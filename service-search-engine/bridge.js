@@ -13,16 +13,28 @@ let searchDebounceTimer = null;
  */
 function initSearchOverlay() {
   // Register command listener for keyboard shortcut
-  chrome.commands.onCommand.addListener((command) => {
-    if (command === 'toggle-search') {
-      toggleSearchOverlay();
+  try {
+    if (chrome.commands && chrome.commands.onCommand) {
+      chrome.commands.onCommand.addListener((command) => {
+        if (command === 'toggle-search') {
+          toggleSearchOverlay();
+        }
+      });
     }
-  });
+  } catch (error) {
+    console.warn('Commands API not available:', error);
+  }
 
   // Register message listener for overlay communication
-  chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    handleSearchMessage(request, sender, sendResponse);
-  });
+  try {
+    if (chrome.runtime && chrome.runtime.onMessage) {
+      chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+        handleSearchMessage(request, sender, sendResponse);
+      });
+    }
+  } catch (error) {
+    console.warn('Runtime messaging not available:', error);
+  }
 }
 
 /**

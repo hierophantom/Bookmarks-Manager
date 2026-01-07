@@ -23,7 +23,7 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["service-search-engine/bridge.js","service-search-engine/overlay/*", "service-search-engine/result-aggregator.js"],
+      "resources": ["service-search-engine/overlay/*"],
       "matches": ["<all_urls>"]
     }
   ],
