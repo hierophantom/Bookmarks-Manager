@@ -488,8 +488,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (openSearch) {
     openSearch.addEventListener('click', async () => {
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-      if (tab) {
-        chrome.tabs.sendMessage(tab.id, { type: 'TOGGLE_OVERLAY' });
+      if (tab && tab.url && tab.url.startsWith('http')) {
+        chrome.tabs.sendMessage(tab.id, { type: 'TOGGLE_OVERLAY' }).catch(() => {});
+      } else {
+        console.warn('Search overlay not available for this page (needs http/https).');
       }
     });
   }

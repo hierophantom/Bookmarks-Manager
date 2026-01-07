@@ -37,13 +37,17 @@ function initSearchOverlay() {
   }
 }
 
+function isContentScriptEligible(url) {
+  return /^https?:\/\//.test(url || '');
+}
+
 /**
  * Toggle search overlay in the active tab
  */
 async function toggleSearchOverlay() {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  if (tab) {
-    chrome.tabs.sendMessage(tab.id, { type: 'TOGGLE_OVERLAY' });
+  if (tab && isContentScriptEligible(tab.url)) {
+    chrome.tabs.sendMessage(tab.id, { type: 'TOGGLE_OVERLAY' }).catch(() => {});
   }
 }
 
