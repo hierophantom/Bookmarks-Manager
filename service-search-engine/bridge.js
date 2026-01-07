@@ -7,6 +7,7 @@
 
 // Debounce timer for search requests
 let searchDebounceTimer = null;
+let lastEligibleTabId = null;
 
 /**
  * Initialize search overlay background handlers
@@ -35,10 +36,32 @@ function initSearchOverlay() {
   } catch (error) {
     console.warn('Runtime messaging not available:', error);
   }
+
+  // Track last eligible tab (http/https) so UI pages (chrome-extension://) can still trigger overlay
+  try {
+    chrome.tabs.onActivated.addListener(async (activeInfo) => {
+      const tab = await chrome.tabs.get(activeInfo.tabId).catch(() => null);
+      updateLastEligibleTab(tab);
+    });
+
+    chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+      if (changeInfo.status === 'complete' || changeInfo.url) {
+        updateLastEligibleTab(tab);
+      }
+    });
+  } catch (error) {
+    console.warn('Tab listeners not available:', error);
+  }
 }
 
 function isContentScriptEligible(url) {
   return /^https?:\/\//.test(url || '');
+}
+
+function updateLastEligibleTab(tab) {
+  if (tab && isContentScriptEligible(tab.url)) {
+    lastEligibleTabId = tab.id;
+  }
 }
 
 /**
@@ -48,6 +71,13 @@ async function toggleSearchOverlay() {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   if (tab && isContentScriptEligible(tab.url)) {
     chrome.tabs.sendMessage(tab.id, { type: 'TOGGLE_OVERLAY' }).catch(() => {});
+    lastEligibleTabId = tab.id;
+    return;
+  }
+
+  // Fallback: if active tab is not eligible (e.g., chrome-extension://), try the last known eligible tab
+  if (lastEligibleTabId !== null) {
+    chrome.tabs.sendMessage(lastEligibleTabId, { type: 'TOGGLE_OVERLAY' }).catch(() => {});
   }
 }
 
@@ -74,6 +104,11 @@ function handleSearchMessage(request, sender, sendResponse) {
 
     case 'OVERLAY_CLOSED':
       handleOverlayClosed(sender, sendResponse);
+      break;
+
+    case 'TOGGLE_OVERLAY_FROM_UI':
+      toggleSearchOverlay();
+      sendResponse({ success: true });
       break;
 
     case 'GET_SEARCH_ENGINE':

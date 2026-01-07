@@ -486,13 +486,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     tagFilterInput.addEventListener('blur', () => { setTimeout(()=>{ if (tagDropdown) tagDropdown.style.display = 'none'; }, 150); });
   }
   if (openSearch) {
-    openSearch.addEventListener('click', async () => {
-      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-      if (tab && tab.url && tab.url.startsWith('http')) {
-        chrome.tabs.sendMessage(tab.id, { type: 'TOGGLE_OVERLAY' }).catch(() => {});
-      } else {
-        console.warn('Search overlay not available for this page (needs http/https).');
-      }
+    openSearch.addEventListener('click', () => {
+      // Delegate to background to use last eligible http/https tab
+      chrome.runtime.sendMessage({ type: 'TOGGLE_OVERLAY_FROM_UI' }, () => {});
     });
   }
 
