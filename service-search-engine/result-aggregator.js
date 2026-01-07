@@ -166,7 +166,7 @@ class ResultAggregator {
    */
   async searchTabs(query) {
     try {
-      const tabs = await chrome.tabs.query({});
+      const tabs = await chrome.tabs.query({ currentWindow: true });
       
       const results = tabs
         .map(tab => this.createTabResult(tab, query))
@@ -184,7 +184,7 @@ class ResultAggregator {
    */
   async getActiveTabs() {
     try {
-      const tabs = await chrome.tabs.query({});
+      const tabs = await chrome.tabs.query({ currentWindow: true });
       return tabs.map(tab => this.createTabResult(tab, ''));
     } catch (error) {
       console.error('Error getting active tabs:', error);
@@ -262,6 +262,7 @@ class ResultAggregator {
     try {
       const oneDayAgo = Date.now() - (24 * 60 * 60 * 1000);
       const historyItems = await chrome.history.search({
+        text: '',
         startTime: oneDayAgo,
         maxResults: 100
       });
@@ -294,6 +295,15 @@ class ResultAggregator {
       const [currentTab] = await chrome.tabs.query({ active: true, currentWindow: true });
       
       if (!currentTab) return [];
+
+      // Detect main.html/new tab page so we can adjust actions
+      const isMainPage = (() => {
+        const url = currentTab.url || '';
+        const isNewTab = url.startsWith('chrome://newtab');
+        const extPrefix = `chrome-extension://${chrome.runtime.id}/`;
+        const isExtMain = url.startsWith(extPrefix) && url.includes('/core/main.html');
+        return isNewTab || isExtMain;
+      })();
 
       // Check if current tab is bookmarked
       const bookmarks = await chrome.bookmarks.search({ url: currentTab.url });
@@ -337,7 +347,7 @@ class ResultAggregator {
             title: currentTab.title
           }
         });
-      } else {
+      } else if (!isMainPage) {
         actions.push({
           id: 'remove-from-favorites',
           type: 'action',
@@ -649,7 +659,9 @@ class ResultAggregator {
   }
 }
 
-// Export for use in background service worker
+export default ResultAggregator;
+
+// Export for CommonJS (tests)
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = ResultAggregator;
 }

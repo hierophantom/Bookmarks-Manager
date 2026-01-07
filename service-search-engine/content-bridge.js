@@ -30,6 +30,9 @@ class OverlayManager {
     // Setup event listeners
     this.setupKeyboardListeners();
     this.setupMessageListeners();
+
+    // Notify background that this tab is ready to receive overlay toggles
+    chrome.runtime.sendMessage({ type: 'OVERLAY_READY' }, () => {});
   }
 
   /**
@@ -44,6 +47,7 @@ class OverlayManager {
     // Create container
     const container = document.createElement('div');
     container.id = 'bm-search-overlay-container';
+    container.style.display = 'none'; // hidden until opened
     container.innerHTML = `
       <div id="bm-search-overlay" class="bm-overlay">
         <!-- Overlay header with drag handle -->
@@ -114,6 +118,9 @@ class OverlayManager {
     document.documentElement.appendChild(container);
     this.overlayContainer = container;
 
+    // Keep hidden until explicitly opened
+    this.overlayContainer.style.display = 'none';
+
     // Inject styles
     this.injectStyles();
 
@@ -133,6 +140,8 @@ class OverlayManager {
         z-index: 999999;
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
         pointer-events: auto;
+        visibility: visible;
+        opacity: 1;
       }
 
       /* Overlay Panel */
@@ -146,6 +155,8 @@ class OverlayManager {
         overflow: hidden;
         display: flex;
         flex-direction: column;
+        visibility: visible;
+        opacity: 1;
       }
 
       /* Dark theme support */
@@ -317,6 +328,10 @@ class OverlayManager {
       .bm-result-content {
         flex: 1;
         min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+        overflow: hidden;
       }
 
       .bm-result-title {
@@ -326,6 +341,7 @@ class OverlayManager {
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
+        line-height: 1.3;
       }
 
       @media (prefers-color-scheme: dark) {
@@ -340,7 +356,7 @@ class OverlayManager {
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
-        margin-top: 2px;
+        line-height: 1.2;
       }
 
       /* Empty state */
@@ -454,22 +470,32 @@ class OverlayManager {
    * Setup keyboard listeners for overlay toggle
    */
   setupKeyboardListeners() {
-    document.addEventListener('keydown', (e) => {
+    const handleKeyDown = (e) => {
       // Track modifier keys
       if (e.ctrlKey) this.ctrlPressed = true;
       if (e.metaKey) this.commandPressed = true;
 
-      // Check for Ctrl/Cmd+Shift+K
-      if ((this.ctrlPressed || this.commandPressed) && e.shiftKey && e.key === 'K') {
+      // Check for Ctrl/Cmd+Shift+E
+      const isShortcut = (this.ctrlPressed || this.commandPressed) && e.shiftKey && (e.key && e.key.toLowerCase() === 'e');
+      if (isShortcut) {
+        console.debug('Overlay toggle shortcut detected (keydown:', e.code, 'key:', e.key, ')');
         e.preventDefault();
         this.toggle();
       }
-    });
+    };
 
-    document.addEventListener('keyup', (e) => {
+    const handleKeyUp = (e) => {
       if (!e.ctrlKey) this.ctrlPressed = false;
       if (!e.metaKey) this.commandPressed = false;
-    });
+    };
+
+    // Attach to both document and window for better coverage
+    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('keyup', handleKeyUp);
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+
+    console.log('Keyboard listeners initialized for overlay toggle (Ctrl/Cmd+Shift+E)');
   }
 
   /**
@@ -614,8 +640,13 @@ class OverlayManager {
       type: 'SEARCH',
       query: query
     }, (response) => {
-      if (response && response.results) {
+      if (chrome.runtime.lastError) {
+        console.debug('Search message error:', chrome.runtime.lastError.message);
+      }
+      if (response && response.success && response.results) {
         this.displayResults(response.results);
+      } else {
+        this.displayResults({});
       }
     });
   }
@@ -626,6 +657,10 @@ class OverlayManager {
   displayResults(groupedResults) {
     const resultsContainer = document.getElementById('bm-search-results');
     const input = document.getElementById('bm-search-input');
+
+    // Build a map for quick lookup when executing actions
+    this.resultMap = this.resultMap || {};
+    this.resultMap = {};
 
     if (input.value === '' && (!groupedResults || Object.keys(groupedResults).length === 0)) {
       resultsContainer.innerHTML = `
@@ -654,6 +689,8 @@ class OverlayManager {
       html += `<div class="bm-results-category-header">${category}</div>`;
 
       results.slice(0, 10).forEach((result) => {
+        // store result for metadata lookup during execution
+        this.resultMap[result.id] = result;
         html += `
           <div class="bm-result-item" data-result-id="${result.id}" data-action="${result.metadata?.action || ''}">
             <div class="bm-result-icon">${result.icon || '📄'}</div>
@@ -712,11 +749,13 @@ class OverlayManager {
   executeResult(resultElement) {
     const action = resultElement.getAttribute('data-action');
     const resultId = resultElement.getAttribute('data-result-id');
+    const result = (this.resultMap && this.resultMap[resultId]) || null;
 
     chrome.runtime.sendMessage({
       type: 'EXECUTE_RESULT',
       resultId: resultId,
-      action: action
+      action: action,
+      metadata: result ? result.metadata : undefined
     }, (response) => {
       if (response && response.success) {
         this.close();
@@ -831,7 +870,16 @@ class OverlayManager {
 
     this.positionOverlay();
     this.overlayContainer.style.display = 'block';
+    this.overlayContainer.style.visibility = 'visible';
+    this.overlayContainer.style.opacity = '1';
     this.isOpen = true;
+
+    console.log('Overlay display state:', {
+      display: this.overlayContainer.style.display,
+      visibility: this.overlayContainer.style.visibility,
+      opacity: this.overlayContainer.style.opacity,
+      position: this.overlayPosition
+    });
 
     // Focus input
     setTimeout(() => {
@@ -906,10 +954,21 @@ class OverlayManager {
 }
 
 // Initialize overlay manager when DOM is ready
+function initOverlaySingleton() {
+  // Reuse existing instance if already created
+  if (window.__bmOverlay && typeof window.__bmOverlay.init === 'function') {
+    return window.__bmOverlay;
+  }
+  const instance = new OverlayManager();
+  window.__bmOverlay = instance;
+  instance.init();
+  return instance;
+}
+
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => {
-    new OverlayManager().init();
+    initOverlaySingleton();
   });
 } else {
-  new OverlayManager().init();
+  initOverlaySingleton();
 }

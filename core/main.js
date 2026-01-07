@@ -1,4 +1,10 @@
 document.addEventListener('DOMContentLoaded', async () => {
+  // Ensure page itself is focused so keyboard shortcuts work immediately on new tab
+  if (document.body) {
+    document.body.setAttribute('tabindex', '-1');
+    document.body.focus();
+  }
+
   // Check new tab override setting
   const newTabEnabled = await Storage.get('newTabOverrideEnabled');
   
@@ -487,7 +493,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
   if (openSearch) {
     openSearch.addEventListener('click', () => {
-      // Delegate to background to use last eligible http/https tab
+      // If overlay is loaded on this page (chrome-extension://main.html), toggle directly
+      if (window.__bmOverlay && typeof window.__bmOverlay.toggle === 'function') {
+        window.__bmOverlay.toggle();
+        return;
+      }
+      // Otherwise delegate to background to use last eligible http/https tab
       chrome.runtime.sendMessage({ type: 'TOGGLE_OVERLAY_FROM_UI' }, () => {});
     });
   }

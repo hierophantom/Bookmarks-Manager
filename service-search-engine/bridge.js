@@ -1,3 +1,5 @@
+import ResultAggregator from './result-aggregator.js';
+
 /**
  * service-search-engine/bridge.js
  * 
@@ -8,6 +10,7 @@
 // Debounce timer for search requests
 let searchDebounceTimer = null;
 let lastEligibleTabId = null;
+const readyTabs = new Set();
 
 /**
  * Initialize search overlay background handlers
@@ -17,10 +20,13 @@ function initSearchOverlay() {
   try {
     if (chrome.commands && chrome.commands.onCommand) {
       chrome.commands.onCommand.addListener((command) => {
+        console.log('Chrome command received:', command);
         if (command === 'toggle-search') {
+          console.log('Executing toggle-search from keyboard shortcut');
           toggleSearchOverlay();
         }
       });
+      console.log('Command listener registered for toggle-search');
     }
   } catch (error) {
     console.warn('Commands API not available:', error);
@@ -30,7 +36,8 @@ function initSearchOverlay() {
   try {
     if (chrome.runtime && chrome.runtime.onMessage) {
       chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-        handleSearchMessage(request, sender, sendResponse);
+        // IMPORTANT: return the boolean from handler so Chrome keeps the message channel open
+        return handleSearchMessage(request, sender, sendResponse);
       });
     }
   } catch (error) {
@@ -52,13 +59,24 @@ function initSearchOverlay() {
         updateLastEligibleTab(tab);
       }
     });
+
+    chrome.tabs.onRemoved.addListener((tabId) => {
+      readyTabs.delete(tabId);
+      if (lastEligibleTabId === tabId) {
+        lastEligibleTabId = null;
+      }
+    });
   } catch (error) {
     console.warn('Tab listeners not available:', error);
   }
 }
 
 function isContentScriptEligible(url) {
-  return /^https?:\/\//.test(url || '');
+  if (!url) return false;
+  if (/^https?:\/\//.test(url)) return true;
+  // Allow extension pages (e.g., main.html) where we manually inject the overlay
+  const extPrefix = `chrome-extension://${chrome.runtime.id}/`;
+  return url.startsWith(extPrefix);
 }
 
 function updateLastEligibleTab(tab) {
@@ -87,24 +105,33 @@ async function seedLastEligibleTab() {
  */
 async function toggleSearchOverlay() {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  if (tab && isContentScriptEligible(tab.url)) {
-    chrome.tabs.sendMessage(tab.id, { type: 'TOGGLE_OVERLAY' }).catch(() => {});
-    lastEligibleTabId = tab.id;
-    return;
+  const trySend = (targetTab) => {
+    if (!targetTab) return false;
+    chrome.tabs.sendMessage(targetTab.id, { type: 'TOGGLE_OVERLAY' }, () => {
+      if (chrome.runtime.lastError) {
+        console.debug('Toggle overlay message failed:', chrome.runtime.lastError.message);
+      }
+    }).catch(() => {});
+    lastEligibleTabId = targetTab.id;
+    return true;
+  };
+
+  if (tab && isContentScriptEligible(tab.url) && readyTabs.has(tab.id)) {
+    if (trySend(tab)) return;
   }
 
-  // Fallback: if active tab is not eligible (e.g., chrome-extension://), try the last known eligible tab
-  if (lastEligibleTabId !== null) {
-    chrome.tabs.sendMessage(lastEligibleTabId, { type: 'TOGGLE_OVERLAY' }).catch(() => {});
-    return;
+  // Fallback: if active tab is not eligible or not ready, try the last known ready tab
+  if (lastEligibleTabId !== null && readyTabs.has(lastEligibleTabId)) {
+    const t = await chrome.tabs.get(lastEligibleTabId).catch(() => null);
+    if (t && trySend(t)) return;
   }
 
-  // Final attempt: find any http/https tab now
+  // Final attempt: find any ready http/https tab now
   const tabs = await chrome.tabs.query({});
-  const httpTab = tabs.find(t => isContentScriptEligible(t.url));
-  if (httpTab) {
-    lastEligibleTabId = httpTab.id;
-    chrome.tabs.sendMessage(httpTab.id, { type: 'TOGGLE_OVERLAY' }).catch(() => {});
+  const readyTab = tabs.find(t => readyTabs.has(t.id) && isContentScriptEligible(t.url));
+  if (readyTab) {
+    trySend(readyTab);
+    return;
   }
 }
 
@@ -138,6 +165,14 @@ function handleSearchMessage(request, sender, sendResponse) {
       sendResponse({ success: true });
       break;
 
+    case 'OVERLAY_READY':
+      if (sender.tab && sender.tab.id !== undefined) {
+        readyTabs.add(sender.tab.id);
+        updateLastEligibleTab(sender.tab);
+      }
+      sendResponse({ success: true });
+      break;
+
     case 'GET_SEARCH_ENGINE':
       getSearchEnginePreference(sendResponse);
       return true;
@@ -155,29 +190,14 @@ function handleSearchMessage(request, sender, sendResponse) {
  * Handle search request with debouncing
  */
 async function handleSearch(query, sendResponse) {
-  // Clear previous debounce timer
-  if (searchDebounceTimer) {
-    clearTimeout(searchDebounceTimer);
+  try {
+    const aggregator = new ResultAggregator();
+    const results = await aggregator.aggregateResults(query || '');
+    sendResponse({ success: true, results });
+  } catch (error) {
+    console.error('Search error:', error);
+    sendResponse({ success: false, error: error.message, results: {} });
   }
-
-  // Debounce search (100ms) to avoid too many API calls
-  searchDebounceTimer = setTimeout(async () => {
-    try {
-      const aggregator = new ResultAggregator();
-      const results = await aggregator.aggregateResults(query);
-
-      sendResponse({
-        success: true,
-        results: results
-      });
-    } catch (error) {
-      console.error('Search error:', error);
-      sendResponse({
-        success: false,
-        error: error.message
-      });
-    }
-  }, 100);
 }
 
 /**
