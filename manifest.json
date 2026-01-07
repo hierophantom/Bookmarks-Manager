@@ -6,7 +6,7 @@
   "permissions": ["bookmarks", "tabs", "tabGroups", "storage", "scripting", "history", "downloads", "management"],
   "host_permissions": ["http://*/", "https://*/"],
   "background": {
-    "service_worker": "background.js",
+    "service_worker": "service-search-engine/bridge.js",
     "type": "module"
   },
   "chrome_url_overrides": {

@@ -485,9 +485,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     tagFilterInput.addEventListener('input', ()=>{ render(true); showTagDropdown(); });
     tagFilterInput.addEventListener('blur', () => { setTimeout(()=>{ if (tagDropdown) tagDropdown.style.display = 'none'; }, 150); });
   }
-  openSearch.addEventListener('click', () => {
-    chrome.runtime.sendMessage({type: 'toggle-search'});
-  });
+  if (openSearch) {
+    openSearch.addEventListener('click', async () => {
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      if (tab) {
+        chrome.tabs.sendMessage(tab.id, { type: 'TOGGLE_OVERLAY' });
+      }
+    });
+  }
 
   // process any pending persisted undo snapshots after DOM ready
   try{ if (typeof UndoPersist !== 'undefined' && UndoPersist.processPending) { UndoPersist.processPending(); } }catch(e){ console.warn('UndoPersist.processPending() failed', e); }
