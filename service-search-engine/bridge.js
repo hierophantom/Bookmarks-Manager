@@ -107,11 +107,12 @@ async function toggleSearchOverlay() {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   const trySend = (targetTab) => {
     if (!targetTab) return false;
+    // chrome.tabs.sendMessage with callback returns undefined, so no .catch() needed
     chrome.tabs.sendMessage(targetTab.id, { type: 'TOGGLE_OVERLAY' }, () => {
       if (chrome.runtime.lastError) {
         console.debug('Toggle overlay message failed:', chrome.runtime.lastError.message);
       }
-    }).catch(() => {});
+    });
     lastEligibleTabId = targetTab.id;
     return true;
   };
@@ -187,12 +188,14 @@ function handleSearchMessage(request, sender, sendResponse) {
 }
 
 /**
- * Handle search request with debouncing
+ * Handle search request
  */
 async function handleSearch(query, sendResponse) {
   try {
+    console.log('Search request received for query:', query);
     const aggregator = new ResultAggregator();
     const results = await aggregator.aggregateResults(query || '');
+    console.log('Sending search results:', results);
     sendResponse({ success: true, results });
   } catch (error) {
     console.error('Search error:', error);

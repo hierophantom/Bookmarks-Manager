@@ -635,17 +635,21 @@ class OverlayManager {
    * Handle search input
    */
   handleSearch(query) {
-    // Send search query to background service worker
+    // Send search query to background service worker with tab tracking
     chrome.runtime.sendMessage({
       type: 'SEARCH',
-      query: query
+      query: query,
+      tabId: chrome.runtime.getURL('').startsWith('chrome-extension:') ? 'extension' : window.location.href
     }, (response) => {
       if (chrome.runtime.lastError) {
         console.debug('Search message error:', chrome.runtime.lastError.message);
+        return;
       }
       if (response && response.success && response.results) {
+        console.log('Search results received for query:', query, 'Results:', response.results);
         this.displayResults(response.results);
       } else {
+        console.log('Empty or failed search response for query:', query);
         this.displayResults({});
       }
     });
