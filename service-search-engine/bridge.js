@@ -37,6 +37,9 @@ function initSearchOverlay() {
     console.warn('Runtime messaging not available:', error);
   }
 
+  // Seed last eligible tab on startup
+  seedLastEligibleTab();
+
   // Track last eligible tab (http/https) so UI pages (chrome-extension://) can still trigger overlay
   try {
     chrome.tabs.onActivated.addListener(async (activeInfo) => {
@@ -64,6 +67,21 @@ function updateLastEligibleTab(tab) {
   }
 }
 
+async function seedLastEligibleTab() {
+  try {
+    const tabs = await chrome.tabs.query({ lastFocusedWindow: true });
+    const httpTabs = tabs.filter(t => isContentScriptEligible(t.url));
+    if (httpTabs.length > 0) {
+      // Prefer active http tab; otherwise take most recently accessed
+      const activeHttp = httpTabs.find(t => t.active);
+      const chosen = activeHttp || httpTabs.sort((a, b) => (b.lastAccessed || 0) - (a.lastAccessed || 0))[0];
+      lastEligibleTabId = chosen.id;
+    }
+  } catch (error) {
+    console.warn('Failed to seed eligible tab:', error);
+  }
+}
+
 /**
  * Toggle search overlay in the active tab
  */
@@ -78,6 +96,15 @@ async function toggleSearchOverlay() {
   // Fallback: if active tab is not eligible (e.g., chrome-extension://), try the last known eligible tab
   if (lastEligibleTabId !== null) {
     chrome.tabs.sendMessage(lastEligibleTabId, { type: 'TOGGLE_OVERLAY' }).catch(() => {});
+    return;
+  }
+
+  // Final attempt: find any http/https tab now
+  const tabs = await chrome.tabs.query({});
+  const httpTab = tabs.find(t => isContentScriptEligible(t.url));
+  if (httpTab) {
+    lastEligibleTabId = httpTab.id;
+    chrome.tabs.sendMessage(httpTab.id, { type: 'TOGGLE_OVERLAY' }).catch(() => {});
   }
 }
 
