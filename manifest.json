@@ -1,0 +1,37 @@
+{
+  "manifest_version": 3,
+  "name": "Bookmark Manager (Spec)",
+  "version": "0.1.0",
+  "description": "A bookmark manager extension implementing the provided spec (minimal scaffold).",
+  "permissions": ["bookmarks", "tabs", "tabGroups", "storage", "scripting"],
+  "host_permissions": ["http://*/", "https://*/"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "chrome_url_overrides": {
+    "newtab": "core/main.html"
+  },
+  "commands": {
+    "toggle-search": {
+      "suggested_key": { "default": "Ctrl+Shift+K", "mac": "Command+Shift+K" },
+      "description": "Toggle universal search overlay"
+    }
+  },
+  "action": {
+    "default_title": "Bookmark Manager"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["service-search-engine/bridge.js","service-search-engine/overlay/*"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+  ,
+  "content_scripts": [
+    {
+      "matches": ["http://*/*","https://*/*"],
+      "js": ["content/bridge-inject.js"],
+      "run_at": "document_start"
+    }
+  ]
+}

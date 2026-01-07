@@ -1,0 +1,136 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Bookmark Manager</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="../utils/modal.css">
+  <link rel="stylesheet" href="../utils/tagify.min.css">
+</head>
+<body>
+  <div id="app">
+    <!-- Top Bar with general settings -->
+    <header class="topbar">
+      <div class="topbar__title">Bookmark Manager</div>
+      <div class="topbar__actions">
+        <button id="open-search" title="Search (Ctrl/Cmd+Shift+K)">🔍</button>
+        <button id="personalize-btn" title="Personalize themes and backgrounds">🎨</button>
+      </div>
+    </header>
+
+    <!-- Make Default New Tab Banner (hidden by default) -->
+    <div id="make-default-banner" class="banner" style="display: none;">
+      <div class="banner__title">✨ Make this your default new tab page</div>
+      <div class="banner__subtitle">See your bookmarks every time you open a new tab</div>
+      <button id="make-default-btn" class="banner__button">Make Default New Tab Page</button>
+    </div>
+
+    <!-- Daily Quote Section -->
+    <div id="daily-quote-container" class="quote" style="display: none;">
+      <div id="quote-text" class="quote__text"></div>
+      <a id="quote-author" href="#" target="_blank" class="quote__author"></a>
+    </div>
+
+    <!-- Page Container -->
+    <div id="page-container">
+      <!-- Page 1: Homepage / Widgets -->
+      <section class="page" data-page="0">
+        <div class="section-header">
+          <h2 class="page__title">Homepage</h2>
+          <button id="add-widget-btn" class="pill-btn">Add Widget</button>
+        </div>
+        <section class="widgets-section">
+          <div id="widgets-container"></div>
+        </section>
+      </section>
+
+      <!-- Page 2: Bookmarks -->
+      <section class="page" data-page="1">
+        <div class="section-header">
+          <h2 class="page__title">Bookmarks</h2>
+        </div>
+        <section class="tab-groups-section" id="tab-groups-section" style="display: none;">
+          <h3 class="subheading">Tab Groups</h3>
+          <div id="tab-groups-container"></div>
+        </section>
+
+        <div class="filter-row">
+          <input id="tag-filter" placeholder="Filter by tag..." />
+          <span id="tag-list"></span>
+          <div style="margin-left: auto; display: flex; gap: 8px; align-items: center;">
+            <label for="sort-dropdown" style="font-size: 13px; font-weight: 600;">Sort:</label>
+            <select id="sort-dropdown" style="padding: 4px 8px; border-radius: 6px; border: 1px solid #ccc; background: white; cursor: pointer; font-size: 13px;">
+              <option value="none">Default</option>
+              <optgroup label="Sort Folders">
+                <option value="folders-az">Folders: A → Z</option>
+                <option value="folders-za">Folders: Z → A</option>
+                <option value="folders-newest">Folders: Last Added</option>
+                <option value="folders-oldest">Folders: First Added</option>
+              </optgroup>
+              <optgroup label="Sort Bookmarks">
+                <option value="bookmarks-az">Bookmarks: A → Z</option>
+                <option value="bookmarks-za">Bookmarks: Z → A</option>
+                <option value="bookmarks-newest">Bookmarks: Last Added</option>
+                <option value="bookmarks-oldest">Bookmarks: First Added</option>
+              </optgroup>
+            </select>
+          </div>
+        </div>
+
+        <main id="bookmarks-root"></main>
+
+        <!-- DEBUG PANEL -->
+        <div class="debug-panel">
+          <div class="debug-panel__title">🔧 Debug Panel:</div>
+          <div class="debug-panel__buttons">
+            <button id="debug-check-storage">Check Storage</button>
+            <button id="debug-view-tags">View All Tags</button>
+            <button id="debug-clear-tags">Clear All Tags</button>
+            <button id="debug-test-save">Test Save</button>
+            <button id="debug-get-bookmarks">Get Bookmarks</button>
+          </div>
+          <div id="debug-output" class="debug-panel__output"></div>
+        </div>
+      </section>
+
+      <!-- Page 3: Journey -->
+      <section class="page" data-page="2">
+        <h2 class="page__title">Journey</h2>
+        <p style="font-size:16px;color:var(--theme-secondary);">Coming soon. For now, enjoy this joke: Why do programmers prefer dark mode? Because light attracts bugs.</p>
+      </section>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <nav id="bottom-nav" class="bottom-nav">
+      <button class="nav-btn" data-target="0">🏠 Home</button>
+      <button class="nav-btn" data-target="1">🔖 Bookmarks</button>
+      <button class="nav-btn" data-target="2">🧭 Journey</button>
+    </nav>
+  </div>
+
+  <template id="folder-template">
+    <section class="folder">
+      <h2 class="folder-title"></h2>
+      <div class="slots"></div>
+    </section>
+  </template>
+
+  <script src="../utils/storage.js"></script>
+  <script src="../utils/tagify.min.js"></script>
+  <script src="../utils/modal.js"></script>
+  <script src="../utils/undo.js"></script>
+  <script src="../utils/undo-persist.js"></script>
+  <script src="../utils/slots.js"></script>
+  <script src="../services/themes.js"></script>
+  <script src="../services/backgrounds.js"></script>
+  <script src="../services/bookmarks.js"></script>
+  <script src="../services/tags.js"></script>
+  <script src="../services/tab-groups.js"></script>
+  <script src="../services/bookmark-modals.js"></script>
+  <script src="../services/widgets.js"></script>
+  <script src="../modals/theme-settings.js"></script>
+  <script src="daily-quote.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>
