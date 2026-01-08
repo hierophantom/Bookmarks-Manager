@@ -246,14 +246,17 @@ function handleSearchMessage(request, sender, sendResponse) {
 async function handleSearch(request, sender, sendResponse) {
   try {
     const query = request && typeof request.query === 'string' ? request.query : '';
-    console.log('Search request received for query:', query, 'from tab:', {
-      id: sender?.tab?.id,
-      url: sender?.tab?.url,
-      title: sender?.tab?.title
+    console.log('Search request received for query:', query, 'from sender:', {
+      tab: sender?.tab ? { id: sender.tab.id, url: sender.tab.url } : null,
+      url: sender?.url,
+      origin: sender?.origin,
+      requestTabId: request?.tabId,
+      requestPageUrl: request?.pageUrl
     });
     const contextTab = await (async () => {
-      if (sender && sender.tab) {
-        console.log('contextTab: using sender.tab');
+      // Use sender.tab if it's a valid http/https page
+      if (sender && sender.tab && sender.tab.url && /^https?:\/\//.test(sender.tab.url)) {
+        console.log('contextTab: using sender.tab (http/https)');
         return sender.tab;
       }
 
@@ -270,12 +273,34 @@ async function handleSearch(request, sender, sendResponse) {
       }
 
       console.log('contextTab: falling back to active tab query');
-      const [activeAny] = await chrome.tabs.query({ active: true }).catch(() => []);
-      return activeAny || null;
+      const activeTabs = await chrome.tabs.query({ active: true }).catch(() => []);
+      // Filter out extension/newtab pages from active tabs
+      const activeHttpTab = activeTabs.find(t => t.url && /^https?:\/\//.test(t.url));
+      if (activeHttpTab) {
+        console.log('contextTab: found active http/https tab', activeHttpTab.id, activeHttpTab.url);
+        return activeHttpTab;
+      }
+      console.warn('contextTab: no valid tab found, all active tabs are extension/newtab');
+      return null;
     })();
 
+    if (!contextTab) {
+      console.error('handleSearch: no valid contextTab found, returning minimal actions');
+      sendResponse({ success: true, results: {
+        Actions: [{
+          id: 'open-settings',
+          type: 'action',
+          title: 'Open Extension Settings',
+          description: 'No valid tab context found',
+          icon: '⚙️',
+          metadata: { action: 'open-settings' }
+        }]
+      }});
+      return;
+    }
+
     const aggregator = new ResultAggregator();
-    console.log('handleSearch: using contextTab:', contextTab ? { id: contextTab.id, url: contextTab.url, title: contextTab.title } : null, 'request.tabId', request?.tabId, 'lastEligibleTabId', lastEligibleTabId);
+    console.log('handleSearch: using contextTab:', { id: contextTab.id, url: contextTab.url, title: contextTab.title }, 'request.tabId', request?.tabId, 'lastEligibleTabId', lastEligibleTabId);
     let results = await aggregator.aggregateResults(query || '', { currentTab: contextTab });
 
     console.log('handleSearch: results keys', results ? Object.keys(results) : []);
