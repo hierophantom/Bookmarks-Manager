@@ -247,7 +247,42 @@ async function handleSearch(request, sender, sendResponse) {
     })();
 
     const aggregator = new ResultAggregator();
-    const results = await aggregator.aggregateResults(query || '', { currentTab: contextTab });
+    let results = await aggregator.aggregateResults(query || '', { currentTab: contextTab });
+
+    const isEmpty = !results || Object.keys(results).length === 0;
+    if (isEmpty) {
+      console.log('No results from aggregator; providing minimal fallback actions');
+      const actions = [];
+      if (contextTab && contextTab.id !== undefined) {
+        actions.push({
+          id: 'close-current-tab',
+          type: 'action',
+          title: 'Close Current Tab',
+          description: `Close "${contextTab.title || 'this tab'}"`,
+          icon: '✕',
+          metadata: { action: 'close-tab', tabId: contextTab.id }
+        });
+        actions.push({
+          id: 'close-all-except',
+          type: 'action',
+          title: 'Close All Except Current',
+          description: 'Close all other tabs in this window',
+          icon: '⊟',
+          metadata: { action: 'close-all-except', tabId: contextTab.id }
+        });
+      }
+      actions.push({
+        id: 'open-settings',
+        type: 'action',
+        title: 'Open Extension Settings',
+        description: 'Configure extension preferences',
+        icon: '⚙️',
+        metadata: { action: 'open-settings' }
+      });
+
+      results = actions.length ? { Actions: actions } : {};
+    }
+
     console.log('Sending search results:', results);
     sendResponse({ success: true, results });
   } catch (error) {
