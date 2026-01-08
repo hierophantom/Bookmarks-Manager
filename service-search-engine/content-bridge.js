@@ -927,13 +927,17 @@ class OverlayManager {
    */
   setupMessageListeners() {
     chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+      console.log('content-bridge received message:', request.type, 'from sender:', sender?.url);
+      
       switch (request.type) {
         case 'TOGGLE_OVERLAY':
+          console.log('Handling TOGGLE_OVERLAY from tabs.sendMessage');
           this.toggle();
           sendResponse({ success: true });
           break;
 
         case 'TOGGLE_OVERLAY_EXTENSION_PAGE':
+          console.log('Handling TOGGLE_OVERLAY_EXTENSION_PAGE from runtime.sendMessage at:', window.location.href);
           // Allow background to toggle overlay on extension pages via runtime messaging
           this.toggle();
           sendResponse({ success: true });

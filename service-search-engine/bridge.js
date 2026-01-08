@@ -106,29 +106,46 @@ async function seedLastEligibleTab() {
 async function toggleSearchOverlay() {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   
+  console.log('toggleSearchOverlay: detected active tab:', { 
+    id: tab?.id, 
+    url: tab?.url,
+    title: tab?.title 
+  });
+
   if (!tab) {
     console.debug('No active tab found');
     return;
   }
 
   const isExtensionPage = typeof tab.url === 'string' && tab.url.startsWith(`chrome-extension://${chrome.runtime.id}/`);
+  const isReady = readyTabs.has(tab.id);
+  
+  console.log('toggleSearchOverlay: tab analysis:', { 
+    isExtensionPage,
+    isReady,
+    readyTabs: Array.from(readyTabs)
+  });
   
   // Only toggle if the active tab is ready
-  if (!readyTabs.has(tab.id)) {
+  if (!isReady) {
     console.debug('Active tab is not ready for overlay toggle:', tab.url);
     return;
   }
 
   // If active tab is an extension page, send runtime message
   if (isExtensionPage) {
-    console.log('Toggling overlay in extension page:', tab.url);
-    chrome.runtime.sendMessage({ type: 'TOGGLE_OVERLAY_EXTENSION_PAGE' }, () => {});
+    console.log('toggleSearchOverlay: sending TOGGLE_OVERLAY_EXTENSION_PAGE to main.html');
+    chrome.runtime.sendMessage({ type: 'TOGGLE_OVERLAY_EXTENSION_PAGE' }, () => {
+      if (chrome.runtime.lastError) {
+        console.debug('Runtime message error:', chrome.runtime.lastError.message);
+      }
+    });
     return;
   }
 
   // If active tab is http/https, send tabs message
   if (isContentScriptEligible(tab.url)) {
-    console.log('Toggling overlay in content script tab:', tab.url);
+    console.log('toggleSearchOverlay: sending TOGGLE_OVERLAY via tabs.sendMessage to tab', tab.id);
     chrome.tabs.sendMessage(tab.id, { type: 'TOGGLE_OVERLAY' }, () => {
       if (chrome.runtime.lastError) {
         console.debug('Toggle overlay message failed:', chrome.runtime.lastError.message);
