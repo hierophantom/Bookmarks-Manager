@@ -40,7 +40,24 @@ class OverlayManager {
 
     // Notify background that this tab is ready to receive overlay toggles
     console.log('OverlayManager.init(): sending OVERLAY_READY to background');
-    chrome.runtime.sendMessage({ type: 'OVERLAY_READY' }, () => {});
+
+    const isExtLikePage = (() => {
+      const href = window.location.href;
+      const protocol = window.location.protocol;
+      const isExt = protocol === 'chrome-extension:';
+      const isMain = href.includes('/core/main.html');
+      const isNewTab = href.startsWith('chrome://newtab');
+      return isExt || isMain || isNewTab;
+    })();
+
+    if (isExtLikePage && chrome.tabs && chrome.tabs.query) {
+      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        const activeId = tabs && tabs[0] ? tabs[0].id : undefined;
+        chrome.runtime.sendMessage({ type: 'OVERLAY_READY', tabId: activeId, isExtensionPage: true }, () => {});
+      });
+    } else {
+      chrome.runtime.sendMessage({ type: 'OVERLAY_READY' }, () => {});
+    }
     
     console.log('OverlayManager.init(): initialization complete');
   }

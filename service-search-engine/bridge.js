@@ -190,13 +190,23 @@ function handleSearchMessage(request, sender, sendResponse) {
       sendResponse({ success: true });
       break;
 
-    case 'OVERLAY_READY':
-      if (sender.tab && sender.tab.id !== undefined) {
-        readyTabs.add(sender.tab.id);
-        updateLastEligibleTab(sender.tab);
+    case 'OVERLAY_READY': {
+      const hintedTabId = request && request.tabId !== undefined ? request.tabId : undefined;
+      const tabFromSender = sender && sender.tab && sender.tab.id !== undefined ? sender.tab : undefined;
+      const tabId = tabFromSender ? tabFromSender.id : hintedTabId;
+
+      if (tabId !== undefined) {
+        readyTabs.add(tabId);
+        if (tabFromSender) {
+          updateLastEligibleTab(tabFromSender);
+        } else if (hintedTabId) {
+          chrome.tabs.get(hintedTabId).then((t) => updateLastEligibleTab(t)).catch(() => {});
+        }
       }
+
       sendResponse({ success: true });
       break;
+    }
 
     case 'GET_SEARCH_ENGINE':
       getSearchEnginePreference(sendResponse);
@@ -222,8 +232,22 @@ async function handleSearch(request, sender, sendResponse) {
       url: sender?.tab?.url,
       title: sender?.tab?.title
     });
+    const contextTab = await (async () => {
+      if (sender && sender.tab) return sender.tab;
+      if (request && request.tabId !== undefined) {
+        const hinted = await chrome.tabs.get(request.tabId).catch(() => null);
+        if (hinted) return hinted;
+      }
+      if (lastEligibleTabId) {
+        const last = await chrome.tabs.get(lastEligibleTabId).catch(() => null);
+        if (last) return last;
+      }
+      const [active] = await chrome.tabs.query({ active: true, currentWindow: true }).catch(() => []);
+      return active || null;
+    })();
+
     const aggregator = new ResultAggregator();
-    const results = await aggregator.aggregateResults(query || '', { currentTab: sender && sender.tab ? sender.tab : null });
+    const results = await aggregator.aggregateResults(query || '', { currentTab: contextTab });
     console.log('Sending search results:', results);
     sendResponse({ success: true, results });
   } catch (error) {
