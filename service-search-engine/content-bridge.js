@@ -67,9 +67,11 @@ class OverlayManager {
     if (isExtLikePage && chrome.tabs && chrome.tabs.query) {
       chrome.tabs.query({ active: true }, (tabs) => {
         const activeId = tabs && tabs[0] ? tabs[0].id : this.tabIdHint;
+        console.log('OVERLAY_READY payload (ext-like):', { tabId: activeId, isExtensionPage: true, href: window.location.href });
         chrome.runtime.sendMessage({ type: 'OVERLAY_READY', tabId: activeId, isExtensionPage: true }, () => {});
       });
     } else {
+      console.log('OVERLAY_READY payload (regular):', { tabId: this.tabIdHint, href: window.location.href });
       chrome.runtime.sendMessage({ type: 'OVERLAY_READY', tabId: this.tabIdHint }, () => {});
     }
     
@@ -689,16 +691,22 @@ class OverlayManager {
    */
   handleSearch(query) {
     // Send search query to background service worker with tab tracking
-    chrome.runtime.sendMessage({
+    const payload = {
       type: 'SEARCH',
       query: query,
       tabId: this.tabIdHint,
       pageUrl: window.location.href
-    }, (response) => {
+    };
+
+    console.log('handleSearch: sending SEARCH', payload);
+
+    chrome.runtime.sendMessage(payload, (response) => {
       if (chrome.runtime.lastError) {
         console.debug('Search message error:', chrome.runtime.lastError.message);
         return;
       }
+      const keys = response && response.results ? Object.keys(response.results) : [];
+      console.log('handleSearch: received response keys:', keys);
       if (response && response.success && response.results) {
         console.log('Search results received for query:', query, 'Results:', response.results);
         this.displayResults(response.results);
@@ -716,6 +724,9 @@ class OverlayManager {
     const resultsContainer = document.getElementById('bm-search-results');
     const input = document.getElementById('bm-search-input');
     const loading = document.getElementById('bm-search-loading');
+
+    const keys = groupedResults ? Object.keys(groupedResults) : [];
+    console.log('displayResults: keys', keys, 'input value', input?.value);
 
     // Build a map for quick lookup when executing actions
     this.resultMap = this.resultMap || {};

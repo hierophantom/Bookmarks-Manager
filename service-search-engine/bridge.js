@@ -195,6 +195,12 @@ function handleSearchMessage(request, sender, sendResponse) {
       const tabFromSender = sender && sender.tab && sender.tab.id !== undefined ? sender.tab : undefined;
       const tabId = tabFromSender ? tabFromSender.id : hintedTabId;
 
+      console.log('OVERLAY_READY received:', {
+        senderTab: tabFromSender ? { id: tabFromSender.id, url: tabFromSender.url } : null,
+        hintedTabId,
+        readyTabs: Array.from(readyTabs)
+      });
+
       if (tabId !== undefined) {
         readyTabs.add(tabId);
         if (tabFromSender) {
@@ -250,7 +256,10 @@ async function handleSearch(request, sender, sendResponse) {
     })();
 
     const aggregator = new ResultAggregator();
+    console.log('handleSearch: using contextTab:', contextTab ? { id: contextTab.id, url: contextTab.url, title: contextTab.title } : null, 'request.tabId', request?.tabId, 'lastEligibleTabId', lastEligibleTabId);
     let results = await aggregator.aggregateResults(query || '', { currentTab: contextTab });
+
+    console.log('handleSearch: results keys', results ? Object.keys(results) : []);
 
     const isEmpty = !results || Object.keys(results).length === 0;
     if (isEmpty) {

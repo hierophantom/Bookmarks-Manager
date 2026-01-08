@@ -28,6 +28,7 @@ class ResultAggregator {
    * Aggregate all results for a search query
    */
   async aggregateResults(query, context = {}) {
+    console.log('aggregateResults: query', query, 'context.currentTab', context?.currentTab ? { id: context.currentTab.id, url: context.currentTab.url, title: context.currentTab.title } : null);
     if (!query || query.trim() === '') {
       return await this.getDefaultResults(context);
     }
