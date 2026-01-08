@@ -172,6 +172,15 @@ async function toggleSearchOverlay() {
  * Handle messages from content script/overlay UI
  */
 function handleSearchMessage(request, sender, sendResponse) {
+  console.log('📨 handleSearchMessage received:', {
+    type: request?.type,
+    query: request?.query,
+    pageUrl: request?.pageUrl,
+    tabId: request?.tabId,
+    senderTab: sender?.tab ? { id: sender.tab.id, url: sender.tab.url } : 'MISSING',
+    senderUrl: sender?.url
+  });
+  
   switch (request.type) {
     case 'SEARCH':
       handleSearch(request, sender, sendResponse);
