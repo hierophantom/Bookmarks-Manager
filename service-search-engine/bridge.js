@@ -251,43 +251,88 @@ async function handleSearch(request, sender, sendResponse) {
     console.log('Query:', query);
     console.log('sender.tab:', sender?.tab ? { id: sender.tab.id, url: sender.tab.url, title: sender.tab.title } : 'MISSING');
     console.log('sender.url:', sender?.url);
+    console.log('sender.origin:', sender?.origin);
     console.log('request.pageUrl:', request?.pageUrl);
     console.log('request.tabId:', request?.tabId);
     
-    // STRICT RULE: Only use sender.tab for http/https pages, nothing else
+    // STRICT RULE: Find the actual tab that sent this search
     let contextTab = null;
     
+    // Method 1: sender.tab exists (rare for runtime.sendMessage from content scripts)
     if (sender && sender.tab && sender.tab.id !== undefined) {
       const tabUrl = sender.tab.url || '';
       const isHttpHttps = /^https?:\/\//.test(tabUrl);
-      const isExtension = tabUrl.startsWith('chrome-extension://') || tabUrl.startsWith('chrome://');
       
-      console.log('sender.tab analysis:', {
+      console.log('Method 1: sender.tab exists:', {
         id: sender.tab.id,
         url: tabUrl,
-        isHttpHttps,
-        isExtension
+        isHttpHttps
       });
       
       if (isHttpHttps) {
         contextTab = sender.tab;
-        console.log('✓ Using sender.tab as contextTab (http/https)');
-      } else if (isExtension) {
-        console.log('✗ sender.tab is extension page, querying for active http/https tab');
-        // Extension page sent search - find the active http/https tab
+        console.log('✓ Using sender.tab as contextTab');
+      }
+    }
+    
+    // Method 2: sender.url exists (content script sent via runtime.sendMessage)
+    if (!contextTab && sender && sender.url) {
+      const senderUrl = sender.url;
+      const isHttpHttps = /^https?:\/\//.test(senderUrl);
+      
+      console.log('Method 2: sender.url exists:', senderUrl, 'isHttpHttps:', isHttpHttps);
+      
+      if (isHttpHttps) {
+        // Find the tab matching this URL
+        const allTabs = await chrome.tabs.query({}).catch(() => []);
+        const matchingTab = allTabs.find(t => t.url === senderUrl);
+        
+        if (matchingTab) {
+          contextTab = matchingTab;
+          console.log('✓ Found matching tab for sender.url:', matchingTab.id, matchingTab.url);
+        } else {
+          console.log('✗ No tab found matching sender.url');
+        }
+      }
+    }
+    
+    // Method 3: request.pageUrl exists (fallback)
+    if (!contextTab && request && request.pageUrl) {
+      const pageUrl = request.pageUrl;
+      const isHttpHttps = /^https?:\/\//.test(pageUrl);
+      
+      console.log('Method 3: request.pageUrl exists:', pageUrl, 'isHttpHttps:', isHttpHttps);
+      
+      if (isHttpHttps) {
+        const allTabs = await chrome.tabs.query({}).catch(() => []);
+        const matchingTab = allTabs.find(t => t.url === pageUrl);
+        
+        if (matchingTab) {
+          contextTab = matchingTab;
+          console.log('✓ Found matching tab for request.pageUrl:', matchingTab.id, matchingTab.url);
+        } else {
+          console.log('✗ No tab found matching request.pageUrl');
+        }
+      }
+    }
+    
+    // Method 4: Extension page search - find active http/https tab
+    if (!contextTab) {
+      const isExtensionSearch = sender?.url?.startsWith('chrome-extension://') || 
+                               request?.pageUrl?.startsWith('chrome-extension://');
+      
+      console.log('Method 4: Extension page search?', isExtensionSearch);
+      
+      if (isExtensionSearch) {
         const allTabs = await chrome.tabs.query({ active: true }).catch(() => []);
         console.log('Active tabs found:', allTabs.length, allTabs.map(t => ({ id: t.id, url: t.url })));
         
         const activeHttpTab = allTabs.find(t => t.url && /^https?:\/\//.test(t.url));
         if (activeHttpTab) {
           contextTab = activeHttpTab;
-          console.log('✓ Found active http/https tab:', activeHttpTab.id, activeHttpTab.url);
-        } else {
-          console.log('✗ No active http/https tab found');
+          console.log('✓ Found active http/https tab for extension search:', activeHttpTab.id, activeHttpTab.url);
         }
       }
-    } else {
-      console.log('✗ sender.tab is missing or has no id');
     }
 
     if (!contextTab) {
