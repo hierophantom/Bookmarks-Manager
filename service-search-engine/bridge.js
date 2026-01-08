@@ -99,12 +99,11 @@ async function toggleSearchOverlay() {
 
   const isReady = readyTabs.has(tab.id);
   
-  console.log('toggleSearchOverlay: isReady =', isReady);
+  console.log('toggleSearchOverlay: isReady =', isReady, 'readyTabs =', Array.from(readyTabs));
   
-  // Only toggle if the active tab is ready
+  // Try to send toggle even if not marked as ready (content script may be loaded but OVERLAY_READY not received)
   if (!isReady) {
-    console.debug('Active tab is not ready for overlay toggle:', tab.url);
-    return;
+    console.warn('toggleSearchOverlay: tab not marked as ready, but attempting toggle anyway');
   }
 
   // If active tab is http/https, send tabs message
@@ -112,7 +111,9 @@ async function toggleSearchOverlay() {
     console.log('toggleSearchOverlay: sending TOGGLE_OVERLAY via tabs.sendMessage to tab', tab.id);
     chrome.tabs.sendMessage(tab.id, { type: 'TOGGLE_OVERLAY' }, () => {
       if (chrome.runtime.lastError) {
-        console.debug('Toggle overlay message failed:', chrome.runtime.lastError.message);
+        console.error('Toggle overlay message failed:', chrome.runtime.lastError.message);
+      } else {
+        console.log('Toggle overlay message sent successfully');
       }
     });
     return;
