@@ -166,7 +166,7 @@ class ResultAggregator {
    */
   async searchTabs(query) {
     try {
-      const tabs = await chrome.tabs.query({ currentWindow: true });
+      const tabs = await chrome.tabs.query({});
       
       const results = tabs
         .map(tab => this.createTabResult(tab, query))
@@ -184,7 +184,7 @@ class ResultAggregator {
    */
   async getActiveTabs() {
     try {
-      const tabs = await chrome.tabs.query({ currentWindow: true });
+      const tabs = await chrome.tabs.query({});
       return tabs.map(tab => this.createTabResult(tab, ''));
     } catch (error) {
       console.error('Error getting active tabs:', error);

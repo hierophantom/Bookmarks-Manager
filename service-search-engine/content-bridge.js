@@ -15,6 +15,7 @@ class OverlayManager {
     this.shortcutKey = 'Shift+K'; // Will be updated from manifest
     this.ctrlPressed = false;
     this.commandPressed = false;
+    this.tabIdHint = undefined; // best-effort tabId for extension pages
   }
 
   /**
@@ -22,6 +23,19 @@ class OverlayManager {
    */
   async init() {
     console.log('OverlayManager.init(): starting initialization at', window.location.href);
+
+    // Best-effort tabId for extension pages (main/newtab) where sender.tab is missing
+    try {
+      if (window.location.protocol === 'chrome-extension:' && chrome.tabs && chrome.tabs.getCurrent) {
+        const t = await chrome.tabs.getCurrent();
+        if (t && t.id !== undefined) {
+          this.tabIdHint = t.id;
+          console.log('OverlayManager.init(): captured tabIdHint', t.id);
+        }
+      }
+    } catch (err) {
+      console.debug('OverlayManager.init(): tabIdHint not available', err?.message);
+    }
     
     // Load saved position
     await this.restorePosition();
@@ -51,12 +65,12 @@ class OverlayManager {
     })();
 
     if (isExtLikePage && chrome.tabs && chrome.tabs.query) {
-      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-        const activeId = tabs && tabs[0] ? tabs[0].id : undefined;
+      chrome.tabs.query({ active: true }, (tabs) => {
+        const activeId = tabs && tabs[0] ? tabs[0].id : this.tabIdHint;
         chrome.runtime.sendMessage({ type: 'OVERLAY_READY', tabId: activeId, isExtensionPage: true }, () => {});
       });
     } else {
-      chrome.runtime.sendMessage({ type: 'OVERLAY_READY' }, () => {});
+      chrome.runtime.sendMessage({ type: 'OVERLAY_READY', tabId: this.tabIdHint }, () => {});
     }
     
     console.log('OverlayManager.init(): initialization complete');
@@ -678,7 +692,8 @@ class OverlayManager {
     chrome.runtime.sendMessage({
       type: 'SEARCH',
       query: query,
-      tabId: chrome.runtime.getURL('').startsWith('chrome-extension:') ? 'extension' : window.location.href
+      tabId: this.tabIdHint,
+      pageUrl: window.location.href
     }, (response) => {
       if (chrome.runtime.lastError) {
         console.debug('Search message error:', chrome.runtime.lastError.message);

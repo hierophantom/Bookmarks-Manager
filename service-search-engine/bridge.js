@@ -234,16 +234,19 @@ async function handleSearch(request, sender, sendResponse) {
     });
     const contextTab = await (async () => {
       if (sender && sender.tab) return sender.tab;
+
       if (request && request.tabId !== undefined) {
         const hinted = await chrome.tabs.get(request.tabId).catch(() => null);
         if (hinted) return hinted;
       }
+
       if (lastEligibleTabId) {
         const last = await chrome.tabs.get(lastEligibleTabId).catch(() => null);
         if (last) return last;
       }
-      const [active] = await chrome.tabs.query({ active: true, currentWindow: true }).catch(() => []);
-      return active || null;
+
+      const [activeAny] = await chrome.tabs.query({ active: true }).catch(() => []);
+      return activeAny || null;
     })();
 
     const aggregator = new ResultAggregator();
