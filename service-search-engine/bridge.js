@@ -101,54 +101,43 @@ async function seedLastEligibleTab() {
 }
 
 /**
- * Toggle search overlay in the active tab
+ * Toggle search overlay in the active tab only (context-aware)
  */
 async function toggleSearchOverlay() {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  const trySend = (targetTab) => {
-    if (!targetTab) return false;
-    // chrome.tabs.sendMessage with callback returns undefined, so no .catch() needed
-    chrome.tabs.sendMessage(targetTab.id, { type: 'TOGGLE_OVERLAY' }, () => {
+  
+  if (!tab) {
+    console.debug('No active tab found');
+    return;
+  }
+
+  const isExtensionPage = typeof tab.url === 'string' && tab.url.startsWith(`chrome-extension://${chrome.runtime.id}/`);
+  
+  // Only toggle if the active tab is ready
+  if (!readyTabs.has(tab.id)) {
+    console.debug('Active tab is not ready for overlay toggle:', tab.url);
+    return;
+  }
+
+  // If active tab is an extension page, send runtime message
+  if (isExtensionPage) {
+    console.log('Toggling overlay in extension page:', tab.url);
+    chrome.runtime.sendMessage({ type: 'TOGGLE_OVERLAY_EXTENSION_PAGE' }, () => {});
+    return;
+  }
+
+  // If active tab is http/https, send tabs message
+  if (isContentScriptEligible(tab.url)) {
+    console.log('Toggling overlay in content script tab:', tab.url);
+    chrome.tabs.sendMessage(tab.id, { type: 'TOGGLE_OVERLAY' }, () => {
       if (chrome.runtime.lastError) {
         console.debug('Toggle overlay message failed:', chrome.runtime.lastError.message);
       }
     });
-    lastEligibleTabId = targetTab.id;
-    return true;
-  };
-
-  // Prefer toggling in the active tab first (including extension pages)
-  if (tab && readyTabs.has(tab.id)) {
-    // If it's an http/https page, ensure eligibility; if it's an extension page, allow
-    const isExtensionPage = typeof tab.url === 'string' && tab.url.startsWith(`chrome-extension://${chrome.runtime.id}/`);
-    if (isExtensionPage) {
-      chrome.runtime.sendMessage({ type: 'TOGGLE_OVERLAY_EXTENSION_PAGE' }, () => {});
-      lastEligibleTabId = tab.id;
-      return;
-    }
-    if (isContentScriptEligible(tab.url)) {
-      if (trySend(tab)) return;
-    }
-  }
-
-  // Fallback: if active tab is not eligible or not ready, try the last known ready tab
-  if (lastEligibleTabId !== null && readyTabs.has(lastEligibleTabId)) {
-    const t = await chrome.tabs.get(lastEligibleTabId).catch(() => null);
-    if (t && trySend(t)) return;
-  }
-
-  // Final attempt: find any ready http/https tab now
-  const tabs = await chrome.tabs.query({});
-  const readyTab = tabs.find(t => readyTabs.has(t.id) && isContentScriptEligible(t.url));
-  if (readyTab) {
-    trySend(readyTab);
     return;
   }
 
-  // If nothing else worked, try sending to the active tab regardless (last resort)
-  if (tab) {
-    trySend(tab);
-  }
+  console.debug('Active tab is not eligible for overlay toggle:', tab.url);
 }
 
 /**
