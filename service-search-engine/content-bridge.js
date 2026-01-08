@@ -21,18 +21,28 @@ class OverlayManager {
    * Initialize overlay manager - called once when content script loads
    */
   async init() {
+    console.log('OverlayManager.init(): starting initialization at', window.location.href);
+    
     // Load saved position
     await this.restorePosition();
     
     // Inject overlay HTML
+    console.log('OverlayManager.init(): injecting overlay HTML');
     this.injectOverlay();
+    console.log('OverlayManager.init(): overlay HTML injected, container =', this.overlayContainer);
     
     // Setup event listeners
+    console.log('OverlayManager.init(): setting up keyboard listeners');
     this.setupKeyboardListeners();
+    
+    console.log('OverlayManager.init(): setting up message listeners');
     this.setupMessageListeners();
 
     // Notify background that this tab is ready to receive overlay toggles
+    console.log('OverlayManager.init(): sending OVERLAY_READY to background');
     chrome.runtime.sendMessage({ type: 'OVERLAY_READY' }, () => {});
+    
+    console.log('OverlayManager.init(): initialization complete');
   }
 
   /**
@@ -471,6 +481,7 @@ class OverlayManager {
    */
   setupKeyboardListeners() {
     console.log('setupKeyboardListeners: initializing. location.href =', window.location.href);
+    console.log('setupKeyboardListeners: window.__bmOverlay exists?', !!window.__bmOverlay);
     
     // Detect if we're on an extension page (main.html)
     const isExtensionPage = window.location.href.includes('/core/main.html') || 
@@ -481,16 +492,25 @@ class OverlayManager {
     if (isExtensionPage) {
       // For extension pages, handle Ctrl/Cmd+Shift+E locally
       console.log('setupKeyboardListeners: registering LOCAL shortcut for extension page');
+      
+      // Use arrow function to preserve 'this' context
       const handleKeyDown = (e) => {
         // Check for Ctrl/Cmd+Shift+E
         const isCtrlOrCmd = e.ctrlKey || e.metaKey;
         const isShift = e.shiftKey;
         const isE = e.key && e.key.toLowerCase() === 'e';
         
+        console.log('Keyboard event:', { code: e.code, key: e.key, ctrlOrCmd: isCtrlOrCmd, shift: isShift, e: isE });
+        
         if (isCtrlOrCmd && isShift && isE) {
-          console.log('Local shortcut triggered in extension page!', { ctrlOrCmd: isCtrlOrCmd, shift: isShift, e: isE });
+          console.log('Local shortcut triggered! this =', this, 'calling toggle()');
           e.preventDefault();
-          this.toggle();
+          // Verify 'this' has toggle method
+          if (typeof this.toggle === 'function') {
+            this.toggle();
+          } else {
+            console.error('ERROR: this.toggle is not a function!', this);
+          }
         }
       };
 
