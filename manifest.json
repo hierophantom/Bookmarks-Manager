@@ -30,7 +30,7 @@
   "content_scripts": [
     {
       "matches": ["http://*/*","https://*/*"],
-      "js": ["service-search-engine/result-aggregator.js", "service-search-engine/content-bridge.js"],
+      "js": ["service-search-engine/content-bridge.js"],
       "run_at": "document_start"
     }
   ]
