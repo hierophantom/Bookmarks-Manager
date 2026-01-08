@@ -130,23 +130,9 @@ async function toggleSearchOverlay() {
     url: tab.url
   });
 
-  // If active tab is an extension page (main.html), broadcast via runtime and tab
+  // If active tab is an extension page (main.html/new tab), let local handler manage shortcuts
   if (isExtensionPage) {
-    console.log('toggleSearchOverlay: sending TOGGLE_OVERLAY_EXTENSION_PAGE (runtime + tab) for tab', tab.id);
-
-    // Runtime broadcast (reaches all extension pages, including main.html)
-    chrome.runtime.sendMessage({ type: 'TOGGLE_OVERLAY_EXTENSION_PAGE', targetTabId: tab.id }, () => {
-      if (chrome.runtime.lastError) {
-        console.debug('Toggle overlay runtime message failed:', chrome.runtime.lastError.message);
-      }
-    });
-
-    // Direct tab message (belt-and-suspenders for extension page)
-    chrome.tabs.sendMessage(tab.id, { type: 'TOGGLE_OVERLAY_EXTENSION_PAGE' }, () => {
-      if (chrome.runtime.lastError) {
-        console.debug('Toggle overlay tab message failed:', chrome.runtime.lastError.message);
-      }
-    });
+    console.log('toggleSearchOverlay: extension page detected; skipping background toggle');
     return;
   }
 

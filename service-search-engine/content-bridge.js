@@ -487,16 +487,16 @@ class OverlayManager {
 
     // Local toggle handler for extension pages (chrome-extension://, e.g., main.html)
     if (isExtensionPage) {
-      console.log('setupKeyboardListeners: registering local toggle listener for extension page');
+      console.log('setupKeyboardListeners: registering local toggle listener for extension page (Cmd/Ctrl+Shift+K)');
       const handleToggleShortcut = (e) => {
         const isCtrlOrCmd = e.ctrlKey || e.metaKey;
         const isShift = e.shiftKey;
-        const isE = e.code === 'KeyE' || (e.key && e.key.toLowerCase() === 'e');
+        const isK = e.code === 'KeyK' || (e.key && e.key.toLowerCase() === 'k');
 
-        if (isCtrlOrCmd && isShift && isE) {
+        if (isCtrlOrCmd && isShift && isK) {
           e.preventDefault();
           e.stopPropagation();
-          console.log('Local toggle shortcut detected on extension page; toggling overlay');
+          console.log('Local toggle shortcut (K) detected on extension page; toggling overlay');
           this.toggle();
         }
       };
