@@ -27,9 +27,9 @@ class ResultAggregator {
   /**
    * Aggregate all results for a search query
    */
-  async aggregateResults(query) {
+  async aggregateResults(query, context = {}) {
     if (!query || query.trim() === '') {
-      return await this.getDefaultResults();
+      return await this.getDefaultResults(context);
     }
 
     const results = {};
@@ -70,11 +70,11 @@ class ResultAggregator {
   /**
    * Get default results (before typing)
    */
-  async getDefaultResults() {
+  async getDefaultResults(context = {}) {
     const results = {};
 
     // Always show extension actions first
-    const actions = await this.getDefaultActions();
+    const actions = await this.getDefaultActions(context);
     if (actions.length > 0) {
       results['Actions'] = actions;
     }
@@ -289,10 +289,14 @@ class ResultAggregator {
   /**
    * Get default extension actions (before typing)
    */
-  async getDefaultActions() {
+  async getDefaultActions(context = {}) {
     try {
-      // Get current active tab
-      const [currentTab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      // Use requesting tab if provided, otherwise active tab
+      let currentTab = context.currentTab || null;
+      if (!currentTab) {
+        const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+        currentTab = tabs && tabs[0] ? tabs[0] : null;
+      }
       
       if (!currentTab) return [];
 

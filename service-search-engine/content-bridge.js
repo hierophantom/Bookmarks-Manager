@@ -947,6 +947,12 @@ class OverlayManager {
           sendResponse({ success: true });
           break;
 
+        case 'TOGGLE_OVERLAY_EXTENSION_PAGE':
+          // Allow background to toggle overlay on extension pages via runtime messaging
+          this.toggle();
+          sendResponse({ success: true });
+          break;
+
         case 'GET_CURRENT_TAB_INFO':
           sendResponse({
             url: window.location.href,

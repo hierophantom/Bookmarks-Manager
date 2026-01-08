@@ -121,7 +121,12 @@ async function toggleSearchOverlay() {
   if (tab && readyTabs.has(tab.id)) {
     // If it's an http/https page, ensure eligibility; if it's an extension page, allow
     const isExtensionPage = typeof tab.url === 'string' && tab.url.startsWith(`chrome-extension://${chrome.runtime.id}/`);
-    if (isExtensionPage || isContentScriptEligible(tab.url)) {
+    if (isExtensionPage) {
+      chrome.runtime.sendMessage({ type: 'TOGGLE_OVERLAY_EXTENSION_PAGE' }, () => {});
+      lastEligibleTabId = tab.id;
+      return;
+    }
+    if (isContentScriptEligible(tab.url)) {
       if (trySend(tab)) return;
     }
   }
@@ -152,7 +157,7 @@ async function toggleSearchOverlay() {
 function handleSearchMessage(request, sender, sendResponse) {
   switch (request.type) {
     case 'SEARCH':
-      handleSearch(request.query, sendResponse);
+      handleSearch(request, sender, sendResponse);
       return true; // Async response
 
     case 'EXECUTE_RESULT':
@@ -200,11 +205,12 @@ function handleSearchMessage(request, sender, sendResponse) {
 /**
  * Handle search request
  */
-async function handleSearch(query, sendResponse) {
+async function handleSearch(request, sender, sendResponse) {
   try {
+    const query = request && typeof request.query === 'string' ? request.query : '';
     console.log('Search request received for query:', query);
     const aggregator = new ResultAggregator();
-    const results = await aggregator.aggregateResults(query || '');
+    const results = await aggregator.aggregateResults(query || '', { currentTab: sender && sender.tab ? sender.tab : null });
     console.log('Sending search results:', results);
     sendResponse({ success: true, results });
   } catch (error) {
