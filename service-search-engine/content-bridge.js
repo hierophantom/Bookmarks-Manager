@@ -694,15 +694,18 @@ class OverlayManager {
 
     chrome.runtime.sendMessage(payload, (response) => {
       if (chrome.runtime.lastError) {
-        console.debug('[OverlayManager] Search error:', chrome.runtime.lastError.message);
+        console.error('[OverlayManager] Search error:', chrome.runtime.lastError.message);
         return;
       }
+      
+      console.log('[OverlayManager] Full response:', response);
       const keys = response && response.results ? Object.keys(response.results) : [];
-      console.log('[OverlayManager] Received response keys:', keys);
+      console.log('[OverlayManager] Response keys:', keys, 'success:', response?.success);
+      
       if (response && response.success && response.results) {
         this.displayResults(response.results);
       } else {
-        console.warn('[OverlayManager] Empty or failed search response');
+        console.warn('[OverlayManager] Empty or failed search response:', response);
         this.displayResults({});
       }
     });

@@ -253,8 +253,11 @@ async function handleSearch(request, sender, sendResponse) {
     console.log('[Bridge] Aggregating results for:', { id: contextTab.id, url: contextTab.url, title: contextTab.title });
     let results = await aggregator.aggregateResults(query || '', { currentTab: contextTab });
 
-    console.log('[Bridge] Aggregator returned keys:', results ? Object.keys(results) : []);
-    console.log('[Bridge] === SEARCH END ===');
+    console.log('[Bridge] Aggregator returned:', { 
+      resultsType: typeof results,
+      keys: results ? Object.keys(results) : [],
+      isEmpty: !results || Object.keys(results).length === 0
+    });
 
     const isEmpty = !results || Object.keys(results).length === 0;
     if (isEmpty) {
@@ -290,8 +293,15 @@ async function handleSearch(request, sender, sendResponse) {
       results = actions.length ? { Actions: actions } : {};
     }
 
-    console.log('[Bridge] Sending search results with keys:', Object.keys(results));
-    sendResponse({ success: true, results });
+    const responsePayload = { success: true, results };
+    console.log('[Bridge] Sending response:', { 
+      success: responsePayload.success, 
+      resultKeys: Object.keys(responsePayload.results),
+      resultCount: Object.values(responsePayload.results).reduce((acc, arr) => acc + (Array.isArray(arr) ? arr.length : 0), 0)
+    });
+    console.log('[Bridge] === SEARCH END ===');
+    
+    sendResponse(responsePayload);
   } catch (error) {
     console.error('[Bridge] Search error:', error);
     sendResponse({ success: false, error: error.message, results: {} });
