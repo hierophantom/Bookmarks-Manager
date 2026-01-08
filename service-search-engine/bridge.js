@@ -124,10 +124,10 @@ async function toggleSearchOverlay() {
     url: tab.url
   });
 
-  // If active tab is an extension page (main.html), send via runtime.sendMessage
+  // If active tab is an extension page (main.html), send directly to that tab
   if (isExtensionPage) {
-    console.log('toggleSearchOverlay: sending TOGGLE_OVERLAY_EXTENSION_PAGE via runtime.sendMessage');
-    chrome.runtime.sendMessage({ type: 'TOGGLE_OVERLAY_EXTENSION_PAGE' }, () => {
+    console.log('toggleSearchOverlay: sending TOGGLE_OVERLAY_EXTENSION_PAGE via tabs.sendMessage to tab', tab.id);
+    chrome.tabs.sendMessage(tab.id, { type: 'TOGGLE_OVERLAY_EXTENSION_PAGE' }, () => {
       if (chrome.runtime.lastError) {
         console.debug('Toggle overlay message failed:', chrome.runtime.lastError.message);
       }
@@ -216,7 +216,11 @@ function handleSearchMessage(request, sender, sendResponse) {
 async function handleSearch(request, sender, sendResponse) {
   try {
     const query = request && typeof request.query === 'string' ? request.query : '';
-    console.log('Search request received for query:', query);
+    console.log('Search request received for query:', query, 'from tab:', {
+      id: sender?.tab?.id,
+      url: sender?.tab?.url,
+      title: sender?.tab?.title
+    });
     const aggregator = new ResultAggregator();
     const results = await aggregator.aggregateResults(query || '', { currentTab: sender && sender.tab ? sender.tab : null });
     console.log('Sending search results:', results);
