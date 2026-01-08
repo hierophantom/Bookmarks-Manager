@@ -79,9 +79,17 @@ function isContentScriptEligible(url) {
   return url.startsWith(extPrefix);
 }
 
+function isExtensionOrNewTab(url) {
+  if (!url) return false;
+  const extPrefix = `chrome-extension://${chrome.runtime.id}/`;
+  return url.startsWith(extPrefix) || url.startsWith('chrome://newtab');
+}
+
 function updateLastEligibleTab(tab) {
-  if (tab && isContentScriptEligible(tab.url)) {
+  // Only track http/https tabs, never extension/newtab pages
+  if (tab && tab.url && /^https?:\/\//.test(tab.url)) {
     lastEligibleTabId = tab.id;
+    console.log('updateLastEligibleTab:', tab.id, tab.url);
   }
 }
 
@@ -194,19 +202,24 @@ function handleSearchMessage(request, sender, sendResponse) {
       const hintedTabId = request && request.tabId !== undefined ? request.tabId : undefined;
       const tabFromSender = sender && sender.tab && sender.tab.id !== undefined ? sender.tab : undefined;
       const tabId = tabFromSender ? tabFromSender.id : hintedTabId;
+      const isExtPage = request && request.isExtensionPage === true;
 
       console.log('OVERLAY_READY received:', {
         senderTab: tabFromSender ? { id: tabFromSender.id, url: tabFromSender.url } : null,
         hintedTabId,
+        isExtPage,
         readyTabs: Array.from(readyTabs)
       });
 
       if (tabId !== undefined) {
         readyTabs.add(tabId);
-        if (tabFromSender) {
-          updateLastEligibleTab(tabFromSender);
-        } else if (hintedTabId) {
-          chrome.tabs.get(hintedTabId).then((t) => updateLastEligibleTab(t)).catch(() => {});
+        // Only update lastEligibleTab for http/https pages, not extension pages
+        if (!isExtPage) {
+          if (tabFromSender) {
+            updateLastEligibleTab(tabFromSender);
+          } else if (hintedTabId) {
+            chrome.tabs.get(hintedTabId).then((t) => updateLastEligibleTab(t)).catch(() => {});
+          }
         }
       }
 
@@ -239,18 +252,24 @@ async function handleSearch(request, sender, sendResponse) {
       title: sender?.tab?.title
     });
     const contextTab = await (async () => {
-      if (sender && sender.tab) return sender.tab;
+      if (sender && sender.tab) {
+        console.log('contextTab: using sender.tab');
+        return sender.tab;
+      }
 
       if (request && request.tabId !== undefined) {
+        console.log('contextTab: trying hinted tabId', request.tabId);
         const hinted = await chrome.tabs.get(request.tabId).catch(() => null);
         if (hinted) return hinted;
       }
 
       if (lastEligibleTabId) {
+        console.log('contextTab: trying lastEligibleTabId', lastEligibleTabId);
         const last = await chrome.tabs.get(lastEligibleTabId).catch(() => null);
         if (last) return last;
       }
 
+      console.log('contextTab: falling back to active tab query');
       const [activeAny] = await chrome.tabs.query({ active: true }).catch(() => []);
       return activeAny || null;
     })();
