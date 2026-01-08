@@ -483,6 +483,31 @@ class OverlayManager {
     console.log('setupKeyboardListeners: initializing. location.href =', window.location.href);
     console.log('setupKeyboardListeners: window.__bmOverlay exists?', !!window.__bmOverlay);
     
+    const isExtensionPage = window.location.protocol === 'chrome-extension:';
+
+    // Local toggle handler for extension pages (chrome-extension://, e.g., main.html)
+    if (isExtensionPage) {
+      console.log('setupKeyboardListeners: registering local toggle listener for extension page');
+      const handleToggleShortcut = (e) => {
+        const isCtrlOrCmd = e.ctrlKey || e.metaKey;
+        const isShift = e.shiftKey;
+        const isE = e.code === 'KeyE' || (e.key && e.key.toLowerCase() === 'e');
+
+        if (isCtrlOrCmd && isShift && isE) {
+          e.preventDefault();
+          e.stopPropagation();
+          console.log('Local toggle shortcut detected on extension page; toggling overlay');
+          this.toggle();
+        }
+      };
+
+      // Capture phase to win against other listeners
+      window.addEventListener('keydown', handleToggleShortcut, true);
+      document.addEventListener('keydown', handleToggleShortcut, true);
+    } else {
+      console.log('setupKeyboardListeners: extension page = false; relying on background chrome.commands');
+    }
+
     // Always handle overlay-local keys (Esc to close when open)
     const handleOverlayKeys = (e) => {
       if (this.isOpen && e.key === 'Escape') {
