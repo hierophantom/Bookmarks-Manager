@@ -109,11 +109,12 @@ async function toggleSearchOverlay() {
   // If active tab is http/https, send tabs message
   if (isContentScriptEligible(tab.url)) {
     console.log('toggleSearchOverlay: sending TOGGLE_OVERLAY via tabs.sendMessage to tab', tab.id);
-    chrome.tabs.sendMessage(tab.id, { type: 'TOGGLE_OVERLAY' }, () => {
+    chrome.tabs.sendMessage(tab.id, { type: 'TOGGLE_OVERLAY' }, (response) => {
       if (chrome.runtime.lastError) {
-        console.error('Toggle overlay message failed:', chrome.runtime.lastError.message);
+        console.error('[Bridge] Toggle failed - content script not loaded:', chrome.runtime.lastError.message);
+        console.warn('[Bridge] You may need to refresh the page to inject the content script');
       } else {
-        console.log('Toggle overlay message sent successfully');
+        console.log('[Bridge] ✓ Toggle message sent successfully');
       }
     });
     return;

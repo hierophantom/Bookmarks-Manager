@@ -695,17 +695,27 @@ class OverlayManager {
     chrome.runtime.sendMessage(payload, (response) => {
       if (chrome.runtime.lastError) {
         console.error('[OverlayManager] Search error:', chrome.runtime.lastError.message);
+        this.displayResults({});
         return;
       }
       
-      console.log('[OverlayManager] Full response:', response);
-      const keys = response && response.results ? Object.keys(response.results) : [];
-      console.log('[OverlayManager] Response keys:', keys, 'success:', response?.success);
+      if (!response) {
+        console.error('[OverlayManager] No response received from background');
+        this.displayResults({});
+        return;
+      }
+
+      console.log('[OverlayManager] Response:', {
+        success: response.success,
+        hasResults: !!response.results,
+        resultKeys: response.results ? Object.keys(response.results) : [],
+        error: response.error
+      });
       
-      if (response && response.success && response.results) {
+      if (response.success && response.results && Object.keys(response.results).length > 0) {
         this.displayResults(response.results);
       } else {
-        console.warn('[OverlayManager] Empty or failed search response:', response);
+        console.warn('[OverlayManager] No results:', response.error || 'Empty results');
         this.displayResults({});
       }
     });
@@ -1032,20 +1042,29 @@ class OverlayManager {
 
 // Initialize overlay manager when DOM is ready
 function initOverlaySingleton() {
+  console.log('[OverlayManager] initOverlaySingleton called, readyState:', document.readyState);
+  
   // Reuse existing instance if already created
   if (window.__bmOverlay && typeof window.__bmOverlay.init === 'function') {
+    console.log('[OverlayManager] Instance already exists, skipping re-init');
     return window.__bmOverlay;
   }
+  
+  console.log('[OverlayManager] Creating new instance');
   const instance = new OverlayManager();
   window.__bmOverlay = instance;
   instance.init();
+  console.log('[OverlayManager] Instance created and initialized');
   return instance;
 }
 
 if (document.readyState === 'loading') {
+  console.log('[OverlayManager] DOM loading, waiting for DOMContentLoaded');
   document.addEventListener('DOMContentLoaded', () => {
+    console.log('[OverlayManager] DOMContentLoaded fired');
     initOverlaySingleton();
   });
 } else {
+  console.log('[OverlayManager] DOM already ready, initializing immediately');
   initOverlaySingleton();
 }
