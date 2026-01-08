@@ -661,12 +661,14 @@ class OverlayManager {
   displayResults(groupedResults) {
     const resultsContainer = document.getElementById('bm-search-results');
     const input = document.getElementById('bm-search-input');
+    const loading = document.getElementById('bm-search-loading');
 
     // Build a map for quick lookup when executing actions
     this.resultMap = this.resultMap || {};
     this.resultMap = {};
 
     if (input.value === '' && (!groupedResults || Object.keys(groupedResults).length === 0)) {
+      if (loading) loading.style.display = 'none';
       resultsContainer.innerHTML = `
         <div class="bm-empty-state">
           <p>Start typing to search, or press ? for help</p>
@@ -676,6 +678,7 @@ class OverlayManager {
     }
 
     if (!groupedResults || Object.keys(groupedResults).length === 0) {
+      if (loading) loading.style.display = 'none';
       resultsContainer.innerHTML = `
         <div class="bm-empty-state">
           <p>No results found for "${input.value}"</p>
@@ -684,6 +687,7 @@ class OverlayManager {
       return;
     }
 
+    if (loading) loading.style.display = 'none';
     let html = '';
 
     for (const [category, results] of Object.entries(groupedResults)) {

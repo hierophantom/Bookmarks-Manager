@@ -117,8 +117,13 @@ async function toggleSearchOverlay() {
     return true;
   };
 
-  if (tab && isContentScriptEligible(tab.url) && readyTabs.has(tab.id)) {
-    if (trySend(tab)) return;
+  // Prefer toggling in the active tab first (including extension pages)
+  if (tab && readyTabs.has(tab.id)) {
+    // If it's an http/https page, ensure eligibility; if it's an extension page, allow
+    const isExtensionPage = typeof tab.url === 'string' && tab.url.startsWith(`chrome-extension://${chrome.runtime.id}/`);
+    if (isExtensionPage || isContentScriptEligible(tab.url)) {
+      if (trySend(tab)) return;
+    }
   }
 
   // Fallback: if active tab is not eligible or not ready, try the last known ready tab
@@ -133,6 +138,11 @@ async function toggleSearchOverlay() {
   if (readyTab) {
     trySend(readyTab);
     return;
+  }
+
+  // If nothing else worked, try sending to the active tab regardless (last resort)
+  if (tab) {
+    trySend(tab);
   }
 }
 
