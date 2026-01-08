@@ -117,7 +117,13 @@ async function toggleSearchOverlay() {
     return;
   }
 
-  const isExtensionPage = typeof tab.url === 'string' && tab.url.startsWith(`chrome-extension://${chrome.runtime.id}/`);
+  const isExtensionPage = (() => {
+    const url = typeof tab.url === 'string' ? tab.url : '';
+    const extPrefix = `chrome-extension://${chrome.runtime.id}/`;
+    const isExt = url.startsWith(extPrefix);
+    const isNewTabOverride = url.startsWith('chrome://newtab');
+    return isExt || isNewTabOverride;
+  })();
   
   console.log('toggleSearchOverlay: tab analysis:', { 
     isExtensionPage,
