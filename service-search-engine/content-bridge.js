@@ -470,35 +470,32 @@ class OverlayManager {
    * Setup keyboard listeners for overlay toggle
    */
   setupKeyboardListeners() {
+    console.log('setupKeyboardListeners: initializing. location.href =', window.location.href);
+    
     // Detect if we're on an extension page (main.html)
-    const isExtensionPage = window.location.href.startsWith(`chrome-extension://${chrome.runtime.id}/`);
+    const isExtensionPage = window.location.href.includes('/core/main.html') || 
+                            window.location.href.startsWith('chrome-extension://');
+    
+    console.log('setupKeyboardListeners: isExtensionPage =', isExtensionPage);
     
     if (isExtensionPage) {
       // For extension pages, handle Ctrl/Cmd+Shift+E locally
-      console.log('setupKeyboardListeners: registering local shortcut for extension page');
+      console.log('setupKeyboardListeners: registering LOCAL shortcut for extension page');
       const handleKeyDown = (e) => {
-        // Track modifier keys
-        if (e.ctrlKey) this.ctrlPressed = true;
-        if (e.metaKey) this.commandPressed = true;
-
         // Check for Ctrl/Cmd+Shift+E
-        const isShortcut = (this.ctrlPressed || this.commandPressed) && e.shiftKey && (e.key && e.key.toLowerCase() === 'e');
-        if (isShortcut) {
-          console.debug('Local shortcut detected in extension page: toggle overlay');
+        const isCtrlOrCmd = e.ctrlKey || e.metaKey;
+        const isShift = e.shiftKey;
+        const isE = e.key && e.key.toLowerCase() === 'e';
+        
+        if (isCtrlOrCmd && isShift && isE) {
+          console.log('Local shortcut triggered in extension page!', { ctrlOrCmd: isCtrlOrCmd, shift: isShift, e: isE });
           e.preventDefault();
           this.toggle();
         }
       };
 
-      const handleKeyUp = (e) => {
-        if (!e.ctrlKey) this.ctrlPressed = false;
-        if (!e.metaKey) this.commandPressed = false;
-      };
-
       document.addEventListener('keydown', handleKeyDown);
-      document.addEventListener('keyup', handleKeyUp);
       window.addEventListener('keydown', handleKeyDown);
-      window.addEventListener('keyup', handleKeyUp);
       console.log('Local shortcut listeners registered for extension page');
     } else {
       // For regular web pages, rely on background chrome.commands
