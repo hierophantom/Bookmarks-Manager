@@ -304,14 +304,39 @@ async function handleSearch(request, sender, sendResponse) {
       console.log('Method 3: request.pageUrl exists:', pageUrl, 'isHttpHttps:', isHttpHttps);
       
       if (isHttpHttps) {
+        // Query all tabs and find one matching this URL
         const allTabs = await chrome.tabs.query({}).catch(() => []);
+        console.log('Method 3: Querying all tabs, found:', allTabs.length);
         const matchingTab = allTabs.find(t => t.url === pageUrl);
         
         if (matchingTab) {
           contextTab = matchingTab;
           console.log('✓ Found matching tab for request.pageUrl:', matchingTab.id, matchingTab.url);
         } else {
-          console.log('✗ No tab found matching request.pageUrl');
+          // Try partial URL match (domain level)
+          console.log('Method 3: Exact URL match failed, trying domain match');
+          try {
+            const pageUrlObj = new URL(pageUrl);
+            const pageDomain = pageUrlObj.hostname;
+            const domainMatchTab = allTabs.find(t => {
+              if (!t.url) return false;
+              try {
+                const tabUrlObj = new URL(t.url);
+                return tabUrlObj.hostname === pageDomain;
+              } catch {
+                return false;
+              }
+            });
+            
+            if (domainMatchTab) {
+              contextTab = domainMatchTab;
+              console.log('✓ Found domain-matching tab for request.pageUrl:', domainMatchTab.id, domainMatchTab.url);
+            } else {
+              console.log('✗ No tab found matching request.pageUrl or domain');
+            }
+          } catch (e) {
+            console.log('✗ Failed to parse pageUrl for domain match:', e);
+          }
         }
       }
     }
