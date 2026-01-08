@@ -197,7 +197,7 @@ async function handleSearch(request, sender, sendResponse) {
     
     let contextTab = null;
     
-    // PRIMARY METHOD: Use explicit tabId from request
+    // PRIMARY METHOD: Use explicit tabId from request (extension pages send this)
     if (request && request.tabId !== undefined && request.tabId !== null) {
       console.log('[Bridge] Using explicit tabId from request:', request.tabId);
       try {
@@ -208,20 +208,15 @@ async function handleSearch(request, sender, sendResponse) {
       }
     }
     
-    // FALLBACK 1: sender.tab (if available)
+    // FALLBACK 1: sender.tab (content scripts - this is the most reliable for http/https pages)
     if (!contextTab && sender?.tab?.id) {
-      const isValidUrl = sender.tab.url && /^https?:\/\//.test(sender.tab.url);
-      if (isValidUrl) {
-        contextTab = sender.tab;
-        console.log('[Bridge] ✓ Using sender.tab:', contextTab.id, contextTab.url);
-      } else {
-        console.log('[Bridge] ✗ sender.tab has invalid URL:', sender.tab.url);
-      }
+      contextTab = sender.tab;
+      console.log('[Bridge] ✓ Using sender.tab:', contextTab.id, contextTab.url);
     }
     
-    // FALLBACK 2: Query for active http/https tab (for extension pages without explicit tabId)
+    // FALLBACK 2: Query for active http/https tab (last resort for extension pages)
     if (!contextTab) {
-      console.log('[Bridge] No explicit context, querying for active http/https tab');
+      console.log('[Bridge] No tab context found, querying for active http/https tab');
       const allTabs = await chrome.tabs.query({ active: true }).catch(() => []);
       const activeHttpTab = allTabs.find(t => t.url && /^https?:\/\//.test(t.url));
       

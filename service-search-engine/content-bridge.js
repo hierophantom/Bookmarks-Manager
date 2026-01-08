@@ -24,36 +24,25 @@ class OverlayManager {
   async init() {
     console.log('[OverlayManager] Initializing on:', window.location.href);
     
-    // CRITICAL: Get THIS tab's ID explicitly for reliable context
-    // Method 1: For extension pages (main.html), getCurrent works
-    try {
-      if (chrome.tabs && chrome.tabs.getCurrent) {
+    // Get tab ID for extension pages only (content scripts don't have chrome.tabs access)
+    const isExtensionPage = window.location.protocol === 'chrome-extension:';
+    
+    if (isExtensionPage && chrome.tabs && chrome.tabs.getCurrent) {
+      try {
         const currentTab = await chrome.tabs.getCurrent();
         if (currentTab && currentTab.id) {
           this.myTabId = currentTab.id;
-          console.log('[OverlayManager] Got tab ID from getCurrent:', this.myTabId);
-        }
-      }
-    } catch (error) {
-      console.log('[OverlayManager] getCurrent not available:', error.message);
-    }
-
-    // Method 2: For content scripts, query by URL
-    if (!this.myTabId) {
-      try {
-        const tabs = await chrome.tabs.query({ url: window.location.href });
-        const matchingTab = tabs.find(t => t.active) || tabs[0];
-        if (matchingTab) {
-          this.myTabId = matchingTab.id;
-          console.log('[OverlayManager] Got tab ID from query:', this.myTabId);
+          console.log('[OverlayManager] Extension page - got tab ID:', this.myTabId);
         }
       } catch (error) {
-        console.warn('[OverlayManager] Failed to query tab ID:', error);
+        console.warn('[OverlayManager] getCurrent failed:', error.message);
       }
+    } else {
+      // Content scripts: tab ID will be inferred by background from sender context
+      console.log('[OverlayManager] Content script - tab ID will be provided by background');
     }
 
-    const isExtensionPage = window.location.protocol === 'chrome-extension:';
-    console.log('[OverlayManager] Initialized with tab ID:', this.myTabId, 'isExtensionPage:', isExtensionPage);
+    console.log('[OverlayManager] Initialized:', { myTabId: this.myTabId, isExtensionPage });
     
     // Load saved position
     await this.restorePosition();
