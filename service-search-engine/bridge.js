@@ -119,19 +119,25 @@ async function toggleSearchOverlay() {
 
   const isExtensionPage = typeof tab.url === 'string' && tab.url.startsWith(`chrome-extension://${chrome.runtime.id}/`);
   
-  // Skip extension pages entirely—they handle shortcuts locally
+  console.log('toggleSearchOverlay: tab analysis:', { 
+    isExtensionPage,
+    url: tab.url
+  });
+
+  // If active tab is an extension page (main.html), send via runtime.sendMessage
   if (isExtensionPage) {
-    console.log('toggleSearchOverlay: skipping extension page (handled locally)');
+    console.log('toggleSearchOverlay: sending TOGGLE_OVERLAY_EXTENSION_PAGE via runtime.sendMessage');
+    chrome.runtime.sendMessage({ type: 'TOGGLE_OVERLAY_EXTENSION_PAGE' }, () => {
+      if (chrome.runtime.lastError) {
+        console.debug('Toggle overlay message failed:', chrome.runtime.lastError.message);
+      }
+    });
     return;
   }
 
   const isReady = readyTabs.has(tab.id);
   
-  console.log('toggleSearchOverlay: tab analysis:', { 
-    isExtensionPage,
-    isReady,
-    readyTabs: Array.from(readyTabs)
-  });
+  console.log('toggleSearchOverlay: isReady =', isReady);
   
   // Only toggle if the active tab is ready
   if (!isReady) {

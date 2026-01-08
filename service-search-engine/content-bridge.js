@@ -483,45 +483,6 @@ class OverlayManager {
     console.log('setupKeyboardListeners: initializing. location.href =', window.location.href);
     console.log('setupKeyboardListeners: window.__bmOverlay exists?', !!window.__bmOverlay);
     
-    // Detect if we're on an extension page (main.html)
-    const isExtensionPage = window.location.href.includes('/core/main.html') || 
-                            window.location.href.startsWith('chrome-extension://');
-    
-    console.log('setupKeyboardListeners: isExtensionPage =', isExtensionPage);
-    
-    if (isExtensionPage) {
-      // For extension pages, handle Ctrl/Cmd+Shift+E locally
-      console.log('setupKeyboardListeners: registering LOCAL shortcut for extension page');
-      
-      // Use arrow function to preserve 'this' context
-      const handleKeyDown = (e) => {
-        // Check for Ctrl/Cmd+Shift+E
-        const isCtrlOrCmd = e.ctrlKey || e.metaKey;
-        const isShift = e.shiftKey;
-        const isE = e.key && e.key.toLowerCase() === 'e';
-        
-        console.log('Keyboard event:', { code: e.code, key: e.key, ctrlOrCmd: isCtrlOrCmd, shift: isShift, e: isE });
-        
-        if (isCtrlOrCmd && isShift && isE) {
-          console.log('Local shortcut triggered! this =', this, 'calling toggle()');
-          e.preventDefault();
-          // Verify 'this' has toggle method
-          if (typeof this.toggle === 'function') {
-            this.toggle();
-          } else {
-            console.error('ERROR: this.toggle is not a function!', this);
-          }
-        }
-      };
-
-      document.addEventListener('keydown', handleKeyDown);
-      window.addEventListener('keydown', handleKeyDown);
-      console.log('Local shortcut listeners registered for extension page');
-    } else {
-      // For regular web pages, rely on background chrome.commands
-      console.log('setupKeyboardListeners: delegating to background chrome.commands for regular page');
-    }
-
     // Always handle overlay-local keys (Esc to close when open)
     const handleOverlayKeys = (e) => {
       if (this.isOpen && e.key === 'Escape') {
