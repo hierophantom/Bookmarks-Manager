@@ -15,67 +15,70 @@ class OverlayManager {
     this.shortcutKey = 'Shift+K'; // Will be updated from manifest
     this.ctrlPressed = false;
     this.commandPressed = false;
-    this.tabIdHint = undefined; // best-effort tabId for extension pages
+    this.myTabId = null; // Explicit tab ID for this content script instance
   }
 
   /**
    * Initialize overlay manager - called once when content script loads
    */
   async init() {
-    console.log('OverlayManager.init(): starting initialization at', window.location.href);
-
-    // Best-effort tabId for extension pages (main/newtab) where sender.tab is missing
+    console.log('[OverlayManager] Initializing on:', window.location.href);
+    
+    // CRITICAL: Get THIS tab's ID explicitly for reliable context
+    // Method 1: For extension pages (main.html), getCurrent works
     try {
-      if (window.location.protocol === 'chrome-extension:' && chrome.tabs && chrome.tabs.getCurrent) {
-        const t = await chrome.tabs.getCurrent();
-        if (t && t.id !== undefined) {
-          this.tabIdHint = t.id;
-          console.log('OverlayManager.init(): captured tabIdHint', t.id);
+      if (chrome.tabs && chrome.tabs.getCurrent) {
+        const currentTab = await chrome.tabs.getCurrent();
+        if (currentTab && currentTab.id) {
+          this.myTabId = currentTab.id;
+          console.log('[OverlayManager] Got tab ID from getCurrent:', this.myTabId);
         }
       }
-    } catch (err) {
-      console.debug('OverlayManager.init(): tabIdHint not available', err?.message);
+    } catch (error) {
+      console.log('[OverlayManager] getCurrent not available:', error.message);
     }
+
+    // Method 2: For content scripts, query by URL
+    if (!this.myTabId) {
+      try {
+        const tabs = await chrome.tabs.query({ url: window.location.href });
+        const matchingTab = tabs.find(t => t.active) || tabs[0];
+        if (matchingTab) {
+          this.myTabId = matchingTab.id;
+          console.log('[OverlayManager] Got tab ID from query:', this.myTabId);
+        }
+      } catch (error) {
+        console.warn('[OverlayManager] Failed to query tab ID:', error);
+      }
+    }
+
+    const isExtensionPage = window.location.protocol === 'chrome-extension:';
+    console.log('[OverlayManager] Initialized with tab ID:', this.myTabId, 'isExtensionPage:', isExtensionPage);
     
     // Load saved position
     await this.restorePosition();
     
     // Inject overlay HTML
-    console.log('OverlayManager.init(): injecting overlay HTML');
+    console.log('[OverlayManager] Injecting overlay HTML');
     this.injectOverlay();
-    console.log('OverlayManager.init(): overlay HTML injected, container =', this.overlayContainer);
+    console.log('[OverlayManager] Overlay HTML injected');
     
     // Setup event listeners
-    console.log('OverlayManager.init(): setting up keyboard listeners');
+    console.log('[OverlayManager] Setting up keyboard listeners');
     this.setupKeyboardListeners();
     
-    console.log('OverlayManager.init(): setting up message listeners');
+    console.log('[OverlayManager] Setting up message listeners');
     this.setupMessageListeners();
 
-    // Notify background that this tab is ready to receive overlay toggles
-    console.log('OverlayManager.init(): sending OVERLAY_READY to background');
-
-    const isExtLikePage = (() => {
-      const href = window.location.href;
-      const protocol = window.location.protocol;
-      const isExt = protocol === 'chrome-extension:';
-      const isMain = href.includes('/core/main.html');
-      const isNewTab = href.startsWith('chrome://newtab');
-      return isExt || isMain || isNewTab;
-    })();
-
-    if (isExtLikePage && chrome.tabs && chrome.tabs.query) {
-      chrome.tabs.query({ active: true }, (tabs) => {
-        const activeId = tabs && tabs[0] ? tabs[0].id : this.tabIdHint;
-        console.log('OVERLAY_READY payload (ext-like):', { tabId: activeId, isExtensionPage: true, href: window.location.href });
-        chrome.runtime.sendMessage({ type: 'OVERLAY_READY', tabId: activeId, isExtensionPage: true }, () => {});
-      });
-    } else {
-      console.log('OVERLAY_READY payload (regular):', { tabId: this.tabIdHint, href: window.location.href });
-      chrome.runtime.sendMessage({ type: 'OVERLAY_READY', tabId: this.tabIdHint }, () => {});
-    }
+    // Notify background that this tab is ready
+    console.log('[OverlayManager] Sending OVERLAY_READY');
+    chrome.runtime.sendMessage({
+      type: 'OVERLAY_READY',
+      tabId: this.myTabId,
+      isExtensionPage
+    }).catch(err => console.warn('[OverlayManager] OVERLAY_READY failed:', err));
     
-    console.log('OverlayManager.init(): initialization complete');
+    console.log('[OverlayManager] Initialization complete');
   }
 
   /**
@@ -690,28 +693,27 @@ class OverlayManager {
    * Handle search input
    */
   handleSearch(query) {
-    // Send search query to background service worker with tab tracking
+    // Send search query to background service worker with EXPLICIT tab ID
     const payload = {
       type: 'SEARCH',
       query: query,
-      tabId: this.tabIdHint,
+      tabId: this.myTabId, // Explicit tab ID captured at init
       pageUrl: window.location.href
     };
 
-    console.log('handleSearch: sending SEARCH', payload);
+    console.log('[OverlayManager] Sending SEARCH:', { query, tabId: this.myTabId, url: window.location.href });
 
     chrome.runtime.sendMessage(payload, (response) => {
       if (chrome.runtime.lastError) {
-        console.debug('Search message error:', chrome.runtime.lastError.message);
+        console.debug('[OverlayManager] Search error:', chrome.runtime.lastError.message);
         return;
       }
       const keys = response && response.results ? Object.keys(response.results) : [];
-      console.log('handleSearch: received response keys:', keys);
+      console.log('[OverlayManager] Received response keys:', keys);
       if (response && response.success && response.results) {
-        console.log('Search results received for query:', query, 'Results:', response.results);
         this.displayResults(response.results);
       } else {
-        console.log('Empty or failed search response for query:', query);
+        console.warn('[OverlayManager] Empty or failed search response');
         this.displayResults({});
       }
     });

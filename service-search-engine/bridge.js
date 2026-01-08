@@ -7,9 +7,7 @@ import ResultAggregator from './result-aggregator.js';
  * Coordinates result aggregation, action execution, and configuration management.
  */
 
-// Debounce timer for search requests
-let searchDebounceTimer = null;
-let lastEligibleTabId = null;
+// Track which tabs have overlay ready
 const readyTabs = new Set();
 
 /**
@@ -44,30 +42,14 @@ function initSearchOverlay() {
     console.warn('Runtime messaging not available:', error);
   }
 
-  // Seed last eligible tab on startup
-  seedLastEligibleTab();
-
-  // Track last eligible tab (http/https) so UI pages (chrome-extension://) can still trigger overlay
+  // Track tab lifecycle for overlay readiness
   try {
-    chrome.tabs.onActivated.addListener(async (activeInfo) => {
-      const tab = await chrome.tabs.get(activeInfo.tabId).catch(() => null);
-      updateLastEligibleTab(tab);
-    });
-
-    chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-      if (changeInfo.status === 'complete' || changeInfo.url) {
-        updateLastEligibleTab(tab);
-      }
-    });
-
     chrome.tabs.onRemoved.addListener((tabId) => {
       readyTabs.delete(tabId);
-      if (lastEligibleTabId === tabId) {
-        lastEligibleTabId = null;
-      }
+      console.log('[Bridge] Tab removed:', tabId);
     });
   } catch (error) {
-    console.warn('Tab listeners not available:', error);
+    console.warn('[Bridge] Tab listeners not available:', error);
   }
 }
 
@@ -77,35 +59,6 @@ function isContentScriptEligible(url) {
   // Allow extension pages (e.g., main.html) where we manually inject the overlay
   const extPrefix = `chrome-extension://${chrome.runtime.id}/`;
   return url.startsWith(extPrefix);
-}
-
-function isExtensionOrNewTab(url) {
-  if (!url) return false;
-  const extPrefix = `chrome-extension://${chrome.runtime.id}/`;
-  return url.startsWith(extPrefix) || url.startsWith('chrome://newtab');
-}
-
-function updateLastEligibleTab(tab) {
-  // Only track http/https tabs, never extension/newtab pages
-  if (tab && tab.url && /^https?:\/\//.test(tab.url)) {
-    lastEligibleTabId = tab.id;
-    console.log('updateLastEligibleTab:', tab.id, tab.url);
-  }
-}
-
-async function seedLastEligibleTab() {
-  try {
-    const tabs = await chrome.tabs.query({ lastFocusedWindow: true });
-    const httpTabs = tabs.filter(t => isContentScriptEligible(t.url));
-    if (httpTabs.length > 0) {
-      // Prefer active http tab; otherwise take most recently accessed
-      const activeHttp = httpTabs.find(t => t.active);
-      const chosen = activeHttp || httpTabs.sort((a, b) => (b.lastAccessed || 0) - (a.lastAccessed || 0))[0];
-      lastEligibleTabId = chosen.id;
-    }
-  } catch (error) {
-    console.warn('Failed to seed eligible tab:', error);
-  }
 }
 
 /**
@@ -172,15 +125,8 @@ async function toggleSearchOverlay() {
  * Handle messages from content script/overlay UI
  */
 function handleSearchMessage(request, sender, sendResponse) {
-  console.log('📨 handleSearchMessage received:', {
-    type: request?.type,
-    query: request?.query,
-    pageUrl: request?.pageUrl,
-    tabId: request?.tabId,
-    senderTab: sender?.tab ? { id: sender.tab.id, url: sender.tab.url } : 'MISSING',
-    senderUrl: sender?.url
-  });
-  
+  console.log('[Bridge] Message received:', request?.type, 'from tab:', request?.tabId || sender?.tab?.id || 'unknown');
+
   switch (request.type) {
     case 'SEARCH':
       handleSearch(request, sender, sendResponse);
@@ -208,28 +154,14 @@ function handleSearchMessage(request, sender, sendResponse) {
       break;
 
     case 'OVERLAY_READY': {
-      const hintedTabId = request && request.tabId !== undefined ? request.tabId : undefined;
-      const tabFromSender = sender && sender.tab && sender.tab.id !== undefined ? sender.tab : undefined;
-      const tabId = tabFromSender ? tabFromSender.id : hintedTabId;
-      const isExtPage = request && request.isExtensionPage === true;
-
-      console.log('OVERLAY_READY received:', {
-        senderTab: tabFromSender ? { id: tabFromSender.id, url: tabFromSender.url } : null,
-        hintedTabId,
-        isExtPage,
-        readyTabs: Array.from(readyTabs)
-      });
+      const tabId = request?.tabId;
+      const isExtensionPage = request?.isExtensionPage === true;
+      
+      console.log('[Bridge] OVERLAY_READY:', { tabId, isExtensionPage, sender: sender?.tab?.id });
 
       if (tabId !== undefined) {
         readyTabs.add(tabId);
-        // Only update lastEligibleTab for http/https pages, not extension pages
-        if (!isExtPage) {
-          if (tabFromSender) {
-            updateLastEligibleTab(tabFromSender);
-          } else if (hintedTabId) {
-            chrome.tabs.get(hintedTabId).then((t) => updateLastEligibleTab(t)).catch(() => {});
-          }
-        }
+        console.log('[Bridge] Added tab to readyTabs:', tabId, 'Total ready:', readyTabs.size);
       }
 
       sendResponse({ success: true });
@@ -256,144 +188,82 @@ async function handleSearch(request, sender, sendResponse) {
   try {
     const query = request && typeof request.query === 'string' ? request.query : '';
     
-    console.log('=== SEARCH DEBUG START ===');
-    console.log('Query:', query);
-    console.log('sender.tab:', sender?.tab ? { id: sender.tab.id, url: sender.tab.url, title: sender.tab.title } : 'MISSING');
-    console.log('sender.url:', sender?.url);
-    console.log('sender.origin:', sender?.origin);
-    console.log('request.pageUrl:', request?.pageUrl);
-    console.log('request.tabId:', request?.tabId);
+    console.log('[Bridge] === SEARCH START ===');
+    console.log('[Bridge] Query:', query);
+    console.log('[Bridge] request.tabId:', request?.tabId);
+    console.log('[Bridge] request.pageUrl:', request?.pageUrl);
+    console.log('[Bridge] sender.tab:', sender?.tab?.id);
+    console.log('[Bridge] sender.url:', sender?.url);
     
-    // STRICT RULE: Find the actual tab that sent this search
     let contextTab = null;
     
-    // Method 1: sender.tab exists (rare for runtime.sendMessage from content scripts)
-    if (sender && sender.tab && sender.tab.id !== undefined) {
-      const tabUrl = sender.tab.url || '';
-      const isHttpHttps = /^https?:\/\//.test(tabUrl);
-      
-      console.log('Method 1: sender.tab exists:', {
-        id: sender.tab.id,
-        url: tabUrl,
-        isHttpHttps
-      });
-      
-      if (isHttpHttps) {
+    // PRIMARY METHOD: Use explicit tabId from request
+    if (request && request.tabId !== undefined && request.tabId !== null) {
+      console.log('[Bridge] Using explicit tabId from request:', request.tabId);
+      try {
+        contextTab = await chrome.tabs.get(request.tabId);
+        console.log('[Bridge] ✓ Got tab by ID:', contextTab.id, contextTab.url);
+      } catch (error) {
+        console.warn('[Bridge] ✗ Failed to get tab by ID:', error.message);
+      }
+    }
+    
+    // FALLBACK 1: sender.tab (if available)
+    if (!contextTab && sender?.tab?.id) {
+      const isValidUrl = sender.tab.url && /^https?:\/\//.test(sender.tab.url);
+      if (isValidUrl) {
         contextTab = sender.tab;
-        console.log('✓ Using sender.tab as contextTab');
+        console.log('[Bridge] ✓ Using sender.tab:', contextTab.id, contextTab.url);
+      } else {
+        console.log('[Bridge] ✗ sender.tab has invalid URL:', sender.tab.url);
       }
     }
     
-    // Method 2: sender.url exists (content script sent via runtime.sendMessage)
-    if (!contextTab && sender && sender.url) {
-      const senderUrl = sender.url;
-      const isHttpHttps = /^https?:\/\//.test(senderUrl);
-      
-      console.log('Method 2: sender.url exists:', senderUrl, 'isHttpHttps:', isHttpHttps);
-      
-      if (isHttpHttps) {
-        // Find the tab matching this URL
-        const allTabs = await chrome.tabs.query({}).catch(() => []);
-        const matchingTab = allTabs.find(t => t.url === senderUrl);
-        
-        if (matchingTab) {
-          contextTab = matchingTab;
-          console.log('✓ Found matching tab for sender.url:', matchingTab.id, matchingTab.url);
-        } else {
-          console.log('✗ No tab found matching sender.url');
-        }
-      }
-    }
-    
-    // Method 3: request.pageUrl exists (fallback)
-    if (!contextTab && request && request.pageUrl) {
-      const pageUrl = request.pageUrl;
-      const isHttpHttps = /^https?:\/\//.test(pageUrl);
-      
-      console.log('Method 3: request.pageUrl exists:', pageUrl, 'isHttpHttps:', isHttpHttps);
-      
-      if (isHttpHttps) {
-        // Query all tabs and find one matching this URL
-        const allTabs = await chrome.tabs.query({}).catch(() => []);
-        console.log('Method 3: Querying all tabs, found:', allTabs.length);
-        const matchingTab = allTabs.find(t => t.url === pageUrl);
-        
-        if (matchingTab) {
-          contextTab = matchingTab;
-          console.log('✓ Found matching tab for request.pageUrl:', matchingTab.id, matchingTab.url);
-        } else {
-          // Try partial URL match (domain level)
-          console.log('Method 3: Exact URL match failed, trying domain match');
-          try {
-            const pageUrlObj = new URL(pageUrl);
-            const pageDomain = pageUrlObj.hostname;
-            const domainMatchTab = allTabs.find(t => {
-              if (!t.url) return false;
-              try {
-                const tabUrlObj = new URL(t.url);
-                return tabUrlObj.hostname === pageDomain;
-              } catch {
-                return false;
-              }
-            });
-            
-            if (domainMatchTab) {
-              contextTab = domainMatchTab;
-              console.log('✓ Found domain-matching tab for request.pageUrl:', domainMatchTab.id, domainMatchTab.url);
-            } else {
-              console.log('✗ No tab found matching request.pageUrl or domain');
-            }
-          } catch (e) {
-            console.log('✗ Failed to parse pageUrl for domain match:', e);
-          }
-        }
-      }
-    }
-    
-    // Method 4: Extension page search - find active http/https tab
+    // FALLBACK 2: Query for active http/https tab (for extension pages without explicit tabId)
     if (!contextTab) {
-      const isExtensionSearch = sender?.url?.startsWith('chrome-extension://') || 
-                               request?.pageUrl?.startsWith('chrome-extension://');
+      console.log('[Bridge] No explicit context, querying for active http/https tab');
+      const allTabs = await chrome.tabs.query({ active: true }).catch(() => []);
+      const activeHttpTab = allTabs.find(t => t.url && /^https?:\/\//.test(t.url));
       
-      console.log('Method 4: Extension page search?', isExtensionSearch);
-      
-      if (isExtensionSearch) {
-        const allTabs = await chrome.tabs.query({ active: true }).catch(() => []);
-        console.log('Active tabs found:', allTabs.length, allTabs.map(t => ({ id: t.id, url: t.url })));
-        
-        const activeHttpTab = allTabs.find(t => t.url && /^https?:\/\//.test(t.url));
-        if (activeHttpTab) {
-          contextTab = activeHttpTab;
-          console.log('✓ Found active http/https tab for extension search:', activeHttpTab.id, activeHttpTab.url);
-        }
+      if (activeHttpTab) {
+        contextTab = activeHttpTab;
+        console.log('[Bridge] ✓ Found active http/https tab:', contextTab.id, contextTab.url);
+      } else {
+        console.log('[Bridge] ✗ No active http/https tab found');
       }
     }
 
     if (!contextTab) {
-      console.error('=== SEARCH FAILED: No valid contextTab ===');
-      sendResponse({ success: true, results: {
-        Actions: [{
-          id: 'no-context',
-          type: 'action',
-          title: 'No Valid Tab Context',
-          description: 'Search requires an active http/https tab',
-          icon: '⚠️',
-          metadata: { action: 'open-settings' }
-        }]
-      }});
+      console.error('[Bridge] === SEARCH FAILED: No context tab ===');
+      sendResponse({ 
+        success: true, 
+        results: {
+          Actions: [{
+            id: 'no-context',
+            type: 'action',
+            title: 'No Valid Tab Context',
+            description: 'Cannot determine which tab to search from',
+            icon: '⚠️',
+            action: () => {}
+          }]
+        } 
+      });
       return;
     }
 
+    console.log('[Bridge] Using contextTab:', contextTab.id, contextTab.url);
+
+    // Aggregate search results with this specific context
     const aggregator = new ResultAggregator();
-    console.log('Using contextTab for aggregation:', { id: contextTab.id, url: contextTab.url, title: contextTab.title });
+    console.log('[Bridge] Aggregating results for:', { id: contextTab.id, url: contextTab.url, title: contextTab.title });
     let results = await aggregator.aggregateResults(query || '', { currentTab: contextTab });
 
-    console.log('Aggregator returned keys:', results ? Object.keys(results) : []);
-    console.log('=== SEARCH DEBUG END ===');
+    console.log('[Bridge] Aggregator returned keys:', results ? Object.keys(results) : []);
+    console.log('[Bridge] === SEARCH END ===');
 
     const isEmpty = !results || Object.keys(results).length === 0;
     if (isEmpty) {
-      console.log('No results from aggregator; providing minimal fallback actions');
+      console.log('[Bridge] No results from aggregator; providing fallback actions');
       const actions = [];
       if (contextTab && contextTab.id !== undefined) {
         actions.push({
@@ -425,10 +295,10 @@ async function handleSearch(request, sender, sendResponse) {
       results = actions.length ? { Actions: actions } : {};
     }
 
-    console.log('Sending search results:', results);
+    console.log('[Bridge] Sending search results with keys:', Object.keys(results));
     sendResponse({ success: true, results });
   } catch (error) {
-    console.error('Search error:', error);
+    console.error('[Bridge] Search error:', error);
     sendResponse({ success: false, error: error.message, results: {} });
   }
 }
