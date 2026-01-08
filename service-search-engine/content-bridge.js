@@ -470,32 +470,18 @@ class OverlayManager {
    * Setup keyboard listeners for overlay toggle
    */
   setupKeyboardListeners() {
+    // Rely on background chrome.commands for global toggle.
+    // Here we only handle overlay-local keys (Esc to close when open).
     const handleKeyDown = (e) => {
-      // Track modifier keys
-      if (e.ctrlKey) this.ctrlPressed = true;
-      if (e.metaKey) this.commandPressed = true;
-
-      // Check for Ctrl/Cmd+Shift+E
-      const isShortcut = (this.ctrlPressed || this.commandPressed) && e.shiftKey && (e.key && e.key.toLowerCase() === 'e');
-      if (isShortcut) {
-        console.debug('Overlay toggle shortcut detected (keydown:', e.code, 'key:', e.key, ')');
+      if (this.isOpen && e.key === 'Escape') {
         e.preventDefault();
-        this.toggle();
+        this.close();
       }
     };
 
-    const handleKeyUp = (e) => {
-      if (!e.ctrlKey) this.ctrlPressed = false;
-      if (!e.metaKey) this.commandPressed = false;
-    };
-
-    // Attach to both document and window for better coverage
     document.addEventListener('keydown', handleKeyDown);
-    document.addEventListener('keyup', handleKeyUp);
     window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('keyup', handleKeyUp);
-
-    console.log('Keyboard listeners initialized for overlay toggle (Ctrl/Cmd+Shift+E)');
+    console.log('Keyboard listeners initialized for overlay-local keys (Esc to close)');
   }
 
   /**
