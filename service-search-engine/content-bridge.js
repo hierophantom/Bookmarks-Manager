@@ -470,18 +470,51 @@ class OverlayManager {
    * Setup keyboard listeners for overlay toggle
    */
   setupKeyboardListeners() {
-    // Rely on background chrome.commands for global toggle.
-    // Here we only handle overlay-local keys (Esc to close when open).
-    const handleKeyDown = (e) => {
+    // Detect if we're on an extension page (main.html)
+    const isExtensionPage = window.location.href.startsWith(`chrome-extension://${chrome.runtime.id}/`);
+    
+    if (isExtensionPage) {
+      // For extension pages, handle Ctrl/Cmd+Shift+E locally
+      console.log('setupKeyboardListeners: registering local shortcut for extension page');
+      const handleKeyDown = (e) => {
+        // Track modifier keys
+        if (e.ctrlKey) this.ctrlPressed = true;
+        if (e.metaKey) this.commandPressed = true;
+
+        // Check for Ctrl/Cmd+Shift+E
+        const isShortcut = (this.ctrlPressed || this.commandPressed) && e.shiftKey && (e.key && e.key.toLowerCase() === 'e');
+        if (isShortcut) {
+          console.debug('Local shortcut detected in extension page: toggle overlay');
+          e.preventDefault();
+          this.toggle();
+        }
+      };
+
+      const handleKeyUp = (e) => {
+        if (!e.ctrlKey) this.ctrlPressed = false;
+        if (!e.metaKey) this.commandPressed = false;
+      };
+
+      document.addEventListener('keydown', handleKeyDown);
+      document.addEventListener('keyup', handleKeyUp);
+      window.addEventListener('keydown', handleKeyDown);
+      window.addEventListener('keyup', handleKeyUp);
+      console.log('Local shortcut listeners registered for extension page');
+    } else {
+      // For regular web pages, rely on background chrome.commands
+      console.log('setupKeyboardListeners: delegating to background chrome.commands for regular page');
+    }
+
+    // Always handle overlay-local keys (Esc to close when open)
+    const handleOverlayKeys = (e) => {
       if (this.isOpen && e.key === 'Escape') {
         e.preventDefault();
         this.close();
       }
     };
 
-    document.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('keydown', handleKeyDown);
-    console.log('Keyboard listeners initialized for overlay-local keys (Esc to close)');
+    document.addEventListener('keydown', handleOverlayKeys);
+    window.addEventListener('keydown', handleOverlayKeys);
   }
 
   /**
