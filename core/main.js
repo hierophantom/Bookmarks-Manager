@@ -326,12 +326,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
           }
           
-          // If no matching bookmarks AND filtering, skip this folder entirely
+          // If no matching bookmarks in this folder, don't render this folder
           if (!hasMatchingBookmarks) {
             console.log(`[Bookmarks] Folder "${folder.title}" has no bookmarks with tag "${filterTag}", skipping`);
-            // Still recursively render subfolders in case they have matches
-            const sortedFolders = sortFolders(childFolders);
-            await Promise.all(sortedFolders.map(f => renderFolder(f, parentEl)));
             return;
           }
         }
