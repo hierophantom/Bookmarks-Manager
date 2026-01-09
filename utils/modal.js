@@ -33,30 +33,50 @@ const Modal = (() => {
     });
 
     return modal.show().then(async (data) => {
+      console.log('[Modal] openBookmarkForm - received data from modal:', data);
+      
       // Clean up Tagify instance
       const tagsInput = document.getElementById('bm_tags');
       if (tagsInput && tagsInput.tagify) {
+        console.log('[Modal] openBookmarkForm - destroying Tagify instance');
         tagsInput.tagify.destroy();
       }
       
-      if (!data) return null;
+      if (!data) {
+        console.log('[Modal] openBookmarkForm - modal was cancelled');
+        return null;
+      }
 
-      return {
+      const result = {
         title: data.bm_title,
         url: data.bm_url || null,
         tags: data.bm_tags || []
       };
+      
+      console.log('[Modal] openBookmarkForm - returning result:', result);
+      return result;
     });
   }
 
   // Initialize Tagify on the tags input after modal is shown
   // This is called internally by BaseModal after rendering
   function initializeTagify() {
+    console.log('[Modal] initializeTagify - starting');
     const tagsInput = document.getElementById('bm_tags');
-    if (!tagsInput || typeof Tagify === 'undefined') return;
+    if (!tagsInput) {
+      console.log('[Modal] initializeTagify - no tags input found');
+      return;
+    }
+    
+    if (typeof Tagify === 'undefined') {
+      console.log('[Modal] initializeTagify - Tagify library not available');
+      return;
+    }
 
+    console.log('[Modal] initializeTagify - Tagify found, initializing');
     // Get all existing tags for autocomplete
     TagsService.getAllTags().then(allTags => {
+      console.log('[Modal] initializeTagify - all tags from service:', allTags);
       const tagify = new Tagify(tagsInput, {
         whitelist: allTags,
         maxTags: 20,
@@ -71,10 +91,14 @@ const Modal = (() => {
         placeholder: 'Type to add tags...',
         originalInputValueFormat: valuesArr => valuesArr.map(item => item.value).join(',')
       });
+      
+      console.log('[Modal] initializeTagify - Tagify instance created, attaching to input');
+      tagsInput.tagify = tagify;
 
       // Style the Tagify container to match modal styling
       const tagifyWrapper = tagsInput.nextElementSibling;
       if (tagifyWrapper && tagifyWrapper.classList.contains('tagify')) {
+        console.log('[Modal] initializeTagify - styling Tagify wrapper');
         tagifyWrapper.style.cssText = `
           border: 1px solid #d1d5db;
           border-radius: 0.375rem;
@@ -82,8 +106,10 @@ const Modal = (() => {
           min-height: 42px;
         `;
       }
+      
+      console.log('[Modal] initializeTagify - complete');
     }).catch(err => {
-      console.error('Failed to initialize tags:', err);
+      console.error('[Modal] initializeTagify - failed to load tags:', err);
     });
   }
 

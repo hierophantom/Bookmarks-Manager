@@ -162,22 +162,41 @@ class BaseModal {
    * Get form data
    */
   getFormData() {
+    console.log('[BaseModal] getFormData - starting');
     const formData = {};
     const form = this.card.querySelector('#bm-modal-form');
-    if (!form) return formData;
+    if (!form) {
+      console.log('[BaseModal] getFormData - no form found!');
+      return formData;
+    }
 
     const inputs = form.querySelectorAll('input');
+    console.log('[BaseModal] getFormData - found', inputs.length, 'inputs');
+    
     inputs.forEach((input) => {
+      console.log('[BaseModal] getFormData - processing input:', input.id);
       // For Tagify fields, extract tags from the Tagify instance
       if (input.id === 'bm_tags' && input.tagify) {
-        formData[input.id] = input.tagify.value.map(item => 
+        console.log('[BaseModal] getFormData - extracting from Tagify for', input.id);
+        const tags = input.tagify.value.map(item => 
           typeof item === 'string' ? item : item.value
         );
+        console.log('[BaseModal] getFormData - Tagify tags:', tags);
+        formData[input.id] = tags;
+      } else if (input.id === 'bm_tags') {
+        console.log('[BaseModal] getFormData - bm_tags input but no tagify instance!', {
+          hasTagify: !!input.tagify,
+          inputValue: input.value
+        });
+        formData[input.id] = [];
       } else {
-        formData[input.id] = input.value.trim();
+        const value = input.value.trim();
+        console.log('[BaseModal] getFormData - regular input:', input.id, '=', value);
+        formData[input.id] = value;
       }
     });
 
+    console.log('[BaseModal] getFormData - complete:', formData);
     return formData;
   }
 
@@ -206,16 +225,23 @@ class BaseModal {
    * Handle form submission
    */
   handleSubmit() {
+    console.log('[BaseModal] handleSubmit - getting form data');
     const data = this.getFormData();
+    console.log('[BaseModal] handleSubmit - form data:', data);
     
     if (!this.validateFormData(data)) {
+      console.log('[BaseModal] handleSubmit - validation failed');
       return;
     }
 
-    this.close();
+    console.log('[BaseModal] handleSubmit - resolving promise before closing modal');
     if (this.resolver) {
       this.resolver(data);
     }
+    
+    console.log('[BaseModal] handleSubmit - closing modal');
+    this.close();
+    
     if (this.onSubmit) {
       this.onSubmit(data);
     }
