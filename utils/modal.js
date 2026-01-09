@@ -132,6 +132,18 @@ const Modal = (() => {
       const selectAll = card.querySelector('#bm_select_all');
       const checkboxes = card.querySelectorAll('.bm-tab-checkbox');
 
+      // Handle submit action
+      const handleSubmit = () => {
+        const selected = [];
+        checkboxes.forEach((cb) => {
+          if (cb.checked) {
+            selected.push(tabs[parseInt(cb.dataset.index, 10)]);
+          }
+        });
+        overlay.remove();
+        resolve(selected);
+      };
+
       selectAll.addEventListener('change', () => {
         checkboxes.forEach((cb) => (cb.checked = selectAll.checked));
       });
@@ -150,15 +162,27 @@ const Modal = (() => {
       });
 
       card.querySelector('#bm_tabs_add').addEventListener('click', () => {
-        const selected = [];
-        checkboxes.forEach((cb) => {
-          if (cb.checked) {
-            selected.push(tabs[parseInt(cb.dataset.index, 10)]);
-          }
-        });
-        overlay.remove();
-        resolve(selected);
+        handleSubmit();
       });
+
+      // Keyboard accessibility
+      document.addEventListener('keydown', (e) => {
+        // Only handle if overlay is visible
+        if (!document.body.contains(overlay)) return;
+
+        // Escape to close
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          overlay.remove();
+          resolve([]);
+        }
+
+        // Cmd/Ctrl+Enter to submit
+        if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+          e.preventDefault();
+          handleSubmit();
+        }
+      }, true);
     });
   }
 
@@ -224,6 +248,30 @@ const Modal = (() => {
         overlay.remove();
         resolve(null);
       });
+
+      // Keyboard accessibility
+      document.addEventListener('keydown', (e) => {
+        // Only handle if overlay is visible
+        if (!document.body.contains(overlay)) return;
+
+        // Escape to close
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          overlay.remove();
+          resolve(null);
+        }
+
+        // Number keys 1-3 to select widgets
+        if (['1', '2', '3'].includes(e.key)) {
+          e.preventDefault();
+          const index = parseInt(e.key, 10) - 1;
+          if (index < widgets.length) {
+            const widget = widgets[index];
+            overlay.remove();
+            resolve(widget);
+          }
+        }
+      }, true);
     });
   }
 

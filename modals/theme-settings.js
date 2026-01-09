@@ -515,8 +515,8 @@ New Tab Override Section -->
       overlay.remove();
     });
 
-    // Save button
-    modal.querySelector('#save-settings-btn').addEventListener('click', async () => {
+    // Keyboard accessibility for theme settings
+    const handleSave = async () => {
       try {
         // Apply theme
         await ThemesService.setTheme(selectedTheme);
@@ -542,7 +542,28 @@ New Tab Override Section -->
         console.error('Failed to save settings', e);
         alert('Failed to save settings: ' + e.message);
       }
-    });
+    };
+
+    // Keyboard accessibility
+    document.addEventListener('keydown', (e) => {
+      // Only handle if overlay is visible
+      if (!document.body.contains(overlay)) return;
+
+      // Escape to close
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        overlay.remove();
+      }
+
+      // Cmd/Ctrl+Enter to save
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+        e.preventDefault();
+        handleSave();
+      }
+    }, true);
+
+    // Save button
+    modal.querySelector('#save-settings-btn').addEventListener('click', handleSave);
 
     return overlay;
   }

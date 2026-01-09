@@ -139,6 +139,24 @@ class BaseModal {
       cancelBtn.addEventListener('click', () => this.close());
     }
 
+    // Keyboard accessibility: Escape to close, Cmd/Ctrl+Enter to submit
+    document.addEventListener('keydown', (e) => {
+      // Only handle if this modal is visible
+      if (!document.body.contains(this.overlay)) return;
+
+      // Escape key to close
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        this.close();
+      }
+
+      // Cmd+Enter or Ctrl+Enter to submit
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+        e.preventDefault();
+        this.handleSubmit();
+      }
+    }, true);
+
     // Focus first input
     const firstInput = this.card.querySelector('input');
     if (firstInput) {
