@@ -98,9 +98,20 @@ async function handleSearch(request, sender, sendResponse) {
   try {
     console.log('[Bridge] Search:', request.query, 'from tab:', sender.tab?.id);
 
+    // Enrich tab data from sender if needed
+    let currentTab = sender.tab;
+    if (sender.tab?.id) {
+      try {
+        const tab = await chrome.tabs.get(sender.tab.id);
+        currentTab = tab;
+      } catch (error) {
+        console.warn('[Bridge] Could not fetch full tab data:', error);
+      }
+    }
+
     // Use sender.tab as context (content scripts always provide this)
     const results = await engine.search(request.query, {
-      currentTab: sender.tab,
+      currentTab: currentTab,
       isExtensionPage: false
     });
 
