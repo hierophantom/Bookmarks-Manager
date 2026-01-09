@@ -232,6 +232,29 @@ export class SearchEngine {
         action: 'close-tab',
         tabId: context.currentTab.id
       });
+
+      actions.push({
+        id: 'action-add-favorite',
+        type: 'action',
+        title: 'Add to Favorites',
+        description: 'Bookmark current page',
+        icon: '⭐',
+        action: 'add-favorite',
+        tabId: context.currentTab.id,
+        url: context.currentTab.url,
+        title: context.currentTab.title
+      });
+
+      actions.push({
+        id: 'action-remove-favorite',
+        type: 'action',
+        title: 'Remove from Favorites',
+        description: 'Remove bookmark',
+        icon: '☆',
+        action: 'remove-favorite',
+        tabId: context.currentTab.id,
+        url: context.currentTab.url
+      });
     }
 
     // If query looks like a URL, add web search
@@ -400,6 +423,26 @@ export class SearchEngine {
             url: `https://www.google.com/search?q=${query}`
           });
           return true;
+
+        case 'add-favorite':
+          if (metadata.url && metadata.title) {
+            await chrome.bookmarks.create({
+              title: metadata.title,
+              url: metadata.url
+            });
+            return true;
+          }
+          return false;
+
+        case 'remove-favorite':
+          if (metadata.url) {
+            const bookmarks = await chrome.bookmarks.search({ url: metadata.url });
+            if (bookmarks && bookmarks.length > 0) {
+              await chrome.bookmarks.remove(bookmarks[0].id);
+              return true;
+            }
+          }
+          return false;
 
         default:
           console.warn('Unknown action:', action);
