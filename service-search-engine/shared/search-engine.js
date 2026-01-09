@@ -62,7 +62,7 @@ export class SearchEngine {
     if (extensions.length > 0) results.Extensions = extensions;
 
     // Always include relevant actions
-    results.Actions = this.getActions(query, context);
+    results.Actions = await this.getActions(query, context);
 
     return results;
   }
@@ -199,7 +199,7 @@ export class SearchEngine {
   /**
    * Get context-aware actions
    */
-  getActions(query, context = {}) {
+  async getActions(query, context = {}) {
     const actions = [];
 
     // Always available
@@ -233,28 +233,40 @@ export class SearchEngine {
         tabId: context.currentTab.id
       });
 
-      actions.push({
-        id: 'action-add-favorite',
-        type: 'action',
-        title: 'Add to Favorites',
-        description: 'Bookmark current page',
-        icon: '⭐',
-        action: 'add-favorite',
-        tabId: context.currentTab.id,
-        url: context.currentTab.url,
-        title: context.currentTab.title
-      });
+      // Check if current URL is bookmarked
+      let isBookmarked = false;
+      try {
+        const bookmarks = await chrome.bookmarks.search({ url: context.currentTab.url });
+        isBookmarked = bookmarks && bookmarks.length > 0;
+      } catch (error) {
+        console.warn('[SearchEngine] Bookmark check failed:', error);
+      }
 
-      actions.push({
-        id: 'action-remove-favorite',
-        type: 'action',
-        title: 'Remove from Favorites',
-        description: 'Remove bookmark',
-        icon: '☆',
-        action: 'remove-favorite',
-        tabId: context.currentTab.id,
-        url: context.currentTab.url
-      });
+      // Show only the appropriate favorite action
+      if (isBookmarked) {
+        actions.push({
+          id: 'action-remove-favorite',
+          type: 'action',
+          title: 'Remove from Favorites',
+          description: 'Remove bookmark',
+          icon: '☆',
+          action: 'remove-favorite',
+          tabId: context.currentTab.id,
+          url: context.currentTab.url
+        });
+      } else {
+        actions.push({
+          id: 'action-add-favorite',
+          type: 'action',
+          title: 'Add to Favorites',
+          description: 'Bookmark current page',
+          icon: '⭐',
+          action: 'add-favorite',
+          tabId: context.currentTab.id,
+          url: context.currentTab.url,
+          title: context.currentTab.title
+        });
+      }
     }
 
     // If query looks like a URL, add web search
