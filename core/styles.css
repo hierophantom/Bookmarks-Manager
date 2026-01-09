@@ -566,46 +566,6 @@ body {
   box-shadow: 0 6px 14px rgba(0, 102, 255, 0.3);
 }
 
-/* ===== DEBUG PANEL ===== */
-.debug-panel {
-  background: #f5f5f5;
-  border: 1px solid #ddd;
-  padding: 12px;
-  margin: 16px 0;
-  border-radius: 8px;
-  font-family: monospace;
-  font-size: 12px;
-}
-
-.debug-panel__title {
-  margin-bottom: 8px;
-  font-weight: bold;
-}
-
-.debug-panel__buttons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-
-.debug-panel__buttons button {
-  padding: 6px 10px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  background: white;
-  cursor: pointer;
-}
-
-.debug-panel__output {
-  background: #fff;
-  border: 1px solid #ccc;
-  padding: 8px;
-  max-height: 200px;
-  overflow-y: auto;
-  border-radius: 6px;
-}
-
 /* ===== TAG DROPDOWN ===== */
 .bm-tag-dropdown {
   position: absolute;
