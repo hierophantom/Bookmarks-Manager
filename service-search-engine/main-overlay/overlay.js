@@ -103,13 +103,13 @@ class MainOverlay {
    * Setup keyboard shortcuts
    */
   setupKeyboardListeners() {
-    // Cmd/Ctrl+Shift+K to toggle
+    // Cmd/Ctrl+Shift+E to toggle
     document.addEventListener('keydown', (e) => {
       const isCtrlOrCmd = e.ctrlKey || e.metaKey;
       const isShift = e.shiftKey;
-      const isK = e.code === 'KeyK';
+      const isE = e.code === 'KeyE';
 
-      if (isCtrlOrCmd && isShift && isK) {
+      if (isCtrlOrCmd && isShift && isE) {
         e.preventDefault();
         this.toggle();
       }

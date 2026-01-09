@@ -123,6 +123,18 @@ class ContentOverlay {
    * Setup keyboard shortcuts
    */
   setupKeyboardListeners() {
+    // Cmd/Ctrl+Shift+E to toggle
+    document.addEventListener('keydown', (e) => {
+      const isCtrlOrCmd = e.ctrlKey || e.metaKey;
+      const isShift = e.shiftKey;
+      const isE = e.code === 'KeyE';
+
+      if (isCtrlOrCmd && isShift && isE) {
+        e.preventDefault();
+        this.toggle();
+      }
+    });
+
     // Escape to close
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && this.isOpen) {

@@ -494,8 +494,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (openSearch) {
     openSearch.addEventListener('click', () => {
       // If overlay is loaded on this page (chrome-extension://main.html), toggle directly
-      if (window.__bmOverlay && typeof window.__bmOverlay.toggle === 'function') {
-        window.__bmOverlay.toggle();
+      if (window.__bmMainOverlay && typeof window.__bmMainOverlay.toggle === 'function') {
+        window.__bmMainOverlay.toggle();
         return;
       }
       // Otherwise delegate to background to use last eligible http/https tab
