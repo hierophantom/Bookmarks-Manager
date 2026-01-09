@@ -125,9 +125,10 @@ class BaseModal {
     const cancelBtn = this.card.querySelector('#bm-modal-cancel');
 
     if (form) {
+      // Prevent default form submission (Enter key triggers this)
       form.addEventListener('submit', (e) => {
         e.preventDefault();
-        this.handleSubmit();
+        // Don't call handleSubmit - only allow explicit triggers
       });
     }
 
