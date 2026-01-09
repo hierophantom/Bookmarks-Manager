@@ -1,0 +1,140 @@
+3.3.1
+Small min-height fix to overlay
+
+3.3
+Fixed all caught UI issues
+
+3.2
+- Overlay and Browser Action Popup works simultaneously. Yay! Just need to fix some css issues
+- Fixed keyboard shortcut
+
+3.1
+Fixed icon
+
+3.0
+Implemented arethmatics with external library data/math.min.js
+
+2.9.3
+Added wiki logo to random articales
+
+2.9.2
+Small fix to min letters to show search
+Changed command to cmd+shift+e
+
+2.9.1
+Small fix to random wiki refresh button
+
+2.9
+Added wiki articles and arranged styles. Navigation also looks good
+
+2.8.5
+Added trailing icon
+
+2.8.4
+Added icon to Wiki articles
+
+2.8.3
+Random articles works. But need UI facelift and custom icon.
+
+2.8.1
+Random wiki added, but with bugs
+
+2.7.1
+Added "ctrl+s" save function to options page
+
+2.7
+Category control is here!
+
+2.6
+Added categories control - not tested
+
+2.5.1
+Small CSS fixes
+
+2.5
+Changes all emojis to icons
+Small edits to CSS
+Reviewed all chrome settings to match current settings
+
+2.4.1
+Complete status to downloads resutls
+
+2.4
+Limit search to show up only after at least 3 entries
+
+2.3.5
+Fixed results order (priority)
+
+2.3.4
+Redefined all "show results" and max results
+
+2.3.3
+Regressed all "show more results" but fixed extension icon
+
+2.3.2
+Fixed extensions and removed max 5 results but will show "see all" button. Should be refactored in general
+
+2.3.1
+All results for downloads
+
+2.3
+Add "show all results
+
+2.2.1
+Limit bookmarks and history to show up to 5 results
+
+2.2
+Arranged data.js
+
+2.1
+Arranged background.js
+
+2.0
+Extension added!!!!!!!! doneeeeee
+
+1.9
+Bookmarks, downloads ,recent history, chrome settings, search engine search! DONEEEEEE!
+
+1.8
+Downloads are here mothafackaaa
+
+
+1.7
+Yayyy -browser history is back.
+
+1.6
+Added Data.js. shows "search in SE" for now.
+
+1.5
+Removed all mockup data.
+Arranged the overlay.js and annotated more files
+
+There is a bug with uncaught functions called generateSuggestions. Its known and should be addressed in future versions
+
+1.4.1
+Fixed bug
+
+1.4
+Works - Connected options to overlay but there is console error
+
+1.3
+Options link works!
+
+1.2.1
+Fixed up and down keyboard navigation
+
+1.2
+Added arrow navigation
+Added tab navigation to skip between categories
+Added enter to select
+Clicking outside the overlay window will close it
+
+1.1
+Refactored version based on original one. 
+Currently showing overlay without any data.
+Only open close overlay. Minimal keyboard functions and search matching with MOCK data.
+Also changed all css classes to be unique with "qse-" prefix
+Removed some files:
+Themes.css - got digested into general options.css
+UI, data, features - all got aborted
+Removed file structure file

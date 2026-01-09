@@ -1,0 +1,143 @@
+<!--
+ * file path and name: options/options.html
+ * 
+ * Defines the settings page structure for the quick search extension.
+ * Contains configuration options for:
+ * - Theme selection (Light/Dark/System)
+ * - Color scheme customization
+ * - Search engine preference
+ * - Visual effects settings
+ * 
+ * Provides a user-friendly interface for customizing the extension's behavior
+ * and appearance.
+ -->
+
+
+<!-- options.html -->
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Spotlight Search Settings</title>
+    <link rel="stylesheet" href="options.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inconsolata:wght@200..900&display=swap" rel="stylesheet">
+    <meta charset="UTF-8">
+  </head>
+  <body>
+    <div class="settings-container">
+
+      <div class="main-container">
+        <h1>Configurations</h1>
+
+        <section>
+          <h2>Categories</h2>
+          <div class="categories-list" id="categoriesList">
+            <!-- Categories will be populated by JavaScript -->
+          </div>
+        </section>
+
+        <section>
+          <h2>Theme</h2>
+          <div class="options-array">
+            <div class="selection-option">
+              <input type="radio" id="light" name="theme" value="light">
+              <label for="light">Light</label>
+            </div>
+            <div class="selection-option">
+              <input type="radio" id="dark" name="theme" value="dark">
+              <label for="dark">Dark</label>
+            </div>
+            <div class="selection-option">
+              <input type="radio" id="system" name="theme" value="system">
+              <label for="system">System</label>
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <h2>Color Scheme</h2>
+          <div class="options-array">
+            <div class="selection-option">
+              <input type="radio" id="clear" name="colorScheme" value="clear">
+              <label for="clear">Clear</label>
+            </div>
+            <div class="selection-option">
+              <input type="radio" id="blue" name="colorScheme" value="blue">
+              <label for="blue">Blue</label>
+            </div>
+            <div class="selection-option">
+              <input type="radio" id="violet" name="colorScheme" value="violet">
+              <label for="violet">Violet</label>
+            </div>
+            <div class="selection-option">
+              <input type="radio" id="grass" name="colorScheme" value="grass">
+              <label for="grass">Grass</label>
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <h2>Search Engine</h2>
+          <div class="options-array">
+            <div class="selection-option">
+              <input type="radio" id="google" name="searchEngine" value="google">
+              <label for="google">Google</label>
+            </div>
+            <div class="selection-option">
+              <input type="radio" id="bing" name="searchEngine" value="bing">
+              <label for="bing">Bing</label>
+            </div>
+            <div class="selection-option">
+              <input type="radio" id="duckduckgo" name="searchEngine" value="duckduckgo">
+              <label for="duckduckgo">DuckDuckGo</label>
+            </div>
+            <div class="selection-option">
+              <input type="radio" id="brave" name="searchEngine" value="brave">
+              <label for="brave">Brave Search</label>
+            </div>
+            <div class="selection-option">
+              <input type="radio" id="yahoo" name="searchEngine" value="yahoo">
+              <label for="yahoo">Yahoo</label>
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <h2>Blur Effect</h2>
+          <div class="options-array">
+            <div class="selection-option">
+              <input type="radio" name="blurEffect" id="blurOn" value="on">
+              <label for="blurOn">Enabled</label>
+            </div>
+            <div class="selection-option">
+              <input type="radio" name="blurEffect" id="blurOff" value="off">
+              <label for="blurOff">Disabled</label>
+            </div>
+          </div>
+        </section>
+
+        <div>
+          <button id="saveButton">Save Settings</button>
+        </div>
+        <div class="shortcut-hint">
+            <span class="keyboard-shortcut">
+                <span class="key">⌘</span>
+                <span class="key">S</span>
+            </span>
+            <span class="keyboard-shortcut">
+                <span class="key">Ctrl</span>
+                <span class="key">S</span>
+            </span>
+        </div>
+
+      </div>
+      <p class="made-with-love">Made with ☕️ and 🤖 by <a href="https://linkedin.com/in/lior-matza-6334223a">Lior Matza</a></p>
+      <p class="made-with-love">Version 3.3</p>
+    </div>
+
+    <div id="save-notification">Settings saved successfully!</div>
+  <script src="../data/data.js"></script>
+  <script src="options.js"></script>
+  </body>
+</html>

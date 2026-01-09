@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Bookmark Manager (Spec)",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "A bookmark manager extension implementing the provided spec (minimal scaffold).",
   "permissions": ["bookmarks", "tabs", "tabGroups", "storage", "scripting", "history", "downloads", "management"],
   "host_permissions": ["http://*/", "https://*/"],
@@ -21,16 +21,10 @@
   "action": {
     "default_title": "Bookmark Manager"
   },
-  "web_accessible_resources": [
-    {
-      "resources": ["service-search-engine/overlay/*"],
-      "matches": ["<all_urls>"]
-    }
-  ],
   "content_scripts": [
     {
-      "matches": ["http://*/*","https://*/*"],
-      "js": ["service-search-engine/content-bridge.js"],
+      "matches": ["http://*/*", "https://*/*"],
+      "js": ["service-search-engine/content-overlay/overlay.js"],
       "run_at": "document_idle",
       "all_frames": false
     }

@@ -1,0 +1,533 @@
+/*
+ * file path and name: overlay/overlay.css
+ * 
+ * Defines the visual styling and theming system for the quick search overlay.
+ * Implements a comprehensive color scheme system with light/dark variants,
+ * responsive layouts, and smooth transitions for interactive elements.
+ * Organized into logical sections: themes, layout, search, results, and animations.
+ */
+
+
+/*=============================================================================
+  THEME VARIABLES
+=============================================================================*/
+
+:root {
+    /* Light variants */
+    --light-100: #FFFFFF;
+    --light-200: #F6F5F5;
+    --light-300: #DCDCDC;
+    --light-400: #757575;
+
+    /* Dark variants */
+    --dark-100: #404040;
+    --dark-200: #535353;
+    --dark-300: #C1C1C1;
+    --dark-400: #DCDCDC;
+
+    /* Clear variants */
+    --clear-100: #DCDCDC;
+    --clear-200: #404040;
+
+    /* Blue variants */
+    --blue-100: #D7EAFF;
+    --blue-200: #007AFF;
+
+    /* Violet variants */
+    --violet-100: #E5E5FF;
+    --violet-200: #5856D6;
+
+    /* Green variants */
+    --green-100: #DCFFE5;
+    --green-200: #21A241;
+
+    /* Animation duration */
+    --transition-speed: 0.2s;
+}
+
+/*=============================================================================
+  THEME & SCHEMES
+=============================================================================*/
+
+/* Clear */
+.theme-light.scheme-light-clear {
+  --bg-1: var(--light-100);
+  --bg-2: var(--light-200);
+  --bg-3: rgba(255, 255, 255, 0.4);
+  --text-1: var(--light-400);
+  --stroke-1: var(--light-300);
+  --text-2: var(--clear-200);
+  --stroke-2: var(--clear-100);
+}
+.theme-dark.scheme-dark-clear {
+  --bg-1: var(--dark-100);
+  --bg-2: var(--dark-200);
+  --bg-3: rgba(187, 187, 187, 0.6);
+  --text-1: var(--dark-400);
+  --stroke-1: var(--dark-300);
+  --text-2: var(--clear-100);
+  --stroke-2: var(--clear-200);
+}
+
+/* Blue */
+.theme-light.scheme-light-blue {
+  --bg-1: var(--light-100);
+  --bg-2: var(--light-200);
+  --bg-3: rgba(215, 234, 255, 0.3);
+  --text-1: var(--light-400);
+  --stroke-1: var(--light-300);
+  --text-2: var(--blue-200);
+  --stroke-2: var(--blue-100);
+}
+.theme-dark.scheme-dark-blue {
+  --bg-1: var(--dark-100);
+  --bg-2: var(--dark-200);
+  --bg-3: rgba(0, 33, 69, 0.3);
+  --text-1: var(--dark-400);
+  --stroke-1: var(--dark-300);
+  --text-2: var(--blue-100);
+  --stroke-2: var(--blue-200);
+}
+
+/* Violet */
+.theme-light.scheme-light-violet {
+  --bg-1: var(--light-100);
+  --bg-2: var(--light-200);
+  --bg-3: rgba(229, 229, 255, 0.3);
+  --text-1: var(--light-400);
+  --stroke-1: var(--light-300);
+  --text-2: var(--violet-200);
+  --stroke-2: var(--violet-100);
+}
+.theme-dark.scheme-dark-violet {
+  --bg-1: var(--dark-100);
+  --bg-2: var(--dark-200);
+  --bg-3: rgba(12, 11, 58, 0.2);
+  --text-1: var(--dark-400);
+  --stroke-1: var(--dark-300);
+  --text-2: var(--violet-100);
+  --stroke-2: var(--violet-200);
+}
+
+/* Grass */
+.theme-light.scheme-light-grass {
+  --bg-1: var(--light-100);
+  --bg-2: var(--light-200);
+  --bg-3: rgba(220, 255, 229, 0.3);
+  --text-1: var(--light-400);
+  --stroke-1: var(--light-300);
+  --text-2: var(--green-200);
+  --stroke-2: var(--green-100);
+}
+.theme-dark.scheme-dark-grass {
+  --bg-1: var(--dark-100);
+  --bg-2: var(--dark-200);
+  --bg-3: rgba(12, 83, 30, 0.3);
+  --text-1: var(--dark-400);
+  --stroke-1: var(--dark-300);
+  --text-2: var(--green-100);
+  --stroke-2: var(--green-200);
+}
+
+/*=============================================================================
+  STANDALONE OVERLAY STYLES
+=============================================================================*/
+
+body {
+    margin: 0px;
+}
+
+.standalone-overlay {
+    position: relative !important;
+    width: 600px !important;
+    height: 550px !important;
+    background: none !important;
+    backdrop-filter: none !important;
+    overflow: none;
+}
+
+.standalone-overlay .qse-spotlight-container {
+    width: 100% !important;
+    height: 100% !important;
+    max-height: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+}
+
+.standalone-overlay .qse-wiki-articles,
+.standalone-overlay .qse-content-wrapper {
+    max-height: none;
+    height: 100%;
+}
+.standalone-overlay .GenericResultsContainer {
+    height: 100%;
+    background-color: var(--bg-2);
+    overflow: scroll;
+}
+
+.standalone-overlay .qse-footer {
+    position: sticky;
+    bottom: 0px;
+    width: 575px;
+    background-color: var(--bg-2);
+    border-radius: 0 !important;
+}
+
+/*.standalone-overlay ::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.standalone-overlay ::-webkit-scrollbar-thumb {
+    background: var(--stroke-1);
+    border-radius: 4px;
+}
+
+.standalone-overlay ::-webkit-scrollbar-thumb:hover {
+    background: var(--text-1);
+}*/
+
+
+/*=============================================================================
+  MAIN LAYOUT
+=============================================================================*/
+
+#qse-spotlight-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 2147483647;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: all var(--transition-speed) ease;
+    direction: ltr !important;
+    background-color: var(--bg-3);
+    -webkit-backdrop-filter: blur(8px); /* For Safari */
+
+}
+
+.qse-content-wrapper {
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
+}
+
+.qse-blur-effect {
+    backdrop-filter: blur(8px);
+}
+
+.qse-spotlight-container {
+    max-height: 600px;
+    width: 550px;
+    border-radius: 8px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+    transition: background-color var(--transition-speed) ease;
+    background-color: var(--bg-2);
+    display: flex;
+    flex-direction: column;
+    min-height: 198px;
+}
+
+.qse-results {
+    overflow: scroll;
+    max-height: fit-content;
+    padding: 8px;
+}
+
+/*=============================================================================
+  SEARCH SECTION
+=============================================================================*/
+
+.qse-search-wrapper {
+    display: flex;
+    align-items: center;
+    padding: 16px;
+    border-bottom: 1px solid var(--stroke-1);
+    transition: border-color var(--transition-speed) ease;
+    font-family: "Lucida Console", monospace;
+}
+
+.qse-search-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    font-size: 20px;
+    outline: none;
+    padding: 4px 0;
+    color: var(--text-2);
+    font-family: "Lucida Console", monospace;
+    font-weight: 300;
+}
+.qse-search-input::placeholder {
+    color: var(--text-1);
+    font-family: "Lucida Console", monospace;
+    font-weight: 300;
+}
+
+.qse-selected-search {
+    font-size: 12px;
+    color: var(--text-1);
+    font-weight: 200;
+    transition: color var(--transition-speed) ease;
+    font-family: "Lucida Console", monospace;
+}
+
+.qse-search-wrapper .qse-icon svg {
+    margin-right: 10px;
+    fill: var(--text-1);
+    width: 16px;
+    height: 16px;
+}
+
+/*=============================================================================
+  RESULTS ITEMS
+=============================================================================*/
+
+.qse-section-title {
+    font-size: 12px;
+    text-transform: uppercase;
+    color: var(--text-1);
+    font-weight: 600;
+    margin: 16px 0px;
+    font-family: "Lucida Console", monospace;
+}
+
+.qse-category-title {
+    font-size: 12px;
+    text-transform: uppercase;
+    color: var(--text-1);
+    font-weight: 600;
+    margin-top:20px;
+    margin-bottom:0px;
+    margin-left: 8px;
+    font-family: "Lucida Console", monospace;
+    cursor: default;
+}
+
+.qse-content {
+    margin-left:16px;
+}
+
+.qse-result-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px;
+    cursor: pointer;
+    transition: all var(--transition-speed) ease;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    color: var(--text-1);
+    font-size: 16px;
+    font-weight: 500;
+    fill: var(--text-1);
+    font-family: "Lucida Console", monospace;
+    vertical-align: middle;
+}
+
+.qse-result-item {
+    position: relative;
+    justify-content: space-between; /* This spreads out the content */
+}
+
+.qse-result-item svg {
+    fill: var(--text-1);
+    margin-top:1px;
+}
+
+.qse-hover-icon {
+    opacity: 0;
+    margin-left: auto;
+    fill: var(--bg-2);
+}
+
+.qse-see-all {
+    color: var(--text-2) !important;
+    font-style: italic;
+    opacity: 0.8;
+}
+
+.qse-see-all:hover {
+    opacity: 1;
+}
+
+.qse-result-item:hover .qse-hover-icon,
+.qse-result-item.selected .qse-hover-icon {
+    opacity: 1;
+}
+
+.qse-result-item:hover {
+    background-color: var(--stroke-2);
+    color: var(--text-2);
+    fill: var(--text-2);
+}
+
+.qse-result-item.selected svg,
+.qse-esult-item:hover svg {
+    fill: var(--text-2);
+}
+
+.qse-result-item.selected {
+    background-color: var(--stroke-2);
+    color: var(--text-2);
+    fill: var(--text-2);
+}
+
+.qse-loading-indicator {
+    text-align: center;
+    padding: 15px;
+    color: var(--text-1);
+}
+
+.qse-hover-text {
+    font-size: 12px;
+}
+/*=============================================================================
+  WIKI SECTION LAYOUT
+=============================================================================*/
+
+.qse-wiki-articles {
+    display: block;
+    transition: all var(--transition-speed) ease;
+}
+
+.qse-wiki-articles.hidden {
+    display: none;
+}
+
+.qse-wiki-list {
+    display: flex;
+    flex-direction: column;
+}
+
+
+.qse-wiki-item,
+.qse-wiki-refresh {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px;
+    margin-bottom: 8px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all var(--transition-speed) ease;
+    color: var(--text-1);
+    fill: var(--text-1);
+    font-size: 16px;
+    font-weight: 500;
+    font-family: "Lucida Console", monospace;
+}
+
+.qse-wiki-refresh {
+    width: 100%;
+    text-align: left;
+    border: hidden;
+}
+
+.qse-wiki-item:hover,
+.qse-wiki-refresh:hover,
+.qse-wiki-item.selected,
+.qse-wiki-refresh.selected,
+.qse-wiki-navigable.selected {
+    background-color: var(--stroke-2);
+    color: var(--text-2);
+    fill: var(--text-2);
+    border: hidden;
+}
+
+.qse-wiki-item .qse-result-icon,
+.qse-wiki-refresh .qse-result-icon {
+    display: flex;
+    align-items: center;
+}
+
+.qse-wiki-item .qse-result-icon svg,
+.qse-wiki-refresh .qse-result-icon svg,
+.qse-wiki-item .qse-hover-icon svg {
+    fill: currentColor;
+}
+
+.qse-wiki-item .qse-hover-icon {
+    opacity: 0;
+    margin-left: auto;
+    transition: opacity var(--transition-speed) ease;
+}
+
+.qse-wiki-item:hover .qse-hover-icon,
+.qse-wiki-item.selected .qse-hover-icon {
+    opacity: 1;
+}
+
+
+.qse-result-text {
+    flex: 1;
+    margin-right: auto;
+}
+
+/*=============================================================================
+  FOOTER
+=============================================================================*/
+
+.qse-footer {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    padding: 16px;
+    border-top: 1px solid var(--stroke-1);
+    align-items: center;
+    font-family: "Lucida Console", monospace;
+    height: 4px;
+    flex-shrink: 0;
+    background-color: var(--bg-2);
+    border-radius: 0% 0% 8% 8%;
+}
+
+.qse-footer p {
+    color: var(--text-1);
+    font-size: 12px;
+    margin:0px;
+}
+
+.qse-footer span {
+    font-family: arial;
+}
+
+.qse-settings-link {
+    cursor: pointer;
+    font-size: 12px;
+    color: var(--text-1);
+    text-decoration: underline;
+    font-family: "Lucida Console", monospace;
+}
+
+.qse-settings-link:hover {
+    color: var(--text-2);
+}
+
+/*=============================================================================
+  ANIMATIONS
+=============================================================================*/
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.qse-result-item {
+    animation: slideIn 0.2s ease forwards;
+}
+
+.qse-overlay-closing {
+    opacity: 0;
+    transform: scale(0.95);
+    transition: opacity 0.15s ease, transform 0.15s ease;
+}
+

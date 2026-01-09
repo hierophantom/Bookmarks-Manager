@@ -1,0 +1,515 @@
+/*
+ * file path and name: options/options.css
+ * 
+ * Defines styles for the extension's settings page interface.
+ * Includes form elements, custom radio buttons, switches, and
+ * interactive elements with consistent theming support.
+ */
+
+html, body, div, span, applet, object, iframe,
+h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+a, abbr, acronym, address, big, cite, code,
+del, dfn, em, img, ins, kbd, q, s, samp,
+small, strike, strong, sub, sup, tt, var,
+b, u, i, center,
+dl, dt, dd, ol, ul, li,
+fieldset, form, label, legend,
+table, caption, tbody, tfoot, thead, tr, th, td,
+article, aside, canvas, details, embed, 
+figure, figcaption, footer, header, hgroup, 
+menu, nav, output, ruby, section, summary,
+time, mark, audio, video {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-size: 100%;
+  font: inherit;
+  vertical-align: baseline;
+}
+/* HTML5 display-role reset for older browsers */
+article, aside, details, figcaption, figure, 
+footer, header, hgroup, menu, nav, section {
+  display: block;
+}
+body {
+  line-height: 1;
+}
+ol, ul {
+  list-style: none;
+}
+blockquote, q {
+  quotes: none;
+}
+blockquote:before, blockquote:after,
+q:before, q:after {
+  content: '';
+  content: none;
+}
+table {
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+:root {
+  /* Light variants */
+  --light-100: #FFFFFF;
+  --light-200: #F6F5F5;
+  --light-300: #DCDCDC;
+  --light-400: #757575;
+
+  /* Dark variants */
+  --dark-100: #404040;
+  --dark-200: #535353;
+  --dark-300: #C1C1C1;
+  --dark-400: #DCDCDC;
+
+  /* Clear variants */
+  --clear-100: #DCDCDC;
+  --clear-200: #404040;
+
+  /* Blue variants */
+  --blue-100: #D7EAFF;
+  --blue-200: #007AFF;
+
+  /* Violet variants */
+  --violet-100: #E5E5FF;
+  --violet-200: #5856D6;
+
+  /* Green variants */
+  --green-100: #DCFFE5;
+  --green-200: #21A241;
+}
+
+/*=============================================================================
+  THEME & SCHEMES
+=============================================================================*/
+
+/* Clear */
+.theme-light.scheme-light-clear {
+  --bg-1: var(--light-100);
+  --bg-2: var(--light-200);
+  --text-1: var(--light-400);
+  --stroke-1: var(--light-300);
+  --text-2: var(--clear-200);
+  --stroke-2: var(--clear-100);
+}
+.theme-dark.scheme-dark-clear {
+  --bg-1: var(--dark-100);
+  --bg-2: var(--dark-200);
+  --text-1: var(--dark-400);
+  --stroke-1: var(--dark-300);
+  --text-2: var(--clear-100);
+  --stroke-2: var(--clear-200);
+}
+
+/* Blue */
+.theme-light.scheme-light-blue {
+  --bg-1: var(--light-100);
+  --bg-2: var(--light-200);
+  --text-1: var(--light-400);
+  --stroke-1: var(--light-300);
+  --text-2: var(--blue-200);
+  --stroke-2: var(--blue-100);
+}
+.theme-dark.scheme-dark-blue {
+  --bg-1: var(--dark-100);
+  --bg-2: var(--dark-200);
+  --text-1: var(--dark-400);
+  --stroke-1: var(--dark-300);
+  --text-2: var(--blue-100);
+  --stroke-2: var(--blue-200);
+}
+
+/* Violet */
+.theme-light.scheme-light-violet {
+  --bg-1: var(--light-100);
+  --bg-2: var(--light-200);
+  --text-1: var(--light-400);
+  --stroke-1: var(--light-300);
+  --text-2: var(--violet-200);
+  --stroke-2: var(--violet-100);
+}
+.theme-dark.scheme-dark-violet {
+  --bg-1: var(--dark-100);
+  --bg-2: var(--dark-200);
+  --text-1: var(--dark-400);
+  --stroke-1: var(--dark-300);
+  --text-2: var(--violet-100);
+  --stroke-2: var(--violet-200);
+}
+
+/* Grass */
+.theme-light.scheme-light-grass {
+  --bg-1: var(--light-100);
+  --bg-2: var(--light-200);
+  --text-1: var(--light-400);
+  --stroke-1: var(--light-300);
+  --text-2: var(--green-200);
+  --stroke-2: var(--green-100);
+}
+.theme-dark.scheme-dark-grass {
+  --bg-1: var(--dark-100);
+  --bg-2: var(--dark-200);
+  --text-1: var(--dark-400);
+  --stroke-1: var(--dark-300);
+  --text-2: var(--green-100);
+  --stroke-2: var(--green-200);
+}
+
+/*=============================================================================
+  BASE STYLES & RESET
+=============================================================================*/
+
+body {
+  font-family: "Inconsolata", sans-serif;
+  background-color: var(--bg-2);
+  transition: all 0.3s ease;
+  padding: 40px;
+}
+
+/*=============================================================================
+  LAYOUT CONTAINERS
+=============================================================================*/
+
+/* Main settings wrapper */
+.settings-container {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  width: auto;
+}
+
+/* Content container with shadow and border */
+.main-container {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+  align-items: flex-start;
+  align-content: stretch;
+  width: 600px;
+  border-radius: 33px;
+  background-color: var(--bg-1);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  padding: 30px;
+}
+
+/* Individual settings sections */
+section {
+  padding: 12px;
+  width: -webkit-fill-available;
+  background-color: var(--bg-2);
+  margin-bottom: 12px;
+  border-radius: 12px;
+}
+
+/*=============================================================================
+  TYPOGRAPHY
+=============================================================================*/
+
+/* Main heading */
+h1 {
+  color: var(--text-1);
+  font-size: 28px;
+  margin-bottom: 16px;
+  font-weight: 700;
+}
+
+/* Section headings */
+h2 {
+  color: var(--text-1);
+  font-size: 20px;
+  margin-bottom: 16px;
+  font-weight: 700;
+}
+
+/*=============================================================================
+  FORM ELEMENTS
+=============================================================================*/
+
+/* Options container */
+.options-array {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: -webkit-fill-available;
+}
+
+/* Selection option wrapper */
+.selection-option {
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  width: -webkit-fill-available;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Hover and selected states */
+.selection-option:hover {
+  background-color: var(--stroke-2);
+  color: var(--text-2);
+}
+
+.selection-option.selected {
+  background-color: var(--stroke-2);
+  color: var(--text-2);
+}
+
+/*=============================================================================
+  CUSTOM RADIO BUTTONS
+=============================================================================*/
+
+/* Base radio button styles */
+.selection-option input[type="radio"] {
+  appearance: none;
+  -webkit-appearance: none;
+  margin: 0;
+  width: 16px;
+  height: 16px;
+  border: 1px solid var(--text-2);
+  border-radius: 50%;
+  outline: none;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+/* Selected state styles */
+.selection-option input:checked + label {
+  font-weight: 700;
+}
+
+.selection-option input:checked {
+  background-color: var(--stroke-2);
+  border-color: var(--text-2);
+}
+
+/* Custom radio button center dot */
+.selection-option input[type="radio"]:checked::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: var(--stroke-2);
+  filter: brightness(0.7);
+}
+
+/* Interactive states */
+.selection-option input[type="radio"]:hover {
+  border-color: var(--stroke-2);
+  color: var(--text-2);
+  box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.2);
+}
+
+.selection-option input[type="radio"]:focus {
+  box-shadow: 0 0 0 3px rgba(66, 133, 244, 0.3);
+}
+
+/* Radio button labels */
+.selection-option label {
+  color: var(--text-1);
+  font-size: 16px;
+}
+
+/*=============================================================================
+  BUTTONS AND INTERACTIVE ELEMENTS
+=============================================================================*/
+
+/* Save button */
+#saveButton {
+  margin-top: 16px;
+  background-color: var(--text-2);
+  color: var(--stroke-2);
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+#saveButton:hover {
+  opacity: 0.9;
+}
+
+#saveButton:active {
+  transform: scale(0.98);
+}
+
+/* Save notification popup */
+#save-notification {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  padding: 15px;
+  background-color: var(--text-2);
+  color: var(--stroke-2);;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  display: none;
+  animation: slideIn 0.3s ease;
+}
+
+/* Keyboard shortcut styles */
+.shortcut-hint {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--text-1);
+    opacity: 0.7;
+}
+
+.keyboard-shortcut {
+    display: flex;
+    gap: 4px;
+}
+
+.key {
+    padding: 2px 6px;
+    border: 1px solid var(--stroke-1);
+    border-radius: 4px;
+    background-color: var(--bg-1);
+}
+
+
+/*=============================================================================
+  CUSTOME CATEGORY CONTROLS
+=============================================================================*/
+
+/* Categories list container */
+.categories-list {
+  width: 100%;
+}
+
+/* Category item styles */
+.category-item {
+  display: flex;
+  align-items: center;
+  padding: 12px;
+  background-color: var(--bg-1);
+  border: 1px solid var(--stroke-1);
+  margin-bottom: 8px;
+  border-radius: 8px;
+  cursor: move;
+}
+
+.category-item:hover {
+  background-color: var(--bg-2);
+}
+
+.category-item.dragging {
+  opacity: 0.5;
+}
+
+/* Category icon and name */
+.category-info {
+  display: flex;
+  align-items: center;
+  flex-grow: 1;
+  gap: 12px;
+}
+
+.category-icon {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.category-name {
+  color: var(--text-1);
+  font-size: 16px;
+}
+
+/* Toggle switch styles */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--stroke-1);
+  transition: .3s;
+  border-radius: 24px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: var(--bg-1);
+  transition: .3s;
+  border-radius: 50%;
+}
+
+input:checked + .slider {
+  background-color: var(--text-2);
+}
+
+input:checked + .slider:before {
+  transform: translateX(20px);
+}
+
+/* Drag handle */
+.drag-handle {
+  color: var(--text-1);
+  cursor: move;
+  padding: 0 12px;
+}
+
+/*=============================================================================
+  FOOTER AND CREDITS
+=============================================================================*/
+
+.made-with-love {
+  color: var(--text-1);
+  font-size: 16px;
+  margin-top: 20px;
+}
+
+.made-with-love a {
+  color: var(--text-2);
+}
+
+/*=============================================================================
+  ANIMATIONS
+=============================================================================*/
+
+@keyframes slideIn {
+  from {
+    transform: translateY(100px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
