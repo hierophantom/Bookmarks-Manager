@@ -150,8 +150,8 @@ class BaseModal {
         this.close();
       }
 
-      // Cmd+Enter or Ctrl+Enter to submit
-      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+      // Cmd+Enter or Ctrl+Enter to submit (not plain Enter)
+      if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
         this.handleSubmit();
       }

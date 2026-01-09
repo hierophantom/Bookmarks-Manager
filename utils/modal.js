@@ -177,8 +177,8 @@ const Modal = (() => {
           resolve([]);
         }
 
-        // Cmd/Ctrl+Enter to submit
-        if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+        // Cmd/Ctrl+Enter to submit (not plain Enter)
+        if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
           e.preventDefault();
           handleSubmit();
         }
@@ -261,8 +261,8 @@ const Modal = (() => {
           resolve(null);
         }
 
-        // Number keys 1-3 to select widgets
-        if (['1', '2', '3'].includes(e.key)) {
+        // Number keys 1-3 to select widgets (no modifier required)
+        if (['1', '2', '3'].includes(e.key) && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey) {
           e.preventDefault();
           const index = parseInt(e.key, 10) - 1;
           if (index < widgets.length) {

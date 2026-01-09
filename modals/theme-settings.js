@@ -555,8 +555,8 @@ New Tab Override Section -->
         overlay.remove();
       }
 
-      // Cmd/Ctrl+Enter to save
-      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+      // Cmd/Ctrl+Enter to save (not plain Enter)
+      if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
         handleSave();
       }
