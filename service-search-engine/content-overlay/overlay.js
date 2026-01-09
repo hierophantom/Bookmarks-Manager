@@ -346,7 +346,7 @@ class ContentOverlay {
    * Execute selected result
    */
   executeResult(item) {
-    console.log('[ContentOverlay] Executing:', item.id, item.type);
+    console.log('[ContentOverlay] Executing:', item.id, item.type, 'itemUrl:', item.url);
 
     try {
       // Handle different result types
@@ -356,13 +356,31 @@ class ContentOverlay {
           console.log('[ContentOverlay] Copied to clipboard:', item.value);
           this.close();
         });
+      } else if (item.type === 'action') {
+        // Actions go through background (check BEFORE url)
+        console.log('[ContentOverlay] Sending action to background:', item.id);
+        chrome.runtime.sendMessage({
+          type: 'EXECUTE_RESULT',
+          resultId: item.id,
+          resultType: item.type,
+          metadata: {
+            url: item.url,
+            tabId: item.tabId,
+            title: item.title,
+            query: item.query,
+            value: item.value
+          }
+        }, (response) => {
+          if (response && response.success) {
+            this.close();
+          }
+        });
       } else if (item.url && item.url.startsWith('http')) {
         // For regular http/https URLs, open directly
         window.open(item.url, '_blank');
         this.close();
       } else {
         // Everything else goes through background:
-        // - Actions (require service worker context)
         // - chrome:// URLs (content scripts can't access)
         // - Tab switching (requires chrome.tabs API)
         chrome.runtime.sendMessage({
