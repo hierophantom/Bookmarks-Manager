@@ -96,6 +96,18 @@ class MainOverlay {
     // Prevent modal click from closing
     this.elements.modal.addEventListener('click', (e) => e.stopPropagation());
 
+    // Add event delegation for result item clicks
+    this.elements.results.addEventListener('click', (e) => {
+      const resultItem = e.target.closest('.bm-result-item');
+      if (resultItem) {
+        const matchingResult = this.resultItems.find(r => r.element === resultItem);
+        if (matchingResult) {
+          console.log('[MainOverlay] Result clicked via delegation:', matchingResult.item.id);
+          this.executeResult(matchingResult.item);
+        }
+      }
+    });
+
     console.log('[MainOverlay] UI setup complete');
   }
 
@@ -211,6 +223,7 @@ class MainOverlay {
   createResultItem(item) {
     const el = document.createElement('div');
     el.className = 'bm-result-item';
+    el.style.cursor = 'pointer';
     el.innerHTML = `
       <span class="bm-result-icon">${item.icon}</span>
       <div class="bm-result-content">
@@ -219,14 +232,6 @@ class MainOverlay {
       </div>
     `;
 
-    // Ensure click events work
-    el.style.cursor = 'pointer';
-    el.addEventListener('click', (e) => {
-      console.log('[MainOverlay] Result clicked:', item.id);
-      e.stopPropagation();
-      this.executeResult(item);
-    }, true);
-    
     el.addEventListener('mouseenter', () => {
       this.clearSelection();
       el.classList.add('bm-selected');
