@@ -168,7 +168,14 @@ class BaseModal {
 
     const inputs = form.querySelectorAll('input');
     inputs.forEach((input) => {
-      formData[input.id] = input.value.trim();
+      // For Tagify fields, extract tags from the Tagify instance
+      if (input.id === 'bm_tags' && input.tagify) {
+        formData[input.id] = input.tagify.value.map(item => 
+          typeof item === 'string' ? item : item.value
+        );
+      } else {
+        formData[input.id] = input.value.trim();
+      }
     });
 
     return formData;

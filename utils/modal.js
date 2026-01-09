@@ -33,28 +33,18 @@ const Modal = (() => {
     });
 
     return modal.show().then(async (data) => {
-      if (!data) {
-        // Clean up Tagify instance when modal is cancelled
-        const tagsInput = document.getElementById('bm_tags');
-        if (tagsInput && tagsInput.tagify) {
-          tagsInput.tagify.destroy();
-        }
-        return null;
-      }
-      
-      // Get tags from Tagify instance
+      // Clean up Tagify instance
       const tagsInput = document.getElementById('bm_tags');
-      let tags = [];
-      
       if (tagsInput && tagsInput.tagify) {
-        tags = tagsInput.tagify.value.map(item => item.value);
         tagsInput.tagify.destroy();
       }
+      
+      if (!data) return null;
 
       return {
         title: data.bm_title,
         url: data.bm_url || null,
-        tags
+        tags: data.bm_tags || []
       };
     });
   }
