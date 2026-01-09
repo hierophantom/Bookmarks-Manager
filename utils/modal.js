@@ -1,6 +1,6 @@
 const Modal = (() => {
   /**
-   * BookmarkForm Modal
+   * BookmarkForm Modal with Tagify integration
    */
   function openBookmarkForm(defaults = {}) {
     const tagArr = Array.isArray(defaults.tags) ? defaults.tags : [];
@@ -24,28 +24,76 @@ const Modal = (() => {
         },
         {
           id: 'bm_tags',
-          label: 'Tags (comma-separated)',
+          label: 'Tags',
           type: 'text',
-          value: tagArr.join(', '),
-          placeholder: 'tag1, tag2, tag3'
+          value: tagArr.join(','),
+          placeholder: 'Add tags...'
         }
       ]
     });
 
-    return modal.show().then((data) => {
-      if (!data) return null;
+    return modal.show().then(async (data) => {
+      if (!data) {
+        // Clean up Tagify instance when modal is cancelled
+        const tagsInput = document.getElementById('bm_tags');
+        if (tagsInput && tagsInput.tagify) {
+          tagsInput.tagify.destroy();
+        }
+        return null;
+      }
       
-      // Parse tags from comma-separated string
-      const tags = data.bm_tags
-        .split(',')
-        .map((t) => t.trim())
-        .filter((t) => t.length > 0);
+      // Get tags from Tagify instance
+      const tagsInput = document.getElementById('bm_tags');
+      let tags = [];
+      
+      if (tagsInput && tagsInput.tagify) {
+        tags = tagsInput.tagify.value.map(item => item.value);
+        tagsInput.tagify.destroy();
+      }
 
       return {
         title: data.bm_title,
         url: data.bm_url || null,
         tags
       };
+    });
+  }
+
+  // Initialize Tagify on the tags input after modal is shown
+  // This is called internally by BaseModal after rendering
+  function initializeTagify() {
+    const tagsInput = document.getElementById('bm_tags');
+    if (!tagsInput || typeof Tagify === 'undefined') return;
+
+    // Get all existing tags for autocomplete
+    TagsService.getAllTags().then(allTags => {
+      const tagify = new Tagify(tagsInput, {
+        whitelist: allTags,
+        maxTags: 20,
+        dropdown: {
+          maxItems: 10,
+          enabled: 0,
+          closeOnSelect: false
+        },
+        editTags: false,
+        duplicates: false,
+        trim: true,
+        placeholder: 'Type to add tags...',
+        originalInputValueFormat: valuesArr => valuesArr.map(item => item.value).join(',')
+      });
+
+      // Style the Tagify container to match modal styling
+      const tagifyWrapper = tagsInput.nextElementSibling;
+      if (tagifyWrapper && tagifyWrapper.classList.contains('tagify')) {
+        tagifyWrapper.style.cssText = `
+          border: 1px solid #d1d5db;
+          border-radius: 0.375rem;
+          padding: 0.5rem;
+          min-height: 42px;
+        `;
+      }
+    }).catch(err => {
+      console.error('Failed to initialize tags:', err);
     });
   }
 
@@ -280,5 +328,11 @@ const Modal = (() => {
       .replace(/"/g, '&quot;');
   }
 
-  return { openBookmarkForm, openFolderForm, openTabsPicker, openWidgetPicker };
+  return { 
+    openBookmarkForm, 
+    openFolderForm, 
+    openTabsPicker, 
+    openWidgetPicker, 
+    initializeTagify 
+  };
 })();

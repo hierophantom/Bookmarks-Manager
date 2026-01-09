@@ -1,8 +1,6 @@
 const BookmarkModals = (()=>{
   async function addBookmark(folderId){
-    console.log('=== addBookmark START ===', {folderId});
     const data = await Modal.openBookmarkForm({});
-    console.log('addBookmark: modal returned', data);
     if (!data) return null;
     
     const createObj = { parentId: folderId, title: data.title };
@@ -11,24 +9,16 @@ const BookmarkModals = (()=>{
     return new Promise((res, reject) => {
       chrome.bookmarks.create(createObj, async (node) => {
         if (chrome.runtime.lastError) {
-          console.error('addBookmark: chrome.bookmarks.create failed', chrome.runtime.lastError);
           reject(chrome.runtime.lastError);
           return;
         }
         
-        console.log('addBookmark: bookmark created with node.id =', node.id);
         try {
           if (node && node.id && Array.isArray(data.tags) && data.tags.length > 0) {
-            console.log('addBookmark: calling TagsService.setTags with', {id: node.id, tags: data.tags});
             await TagsService.setTags(node.id, data.tags);
-            console.log('addBookmark: TagsService.setTags completed');
-          } else {
-            console.log('addBookmark: skipping tags (no tags or no node)', {hasNode: !!node, hasNodeId: !!(node && node.id), tags: data.tags});
           }
-          console.log('=== addBookmark END (success) ===');
           res(node);
         } catch (e) {
-          console.error('=== addBookmark ERROR ===', e);
           reject(e);
         }
       });
@@ -41,26 +31,14 @@ const BookmarkModals = (()=>{
     const data = await Modal.openBookmarkForm({ id, title: info.title, url: info.url, tags });
     if (!data) return null;
     
-    // Save tags first
-    try {
-      if (Array.isArray(data.tags) && data.tags.length > 0) {
-        console.log('editBookmark: saving tags for bookmark', {id, tags: data.tags});
-        await TagsService.setTags(id, data.tags);
-      } else {
-        console.log('editBookmark: clearing tags for bookmark', id);
-        await TagsService.setTags(id, []);
-      }
-    } catch (e) {
-      console.error('editBookmark: error saving tags', e);
-      throw e;
-    }
+    // Save tags
+    await TagsService.setTags(id, data.tags || []);
     
     return new Promise((res, reject) => {
       const updateObj = { title: data.title };
       if (info.url) updateObj.url = data.url || '';
       chrome.bookmarks.update(id, updateObj, updated => {
         if (chrome.runtime.lastError) {
-          console.error('editBookmark: chrome.bookmarks.update failed', chrome.runtime.lastError);
           reject(chrome.runtime.lastError);
         } else {
           res(updated);

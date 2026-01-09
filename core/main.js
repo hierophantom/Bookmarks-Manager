@@ -257,10 +257,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     let filterTag = tagFilterInput && tagFilterInput.value.trim();
     if (tagListSpan && typeof TagsService !== 'undefined') {
       const allTags = await TagsService.getAllTags();
-      tagListSpan.innerHTML = allTags.map(t=>`<button class="tag-pill" style="margin:0 2px 2px 0;padding:2px 8px;border-radius:12px;border:none;background:#eee;cursor:pointer">${t}</button>`).join('');
+      tagListSpan.innerHTML = allTags.map(t=>
+        `<button class="tag-pill" style="margin:0 4px 4px 0;padding:4px 12px;border-radius:9999px;border:none;background:#e5e7eb;color:#374151;cursor:pointer;font-size:12px;font-weight:500;">#${t}</button>`
+      ).join('');
       tagListSpan.querySelectorAll('.tag-pill').forEach(btn=>{
         btn.addEventListener('click', ()=>{
-          if (tagFilterInput) tagFilterInput.value = btn.textContent;
+          const tagName = btn.textContent.replace('#', '');
+          if (tagFilterInput) tagFilterInput.value = tagName;
           render(true);
         });
       });
@@ -331,13 +334,32 @@ document.addEventListener('DOMContentLoaded', async () => {
           
           if (child.url) {
             // Bookmark slot
-            let tagHtml = '';
-            let tagMarker = '';
+            let tagChips = '';
             if (typeof TagsService !== 'undefined') {
               const tags = await TagsService.getTags(child.id);
-              if (tags.length) { tagHtml = `<span class="bm-tag-list" style="margin-left:8px;color:#888;font-size:90%;">[${tags.join(', ')}]</span>`; tagMarker = `<span class="bm-tag-marker" title="Has tags"></span>`; }
+              if (tags.length > 0) {
+                tagChips = `<div class="bm-tag-chips" style="display:inline-flex;gap:4px;flex-wrap:wrap;margin-left:8px;">${
+                  tags.map(tag => 
+                    `<span class="bm-tag-chip" data-tag="${tag}" style="display:inline-block;padding:2px 8px;background:#e5e7eb;color:#374151;border-radius:9999px;font-size:11px;font-weight:500;cursor:pointer;" title="Click to filter by this tag">#${tag}</span>`
+                  ).join('')
+                }</div>`;
+              }
             }
-            slot.innerHTML = `${tagMarker}<a href="${child.url}" target="_blank">${child.title || child.url}</a> <button data-action="edit">Edit</button> <button data-action="del">Delete</button> ${tagHtml}`;
+            slot.innerHTML = `<a href="${child.url}" target="_blank">${child.title || child.url}</a> ${tagChips} <button data-action="edit">Edit</button> <button data-action="del">Delete</button>`;
+            
+            // Add tag chip click handlers
+            slot.querySelectorAll('.bm-tag-chip').forEach(chip => {
+              chip.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const tagFilterInput = document.getElementById('tag-filter');
+                if (tagFilterInput) {
+                  tagFilterInput.value = chip.dataset.tag;
+                  render(true);
+                }
+              });
+            });
+            
             slot.querySelectorAll('button').forEach(btn => {
               btn.addEventListener('click', (e) => {
                 const action = btn.dataset.action;

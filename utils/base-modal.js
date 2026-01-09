@@ -238,6 +238,12 @@ class BaseModal {
       card.innerHTML = this.getHTML();
       this.overlay.appendChild(card);
       this.attachEventListeners();
+      
+      // Initialize any special field handlers (like Tagify)
+      // Call initializeTagify if it exists in Modal namespace
+      if (typeof Modal !== 'undefined' && typeof Modal.initializeTagify === 'function') {
+        setTimeout(() => Modal.initializeTagify(), 10);
+      }
     });
   }
 

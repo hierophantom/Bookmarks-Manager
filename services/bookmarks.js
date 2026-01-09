@@ -18,7 +18,7 @@ const BookmarksService = (()=>{
     return ids;
   }
   async function reconcileTags(){
-    if (typeof TagsService === 'undefined' || !TagsService.cleanupOrphans) return;
+    // Tags cleanup - remove orphaned tags
     try{
       const ids = await getAllBookmarkIds();
       await TagsService.cleanupOrphans(ids);
