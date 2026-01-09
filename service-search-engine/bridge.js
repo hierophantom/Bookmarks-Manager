@@ -125,14 +125,31 @@ async function handleSearch(request, sender, sendResponse) {
  */
 async function handleExecuteResult(request, sender, sendResponse) {
   try {
-    console.log('[Bridge] Execute:', request.resultId, 'from tab:', sender.tab?.id);
+    console.log('[Bridge] Execute:', request.resultType, request.resultId, 'from tab:', sender.tab?.id);
 
     const metadata = {
       ...request.metadata,
-      tabId: sender.tab?.id
+      currentTabId: sender.tab?.id  // Keep current tab ID separate from target tab ID
     };
 
-    const success = await engine.executeAction(request.resultId, metadata);
+    let success = false;
+
+    // Handle different result types
+    if (request.resultType === 'action') {
+      // Actions use executeAction
+      success = await engine.executeAction(request.resultId, metadata);
+    } else if (request.resultType === 'tab' && metadata.tabId) {
+      // Switch to tab - metadata.tabId is the target tab from the result item
+      await chrome.tabs.update(metadata.tabId, { active: true });
+      await chrome.windows.update(await chrome.tabs.get(metadata.tabId).then(t => t.windowId), { focused: true });
+      success = true;
+    } else if (metadata.url) {
+      // Open URL (bookmarks, history, downloads, chrome:// URLs, show-more)
+      await chrome.tabs.create({ url: metadata.url });
+      success = true;
+    } else {
+      console.warn('[Bridge] Unknown result type or missing data:', request);
+    }
 
     sendResponse({ success });
   } catch (error) {

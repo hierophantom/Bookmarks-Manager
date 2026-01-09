@@ -286,23 +286,26 @@ class MainOverlay {
    * Execute selected result
    */
   async executeResult(item) {
-    console.log('[MainOverlay] Executing:', item.id, item.type);
+    console.log('[MainOverlay] Executing:', item.id, item.type, 'hasUrl:', !!item.url, 'hasTabId:', !!item.tabId);
 
     try {
       let success = false;
 
-      if (item.type === 'action') {
+      if (item.type === 'tab' && item.tabId) {
+        // Switch to tab and focus its window (check FIRST before url)
+        console.log('[MainOverlay] Switching to tab:', item.tabId);
+        await chrome.tabs.update(item.tabId, { active: true });
+        const tab = await chrome.tabs.get(item.tabId);
+        await chrome.windows.update(tab.windowId, { focused: true });
+        success = true;
+      } else if (item.type === 'action') {
         success = await this.engine.executeAction(item.id, {
           tabId: item.tabId,
           query: item.query
         });
       } else if (item.url) {
-        // Open URL in new tab
+        // Open URL in new tab (bookmarks, history, downloads)
         await chrome.tabs.create({ url: item.url });
-        success = true;
-      } else if (item.type === 'tab' && item.tabId) {
-        // Switch to tab
-        await chrome.tabs.update(item.tabId, { active: true });
         success = true;
       }
 

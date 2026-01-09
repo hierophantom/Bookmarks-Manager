@@ -157,7 +157,7 @@ export class SearchEngine {
   async searchDownloads(query) {
     try {
       const results = [];
-      const downloads = await chrome.downloads.search({ query });
+      const downloads = await chrome.downloads.search({ query: query ? [query] : [] });
 
       for (const dl of downloads.slice(0, 5)) {
         results.push({
@@ -249,8 +249,8 @@ export class SearchEngine {
           return true;
 
         case 'close-tab':
-          if (metadata.tabId) {
-            await chrome.tabs.remove(metadata.tabId);
+          if (metadata.currentTabId) {
+            await chrome.tabs.remove(metadata.currentTabId);
             return true;
           }
           return false;

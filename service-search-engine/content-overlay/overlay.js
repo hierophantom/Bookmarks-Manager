@@ -19,17 +19,8 @@ class ContentOverlay {
   async init() {
     console.log('[ContentOverlay] Initializing on:', window.location.href);
     
-    // Try to get tab ID
-    try {
-      const tabs = await chrome.tabs.query({ url: window.location.href });
-      const activeTab = tabs.find(t => t.active) || tabs[0];
-      if (activeTab) {
-        this.myTabId = activeTab.id;
-        console.log('[ContentOverlay] Tab ID:', this.myTabId);
-      }
-    } catch (error) {
-      console.warn('[ContentOverlay] Failed to get tab ID:', error.message);
-    }
+    // Note: Content scripts don't have access to chrome.tabs API
+    // Tab ID will be set by background when needed
 
     // Inject overlay HTML
     this.injectOverlay();
@@ -132,6 +123,27 @@ class ContentOverlay {
       this.elements.modal.addEventListener('click', (e) => {
         // Let other listeners run first in capture phase, check both in bubbling
         const target = e.target;
+        
+        // Check for show-more button first
+        const showMoreBtn = target.closest ? target.closest('.bm-show-more') : null;
+        if (showMoreBtn) {
+          console.log('[ContentOverlay] Clicked on show-more button:', showMoreBtn.dataset.category);
+          const url = showMoreBtn.dataset.url;
+          if (url) {
+            chrome.runtime.sendMessage({
+              type: 'EXECUTE_RESULT',
+              resultId: `show-more-${showMoreBtn.dataset.category}`,
+              resultType: 'show-more',
+              metadata: { url }
+            }, (response) => {
+              if (response && response.success) {
+                this.close();
+              }
+            });
+          }
+          return;
+        }
+        
         const resultItem = target.closest ? target.closest('.bm-result-item') : null;
         
         if (resultItem) {
@@ -279,14 +291,12 @@ class ContentOverlay {
         const showMoreBtn = document.createElement('button');
         showMoreBtn.className = 'bm-show-more';
         showMoreBtn.innerHTML = `📂 Show more in ${category}`;
-        showMoreBtn.addEventListener('click', () => {
-          chrome.tabs.create({ url: showMoreUrls[category] });
-          this.close();
-        });
+        showMoreBtn.dataset.category = category;
+        showMoreBtn.dataset.url = showMoreUrls[category];
         resultsList.appendChild(showMoreBtn);
         // Add show-more button to resultItems for keyboard navigation
         this.resultItems.push({ 
-          item: { id: `show-more-${category}`, type: 'action', title: `Show more in ${category}` }, 
+          item: { id: `show-more-${category}`, type: 'show-more', title: `Show more in ${category}`, url: showMoreUrls[category] }, 
           element: showMoreBtn,
           isShowMore: true,
           url: showMoreUrls[category]
@@ -337,8 +347,15 @@ class ContentOverlay {
 
     try {
       // Handle different result types
-      if (item.type === 'action') {
-        // Actions need background service worker
+      // For regular http/https URLs, open directly
+      if (item.url && item.url.startsWith('http')) {
+        window.open(item.url, '_blank');
+        this.close();
+      } else {
+        // Everything else goes through background:
+        // - Actions (require service worker context)
+        // - chrome:// URLs (content scripts can't access)
+        // - Tab switching (requires chrome.tabs API)
         chrome.runtime.sendMessage({
           type: 'EXECUTE_RESULT',
           resultId: item.id,
@@ -353,16 +370,6 @@ class ContentOverlay {
             this.close();
           }
         });
-      } else if (item.url) {
-        // Bookmarks, History, Downloads - open URL
-        window.open(item.url, '_blank');
-        this.close();
-      } else if (item.type === 'tab' && item.tabId) {
-        // Switch to tab
-        chrome.tabs.update(item.tabId, { active: true });
-        this.close();
-      } else {
-        console.warn('[ContentOverlay] Unknown result type:', item.type);
       }
     } catch (error) {
       console.error('[ContentOverlay] Execute error:', error);
@@ -397,9 +404,17 @@ class ContentOverlay {
     if (this.selectedIndex >= 0 && this.resultItems[this.selectedIndex]) {
       const resultData = this.resultItems[this.selectedIndex];
       if (resultData.isShowMore) {
-        // Handle "show more" button activation
-        chrome.tabs.create({ url: resultData.url });
-        this.close();
+        // Handle "show more" button activation - route through background
+        chrome.runtime.sendMessage({
+          type: 'EXECUTE_RESULT',
+          resultId: resultData.item.id,
+          resultType: 'show-more',
+          metadata: { url: resultData.item.url }
+        }, (response) => {
+          if (response && response.success) {
+            this.close();
+          }
+        });
       } else {
         this.executeResult(resultData.item);
       }
