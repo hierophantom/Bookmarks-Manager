@@ -3,9 +3,6 @@
  * Simpler than before: just route searches from content scripts
  */
 
-// Load math.js library for calculator support
-importScripts('shared/math.min.js');
-
 import SearchEngine from './shared/search-engine.js';
 
 const engine = new SearchEngine();
