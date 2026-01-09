@@ -107,14 +107,49 @@ class ContentOverlay {
       empty: document.getElementById('bm-empty-state')
     };
 
+    // Debug: verify all elements are found
+    console.log('[ContentOverlay] Element references:', {
+      overlay: !!this.elements.overlay,
+      modal: !!this.elements.modal,
+      results: !!this.elements.results,
+      input: !!this.elements.input
+    });
+
     // Backdrop click to close
     this.elements.backdrop.addEventListener('click', () => this.close());
 
     // Search input
     this.elements.input.addEventListener('input', (e) => this.handleSearch(e.target.value));
 
-    // Prevent modal click from closing
-    this.elements.modal.addEventListener('click', (e) => e.stopPropagation());
+    // Prevent modal click from closing (but let it bubble for clicks inside)
+    this.elements.modal.addEventListener('click', (e) => {
+      // Don't stop propagation - we need it for event delegation
+      e.stopPropagation();
+    });
+
+    // Event delegation for result clicks - listen on modal in capture phase
+    if (this.elements.modal) {
+      this.elements.modal.addEventListener('click', (e) => {
+        // Let other listeners run first in capture phase, check both in bubbling
+        const target = e.target;
+        const resultItem = target.closest ? target.closest('.bm-result-item') : null;
+        
+        if (resultItem) {
+          console.log('[ContentOverlay] Clicked on result item element:', resultItem.className);
+          const matchingResult = this.resultItems.find(r => r.element === resultItem);
+          
+          if (matchingResult) {
+            console.log('[ContentOverlay] Executing result:', matchingResult.item.id, matchingResult.item.type);
+            this.executeResult(matchingResult.item);
+          } else {
+            console.warn('[ContentOverlay] Result item DOM node not found in tracking array', {
+              resultItemsCount: this.resultItems.length,
+              elementClass: resultItem.className
+            });
+          }
+        }
+      }); // No capture phase - use normal bubbling
+    }
 
     console.log('[ContentOverlay] UI setup complete');
   }
@@ -178,6 +213,13 @@ class ContentOverlay {
 
       console.log('[ContentOverlay] Results:', Object.keys(response.results || {}));
       this.currentResults = response.results || {};
+      console.log('[ContentOverlay] Full results object:', {
+        categories: Object.keys(this.currentResults),
+        itemCounts: Object.entries(this.currentResults).reduce((acc, [k, v]) => {
+          acc[k] = Array.isArray(v) ? v.length : 'not array';
+          return acc;
+        }, {})
+      });
       this.displayResults();
     });
   }
@@ -192,9 +234,22 @@ class ContentOverlay {
     resultsList.innerHTML = '';
     this.resultItems = [];
 
+    console.log('[ContentOverlay] displayResults called with:', Object.keys(this.currentResults));
+
+    // Map for "show more" URLs
+    const showMoreUrls = {
+      'History': 'chrome://history',
+      'Downloads': 'chrome://downloads',
+      'Tabs': null,
+      'Bookmarks': 'chrome://bookmarks',
+      'Actions': null
+    };
+
     // Group results by category
     for (const [category, items] of Object.entries(this.currentResults)) {
       if (!Array.isArray(items) || items.length === 0) continue;
+
+      console.log('[ContentOverlay] Processing category:', category, 'items:', items.length, 'sample:', items[0]?.id);
 
       // Category header
       const header = document.createElement('div');
@@ -202,17 +257,48 @@ class ContentOverlay {
       header.textContent = category;
       resultsList.appendChild(header);
 
-      // Items
-      for (const item of items) {
+      // Items - limit to 5, add "show more" button if needed
+      const maxItems = 5;
+      const displayItems = items.slice(0, maxItems);
+      const hasMore = items.length > maxItems;
+
+      for (const item of displayItems) {
         const element = this.createResultItem(item);
         resultsList.appendChild(element);
         this.resultItems.push({ item, element });
+        console.log('[ContentOverlay] Added result item:', {
+          id: item.id,
+          title: item.title,
+          elementClass: element.className,
+          elementInDOM: resultsList.contains(element)
+        });
+      }
+
+      // Add "show more" button if items exceed limit
+      if (hasMore && showMoreUrls[category]) {
+        const showMoreBtn = document.createElement('button');
+        showMoreBtn.className = 'bm-show-more';
+        showMoreBtn.innerHTML = `📂 Show more in ${category}`;
+        showMoreBtn.addEventListener('click', () => {
+          chrome.tabs.create({ url: showMoreUrls[category] });
+          this.close();
+        });
+        resultsList.appendChild(showMoreBtn);
+        // Add show-more button to resultItems for keyboard navigation
+        this.resultItems.push({ 
+          item: { id: `show-more-${category}`, type: 'action', title: `Show more in ${category}` }, 
+          element: showMoreBtn,
+          isShowMore: true,
+          url: showMoreUrls[category]
+        });
       }
     }
 
     if (this.resultItems.length === 0) {
+      console.log('[ContentOverlay] No items to display, showing empty state');
       this.showEmpty();
     } else {
+      console.log('[ContentOverlay] Displaying', this.resultItems.length, 'items');
       this.elements.empty.style.display = 'none';
     }
 
@@ -234,7 +320,6 @@ class ContentOverlay {
       </div>
     `;
 
-    el.addEventListener('click', () => this.executeResult(item));
     el.addEventListener('mouseenter', () => {
       this.clearSelection();
       el.classList.add('bm-selected');
@@ -250,21 +335,38 @@ class ContentOverlay {
   executeResult(item) {
     console.log('[ContentOverlay] Executing:', item.id, item.type);
 
-    // Send execution request to background
-    chrome.runtime.sendMessage({
-      type: 'EXECUTE_RESULT',
-      resultId: item.id,
-      resultType: item.type,
-      metadata: {
-        url: item.url,
-        tabId: item.tabId,
-        query: item.query
-      }
-    }, (response) => {
-      if (response && response.success) {
+    try {
+      // Handle different result types
+      if (item.type === 'action') {
+        // Actions need background service worker
+        chrome.runtime.sendMessage({
+          type: 'EXECUTE_RESULT',
+          resultId: item.id,
+          resultType: item.type,
+          metadata: {
+            url: item.url,
+            tabId: item.tabId,
+            query: item.query
+          }
+        }, (response) => {
+          if (response && response.success) {
+            this.close();
+          }
+        });
+      } else if (item.url) {
+        // Bookmarks, History, Downloads - open URL
+        window.open(item.url, '_blank');
         this.close();
+      } else if (item.type === 'tab' && item.tabId) {
+        // Switch to tab
+        chrome.tabs.update(item.tabId, { active: true });
+        this.close();
+      } else {
+        console.warn('[ContentOverlay] Unknown result type:', item.type);
       }
-    });
+    } catch (error) {
+      console.error('[ContentOverlay] Execute error:', error);
+    }
   }
 
   /**
@@ -293,7 +395,14 @@ class ContentOverlay {
 
   executeSelected() {
     if (this.selectedIndex >= 0 && this.resultItems[this.selectedIndex]) {
-      this.executeResult(this.resultItems[this.selectedIndex].item);
+      const resultData = this.resultItems[this.selectedIndex];
+      if (resultData.isShowMore) {
+        // Handle "show more" button activation
+        chrome.tabs.create({ url: resultData.url });
+        this.close();
+      } else {
+        this.executeResult(resultData.item);
+      }
     }
   }
 
@@ -331,8 +440,8 @@ class ContentOverlay {
     this.elements.overlay.style.display = 'flex';
     this.elements.input.focus();
     this.elements.input.value = '';
-    this.currentResults = {};
-    this.displayResults();
+    // Load default results (actions, tabs, recent history)
+    this.handleSearch('');
   }
 
   close() {
@@ -515,6 +624,24 @@ class ContentOverlay {
         overflow: hidden;
         text-overflow: ellipsis;
         margin-top: 2px;
+      }
+
+      #bm-content-overlay .bm-show-more {
+        display: block;
+        width: 100%;
+        padding: 12px 16px;
+        border: none;
+        background: #f9f9f9;
+        color: #666;
+        font-size: 13px;
+        cursor: pointer;
+        border-top: 1px solid #eee;
+        transition: background 0.2s;
+        font-family: inherit;
+      }
+
+      #bm-content-overlay .bm-show-more:hover {
+        background: #f0f0f0;
       }
 
       #bm-content-overlay .bm-empty-state {

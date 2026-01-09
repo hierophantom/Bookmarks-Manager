@@ -96,6 +96,28 @@ class MainOverlay {
     // Prevent modal click from closing
     this.elements.modal.addEventListener('click', (e) => e.stopPropagation());
 
+    // Event delegation for result clicks and show more buttons
+    if (this.elements.results) {
+      this.elements.results.addEventListener('click', (e) => {
+        // Check if it's a result item
+        const resultItem = e.target.closest('.bm-result-item');
+        if (resultItem) {
+          const matchingResult = this.resultItems.find(r => r.element === resultItem);
+          if (matchingResult) {
+            console.log('[MainOverlay] Result clicked:', matchingResult.item.id);
+            this.executeResult(matchingResult.item);
+          }
+          return;
+        }
+
+        // Check if it's a show more button
+        const showMoreBtn = e.target.closest('.bm-show-more');
+        if (showMoreBtn) {
+          e.stopPropagation();
+        }
+      });
+    }
+
     console.log('[MainOverlay] UI setup complete');
   }
 
@@ -177,6 +199,15 @@ class MainOverlay {
     resultsList.innerHTML = '';
     this.resultItems = [];
 
+    // Map for "show more" URLs
+    const showMoreUrls = {
+      'History': 'chrome://history',
+      'Downloads': 'chrome://downloads',
+      'Tabs': null, // Can't link to tabs
+      'Bookmarks': 'chrome://bookmarks',
+      'Actions': null
+    };
+
     // Group results by category
     for (const [category, items] of Object.entries(this.currentResults)) {
       if (!Array.isArray(items) || items.length === 0) continue;
@@ -187,11 +218,34 @@ class MainOverlay {
       header.textContent = category;
       resultsList.appendChild(header);
 
-      // Items
-      for (const item of items) {
+      // Items - limit to 5, add "show more" button if needed
+      const maxItems = 5;
+      const displayItems = items.slice(0, maxItems);
+      const hasMore = items.length > maxItems;
+
+      for (const item of displayItems) {
         const element = this.createResultItem(item);
         resultsList.appendChild(element);
         this.resultItems.push({ item, element });
+      }
+
+      // Add "show more" button if items exceed limit
+      if (hasMore && showMoreUrls[category]) {
+        const showMoreBtn = document.createElement('button');
+        showMoreBtn.className = 'bm-show-more';
+        showMoreBtn.innerHTML = `📂 Show more in ${category}`;
+        showMoreBtn.addEventListener('click', () => {
+          chrome.tabs.create({ url: showMoreUrls[category] });
+          this.close();
+        });
+        resultsList.appendChild(showMoreBtn);
+        // Add show-more button to resultItems for keyboard navigation
+        this.resultItems.push({ 
+          item: { id: `show-more-${category}`, type: 'action', title: `Show more in ${category}` }, 
+          element: showMoreBtn,
+          isShowMore: true,
+          url: showMoreUrls[category]
+        });
       }
     }
 
@@ -219,7 +273,6 @@ class MainOverlay {
       </div>
     `;
 
-    el.addEventListener('click', () => this.executeResult(item));
     el.addEventListener('mouseenter', () => {
       this.clearSelection();
       el.classList.add('bm-selected');
@@ -287,7 +340,14 @@ class MainOverlay {
 
   executeSelected() {
     if (this.selectedIndex >= 0 && this.resultItems[this.selectedIndex]) {
-      this.executeResult(this.resultItems[this.selectedIndex].item);
+      const resultData = this.resultItems[this.selectedIndex];
+      if (resultData.isShowMore) {
+        // Handle "show more" button activation
+        chrome.tabs.create({ url: resultData.url });
+        this.close();
+      } else {
+        this.executeResult(resultData.item);
+      }
     }
   }
 
@@ -308,8 +368,8 @@ class MainOverlay {
     this.elements.overlay.style.display = 'flex';
     this.elements.input.focus();
     this.elements.input.value = '';
-    this.currentResults = {};
-    this.displayResults();
+    // Load default results (actions, tabs, recent history)
+    this.handleSearch('');
   }
 
   close() {
@@ -496,6 +556,23 @@ class MainOverlay {
         overflow: hidden;
         text-overflow: ellipsis;
         margin-top: 2px;
+      }
+
+      .bm-show-more {
+        display: block;
+        width: 100%;
+        padding: 12px 16px;
+        border: none;
+        background: #f9f9f9;
+        color: #666;
+        font-size: 13px;
+        cursor: pointer;
+        border-top: 1px solid #eee;
+        transition: background 0.2s;
+      }
+
+      .bm-show-more:hover {
+        background: #f0f0f0;
       }
 
       .bm-empty-state {

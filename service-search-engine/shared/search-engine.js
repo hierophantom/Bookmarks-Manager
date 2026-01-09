@@ -22,7 +22,7 @@ export class SearchEngine {
    */
   async search(query, context = {}) {
     if (!query || query.trim() === '') {
-      return this.getDefaultResults(context);
+      return await this.getDefaultResults(context);
     }
 
     const results = {};
@@ -50,11 +50,16 @@ export class SearchEngine {
   /**
    * Get default results when query is empty
    */
-  getDefaultResults(context) {
+  async getDefaultResults(context) {
+    const [tabs, history] = await Promise.all([
+      this.searchTabs(''),
+      this.searchHistory('')
+    ]);
+
     return {
       Actions: this.getActions('', context),
-      Tabs: [], // Could show recent tabs
-      Bookmarks: [] // Could show frequent bookmarks
+      Tabs: tabs,
+      History: history.slice(0, 5) // Limit to 5 recent
     };
   }
 
@@ -229,7 +234,9 @@ export class SearchEngine {
    * Execute an action
    */
   async executeAction(actionId, metadata = {}) {
-    const action = actionId.split('-')[1];
+    // Extract action type: 'action-new-tab' -> 'new-tab'
+    const action = actionId.replace('action-', '');
+    console.log('[SearchEngine] Executing action:', action, 'from ID:', actionId);
 
     try {
       switch (action) {
