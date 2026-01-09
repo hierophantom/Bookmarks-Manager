@@ -348,15 +348,7 @@ New Tab Override Section -->
         <!-- Buttons -->
         <div style="display: flex; gap: 8px; justify-content: flex-end; padding-top: 16px; border-top: 1px solid var(--theme-border);">
           <button id="cancel-settings-btn" style="
-       New tab override toggle
-    const newTabToggle = modal.querySelector('#new-tab-override-toggle');
-    if (newTabToggle) {
-      newTabToggle.addEventListener('change', (e) => {
-        newTabOverride = e.target.checked;
-      });
-    }
-
-    //      padding: 10px 20px;
+            padding: 10px 20px;
             background: white;
             border: 1px solid var(--theme-border);
             color: var(--theme-primary);
@@ -383,7 +375,8 @@ New Tab Override Section -->
       </div>
     `;
 
-    document.body.appendChild(modal);
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
 
     // New tab override toggle
     const newTabToggle = modal.querySelector('#new-tab-override-toggle');
