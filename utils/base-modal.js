@@ -125,10 +125,9 @@ class BaseModal {
     const cancelBtn = this.card.querySelector('#bm-modal-cancel');
 
     if (form) {
-      // Prevent default form submission (Enter key triggers this)
       form.addEventListener('submit', (e) => {
         e.preventDefault();
-        // Don't call handleSubmit - only allow explicit triggers
+        this.handleSubmit();
       });
     }
 
@@ -140,7 +139,7 @@ class BaseModal {
       cancelBtn.addEventListener('click', () => this.close());
     }
 
-    // Keyboard accessibility: Escape to close, Cmd/Ctrl+Enter to submit
+    // Keyboard accessibility: Escape to close
     document.addEventListener('keydown', (e) => {
       // Only handle if this modal is visible
       if (!document.body.contains(this.overlay)) return;
@@ -149,12 +148,6 @@ class BaseModal {
       if (e.key === 'Escape') {
         e.preventDefault();
         this.close();
-      }
-
-      // Cmd+Enter or Ctrl+Enter to submit (not plain Enter)
-      if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault();
-        this.handleSubmit();
       }
     }, true);
 

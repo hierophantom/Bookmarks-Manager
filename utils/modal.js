@@ -176,12 +176,6 @@ const Modal = (() => {
           overlay.remove();
           resolve([]);
         }
-
-        // Cmd/Ctrl+Enter to submit (not plain Enter)
-        if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
-          e.preventDefault();
-          handleSubmit();
-        }
       }, true);
     });
   }
@@ -261,8 +255,8 @@ const Modal = (() => {
           resolve(null);
         }
 
-        // Number keys 1-3 to select widgets (no modifier required)
-        if (['1', '2', '3'].includes(e.key) && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey) {
+        // Number keys 1-3 to select widgets
+        if (['1', '2', '3'].includes(e.key)) {
           e.preventDefault();
           const index = parseInt(e.key, 10) - 1;
           if (index < widgets.length) {
