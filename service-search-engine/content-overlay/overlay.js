@@ -246,7 +246,14 @@ class ContentOverlay {
       </div>
     `;
 
-    el.addEventListener('click', () => this.executeResult(item));
+    // Ensure click events work
+    el.style.cursor = 'pointer';
+    el.addEventListener('click', (e) => {
+      console.log('[ContentOverlay] Result clicked:', item.id);
+      e.stopPropagation();
+      this.executeResult(item);
+    }, true);
+    
     el.addEventListener('mouseenter', () => {
       this.clearSelection();
       el.classList.add('bm-selected');
