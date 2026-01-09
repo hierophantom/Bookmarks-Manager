@@ -205,7 +205,10 @@ class MainOverlay {
       'Downloads': 'chrome://downloads',
       'Tabs': null, // Can't link to tabs
       'Bookmarks': 'chrome://bookmarks',
-      'Actions': null
+      'Actions': null,
+      'Chrome Settings': 'chrome://settings',
+      'Extensions': 'chrome://extensions',
+      'Calculator': null
     };
 
     // Group results by category
@@ -291,7 +294,12 @@ class MainOverlay {
     try {
       let success = false;
 
-      if (item.type === 'tab' && item.tabId) {
+      if (item.type === 'calculator') {
+        // Copy calculator result to clipboard
+        await navigator.clipboard.writeText(item.value);
+        console.log('[MainOverlay] Copied to clipboard:', item.value);
+        success = true;
+      } else if (item.type === 'tab' && item.tabId) {
         // Switch to tab and focus its window (check FIRST before url)
         console.log('[MainOverlay] Switching to tab:', item.tabId);
         await chrome.tabs.update(item.tabId, { active: true });
@@ -304,7 +312,7 @@ class MainOverlay {
           query: item.query
         });
       } else if (item.url) {
-        // Open URL in new tab (bookmarks, history, downloads)
+        // Open URL in new tab (bookmarks, history, downloads, chrome settings, extensions)
         await chrome.tabs.create({ url: item.url });
         success = true;
       }

@@ -254,7 +254,10 @@ class ContentOverlay {
       'Downloads': 'chrome://downloads',
       'Tabs': null,
       'Bookmarks': 'chrome://bookmarks',
-      'Actions': null
+      'Actions': null,
+      'Chrome Settings': 'chrome://settings',
+      'Extensions': 'chrome://extensions',
+      'Calculator': null
     };
 
     // Group results by category
@@ -347,8 +350,14 @@ class ContentOverlay {
 
     try {
       // Handle different result types
-      // For regular http/https URLs, open directly
-      if (item.url && item.url.startsWith('http')) {
+      if (item.type === 'calculator') {
+        // Copy calculator result to clipboard
+        navigator.clipboard.writeText(item.value).then(() => {
+          console.log('[ContentOverlay] Copied to clipboard:', item.value);
+          this.close();
+        });
+      } else if (item.url && item.url.startsWith('http')) {
+        // For regular http/https URLs, open directly
         window.open(item.url, '_blank');
         this.close();
       } else {
@@ -363,7 +372,8 @@ class ContentOverlay {
           metadata: {
             url: item.url,
             tabId: item.tabId,
-            query: item.query
+            query: item.query,
+            value: item.value
           }
         }, (response) => {
           if (response && response.success) {
