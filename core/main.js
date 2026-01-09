@@ -315,6 +315,27 @@ document.addEventListener('DOMContentLoaded', async () => {
         const childFolders = folder.children.filter(c => !c.url);
         const childBookmarks = folder.children.filter(c => c.url);
         
+        // When filtering by tag, check if folder has any matching bookmarks
+        if (filterTag) {
+          let hasMatchingBookmarks = false;
+          for (const bookmark of childBookmarks) {
+            const tags = await TagsService.getTags(bookmark.id);
+            if (tags.includes(filterTag)) {
+              hasMatchingBookmarks = true;
+              break;
+            }
+          }
+          
+          // If no matching bookmarks AND filtering, skip this folder entirely
+          if (!hasMatchingBookmarks) {
+            console.log(`[Bookmarks] Folder "${folder.title}" has no bookmarks with tag "${filterTag}", skipping`);
+            // Still recursively render subfolders in case they have matches
+            const sortedFolders = sortFolders(childFolders);
+            await Promise.all(sortedFolders.map(f => renderFolder(f, parentEl)));
+            return;
+          }
+        }
+        
         // Apply sorting
         const sortedFolders = sortFolders(childFolders);
         const sortedBookmarks = sortBookmarks(childBookmarks);
