@@ -372,6 +372,7 @@ class ContentOverlay {
           metadata: {
             url: item.url,
             tabId: item.tabId,
+            title: item.title,
             query: item.query,
             value: item.value
           }

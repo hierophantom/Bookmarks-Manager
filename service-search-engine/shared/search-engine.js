@@ -77,7 +77,7 @@ export class SearchEngine {
     ]);
 
     return {
-      Actions: this.getActions('', context),
+      Actions: await this.getActions('', context),
       Tabs: tabs,
       History: history.slice(0, 5) // Limit to 5 recent
     };
@@ -381,9 +381,14 @@ export class SearchEngine {
       if (typeof math === 'undefined' || !math || !math.evaluate) {
         // Fallback to basic eval for simple expressions
         if (/^[\d\s+\-*/.()]+$/.test(cleanInput)) {
-          const result = Function('"use strict"; return (' + cleanInput + ')')();
-          if (!Number.isFinite(result)) return null;
-          return Math.round(result * 1e8) / 1e8;
+          try {
+            const result = Function('"use strict"; return (' + cleanInput + ')')();
+            if (!Number.isFinite(result)) return null;
+            return Math.round(result * 1e8) / 1e8;
+          } catch (e) {
+            console.warn('Calculator fallback error:', e);
+            return null;
+          }
         }
         return null;
       }

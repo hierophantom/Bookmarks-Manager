@@ -308,7 +308,9 @@ class MainOverlay {
         success = true;
       } else if (item.type === 'action') {
         success = await this.engine.executeAction(item.id, {
-          tabId: item.tabId,
+          currentTabId: item.tabId,
+          url: item.url,
+          title: item.title,
           query: item.query
         });
       } else if (item.url) {
