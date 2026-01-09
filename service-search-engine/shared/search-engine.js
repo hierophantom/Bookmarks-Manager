@@ -358,7 +358,7 @@ export class SearchEngine {
   }
 
   /**
-   * Evaluate calculator expression
+   * Evaluate calculator expression - safe fallback without eval
    */
   evaluateCalculator(input) {
     if (!input || typeof input !== 'string') return null;
@@ -378,35 +378,129 @@ export class SearchEngine {
 
     try {
       // Check if math.js is available
-      if (typeof math === 'undefined' || !math || !math.evaluate) {
-        // Fallback to basic eval for simple expressions
-        if (/^[\d\s+\-*/.()]+$/.test(cleanInput)) {
-          try {
-            const result = Function('"use strict"; return (' + cleanInput + ')')();
-            if (!Number.isFinite(result)) return null;
-            return Math.round(result * 1e8) / 1e8;
-          } catch (e) {
-            console.warn('Calculator fallback error:', e);
-            return null;
-          }
+      if (typeof math !== 'undefined' && math && math.evaluate) {
+        // Use math.js to evaluate the expression
+        const result = math.evaluate(cleanInput);
+        
+        // Return null if result is not finite
+        if (!Number.isFinite(result)) {
+          return null;
         }
-        return null;
+        
+        // Round to 8 decimal places to avoid floating point issues
+        return Math.round(result * 1e8) / 1e8;
       }
 
-      // Use math.js to evaluate the expression
-      const result = math.evaluate(cleanInput);
-      
-      // Return null if result is not finite
-      if (!Number.isFinite(result)) {
-        return null;
-      }
-      
-      // Round to 8 decimal places to avoid floating point issues
-      return Math.round(result * 1e8) / 1e8;
+      // Fallback: Safe expression parser without eval
+      // Only supports basic arithmetic: +, -, *, /, %
+      return this.safeMathEval(cleanInput);
     } catch (e) {
       console.warn('Calculator error:', e);
       return null;
     }
+  }
+
+  /**
+   * Safe math expression evaluator - no eval, no Function
+   * Supports: +, -, *, /, %, parentheses, decimals
+   */
+  safeMathEval(expr) {
+    // Tokenize the expression
+    const tokens = [];
+    let current = '';
+    
+    for (let i = 0; i < expr.length; i++) {
+      const char = expr[i];
+      if ('+-*/%()'.includes(char)) {
+        if (current) {
+          tokens.push(parseFloat(current));
+          current = '';
+        }
+        tokens.push(char);
+      } else if (/[\d.]/.test(char)) {
+        current += char;
+      }
+    }
+    
+    if (current) {
+      tokens.push(parseFloat(current));
+    }
+
+    // Validate tokens
+    if (tokens.length === 0) return null;
+    for (const token of tokens) {
+      if (typeof token === 'number' && !Number.isFinite(token)) {
+        return null;
+      }
+    }
+
+    // Evaluate with operator precedence
+    return this.evaluateTokens(tokens);
+  }
+
+  /**
+   * Evaluate tokenized expression with proper precedence
+   */
+  evaluateTokens(tokens) {
+    // Handle parentheses first
+    while (tokens.includes('(')) {
+      const closeIdx = tokens.indexOf(')');
+      if (closeIdx === -1) return null;
+      
+      let openIdx = closeIdx - 1;
+      while (openIdx >= 0 && tokens[openIdx] !== '(') {
+        openIdx--;
+      }
+      
+      if (openIdx === -1) return null;
+      
+      const subExpr = tokens.slice(openIdx + 1, closeIdx);
+      const result = this.evaluateTokens(subExpr);
+      if (result === null) return null;
+      
+      tokens.splice(openIdx, closeIdx - openIdx + 1, result);
+    }
+
+    // Handle * and / first (left to right)
+    for (let i = 1; i < tokens.length; i += 2) {
+      if (tokens[i] === '*') {
+        const result = tokens[i - 1] * tokens[i + 1];
+        tokens.splice(i - 1, 3, result);
+        i -= 2;
+      } else if (tokens[i] === '/') {
+        if (tokens[i + 1] === 0) return null; // Division by zero
+        const result = tokens[i - 1] / tokens[i + 1];
+        tokens.splice(i - 1, 3, result);
+        i -= 2;
+      } else if (tokens[i] === '%') {
+        const result = tokens[i - 1] % tokens[i + 1];
+        tokens.splice(i - 1, 3, result);
+        i -= 2;
+      }
+    }
+
+    // Handle + and - (left to right)
+    for (let i = 1; i < tokens.length; i += 2) {
+      if (tokens[i] === '+') {
+        const result = tokens[i - 1] + tokens[i + 1];
+        tokens.splice(i - 1, 3, result);
+        i -= 2;
+      } else if (tokens[i] === '-') {
+        const result = tokens[i - 1] - tokens[i + 1];
+        tokens.splice(i - 1, 3, result);
+        i -= 2;
+      }
+    }
+
+    // Should be left with single result
+    if (tokens.length !== 1 || typeof tokens[0] !== 'number') {
+      return null;
+    }
+
+    const result = tokens[0];
+    if (!Number.isFinite(result)) return null;
+    
+    return Math.round(result * 1e8) / 1e8;
   }
 
   /**
