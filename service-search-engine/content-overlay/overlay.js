@@ -283,9 +283,11 @@ class ContentOverlay {
         this.resultItems.push({ item, element });
         console.log('[ContentOverlay] Added result item:', {
           id: item.id,
+          type: item.type,
           title: item.title,
           elementClass: element.className,
-          elementInDOM: resultsList.contains(element)
+          elementInDOM: resultsList.contains(element),
+          hasUrl: !!item.url
         });
       }
 
@@ -346,11 +348,19 @@ class ContentOverlay {
    * Execute selected result
    */
   executeResult(item) {
-    console.log('[ContentOverlay] Executing:', item.id, item.type, 'itemUrl:', item.url);
+    console.log('[ContentOverlay] Executing:', {
+      id: item.id,
+      type: item.type,
+      url: item.url,
+      typeCheck_calculator: item.type === 'calculator',
+      typeCheck_action: item.type === 'action',
+      urlCheck_http: item.url && item.url.startsWith('http')
+    });
 
     try {
       // Handle different result types
       if (item.type === 'calculator') {
+        console.log('[ContentOverlay] Branch: calculator');
         // Copy calculator result to clipboard
         navigator.clipboard.writeText(item.value).then(() => {
           console.log('[ContentOverlay] Copied to clipboard:', item.value);
@@ -358,7 +368,7 @@ class ContentOverlay {
         });
       } else if (item.type === 'action') {
         // Actions go through background (check BEFORE url)
-        console.log('[ContentOverlay] Sending action to background:', item.id);
+        console.log('[ContentOverlay] Branch: action - sending to background');
         chrome.runtime.sendMessage({
           type: 'EXECUTE_RESULT',
           resultId: item.id,
@@ -371,15 +381,18 @@ class ContentOverlay {
             value: item.value
           }
         }, (response) => {
+          console.log('[ContentOverlay] Action response:', response);
           if (response && response.success) {
             this.close();
           }
         });
       } else if (item.url && item.url.startsWith('http')) {
+        console.log('[ContentOverlay] Branch: http URL - opening in new tab');
         // For regular http/https URLs, open directly
         window.open(item.url, '_blank');
         this.close();
       } else {
+        console.log('[ContentOverlay] Branch: other (chrome://, tabs, etc)');
         // Everything else goes through background:
         // - chrome:// URLs (content scripts can't access)
         // - Tab switching (requires chrome.tabs API)
@@ -395,6 +408,7 @@ class ContentOverlay {
             value: item.value
           }
         }, (response) => {
+          console.log('[ContentOverlay] Background response:', response);
           if (response && response.success) {
             this.close();
           }
