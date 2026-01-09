@@ -15,37 +15,6 @@ export class SearchEngine {
       extensions: { name: 'Extensions', icon: '🧩', weight: 2 },
       calculator: { name: 'Calculator', icon: '🔢', weight: 3 }
     };
-    
-    // Try to load math.js if available
-    this.mathLoaded = false;
-    this.loadMathLib();
-  }
-
-  async loadMathLib() {
-    try {
-      // Check if math.js is already loaded globally
-      if (typeof math !== 'undefined') {
-        this.mathLoaded = true;
-        return;
-      }
-      
-      // Try to import math.js
-      const script = document.createElement('script');
-      script.src = chrome.runtime.getURL('service-search-engine/shared/math.min.js');
-      script.onload = () => {
-        this.mathLoaded = true;
-        console.log('[SearchEngine] Math.js loaded successfully');
-      };
-      script.onerror = () => {
-        console.warn('[SearchEngine] Failed to load math.js');
-      };
-      
-      if (document.head) {
-        document.head.appendChild(script);
-      }
-    } catch (error) {
-      console.warn('[SearchEngine] Math.js loading error:', error);
-    }
   }
 
   /**
@@ -360,19 +329,24 @@ export class SearchEngine {
     if (!input || typeof input !== 'string') return null;
     
     // Remove whitespace
-    input = input.replace(/\s+/g, '');
+    const cleanInput = input.replace(/\s+/g, '');
+    
+    // Check for minimum pattern: [num][operator][num]
+    // Must have at least one digit, followed by an operator, followed by at least one digit
+    const hasBasicPattern = /\d+[-+/*%^]\d+/.test(cleanInput);
+    if (!hasBasicPattern) return null;
     
     // Early return checks for invalid inputs
-    if (input.includes('()')) return null;
-    if (input.match(/\(\s*\)/)) return null;
-    if (!/[-+/*().\d]/.test(input)) return null;
+    if (cleanInput.includes('()')) return null;
+    if (cleanInput.match(/\(\s*\)/)) return null;
+    if (!/[-+/*().\d]/.test(cleanInput)) return null;
 
     try {
       // Check if math.js is available
       if (typeof math === 'undefined' || !math || !math.evaluate) {
         // Fallback to basic eval for simple expressions
-        if (/^[\d\s+\-*/.()]+$/.test(input)) {
-          const result = Function('"use strict"; return (' + input + ')')();
+        if (/^[\d\s+\-*/.()]+$/.test(cleanInput)) {
+          const result = Function('"use strict"; return (' + cleanInput + ')')();
           if (!Number.isFinite(result)) return null;
           return Math.round(result * 1e8) / 1e8;
         }
@@ -380,7 +354,7 @@ export class SearchEngine {
       }
 
       // Use math.js to evaluate the expression
-      const result = math.evaluate(input);
+      const result = math.evaluate(cleanInput);
       
       // Return null if result is not finite
       if (!Number.isFinite(result)) {

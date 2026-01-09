@@ -24,7 +24,7 @@
   "content_scripts": [
     {
       "matches": ["http://*/*", "https://*/*"],
-      "js": ["service-search-engine/content-overlay/overlay.js"],
+      "js": ["service-search-engine/shared/math.min.js", "service-search-engine/content-overlay/overlay.js"],
       "run_at": "document_idle",
       "all_frames": false
     }
