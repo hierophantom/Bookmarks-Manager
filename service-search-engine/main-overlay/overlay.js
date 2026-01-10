@@ -13,6 +13,7 @@ class MainOverlay {
     this.selectedIndex = -1;
     this.currentResults = {};
     this.resultItems = [];
+    this.selectedTags = [];
   }
 
   /**
@@ -49,13 +50,24 @@ class MainOverlay {
     overlay.innerHTML = `
       <div class="bm-overlay-backdrop" id="bm-overlay-backdrop"></div>
       <div class="bm-overlay-modal" id="bm-overlay-modal">
-        <input 
-          type="text" 
-          id="bm-search-input" 
-          class="bm-search-input" 
-          placeholder="Search bookmarks, history, tabs..."
-          autocomplete="off"
-        />
+        <div class="bm-search-wrapper">
+          <input 
+            type="text" 
+            id="bm-search-input" 
+            class="bm-search-input" 
+            placeholder="Search bookmarks, history, tabs..."
+            autocomplete="off"
+          />
+          <input 
+            type="text" 
+            id="bm-tag-filter-input" 
+            class="bm-tag-filter-input" 
+            placeholder="Filter by tag..."
+            autocomplete="off"
+            style="margin-left: 8px; flex: 0 1 200px;"
+          />
+          <div id="bm-selected-tags" class="bm-selected-tags" style="margin-left: 8px;"></div>
+        </div>
         <div class="bm-results-container" id="bm-results-container">
           <div class="bm-loading" id="bm-loading" style="display: none;">
             <div class="bm-spinner"></div>
@@ -82,6 +94,8 @@ class MainOverlay {
       modal: document.getElementById('bm-overlay-modal'),
       backdrop: document.getElementById('bm-overlay-backdrop'),
       input: document.getElementById('bm-search-input'),
+      tagInput: document.getElementById('bm-tag-filter-input'),
+      selectedTags: document.getElementById('bm-selected-tags'),
       loading: document.getElementById('bm-loading'),
       results: document.getElementById('bm-results'),
       empty: document.getElementById('bm-empty-state')
@@ -92,6 +106,22 @@ class MainOverlay {
 
     // Search input
     this.elements.input.addEventListener('input', (e) => this.handleSearch(e.target.value));
+
+    // Tag filter input
+    if (this.elements.tagInput) {
+      this.elements.tagInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          const tag = this.elements.tagInput.value.trim();
+          if (tag && !this.selectedTags.includes(tag)) {
+            this.selectedTags.push(tag);
+            this.elements.tagInput.value = '';
+            this.updateSelectedTagsDisplay();
+            this.handleSearch(this.elements.input.value);
+          }
+          e.preventDefault();
+        }
+      });
+    }
 
     // Prevent modal click from closing
     this.elements.modal.addEventListener('click', (e) => e.stopPropagation());
@@ -182,11 +212,67 @@ class MainOverlay {
       });
 
       console.log('[MainOverlay] Results:', Object.keys(this.currentResults));
+      // Filter results by selected tags if any
+      if (this.selectedTags.length > 0) {
+        this.filterResultsByTags();
+      }
       this.displayResults();
     } catch (error) {
       console.error('[MainOverlay] Search error:', error);
       this.showEmpty();
     }
+  }
+
+  /**
+   * Filter bookmark results by selected tags
+   */
+  async filterResultsByTags() {
+    if (!this.currentResults.Bookmarks || !Array.isArray(this.currentResults.Bookmarks)) {
+      return;
+    }
+
+    // Check if TagsService is available
+    if (typeof TagsService === 'undefined') {
+      console.warn('[MainOverlay] TagsService not available');
+      return;
+    }
+
+    const filtered = [];
+    for (const bookmark of this.currentResults.Bookmarks) {
+      const tags = await TagsService.getTags(bookmark.metadata.bookmarkId);
+      // Include bookmark if it has ALL selected tags
+      const hasAllTags = this.selectedTags.every(tag => tags.includes(tag));
+      if (hasAllTags) {
+        filtered.push(bookmark);
+      }
+    }
+
+    this.currentResults.Bookmarks = filtered;
+  }
+
+  /**
+   * Display selected tags
+   */
+  updateSelectedTagsDisplay() {
+    if (!this.elements.selectedTags) return;
+    
+    this.elements.selectedTags.innerHTML = this.selectedTags.map(tag => `
+      <span class="bm-tag-chip" style="display:inline-block;padding:4px 8px;background:#e5e7eb;color:#374151;border-radius:9999px;font-size:11px;margin-right:4px;">
+        #${tag}
+        <button class="bm-tag-remove" data-tag="${tag}" style="background:none;border:none;cursor:pointer;margin-left:4px;font-weight:bold;">×</button>
+      </span>
+    `).join('');
+
+    // Add remove handlers
+    this.elements.selectedTags.querySelectorAll('.bm-tag-remove').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const tag = btn.dataset.tag;
+        this.selectedTags = this.selectedTags.filter(t => t !== tag);
+        this.updateSelectedTagsDisplay();
+        this.handleSearch(this.elements.input.value);
+      });
+    });
   }
 
   /**
@@ -268,6 +354,27 @@ class MainOverlay {
   createResultItem(item) {
     const el = document.createElement('div');
     el.className = 'bm-result-item';
+    
+    // Build tags display for bookmarks
+    let tagsHtml = '';
+    if (item.type === 'bookmark' && typeof TagsService !== 'undefined') {
+      // Note: Tags are loaded asynchronously, but we'll add them dynamically
+      const bookmarkId = item.metadata && item.metadata.bookmarkId;
+      if (bookmarkId) {
+        TagsService.getTags(bookmarkId).then(tags => {
+          if (tags.length > 0) {
+            const tagChips = tags.map(tag => 
+              `<span class="bm-tag-chip" style="display:inline-block;padding:2px 6px;background:#e5e7eb;color:#374151;border-radius:6px;font-size:10px;margin-right:3px;">#${tag}</span>`
+            ).join('');
+            const desc = el.querySelector('.bm-result-description');
+            if (desc) {
+              desc.innerHTML += `<div style="margin-top:3px;">${tagChips}</div>`;
+            }
+          }
+        });
+      }
+    }
+    
     el.innerHTML = `
       <span class="bm-result-icon">${item.icon}</span>
       <div class="bm-result-content">
