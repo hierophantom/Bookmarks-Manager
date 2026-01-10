@@ -12,6 +12,8 @@
   <script type="module" src="../service-search-engine/main-overlay/overlay.js"></script>
   <!-- Load BaseModal class for all modals -->
   <script src="../utils/base-modal.js"></script>
+  <!-- Tag multi-select utility -->
+  <script src="../utils/tag-multiselect.js"></script>
 </head>
 <body>
   <div id="app">
@@ -62,8 +64,7 @@
 
         <div class="filter-row">
           <input id="text-search" placeholder="Search by title or URL..." style="flex: 1; margin-right: 8px;" />
-          <input id="tag-filter" placeholder="Filter by tag..." />
-          <span id="tag-list"></span>
+          <input id="tag-filter" placeholder="Filter by tags..." />
           <div style="margin-left: auto; display: flex; gap: 8px; align-items: center;">
             <label for="sort-dropdown" style="font-size: 13px; font-weight: 600;">Sort:</label>
             <select id="sort-dropdown" style="padding: 4px 8px; border-radius: 6px; border: 1px solid #ccc; background: white; cursor: pointer; font-size: 13px;">

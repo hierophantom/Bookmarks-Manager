@@ -215,6 +215,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     return sorted;
   }
 
+  // Global state for tag multi-select
+  const tagFilterInputRef = document.getElementById('tag-filter');
+  let currentFilterTags = [];
+  if (tagFilterInputRef && typeof window.TagMultiSelect !== 'undefined' && typeof window.TagsService !== 'undefined') {
+    try {
+      const tagSelect = new window.TagMultiSelect({
+        input: tagFilterInputRef,
+        getTags: () => window.TagsService.getAllTags(),
+        onChange: (tags) => { currentFilterTags = tags; render(true); },
+        placeholder: 'Filter by tags...'
+      });
+    } catch (e) { console.warn('TagMultiSelect init failed', e); }
+  }
+
   async function render(preserveScroll = false) {
     const savedScrollY = preserveScroll ? window.scrollY : 0;
     
@@ -251,37 +265,16 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
     }
 
-    // Text search and tag filter logic
+    // Text search input
     const textSearchInput = document.getElementById('text-search');
-    const tagFilterInput = document.getElementById('tag-filter');
-    const tagListSpan = document.getElementById('tag-list');
     
-    // Add event listeners for both search inputs
+    // Text search listener
     if (textSearchInput) {
       textSearchInput.addEventListener('input', () => render(true));
-    }
-    if (tagFilterInput) {
-      tagFilterInput.addEventListener('input', () => render(true));
     }
     
     // Get filter values
     let filterText = (textSearchInput && textSearchInput.value.trim().toLowerCase()) || '';
-    let filterTag = (tagFilterInput && tagFilterInput.value.trim()) || '';
-    
-    // Populate tag list
-    if (tagListSpan && typeof TagsService !== 'undefined') {
-      const allTags = await TagsService.getAllTags();
-      tagListSpan.innerHTML = allTags.map(t=>
-        `<button class="tag-pill" style="margin:0 4px 4px 0;padding:4px 12px;border-radius:9999px;border:none;background:#e5e7eb;color:#374151;cursor:pointer;font-size:12px;font-weight:500;">#${t}</button>`
-      ).join('');
-      tagListSpan.querySelectorAll('.tag-pill').forEach(btn=>{
-        btn.addEventListener('click', ()=>{
-          const tagName = btn.textContent.replace('#', '');
-          if (tagFilterInput) tagFilterInput.value = tagName;
-          render(true);
-        });
-      });
-    }
 
     // Helper function to render a folder and all its contents recursively
     async function renderFolder(folder, parentEl) {
@@ -329,30 +322,38 @@ document.addEventListener('DOMContentLoaded', async () => {
         const childFolders = folder.children.filter(c => !c.url);
         const childBookmarks = folder.children.filter(c => c.url);
         
-        // When filtering by tag or text, check if folder has any matching bookmarks
-        if (filterTag || filterText) {
-          let hasMatchingBookmarks = false;
-          for (const bookmark of childBookmarks) {
-            // Check tag filter
-            if (filterTag) {
-              const tags = await TagsService.getTags(bookmark.id);
-              if (!tags.includes(filterTag)) continue;
+        // When filtering by tags or text, check if folder or its subfolders have any matching bookmarks
+        if ((currentFilterTags && currentFilterTags.length > 0) || filterText) {
+          async function folderHasMatch(node) {
+            if (!node || !node.children) return false;
+            for (const child of node.children) {
+              if (child.url) {
+                // Text condition (AND with tags)
+                if (filterText) {
+                  const title = (child.title || '').toLowerCase();
+                  const url = (child.url || '').toLowerCase();
+                  if (!title.includes(filterText) && !url.includes(filterText)) {
+                    continue;
+                  }
+                }
+                // Tag OR condition
+                if (currentFilterTags && currentFilterTags.length > 0) {
+                  const tags = await TagsService.getTags(child.id);
+                  const anyMatch = currentFilterTags.some(t => tags.includes(t));
+                  if (!anyMatch) continue;
+                }
+                return true; // found a matching bookmark
+              } else if (child.children && child.children.length) {
+                const has = await folderHasMatch(child);
+                if (has) return true;
+              }
             }
-            
-            // Check text filter
-            if (filterText) {
-              const title = (bookmark.title || '').toLowerCase();
-              const url = (bookmark.url || '').toLowerCase();
-              if (!title.includes(filterText) && !url.includes(filterText)) continue;
-            }
-            
-            hasMatchingBookmarks = true;
-            break;
+            return false;
           }
-          
-          // If no matching bookmarks in this folder, don't render this folder
+
+          const hasMatchingBookmarks = await folderHasMatch(folder);
           if (!hasMatchingBookmarks) {
-            console.log(`[Bookmarks] Folder "${folder.title}" has no matching bookmarks, skipping`);
+            console.log(`[Bookmarks] Folder "${folder.title}" has no matching bookmarks (including subfolders), skipping`);
             return;
           }
         }
@@ -365,10 +366,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         const sortedChildren = [...sortedFolders, ...sortedBookmarks];
         
         await Promise.all(sortedChildren.map(async child => {
-          // Filter by tag
-          if (filterTag) {
+          // Filter by tags (OR among selected; AND with text)
+          if (currentFilterTags && currentFilterTags.length > 0 && child.url) {
             const tags = await TagsService.getTags(child.id);
-            if (!tags.includes(filterTag)) return;
+            const anyMatch = currentFilterTags.some(t => tags.includes(t));
+            if (!anyMatch) return;
           }
           
           // Filter by text (title or URL)
@@ -397,18 +399,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
             slot.innerHTML = `<a href="${child.url}" target="_blank">${child.title || child.url}</a> ${tagChips} <button data-action="edit">Edit</button> <button data-action="del">Delete</button>`;
             
-            // Add tag chip click handlers
-            slot.querySelectorAll('.bm-tag-chip').forEach(chip => {
-              chip.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                const tagFilterInput = document.getElementById('tag-filter');
-                if (tagFilterInput) {
-                  tagFilterInput.value = chip.dataset.tag;
-                  render(true);
-                }
-              });
-            });
+            
             
             slot.querySelectorAll('button').forEach(btn => {
               btn.addEventListener('click', (e) => {
@@ -524,45 +515,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       } catch (err) { console.error('drop move failed', err); }
     });
   }
-  // tag filter input triggers render and autocomplete
-  const tagFilterInput = document.getElementById('tag-filter');
-  let tagDropdown;
-  async function showTagDropdown() {
-    if (!tagFilterInput) return;
-    const val = tagFilterInput.value.trim().toLowerCase();
-    if (!val) { if (tagDropdown) tagDropdown.style.display = 'none'; return; }
-    const allTags = (typeof window.TagsService !== 'undefined' && window.TagsService.getAllTags) ? await window.TagsService.getAllTags() : [];
-    const matches = allTags.filter(t => t.toLowerCase().includes(val) && t);
-    if (!matches.length) { if (tagDropdown) tagDropdown.style.display = 'none'; return; }
-    if (!tagDropdown) {
-      tagDropdown = document.createElement('div');
-      tagDropdown.className = 'bm-tag-dropdown';
-      tagDropdown.style.position = 'absolute';
-      tagDropdown.style.background = '#fff';
-      tagDropdown.style.border = '1px solid #ccc';
-      tagDropdown.style.zIndex = 100000;
-      tagDropdown.style.minWidth = '120px';
-      tagDropdown.style.boxShadow = '0 2px 8px rgba(0,0,0,0.08)';
-      tagFilterInput.parentNode.appendChild(tagDropdown);
-    }
-    tagDropdown.innerHTML = matches.map(t => `<div class='bm-tag-suggestion' style='padding:4px 8px;cursor:pointer;'>${t}</div>`).join('');
-    tagDropdown.style.display = 'block';
-    tagDropdown.style.top = (tagFilterInput.offsetTop + tagFilterInput.offsetHeight) + 'px';
-    tagDropdown.style.left = tagFilterInput.offsetLeft + 'px';
-    tagDropdown.querySelectorAll('.bm-tag-suggestion').forEach(el => {
-      el.addEventListener('mousedown', (e) => {
-        e.preventDefault();
-        tagFilterInput.value = el.textContent;
-        tagDropdown.style.display = 'none';
-        render(true);
-        tagFilterInput.focus();
-      });
-    });
-  }
-  if (tagFilterInput) {
-    tagFilterInput.addEventListener('input', ()=>{ render(true); showTagDropdown(); });
-    tagFilterInput.addEventListener('blur', () => { setTimeout(()=>{ if (tagDropdown) tagDropdown.style.display = 'none'; }, 150); });
-  }
+  
   if (openSearch) {
     openSearch.addEventListener('click', () => {
       // If overlay is loaded on this page (chrome-extension://main.html), toggle directly

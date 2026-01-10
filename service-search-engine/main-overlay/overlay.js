@@ -62,11 +62,10 @@ class MainOverlay {
             type="text" 
             id="bm-tag-filter-input" 
             class="bm-tag-filter-input" 
-            placeholder="Filter by tag..."
+            placeholder="Filter by tags..."
             autocomplete="off"
             style="margin-left: 8px; flex: 0 1 200px;"
           />
-          <div id="bm-selected-tags" class="bm-selected-tags" style="margin-left: 8px;"></div>
         </div>
         <div class="bm-results-container" id="bm-results-container">
           <div class="bm-loading" id="bm-loading" style="display: none;">
@@ -95,7 +94,7 @@ class MainOverlay {
       backdrop: document.getElementById('bm-overlay-backdrop'),
       input: document.getElementById('bm-search-input'),
       tagInput: document.getElementById('bm-tag-filter-input'),
-      selectedTags: document.getElementById('bm-selected-tags'),
+      
       loading: document.getElementById('bm-loading'),
       results: document.getElementById('bm-results'),
       empty: document.getElementById('bm-empty-state')
@@ -107,20 +106,16 @@ class MainOverlay {
     // Search input
     this.elements.input.addEventListener('input', (e) => this.handleSearch(e.target.value));
 
-    // Tag filter input
-    if (this.elements.tagInput) {
-      this.elements.tagInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-          const tag = this.elements.tagInput.value.trim();
-          if (tag && !this.selectedTags.includes(tag)) {
-            this.selectedTags.push(tag);
-            this.elements.tagInput.value = '';
-            this.updateSelectedTagsDisplay();
-            this.handleSearch(this.elements.input.value);
-          }
-          e.preventDefault();
-        }
-      });
+    // Tag multi-select dropdown
+    if (this.elements.tagInput && typeof window.TagMultiSelect !== 'undefined' && typeof window.TagsService !== 'undefined') {
+      try {
+        const tagSelect = new window.TagMultiSelect({
+          input: this.elements.tagInput,
+          getTags: () => window.TagsService.getAllTags(),
+          onChange: (tags) => { this.selectedTags = tags; this.handleSearch(this.elements.input.value); },
+          placeholder: 'Filter by tags...'
+        });
+      } catch (e) { console.warn('[MainOverlay] TagMultiSelect init failed', e); }
     }
 
     // Prevent modal click from closing
@@ -214,7 +209,7 @@ class MainOverlay {
       console.log('[MainOverlay] Results:', Object.keys(this.currentResults));
       // Filter results by selected tags if any
       if (this.selectedTags.length > 0) {
-        this.filterResultsByTags();
+        await this.filterResultsByTags();
       }
       this.displayResults();
     } catch (error) {
@@ -240,9 +235,9 @@ class MainOverlay {
     const filtered = [];
     for (const bookmark of this.currentResults.Bookmarks) {
       const tags = await TagsService.getTags(bookmark.metadata.bookmarkId);
-      // Include bookmark if it has ALL selected tags
-      const hasAllTags = this.selectedTags.every(tag => tags.includes(tag));
-      if (hasAllTags) {
+      // Include bookmark if it has ANY of the selected tags (OR)
+      const hasAnyTag = this.selectedTags.some(tag => tags.includes(tag));
+      if (hasAnyTag) {
         filtered.push(bookmark);
       }
     }
@@ -250,30 +245,7 @@ class MainOverlay {
     this.currentResults.Bookmarks = filtered;
   }
 
-  /**
-   * Display selected tags
-   */
-  updateSelectedTagsDisplay() {
-    if (!this.elements.selectedTags) return;
-    
-    this.elements.selectedTags.innerHTML = this.selectedTags.map(tag => `
-      <span class="bm-tag-chip" style="display:inline-block;padding:4px 8px;background:#e5e7eb;color:#374151;border-radius:9999px;font-size:11px;margin-right:4px;">
-        #${tag}
-        <button class="bm-tag-remove" data-tag="${tag}" style="background:none;border:none;cursor:pointer;margin-left:4px;font-weight:bold;">×</button>
-      </span>
-    `).join('');
-
-    // Add remove handlers
-    this.elements.selectedTags.querySelectorAll('.bm-tag-remove').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const tag = btn.dataset.tag;
-        this.selectedTags = this.selectedTags.filter(t => t !== tag);
-        this.updateSelectedTagsDisplay();
-        this.handleSearch(this.elements.input.value);
-      });
-    });
-  }
+  
 
   /**
    * Display results
