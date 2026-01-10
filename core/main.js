@@ -251,10 +251,24 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
     }
 
-    // Tag filter logic
+    // Text search and tag filter logic
+    const textSearchInput = document.getElementById('text-search');
     const tagFilterInput = document.getElementById('tag-filter');
     const tagListSpan = document.getElementById('tag-list');
-    let filterTag = tagFilterInput && tagFilterInput.value.trim();
+    
+    // Add event listeners for both search inputs
+    if (textSearchInput) {
+      textSearchInput.addEventListener('input', () => render(true));
+    }
+    if (tagFilterInput) {
+      tagFilterInput.addEventListener('input', () => render(true));
+    }
+    
+    // Get filter values
+    let filterText = (textSearchInput && textSearchInput.value.trim().toLowerCase()) || '';
+    let filterTag = (tagFilterInput && tagFilterInput.value.trim()) || '';
+    
+    // Populate tag list
     if (tagListSpan && typeof TagsService !== 'undefined') {
       const allTags = await TagsService.getAllTags();
       tagListSpan.innerHTML = allTags.map(t=>
@@ -315,20 +329,30 @@ document.addEventListener('DOMContentLoaded', async () => {
         const childFolders = folder.children.filter(c => !c.url);
         const childBookmarks = folder.children.filter(c => c.url);
         
-        // When filtering by tag, check if folder has any matching bookmarks
-        if (filterTag) {
+        // When filtering by tag or text, check if folder has any matching bookmarks
+        if (filterTag || filterText) {
           let hasMatchingBookmarks = false;
           for (const bookmark of childBookmarks) {
-            const tags = await TagsService.getTags(bookmark.id);
-            if (tags.includes(filterTag)) {
-              hasMatchingBookmarks = true;
-              break;
+            // Check tag filter
+            if (filterTag) {
+              const tags = await TagsService.getTags(bookmark.id);
+              if (!tags.includes(filterTag)) continue;
             }
+            
+            // Check text filter
+            if (filterText) {
+              const title = (bookmark.title || '').toLowerCase();
+              const url = (bookmark.url || '').toLowerCase();
+              if (!title.includes(filterText) && !url.includes(filterText)) continue;
+            }
+            
+            hasMatchingBookmarks = true;
+            break;
           }
           
           // If no matching bookmarks in this folder, don't render this folder
           if (!hasMatchingBookmarks) {
-            console.log(`[Bookmarks] Folder "${folder.title}" has no bookmarks with tag "${filterTag}", skipping`);
+            console.log(`[Bookmarks] Folder "${folder.title}" has no matching bookmarks, skipping`);
             return;
           }
         }
@@ -341,9 +365,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         const sortedChildren = [...sortedFolders, ...sortedBookmarks];
         
         await Promise.all(sortedChildren.map(async child => {
+          // Filter by tag
           if (filterTag) {
             const tags = await TagsService.getTags(child.id);
             if (!tags.includes(filterTag)) return;
+          }
+          
+          // Filter by text (title or URL)
+          if (filterText && child.url) {
+            const title = (child.title || '').toLowerCase();
+            const url = (child.url || '').toLowerCase();
+            if (!title.includes(filterText) && !url.includes(filterText)) return;
           }
           const slot = document.createElement('div');
           slot.className = 'slot';
