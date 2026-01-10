@@ -17,6 +17,39 @@ export class SearchEngine {
     };
   }
 
+  async getTagsApi() {
+    if (typeof TagsService !== 'undefined') {
+      return {
+        getAllTags: () => TagsService.getAllTags(),
+        findBookmarksByTag: (tag) => TagsService.findBookmarksByTag(tag),
+        getTags: (id) => TagsService.getTags(id)
+      };
+    }
+    // Fallback for contexts without TagsService (e.g., content/background)
+    const loadAll = async () => {
+      const data = await chrome.storage.local.get('bookmarkTags');
+      return data && data.bookmarkTags ? data.bookmarkTags : {};
+    };
+    return {
+      getAllTags: async () => {
+        const all = await loadAll();
+        const set = new Set();
+        Object.values(all).forEach(arr => {
+          if (Array.isArray(arr)) arr.forEach(t => set.add(t));
+        });
+        return Array.from(set).sort();
+      },
+      findBookmarksByTag: async (tag) => {
+        const all = await loadAll();
+        return Object.keys(all).filter(id => Array.isArray(all[id]) && all[id].includes(tag));
+      },
+      getTags: async (id) => {
+        const all = await loadAll();
+        return all[id] || [];
+      }
+    };
+  }
+
   /**
    * Main search function - aggregates results from all sources
    * @param {string} query - Search query
@@ -45,16 +78,18 @@ export class SearchEngine {
     }
 
     // Search each source
-    const [bookmarks, history, tabs, downloads, chromeSettings, extensions] = await Promise.all([
+    const [bookmarks, history, tabs, downloads, chromeSettings, extensions, tags] = await Promise.all([
       this.searchBookmarks(normalizedQuery),
       this.searchHistory(normalizedQuery),
       this.searchTabs(normalizedQuery),
       this.searchDownloads(normalizedQuery),
       this.searchChromeSettings(normalizedQuery),
-      this.searchExtensions(normalizedQuery)
+      this.searchExtensions(normalizedQuery),
+      this.searchTags(normalizedQuery)
     ]);
 
     if (bookmarks.length > 0) results.Bookmarks = bookmarks;
+    if (tags.length > 0) results.Tags = tags;
     if (history.length > 0) results.History = history;
     if (tabs.length > 0) results.Tabs = tabs;
     if (downloads.length > 0) results.Downloads = downloads;
@@ -93,20 +128,72 @@ export class SearchEngine {
 
       // Filter to only bookmarks with URLs, limit to 10
       for (const bm of bookmarks.slice(0, 10)) {
-        if (bm.url) {
+        if (!bm.url) continue;
+        results.push({
+          id: `bookmark-${bm.id}`,
+          type: 'bookmark',
+          title: bm.title || bm.url,
+          description: bm.url,
+          url: bm.url,
+          icon: '🔖',
+          metadata: { bookmarkId: bm.id }
+        });
+      }
+      return results;
+    } catch (error) {
+      console.warn('Bookmark search failed:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Search tags
+   */
+  async searchTags(query) {
+    try {
+      const results = [];
+      const tagsApi = await this.getTagsApi();
+      if (!tagsApi || !query) return results;
+
+      // Find tags matching the query
+      const allTags = await tagsApi.getAllTags();
+      const matchingTags = allTags.filter(t => t.toLowerCase().includes(query));
+
+      // Collect unique bookmark IDs across all matching tags
+      const idSet = new Set();
+      for (const tag of matchingTags) {
+        const ids = await tagsApi.findBookmarksByTag(tag);
+        for (const id of ids) idSet.add(id);
+      }
+
+      // Limit total results to 10 for consistency
+      const uniqueIds = Array.from(idSet).slice(0, 10);
+
+      // Build bookmark result items with tags included
+      for (const id of uniqueIds) {
+        try {
+          const bms = await chrome.bookmarks.get(id);
+          const bm = Array.isArray(bms) ? bms[0] : null;
+          if (!bm || !bm.url) continue;
+          const bmTags = await tagsApi.getTags(id);
           results.push({
             id: `bookmark-${bm.id}`,
             type: 'bookmark',
             title: bm.title || bm.url,
             description: bm.url,
             url: bm.url,
-            icon: '🔖'
+            icon: '🔖',
+            metadata: { bookmarkId: bm.id },
+            tags: bmTags || []
           });
+        } catch (e) {
+          // Skip problematic entries
         }
       }
+
       return results;
     } catch (error) {
-      console.warn('Bookmark search failed:', error);
+      console.warn('Tag search failed:', error);
       return [];
     }
   }

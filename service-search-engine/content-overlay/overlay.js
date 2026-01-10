@@ -327,6 +327,30 @@ class ContentOverlay {
       </div>
     `;
 
+    // Render tag chips for bookmark items
+    if (item.type === 'bookmark') {
+      const renderTags = (tags) => {
+        if (!tags || !tags.length) return;
+        const tagChips = tags.map(tag => `<span class="bm-tag-chip" style="display:inline-block;padding:2px 6px;background:#e5e7eb;color:#374151;border-radius:6px;font-size:10px;margin-right:3px;">#${tag}</span>`).join('');
+        const desc = el.querySelector('.bm-result-description');
+        if (desc) {
+          desc.innerHTML += `<div style="margin-top:3px;">${tagChips}</div>`;
+        }
+      };
+
+      if (item.tags && item.tags.length) {
+        renderTags(item.tags);
+      } else if (item.metadata && item.metadata.bookmarkId) {
+        // Ask background for tags to avoid missing tags in content context
+        chrome.runtime.sendMessage({
+          type: 'GET_BOOKMARK_TAGS',
+          bookmarkId: item.metadata.bookmarkId
+        }, (resp) => {
+          if (resp && Array.isArray(resp.tags)) renderTags(resp.tags);
+        });
+      }
+    }
+
     el.addEventListener('mouseenter', () => {
       this.clearSelection();
       el.classList.add('bm-selected');

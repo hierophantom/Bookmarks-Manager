@@ -13,7 +13,6 @@ class MainOverlay {
     this.selectedIndex = -1;
     this.currentResults = {};
     this.resultItems = [];
-    this.selectedTags = [];
   }
 
   /**
@@ -58,14 +57,6 @@ class MainOverlay {
             placeholder="Search bookmarks, history, tabs..."
             autocomplete="off"
           />
-          <input 
-            type="text" 
-            id="bm-tag-filter-input" 
-            class="bm-tag-filter-input" 
-            placeholder="Filter by tags..."
-            autocomplete="off"
-            style="margin-left: 8px; flex: 0 1 200px;"
-          />
         </div>
         <div class="bm-results-container" id="bm-results-container">
           <div class="bm-loading" id="bm-loading" style="display: none;">
@@ -93,8 +84,6 @@ class MainOverlay {
       modal: document.getElementById('bm-overlay-modal'),
       backdrop: document.getElementById('bm-overlay-backdrop'),
       input: document.getElementById('bm-search-input'),
-      tagInput: document.getElementById('bm-tag-filter-input'),
-      
       loading: document.getElementById('bm-loading'),
       results: document.getElementById('bm-results'),
       empty: document.getElementById('bm-empty-state')
@@ -105,18 +94,6 @@ class MainOverlay {
 
     // Search input
     this.elements.input.addEventListener('input', (e) => this.handleSearch(e.target.value));
-
-    // Tag multi-select dropdown
-    if (this.elements.tagInput && typeof window.TagMultiSelect !== 'undefined' && typeof window.TagsService !== 'undefined') {
-      try {
-        const tagSelect = new window.TagMultiSelect({
-          input: this.elements.tagInput,
-          getTags: () => window.TagsService.getAllTags(),
-          onChange: (tags) => { this.selectedTags = tags; this.handleSearch(this.elements.input.value); },
-          placeholder: 'Filter by tags...'
-        });
-      } catch (e) { console.warn('[MainOverlay] TagMultiSelect init failed', e); }
-    }
 
     // Prevent modal click from closing
     this.elements.modal.addEventListener('click', (e) => e.stopPropagation());
@@ -207,42 +184,11 @@ class MainOverlay {
       });
 
       console.log('[MainOverlay] Results:', Object.keys(this.currentResults));
-      // Filter results by selected tags if any
-      if (this.selectedTags.length > 0) {
-        await this.filterResultsByTags();
-      }
       this.displayResults();
     } catch (error) {
       console.error('[MainOverlay] Search error:', error);
       this.showEmpty();
     }
-  }
-
-  /**
-   * Filter bookmark results by selected tags
-   */
-  async filterResultsByTags() {
-    if (!this.currentResults.Bookmarks || !Array.isArray(this.currentResults.Bookmarks)) {
-      return;
-    }
-
-    // Check if TagsService is available
-    if (typeof TagsService === 'undefined') {
-      console.warn('[MainOverlay] TagsService not available');
-      return;
-    }
-
-    const filtered = [];
-    for (const bookmark of this.currentResults.Bookmarks) {
-      const tags = await TagsService.getTags(bookmark.metadata.bookmarkId);
-      // Include bookmark if it has ANY of the selected tags (OR)
-      const hasAnyTag = this.selectedTags.some(tag => tags.includes(tag));
-      if (hasAnyTag) {
-        filtered.push(bookmark);
-      }
-    }
-
-    this.currentResults.Bookmarks = filtered;
   }
 
   
@@ -327,26 +273,6 @@ class MainOverlay {
     const el = document.createElement('div');
     el.className = 'bm-result-item';
     
-    // Build tags display for bookmarks
-    let tagsHtml = '';
-    if (item.type === 'bookmark' && typeof TagsService !== 'undefined') {
-      // Note: Tags are loaded asynchronously, but we'll add them dynamically
-      const bookmarkId = item.metadata && item.metadata.bookmarkId;
-      if (bookmarkId) {
-        TagsService.getTags(bookmarkId).then(tags => {
-          if (tags.length > 0) {
-            const tagChips = tags.map(tag => 
-              `<span class="bm-tag-chip" style="display:inline-block;padding:2px 6px;background:#e5e7eb;color:#374151;border-radius:6px;font-size:10px;margin-right:3px;">#${tag}</span>`
-            ).join('');
-            const desc = el.querySelector('.bm-result-description');
-            if (desc) {
-              desc.innerHTML += `<div style="margin-top:3px;">${tagChips}</div>`;
-            }
-          }
-        });
-      }
-    }
-    
     el.innerHTML = `
       <span class="bm-result-icon">${item.icon}</span>
       <div class="bm-result-content">
@@ -354,6 +280,29 @@ class MainOverlay {
         <div class="bm-result-description">${this.escapeHtml(item.description || '')}</div>
       </div>
     `;
+
+    // Render tag chips for bookmark items (after innerHTML so description exists)
+    if (item.type === 'bookmark') {
+      const renderTags = (tags) => {
+        if (!tags || !tags.length) return;
+        const tagChips = tags.map(tag => 
+          `<span class="bm-tag-chip" style="display:inline-block;padding:2px 6px;background:#e5e7eb;color:#374151;border-radius:6px;font-size:10px;margin-right:3px;">#${tag}</span>`
+        ).join('');
+        const desc = el.querySelector('.bm-result-description');
+        if (desc) {
+          desc.innerHTML += `<div style="margin-top:3px;">${tagChips}</div>`;
+        }
+      };
+
+      if (item.tags && item.tags.length) {
+        renderTags(item.tags);
+      } else if (typeof TagsService !== 'undefined') {
+        const bookmarkId = item.metadata && item.metadata.bookmarkId;
+        if (bookmarkId) {
+          TagsService.getTags(bookmarkId).then(renderTags);
+        }
+      }
+    }
 
     el.addEventListener('mouseenter', () => {
       this.clearSelection();
