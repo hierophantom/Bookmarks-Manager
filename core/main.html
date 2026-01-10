@@ -63,7 +63,10 @@
         </section>
 
         <div class="filter-row">
-          <input id="text-search" placeholder="Search by title or URL..." style="flex: 1; margin-right: 8px;" />
+          <span class="bm-input-wrapper" style="position: relative; flex: 1; margin-right: 8px; display: inline-block;">
+            <input id="text-search" placeholder="Search by title or URL..." style="width: 100%; padding-right: 28px;" />
+            <button id="text-clear" title="Clear" aria-label="Clear" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); border: none; background: transparent; cursor: pointer; font-size: 16px; line-height: 1; color: #888;">×</button>
+          </span>
           <input id="tag-filter" placeholder="Filter by tags..." />
           <div style="margin-left: auto; display: flex; gap: 8px; align-items: center;">
             <label for="sort-dropdown" style="font-size: 13px; font-weight: 600;">Sort:</label>

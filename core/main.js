@@ -229,8 +229,41 @@ document.addEventListener('DOMContentLoaded', async () => {
     } catch (e) { console.warn('TagMultiSelect init failed', e); }
   }
 
+  // Render version to avoid stale async writes
+  let renderVersion = 0;
+
+  // Text search elements (listeners registered once)
+  const textSearchInput = document.getElementById('text-search');
+  const textClearBtn = document.getElementById('text-clear');
+
+  if (textSearchInput) {
+    textSearchInput.addEventListener('input', () => {
+      if (textClearBtn) {
+        const hasText = !!textSearchInput.value && textSearchInput.value.length > 0;
+        textClearBtn.style.visibility = hasText ? 'visible' : 'hidden';
+      }
+      render(true);
+    });
+    if (textClearBtn) {
+      const hasText = !!textSearchInput.value && textSearchInput.value.length > 0;
+      textClearBtn.style.visibility = hasText ? 'visible' : 'hidden';
+    }
+  }
+  if (textClearBtn) {
+    textClearBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (textSearchInput) {
+        textSearchInput.value = '';
+        textClearBtn.style.visibility = 'hidden';
+        render(true);
+      }
+    });
+  }
+
   async function render(preserveScroll = false) {
+    const thisRender = ++renderVersion;
     const savedScrollY = preserveScroll ? window.scrollY : 0;
+    const renderedFolderIds = new Set();
     
     root.innerHTML = '';
     const errElId = '__bm_error';
@@ -265,19 +298,131 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
     }
 
-    // Text search input
-    const textSearchInput = document.getElementById('text-search');
-    
-    // Text search listener
-    if (textSearchInput) {
-      textSearchInput.addEventListener('input', () => render(true));
-    }
-    
     // Get filter values
     let filterText = (textSearchInput && textSearchInput.value.trim().toLowerCase()) || '';
+    const filterActive = (currentFilterTags && currentFilterTags.length > 0) || !!filterText;
+
+    // Build id -> node map for folder path resolution
+    const idToNode = new Map();
+    (function buildMap(nodes){
+      if (!nodes) return;
+      const arr = Array.isArray(nodes) ? nodes : [nodes];
+      for (const n of arr) {
+        if (!n || !n.id) continue;
+        idToNode.set(n.id, n);
+        if (n.children && n.children.length) buildMap(n.children);
+      }
+    })(tree && tree[0] ? tree[0] : null);
+
+    function getFolderPath(id) {
+      const parts = [];
+      let node = idToNode.get(id);
+      let parentId = node && node.parentId;
+      while (parentId) {
+        const parent = idToNode.get(parentId);
+        if (!parent) break;
+        if (!parent.url) {
+          parts.push(parent.title || parent.id);
+        }
+        parentId = parent.parentId;
+      }
+      return parts.reverse().join(' / ');
+    }
+
+    // Flat search results mode: when filtering, render only matching bookmarks without folder sections
+    if (filterActive) {
+      const matches = [];
+      const seen = new Set();
+      async function collectMatches(node) {
+        if (!node) return;
+        if (Array.isArray(node)) {
+          for (const n of node) await collectMatches(n);
+          return;
+        }
+        if (node.url) {
+          // Check text
+          if (filterText) {
+            const title = (node.title || '').toLowerCase();
+            const url = (node.url || '').toLowerCase();
+            if (!title.includes(filterText) && !url.includes(filterText)) {
+              // no text match
+              // still may match if only tags are selected and no text
+              if (!filterText) return; // redundant, but keep structure
+              return;
+            }
+          }
+          // Check tags (OR)
+          if (currentFilterTags && currentFilterTags.length > 0) {
+            const tags = await TagsService.getTags(node.id);
+            const anyMatch = currentFilterTags.some(t => tags.includes(t));
+            if (!anyMatch) return;
+          }
+          if (!seen.has(node.id)) { seen.add(node.id); matches.push(node); }
+        }
+        if (node.children && node.children.length) {
+          for (const c of node.children) await collectMatches(c);
+        }
+      }
+      await collectMatches(tree && tree[0] ? tree[0] : null);
+      if (thisRender !== renderVersion) return; // stale
+
+      const results = currentSort.startsWith('bookmarks-') ? sortBookmarks(matches) : matches;
+      const container = document.createElement('section');
+      container.className = 'folder';
+      const header = document.createElement('h2');
+      header.className = 'folder-title';
+      header.textContent = `Results (${results.length})`;
+      const slots = document.createElement('div');
+      slots.className = 'slots';
+      container.appendChild(header);
+      container.appendChild(slots);
+      root.appendChild(container);
+
+      await Promise.all(results.map(async (child) => {
+        if (thisRender !== renderVersion) return; // stale
+        const slot = document.createElement('div');
+        slot.className = 'slot';
+        slot.draggable = true;
+        slot.dataset.id = child.id;
+        let tagChips = '';
+        if (typeof TagsService !== 'undefined') {
+          const tags = await TagsService.getTags(child.id);
+          if (tags.length > 0) {
+            tagChips = `<div class="bm-tag-chips" style="display:inline-flex;gap:4px;flex-wrap:wrap;margin-left:8px;">${
+              tags.map(tag => `<span class="bm-tag-chip" data-tag="${tag}" style="display:inline-block;padding:2px 8px;background:#e5e7eb;color:#374151;border-radius:9999px;font-size:11px;font-weight:500;">#${tag}</span>`).join('')
+            }</div>`;
+          }
+        }
+        const path = getFolderPath(child.id);
+        slot.innerHTML = `<a href="${child.url}" target="_blank" title="${path ? 'Path: ' + path : ''}">${child.title || child.url}</a> ${tagChips} <button data-action="edit">Edit</button> <button data-action="del">Delete</button>`;
+        slot.querySelectorAll('button').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const action = btn.dataset.action;
+            const id = slot.dataset.id;
+            if (action === 'edit') BookmarksService.editBookmarkPrompt(id).then(() => render(true));
+            if (action === 'del') {
+              (async ()=>{ const info = await BookmarksService.getBookmark(id); if (!info) return; if (!info.url){ if (!confirm('Delete this folder and all its contents?')) return; await BookmarksService.deleteWithUndo(id); } else { if (!confirm('Delete this bookmark?')) return; await BookmarksService.deleteWithUndo(id); } await render(true); })();
+            }
+          });
+        });
+        addDragHandlers(slot);
+        slots.appendChild(slot);
+      }));
+
+      if (thisRender !== renderVersion) return; // stale
+      if (preserveScroll) {
+        requestAnimationFrame(() => { window.scrollTo(0, savedScrollY); });
+      }
+      return; // Skip folder sections in filter mode
+    }
 
     // Helper function to render a folder and all its contents recursively
     async function renderFolder(folder, parentEl) {
+      // Prevent duplicate folder sections
+      if (renderedFolderIds.has(folder.id)) {
+        return;
+      }
+      renderedFolderIds.add(folder.id);
       // Check if folder is hidden
       if (hiddenFolderIds.has(folder.id)) {
         return; // Skip rendering hidden folders
@@ -364,7 +509,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         // Render in order: folders first, then bookmarks
         const sortedChildren = [...sortedFolders, ...sortedBookmarks];
-        
+        const seenChildFolderIds = new Set();
         await Promise.all(sortedChildren.map(async child => {
           // Filter by tags (OR among selected; AND with text)
           if (currentFilterTags && currentFilterTags.length > 0 && child.url) {
@@ -414,6 +559,8 @@ document.addEventListener('DOMContentLoaded', async () => {
           } else {
             // Folder slot
             slot.classList.add('folder-slot');
+            if (seenChildFolderIds.has(child.id)) return; // dedupe folder slots within this section
+            seenChildFolderIds.add(child.id);
             const childCount = (child.children && child.children.length) || 0;
             slot.innerHTML = `📁 <strong>${child.title || 'Folder'}</strong> <span class="folder-count">(${childCount})</span> <button data-action="jump">→</button> <button data-action="rename">✏️</button> <button data-action="del">🗑️</button>`;
             slot.style.cursor = 'pointer';
