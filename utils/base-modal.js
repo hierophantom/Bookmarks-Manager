@@ -23,6 +23,9 @@ class BaseModal {
     overlay = document.createElement('div');
     overlay.id = 'bm-modal-overlay';
     overlay.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
+    overlay.setAttribute('aria-labelledby', 'bm-modal-title');
     
     overlay.addEventListener('click', (e) => {
       if (e.target === overlay) this.close();
@@ -48,7 +51,7 @@ class BaseModal {
    */
   renderTitle() {
     if (!this.title) return '';
-    return `<h2 class="text-xl font-bold text-gray-900 mb-4">${this.escapeHtml(this.title)}</h2>`;
+    return `<h2 id="bm-modal-title" class="text-xl font-bold text-gray-900 mb-4">${this.escapeHtml(this.title)}</h2>`;
   }
 
   /**
@@ -74,6 +77,8 @@ class BaseModal {
       value="${this.escapeHtml(value)}"
       placeholder="${placeholder}"
       ${requiredAttr}
+      aria-label="${this.escapeHtml(label)}"
+      aria-required="${required}"
       class="bm-input w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
     `;
 
@@ -92,11 +97,11 @@ class BaseModal {
    */
   renderActions() {
     return `
-      <div class="bm-modal-actions flex gap-3 mt-6">
-        <button id="bm-modal-cancel" class="bm-btn-cancel flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 font-medium transition-colors">
+      <div class="bm-modal-actions flex gap-3 mt-6" role="group" aria-label="Modal actions">
+        <button id="bm-modal-cancel" type="button" aria-label="Cancel and close modal" class="bm-btn-cancel flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 font-medium transition-colors">
           Cancel
         </button>
-        <button id="bm-modal-submit" class="bm-btn-submit flex-1 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 font-medium transition-colors">
+        <button id="bm-modal-submit" type="submit" aria-label="Save changes" class="bm-btn-submit flex-1 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 font-medium transition-colors">
           Save
         </button>
       </div>
@@ -139,8 +144,23 @@ class BaseModal {
       cancelBtn.addEventListener('click', () => this.close());
     }
 
-    // Keyboard accessibility: Escape to close
-    document.addEventListener('keydown', (e) => {
+    // Focus trap: get all focusable elements
+    const focusableElements = this.card.querySelectorAll(
+      'input, button, textarea, select, a[href], [tabindex]:not([tabindex="-1"])'
+    );
+    const firstFocusable = focusableElements[0];
+    const lastFocusable = focusableElements[focusableElements.length - 1];
+
+    // Set initial focus to first input or button
+    const firstInput = this.card.querySelector('input, textarea');
+    if (firstInput) {
+      setTimeout(() => firstInput.focus(), 50);
+    } else if (firstFocusable) {
+      setTimeout(() => firstFocusable.focus(), 50);
+    }
+
+    // Keyboard accessibility: Escape to close and Tab trap
+    this.keydownHandler = (e) => {
       // Only handle if this modal is visible
       if (!document.body.contains(this.overlay)) return;
 
@@ -148,8 +168,27 @@ class BaseModal {
       if (e.key === 'Escape') {
         e.preventDefault();
         this.close();
+        return;
       }
-    }, true);
+
+      // Tab trap: cycle focus within modal
+      if (e.key === 'Tab') {
+        if (e.shiftKey) {
+          // Shift+Tab: if on first element, go to last
+          if (document.activeElement === firstFocusable) {
+            e.preventDefault();
+            lastFocusable.focus();
+          }
+        } else {
+          // Tab: if on last element, go to first
+          if (document.activeElement === lastFocusable) {
+            e.preventDefault();
+            firstFocusable.focus();
+          }
+        }
+      }
+    };
+    document.addEventListener('keydown', this.keydownHandler, true);
 
     // Focus first input
     const firstInput = this.card.querySelector('input');

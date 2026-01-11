@@ -79,6 +79,15 @@ const ThemesService = (() => {
       text: '#1A1A1A',
       border: '#FFA39E',
     },
+    'high-contrast': {
+      name: 'High Contrast (Accessible)',
+      primary: '#000000',
+      secondary: '#000000',
+      accent: '#FFD700',
+      background: '#FFFFFF',
+      text: '#000000',
+      border: '#000000',
+    },
   };
 
   const DEFAULT_THEME = 'electric-blue';

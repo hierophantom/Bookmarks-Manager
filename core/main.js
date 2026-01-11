@@ -680,6 +680,26 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   render();
 
+  // Setup keyboard navigation for bookmark lists
+  function setupKeyboardNavigation() {
+    // For each slots container, set up arrow key navigation
+    document.querySelectorAll('.slots').forEach(slotsContainer => {
+      if (!slotsContainer.getAttribute('data-kbd-nav-initialized')) {
+        KeyboardNavigation.setupListNavigation(slotsContainer, '.slot', {
+          focusClass: 'bm-focused',
+          onItemFocus: (item) => {
+            // Smooth scroll into view
+            item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          }
+        });
+        slotsContainer.setAttribute('data-kbd-nav-initialized', 'true');
+      }
+    });
+  }
+
+  // Setup keyboard navigation after rendering
+  setupKeyboardNavigation();
+
   // render widgets area
   try{ if (typeof WidgetsService !== 'undefined') await WidgetsService.render('widgets-container'); }catch(e){ console.warn('Widgets render failed', e); }
 

@@ -320,6 +320,22 @@ body {
   border: 1px dashed transparent;
   margin-bottom: 6px;
   gap: 6px;
+  transition: all 0.15s ease;
+}
+
+.slot:focus-within {
+  outline: 2px solid var(--theme-primary);
+  outline-offset: 2px;
+}
+
+/* Keyboard navigation focus state */
+.slot.bm-focused {
+  border-color: var(--theme-primary);
+  background: var(--theme-hover-bg);
+  border-style: solid;
+  outline: 2px solid var(--theme-primary);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.1);
 }
 
 .slot a {
