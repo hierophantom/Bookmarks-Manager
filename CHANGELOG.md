@@ -4,6 +4,14 @@ All notable changes to the Bookmark Manager Chrome Extension are documented in t
 
 ## [Unreleased]
 
+### Added - Open All Confirmation (January 11, 2026)
+- **BMG-63**: Confirmation modal for "Open All" button when folder has 10+ bookmarks
+  - Shows confirmation dialog: "You are about to open X bookmarks. Are you sure?"
+  - Two buttons: "Yes, open" to confirm, "Cancel" to abort
+  - Prevents accidental opening of many tabs and improves browser performance
+  - Added `openConfirmation()` method to Modal utility with customizable text
+  - Enhanced BaseModal to support custom content and button labels
+
 ### Fixed - Search Overlay UX (January 11, 2026)
 - **BMG-48**: Auto-scroll results area when navigating with arrow keys in search overlay
   - Added automatic scrolling to keep selected result visible when using arrow keys

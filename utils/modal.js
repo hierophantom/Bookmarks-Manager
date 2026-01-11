@@ -350,11 +350,36 @@ const Modal = (() => {
       .replace(/"/g, '&quot;');
   }
 
+  /**
+   * Simple confirmation modal
+   */
+  function openConfirmation(options = {}) {
+    const { 
+      title = 'Confirm', 
+      message = 'Are you sure?', 
+      confirmText = 'Confirm', 
+      cancelText = 'Cancel' 
+    } = options;
+
+    const modal = new BaseModal({
+      title: title,
+      customContent: `<p style="margin: 1rem 0; line-height: 1.5;">${escapeHTML(message)}</p>`,
+      confirmText: confirmText,
+      cancelText: cancelText
+    });
+
+    return modal.show().then(data => {
+      // Return true if confirmed, false if cancelled
+      return data !== null;
+    });
+  }
+
   return { 
     openBookmarkForm, 
     openFolderForm, 
     openTabsPicker, 
     openWidgetPicker, 
+    openConfirmation,
     initializeTagify 
   };
 })();

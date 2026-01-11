@@ -452,7 +452,33 @@ document.addEventListener('DOMContentLoaded', async () => {
       const editBtn = headerControls.querySelector('.edit-folder');
       if (editBtn) editBtn.addEventListener('click', async ()=>{ await BookmarkModals.editFolder(folder.id); await render(true); });
       headerControls.querySelector('.add-tabs').addEventListener('click', async ()=>{ await BookmarkModals.addTabs(folder.id); await render(true); });
-      headerControls.querySelector('.open-all-tabs').addEventListener('click', async ()=>{ try { if (folder.children && folder.children.length) { for (const child of folder.children) { if (child.url) await new Promise((res)=>{ chrome.tabs.create({url: child.url}, res); }); } } } catch (err) { console.error('Open all failed', err); } });
+      headerControls.querySelector('.open-all-tabs').addEventListener('click', async ()=>{ 
+        try { 
+          if (folder.children && folder.children.length) { 
+            // Count bookmarks (exclude folders)
+            const bookmarkCount = folder.children.filter(child => child.url).length;
+            
+            // Show confirmation modal if more than 9 bookmarks
+            if (bookmarkCount > 9) {
+              const confirmed = await Modal.openConfirmation({
+                title: 'Open All Bookmarks',
+                message: `You are about to open ${bookmarkCount} bookmarks. Are you sure?`,
+                confirmText: 'Yes, open',
+                cancelText: 'Cancel'
+              });
+              
+              if (!confirmed) return;
+            }
+            
+            // Open all bookmarks
+            for (const child of folder.children) { 
+              if (child.url) await new Promise((res)=>{ chrome.tabs.create({url: child.url}, res); }); 
+            } 
+          } 
+        } catch (err) { 
+          console.error('Open all failed', err); 
+        } 
+      });
       headerControls.querySelector('.add-folder').addEventListener('click', async ()=>{ const data = await Modal.openFolderForm({ title: '' }); if (!data) return; await BookmarksService.createFolder(folder.id, data.title); await render(true); });
       const hideBtn = headerControls.querySelector('.hide-folder');
       if (hideBtn) hideBtn.addEventListener('click', async ()=>{ const hidden = await Storage.get('hiddenFolders') || []; if (!hidden.includes(folder.id)) hidden.push(folder.id); await Storage.set({ hiddenFolders: hidden }); await render(true); });

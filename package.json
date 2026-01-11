@@ -11,8 +11,8 @@
   },
   "devDependencies": {
     "jest": "^29.7.0",
-    "@testing-library/dom": "^9.3.3",
-    "chrome-extension-mock": "^1.0.0"
+    "jest-environment-jsdom": "^29.7.0",
+    "@testing-library/dom": "^9.3.3"
   },
   "jest": {
     "testEnvironment": "jsdom",

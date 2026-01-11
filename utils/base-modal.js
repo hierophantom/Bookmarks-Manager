@@ -6,6 +6,9 @@ class BaseModal {
   constructor(config = {}) {
     this.title = config.title || '';
     this.fields = config.fields || [];
+    this.customContent = config.customContent || ''; // Support custom HTML content
+    this.confirmText = config.confirmText || 'Save'; // Customizable confirm button text
+    this.cancelText = config.cancelText || 'Cancel'; // Customizable cancel button text
     this.onSubmit = config.onSubmit || (() => {});
     this.onCancel = config.onCancel || (() => {});
     this.resolver = null;
@@ -99,10 +102,10 @@ class BaseModal {
     return `
       <div class="bm-modal-actions flex gap-3 mt-6" role="group" aria-label="Modal actions">
         <button id="bm-modal-cancel" type="button" aria-label="Cancel and close modal" class="bm-btn-cancel flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 font-medium transition-colors">
-          Cancel
+          ${this.escapeHtml(this.cancelText)}
         </button>
         <button id="bm-modal-submit" type="submit" aria-label="Save changes" class="bm-btn-submit flex-1 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 font-medium transition-colors">
-          Save
+          ${this.escapeHtml(this.confirmText)}
         </button>
       </div>
     `;
@@ -115,6 +118,7 @@ class BaseModal {
     return `
       ${this.renderTitle()}
       <form class="bm-modal-form" id="bm-modal-form">
+        ${this.customContent}
         ${this.renderFields()}
         ${this.renderActions()}
       </form>
