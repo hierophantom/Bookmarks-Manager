@@ -437,12 +437,22 @@ class ContentOverlay {
     if (this.selectedIndex >= 0 && this.resultItems[this.selectedIndex]) {
       const selectedElement = this.resultItems[this.selectedIndex].element;
       selectedElement.classList.add('bm-selected');
-      // Auto-scroll to keep selected result in view
-      selectedElement.scrollIntoView({ 
-        behavior: 'smooth', 
-        block: 'nearest',
-        inline: 'nearest'
-      });
+      
+      // Auto-scroll to keep selected result in view within the results container
+      const container = this.elements.results.parentElement; // .bm-results-container
+      if (container) {
+        const containerRect = container.getBoundingClientRect();
+        const elementRect = selectedElement.getBoundingClientRect();
+        
+        // Check if element is out of view
+        if (elementRect.top < containerRect.top) {
+          // Scroll up
+          container.scrollTop -= (containerRect.top - elementRect.top);
+        } else if (elementRect.bottom > containerRect.bottom) {
+          // Scroll down
+          container.scrollTop += (elementRect.bottom - containerRect.bottom);
+        }
+      }
     }
   }
 
