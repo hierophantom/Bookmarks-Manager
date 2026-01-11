@@ -682,6 +682,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Setup keyboard navigation for bookmark lists
   function setupKeyboardNavigation() {
+    // Check if KeyboardNavigation utility is available
+    if (typeof KeyboardNavigation === 'undefined') {
+      console.warn('KeyboardNavigation utility not loaded');
+      return;
+    }
+    
     // For each slots container, set up arrow key navigation
     document.querySelectorAll('.slots').forEach(slotsContainer => {
       if (!slotsContainer.getAttribute('data-kbd-nav-initialized')) {
