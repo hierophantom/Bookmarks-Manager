@@ -361,9 +361,17 @@ const Modal = (() => {
       cancelText = 'Cancel' 
     } = options;
 
+    // Escape HTML to prevent XSS
+    const escapeHtml = (str) => String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+
     const modal = new BaseModal({
       title: title,
-      customContent: `<p style="margin: 1rem 0; line-height: 1.5;">${escapeHTML(message)}</p>`,
+      customContent: `<p style="margin: 1rem 0; line-height: 1.5;">${escapeHtml(message)}</p>`,
       confirmText: confirmText,
       cancelText: cancelText
     });
