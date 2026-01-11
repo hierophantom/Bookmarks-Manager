@@ -371,7 +371,14 @@ class MainOverlay {
   updateSelection() {
     this.clearSelection();
     if (this.selectedIndex >= 0 && this.resultItems[this.selectedIndex]) {
-      this.resultItems[this.selectedIndex].element.classList.add('bm-selected');
+      const selectedElement = this.resultItems[this.selectedIndex].element;
+      selectedElement.classList.add('bm-selected');
+      // Auto-scroll to keep selected result in view
+      selectedElement.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'nearest',
+        inline: 'nearest'
+      });
     }
   }
 
