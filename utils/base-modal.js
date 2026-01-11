@@ -189,12 +189,6 @@ class BaseModal {
       }
     };
     document.addEventListener('keydown', this.keydownHandler, true);
-
-    // Focus first input
-    const firstInput = this.card.querySelector('input');
-    if (firstInput) {
-      setTimeout(() => firstInput.focus(), 0);
-    }
   }
 
   /**
@@ -290,10 +284,23 @@ class BaseModal {
    * Close the modal
    */
   close() {
+    // Clean up keyboard event listener
+    if (this.keydownHandler) {
+      document.removeEventListener('keydown', this.keydownHandler, true);
+      this.keydownHandler = null;
+    }
+    
     if (this.overlay) {
       this.overlay.remove();
       this.overlay = null;
     }
+    
+    // Resolve with null to indicate cancellation
+    if (this.resolver) {
+      this.resolver(null);
+      this.resolver = null;
+    }
+    
     if (this.onCancel) {
       this.onCancel();
     }
