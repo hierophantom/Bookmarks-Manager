@@ -27,14 +27,14 @@
       ".min.js"
     ],
     "testMatch": [
-      "**/__tests__/**/*.test.js",
+      "**/tests/**/*.test.js",
       "**/?(*.)+(spec|test).js"
     ],
     "moduleNameMapper": {
       "^@/(.*)$": "<rootDir>/$1"
     },
     "setupFilesAfterEnv": [
-      "<rootDir>/__tests__/setup.js"
+      "<rootDir>/tests/setup.js"
     ]
   },
   "keywords": [
