@@ -4,6 +4,19 @@ All notable changes to the Bookmark Manager Chrome Extension are documented in t
 
 ## [Unreleased]
 
+### Fixed - Search Overlay UX (January 11, 2026)
+- **BMG-48**: Auto-scroll results area when navigating with arrow keys in search overlay
+  - Added automatic scrolling to keep selected result visible when using arrow keys
+  - Implemented manual scroll calculation for content overlay (http/https pages)
+  - Used `scrollIntoView` with smooth behavior for main overlay (extension pages)
+  - Ensures smooth navigation experience without manual scrolling
+
+### Changed - Project Cleanup (January 11, 2026)
+- Reorganized documentation to `.github/docs/` directory
+- Moved TES-13 issues and specs documentation to proper location
+- Cleaned up archived search engine implementation files
+- Removed temporary Tag Manager and test files
+
 ### Added - Homepage, Navigation, and Bookmarks UX (January 6, 2026)
 - Multi-page layout with sticky bottom navigation (Home, Bookmarks, Journey)
 - Keyboard shortcuts: H → Home, B → Bookmarks, J → Journey; Arrow keys switch pages
