@@ -51,37 +51,42 @@ class ContentOverlay {
    * Inject overlay HTML into DOM
    */
   injectOverlay() {
-    if (document.getElementById('bm-content-overlay')) {
+    if (document.getElementById('bmg-http-overlay')) {
       return; // Already injected
     }
 
+    // Create root isolation container with LTR properties
+    const root = document.createElement('div');
+    root.id = 'bmg-http-overlay';
+    
     const overlay = document.createElement('div');
-    overlay.id = 'bm-content-overlay';
+    overlay.className = 'bmg-overlay-container';
     overlay.innerHTML = `
-      <div class="bm-overlay-backdrop" id="bm-overlay-backdrop"></div>
-      <div class="bm-overlay-modal" id="bm-overlay-modal">
+      <div class="bmg-overlay-backdrop" id="bmg-overlay-backdrop"></div>
+      <div class="bmg-overlay-modal" id="bmg-overlay-modal">
         <input 
           type="text" 
-          id="bm-search-input" 
-          class="bm-search-input" 
+          id="bmg-search-input" 
+          class="bmg-search-input" 
           placeholder="Search bookmarks, history, tabs..."
           autocomplete="off"
         />
-        <div class="bm-results-container" id="bm-results-container">
-          <div class="bm-loading" id="bm-loading" style="display: none;">
-            <div class="bm-spinner"></div>
+        <div class="bmg-results-container" id="bmg-results-container">
+          <div class="bmg-loading" id="bmg-loading" style="display: none;">
+            <div class="bmg-spinner"></div>
             Searching...
           </div>
-          <div class="bm-results" id="bm-results"></div>
-          <div class="bm-empty-state" id="bm-empty-state" style="display: none;">
+          <div class="bmg-results" id="bmg-results"></div>
+          <div class="bmg-empty-state" id="bmg-empty-state" style="display: none;">
             <p>No results found</p>
           </div>
         </div>
       </div>
     `;
     
-    document.body.appendChild(overlay);
-    console.log('[ContentOverlay] HTML injected');
+    root.appendChild(overlay);
+    document.body.appendChild(root);
+    console.log('[ContentOverlay] HTML injected with LTR isolation');
   }
 
   /**
@@ -89,13 +94,13 @@ class ContentOverlay {
    */
   setupUI() {
     this.elements = {
-      overlay: document.getElementById('bm-content-overlay'),
-      modal: document.getElementById('bm-overlay-modal'),
-      backdrop: document.getElementById('bm-overlay-backdrop'),
-      input: document.getElementById('bm-search-input'),
-      loading: document.getElementById('bm-loading'),
-      results: document.getElementById('bm-results'),
-      empty: document.getElementById('bm-empty-state')
+      overlay: document.getElementById('bmg-http-overlay'),
+      modal: document.getElementById('bmg-overlay-modal'),
+      backdrop: document.getElementById('bmg-overlay-backdrop'),
+      input: document.getElementById('bmg-search-input'),
+      loading: document.getElementById('bmg-loading'),
+      results: document.getElementById('bmg-results'),
+      empty: document.getElementById('bmg-empty-state')
     };
 
     // Debug: verify all elements are found
@@ -125,7 +130,7 @@ class ContentOverlay {
         const target = e.target;
         
         // Check for show-more button first
-        const showMoreBtn = target.closest ? target.closest('.bm-show-more') : null;
+        const showMoreBtn = target.closest ? target.closest('.bmg-show-more') : null;
         if (showMoreBtn) {
           console.log('[ContentOverlay] Clicked on show-more button:', showMoreBtn.dataset.category);
           const url = showMoreBtn.dataset.url;
@@ -144,7 +149,7 @@ class ContentOverlay {
           return;
         }
         
-        const resultItem = target.closest ? target.closest('.bm-result-item') : null;
+        const resultItem = target.closest ? target.closest('.bmg-result-item') : null;
         
         if (resultItem) {
           console.log('[ContentOverlay] Clicked on result item element:', resultItem.className);
@@ -331,8 +336,8 @@ class ContentOverlay {
     if (item.type === 'bookmark') {
       const renderTags = (tags) => {
         if (!tags || !tags.length) return;
-        const tagChips = tags.map(tag => `<span class="bm-tag-chip" style="display:inline-block;padding:2px 6px;background:#e5e7eb;color:#374151;border-radius:6px;font-size:10px;margin-right:3px;">#${tag}</span>`).join('');
-        const desc = el.querySelector('.bm-result-description');
+        const tagChips = tags.map(tag => `<span class="bmg-tag-chip" style="display:inline-block;padding:2px 6px;background:#e5e7eb;color:#374151;border-radius:6px;font-size:10px;margin-right:3px;">#${tag}</span>`).join('');
+        const desc = el.querySelector('.bmg-result-description');
         if (desc) {
           desc.innerHTML += `<div style="margin-top:3px;">${tagChips}</div>`;
         }
@@ -559,12 +564,45 @@ class ContentOverlay {
    * Inject styles
    */
   injectStyles() {
-    if (document.getElementById('bm-content-overlay-styles')) return;
+    if (document.getElementById('bmg-http-overlay-styles')) return;
 
     const style = document.createElement('style');
-    style.id = 'bm-content-overlay-styles';
+    style.id = 'bmg-http-overlay-styles';
     style.textContent = `
-      #bm-content-overlay {
+      /* ============================================
+         CSS ISOLATION ROOT
+         Prevents host-page CSS collisions and forces LTR layout
+         ============================================ */
+      #bmg-http-overlay {
+        /* LTR Layout Isolation - Forces left-to-right regardless of page locale */
+        direction: ltr;
+        unicode-bidi: isolate;
+        
+        /* CSS Custom properties for consistent styling */
+        --bmg-text-align: left;
+        --bmg-margin-start: 0;
+        --bmg-margin-end: 0;
+      }
+      
+      /* Force LTR on all children */
+      #bmg-http-overlay * {
+        direction: ltr !important;
+        unicode-bidi: normal !important;
+      }
+      
+      /* Extra protection for form inputs */
+      #bmg-http-overlay input,
+      #bmg-http-overlay button,
+      #bmg-http-overlay textarea,
+      #bmg-http-overlay select {
+        direction: ltr !important;
+        unicode-bidi: normal !important;
+        margin: 0;
+        padding: 0;
+        border: 0;
+      }
+      
+      .bmg-overlay-container {
         display: none;
         position: fixed;
         top: 0;
@@ -579,7 +617,7 @@ class ContentOverlay {
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       }
 
-      #bm-content-overlay .bm-overlay-backdrop {
+      #bmg-http-overlay .bmg-overlay-backdrop {
         position: absolute;
         top: 0;
         left: 0;
@@ -589,7 +627,7 @@ class ContentOverlay {
         backdrop-filter: blur(4px);
       }
 
-      #bm-content-overlay .bm-overlay-modal {
+      #bmg-http-overlay .bmg-overlay-modal {
         position: relative;
         z-index: 1;
         width: 600px;
@@ -603,7 +641,7 @@ class ContentOverlay {
         overflow: hidden;
       }
 
-      #bm-content-overlay .bm-search-input {
+      #bmg-http-overlay .bmg-search-input {
         padding: 16px;
         border: none;
         font-size: 16px;
@@ -611,18 +649,18 @@ class ContentOverlay {
         border-bottom: 1px solid #eee;
       }
 
-      #bm-content-overlay .bm-search-input::placeholder {
+      #bmg-http-overlay .bmg-search-input::placeholder {
         color: #999;
       }
 
-      #bm-content-overlay .bm-results-container {
+      #bmg-http-overlay .bmg-results-container {
         flex: 1;
         overflow-y: auto;
         display: flex;
         flex-direction: column;
       }
 
-      #bm-content-overlay .bm-loading {
+      #bmg-http-overlay .bmg-loading {
         display: none;
         flex: 1;
         align-items: center;
@@ -631,20 +669,20 @@ class ContentOverlay {
         color: #666;
       }
 
-      #bm-content-overlay .bm-spinner {
+      #bmg-http-overlay .bmg-spinner {
         width: 16px;
         height: 16px;
         border: 2px solid #ddd;
         border-top-color: #666;
         border-radius: 50%;
-        animation: spin 0.6s linear infinite;
+        animation: bmg-spin 0.6s linear infinite;
       }
 
-      #bm-content-overlay .bm-results {
+      #bmg-http-overlay .bmg-results {
         flex: 1;
       }
 
-      #bm-content-overlay .bm-result-category {
+      #bmg-http-overlay .bmg-result-category {
         padding: 8px 16px;
         font-size: 12px;
         font-weight: 600;
@@ -655,11 +693,11 @@ class ContentOverlay {
         margin-top: 8px;
       }
 
-      #bm-content-overlay .bm-result-category:first-child {
+      #bmg-http-overlay .bmg-result-category:first-child {
         margin-top: 0;
       }
 
-      #bm-content-overlay .bm-result-item {
+      #bmg-http-overlay .bmg-result-item {
         display: flex;
         align-items: center;
         gap: 12px;
@@ -669,22 +707,22 @@ class ContentOverlay {
         transition: background 0.2s;
       }
 
-      #bm-content-overlay .bm-result-item:hover,
-      #bm-content-overlay .bm-result-item.bm-selected {
+      #bmg-http-overlay .bmg-result-item:hover,
+      #bmg-http-overlay .bmg-result-item.bmg-selected {
         background: #f5f5f5;
       }
 
-      #bm-content-overlay .bm-result-icon {
+      #bmg-http-overlay .bmg-result-icon {
         font-size: 20px;
         flex-shrink: 0;
       }
 
-      #bm-content-overlay .bm-result-content {
+      #bmg-http-overlay .bmg-result-content {
         flex: 1;
         min-width: 0;
       }
 
-      #bm-content-overlay .bm-result-title {
+      #bmg-http-overlay .bmg-result-title {
         font-weight: 500;
         color: #333;
         white-space: nowrap;
@@ -692,7 +730,7 @@ class ContentOverlay {
         text-overflow: ellipsis;
       }
 
-      #bm-content-overlay .bm-result-description {
+      #bmg-http-overlay .bmg-result-description {
         font-size: 13px;
         color: #999;
         white-space: nowrap;
@@ -701,7 +739,7 @@ class ContentOverlay {
         margin-top: 2px;
       }
 
-      #bm-content-overlay .bm-show-more {
+      #bmg-http-overlay .bmg-show-more {
         display: block;
         width: 100%;
         padding: 12px 16px;
@@ -715,11 +753,11 @@ class ContentOverlay {
         font-family: inherit;
       }
 
-      #bm-content-overlay .bm-show-more:hover {
+      #bmg-http-overlay .bmg-show-more:hover {
         background: #f0f0f0;
       }
 
-      #bm-content-overlay .bm-empty-state {
+      #bmg-http-overlay .bmg-empty-state {
         display: none;
         flex: 1;
         align-items: center;
@@ -728,21 +766,26 @@ class ContentOverlay {
         font-size: 14px;
       }
 
-      #bm-content-overlay .bm-results::-webkit-scrollbar {
+      #bmg-http-overlay .bmg-results::-webkit-scrollbar {
         width: 8px;
       }
 
-      #bm-content-overlay .bm-results::-webkit-scrollbar-track {
+      #bmg-http-overlay .bmg-results::-webkit-scrollbar-track {
         background: transparent;
       }
 
-      #bm-content-overlay .bm-results::-webkit-scrollbar-thumb {
+      #bmg-http-overlay .bmg-results::-webkit-scrollbar-thumb {
         background: #ccc;
         border-radius: 4px;
       }
 
-      #bm-content-overlay .bm-results::-webkit-scrollbar-thumb:hover {
+      #bmg-http-overlay .bmg-results::-webkit-scrollbar-thumb:hover {
         background: #999;
+      }
+      
+      /* Keyframe animations - namespaced */
+      @keyframes bmg-spin {
+        to { transform: rotate(360deg); }
       }
     `;
 

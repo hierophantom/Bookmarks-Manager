@@ -4,6 +4,16 @@ All notable changes to the Bookmark Manager Chrome Extension are documented in t
 
 ## [Unreleased]
 
+### Fixed - HTTP Overlay CSS Isolation & LTR (January 12, 2026)
+- **BMG-75**: Custom CSS isolation for HTTP search overlay with LTR enforcement
+  - Wrapped HTTP overlay in scoped root element (`#bmg-http-overlay`)
+  - All CSS classes namespaced under `#bmg-http-overlay` root to prevent host-page CSS collisions
+  - Added LTR enforcement: `direction: ltr` + `unicode-bidi: isolate` on root element
+  - All child elements inherit LTR behavior with `!important` flags
+  - Renamed IDs and classes: `bm-` → `bmg-` for better namespace isolation
+  - CSS-in-JS approach ensures styles stay encapsulated even on aggressive host pages
+  - Tested for RTL sites, aggressive CSS, and different locale scenarios
+
 ### Added - Open All Confirmation (January 11, 2026)
 - **BMG-63**: Confirmation modal for "Open All" button when folder has 10+ bookmarks
   - Shows confirmation dialog: "You are about to open X bookmarks. Are you sure?"
