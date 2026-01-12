@@ -576,7 +576,8 @@ class ContentOverlay {
       #bmg-http-overlay {
         /* LTR Layout Isolation - Forces left-to-right regardless of page locale */
         direction: ltr;
-        unicode-bidi: isolate;
+        unicode-bidi: bidi-override;
+        text-align: left;
         
         /* CSS Custom properties for consistent styling */
         --bmg-text-align: left;
@@ -584,10 +585,11 @@ class ContentOverlay {
         --bmg-margin-end: 0;
       }
       
-      /* Force LTR on all children */
+      /* Force LTR on all children with bidi-override for stronger enforcement */
       #bmg-http-overlay * {
         direction: ltr !important;
-        unicode-bidi: normal !important;
+        unicode-bidi: bidi-override !important;
+        text-align: left !important;
       }
       
       /* Extra protection for form inputs */
@@ -596,7 +598,8 @@ class ContentOverlay {
       #bmg-http-overlay textarea,
       #bmg-http-overlay select {
         direction: ltr !important;
-        unicode-bidi: normal !important;
+        unicode-bidi: bidi-override !important;
+        text-align: left !important;
         margin: 0;
         padding: 0;
         border: 0;
@@ -640,7 +643,8 @@ class ContentOverlay {
         flex-direction: column;
         overflow: hidden;
         direction: ltr;
-        unicode-bidi: isolate;
+        unicode-bidi: bidi-override;
+        text-align: left;
       }
 
       #bmg-http-overlay .bmg-search-input {
@@ -649,6 +653,9 @@ class ContentOverlay {
         font-size: 16px;
         outline: none;
         border-bottom: 1px solid #eee;
+        direction: ltr;
+        unicode-bidi: bidi-override;
+        text-align: left;
       }
 
       #bmg-http-overlay .bmg-search-input::placeholder {
@@ -730,6 +737,9 @@ class ContentOverlay {
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+        direction: ltr;
+        unicode-bidi: bidi-override;
+        text-align: left;
       }
 
       #bmg-http-overlay .bmg-result-description {
@@ -739,6 +749,9 @@ class ContentOverlay {
         overflow: hidden;
         text-overflow: ellipsis;
         margin-top: 2px;
+        direction: ltr;
+        unicode-bidi: bidi-override;
+        text-align: left;
       }
 
       #bmg-http-overlay .bmg-show-more {
