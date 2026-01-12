@@ -585,21 +585,20 @@ class ContentOverlay {
         --bmg-margin-end: 0;
       }
       
-      /* Force LTR on all children with bidi-override for stronger enforcement */
-      #bmg-http-overlay * {
-        direction: ltr !important;
-        unicode-bidi: bidi-override !important;
-        text-align: left !important;
+      /* Reset directional properties on container that handles display toggle */
+      #bmg-http-overlay .bmg-overlay-container {
+        direction: ltr;
+        unicode-bidi: bidi-override;
       }
       
-      /* Extra protection for form inputs */
+      /* Extra protection for form inputs and text elements */
       #bmg-http-overlay input,
       #bmg-http-overlay button,
       #bmg-http-overlay textarea,
       #bmg-http-overlay select {
-        direction: ltr !important;
-        unicode-bidi: bidi-override !important;
-        text-align: left !important;
+        direction: ltr;
+        unicode-bidi: bidi-override;
+        text-align: left;
         margin: 0;
         padding: 0;
         border: 0;
