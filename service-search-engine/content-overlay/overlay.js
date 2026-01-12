@@ -94,7 +94,8 @@ class ContentOverlay {
    */
   setupUI() {
     this.elements = {
-      overlay: document.getElementById('bmg-http-overlay'),
+      root: document.getElementById('bmg-http-overlay'),
+      overlay: document.querySelector('#bmg-http-overlay .bmg-overlay-container'),
       modal: document.getElementById('bmg-overlay-modal'),
       backdrop: document.getElementById('bmg-overlay-backdrop'),
       input: document.getElementById('bmg-search-input'),
@@ -579,6 +580,14 @@ class ContentOverlay {
         unicode-bidi: bidi-override;
         text-align: left;
         
+        /* Font Locking - Specific fonts for overlay, immune to host-page fonts */
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        font-size: 14px;
+        font-weight: 400;
+        line-height: 1.5;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        
         /* CSS Custom properties for consistent styling */
         --bmg-text-align: left;
         --bmg-margin-start: 0;
@@ -616,7 +625,6 @@ class ContentOverlay {
         align-items: center;
         justify-content: flex-start;
         padding-top: 100px;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       }
 
       #bmg-http-overlay .bmg-overlay-backdrop {
