@@ -273,7 +273,7 @@ class ContentOverlay {
 
       // Category header
       const header = document.createElement('div');
-      header.className = 'bm-result-category';
+      header.className = 'bmg-result-category';
       header.textContent = category;
       resultsList.appendChild(header);
 
@@ -291,7 +291,7 @@ class ContentOverlay {
       // Add "show more" button if items exceed limit
       if (hasMore && showMoreUrls[category]) {
         const showMoreBtn = document.createElement('button');
-        showMoreBtn.className = 'bm-show-more';
+        showMoreBtn.className = 'bmg-show-more';
         showMoreBtn.innerHTML = `📂 Show more in ${category}`;
         showMoreBtn.dataset.category = category;
         showMoreBtn.dataset.url = showMoreUrls[category];
@@ -323,12 +323,12 @@ class ContentOverlay {
    */
   createResultItem(item) {
     const el = document.createElement('div');
-    el.className = 'bm-result-item';
+    el.className = 'bmg-result-item';
     el.innerHTML = `
-      <span class="bm-result-icon">${item.icon}</span>
-      <div class="bm-result-content">
-        <div class="bm-result-title">${this.escapeHtml(item.title)}</div>
-        <div class="bm-result-description">${this.escapeHtml(item.description || '')}</div>
+      <span class="bmg-result-icon">${item.icon}</span>
+      <div class="bmg-result-content">
+        <div class="bmg-result-title">${this.escapeHtml(item.title)}</div>
+        <div class="bmg-result-description">${this.escapeHtml(item.description || '')}</div>
       </div>
     `;
 
