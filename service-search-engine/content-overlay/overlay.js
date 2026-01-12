@@ -639,6 +639,8 @@ class ContentOverlay {
         display: flex;
         flex-direction: column;
         overflow: hidden;
+        direction: ltr;
+        unicode-bidi: isolate;
       }
 
       #bmg-http-overlay .bmg-search-input {
