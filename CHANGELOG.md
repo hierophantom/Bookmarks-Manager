@@ -4,6 +4,15 @@ All notable changes to the Bookmark Manager Chrome Extension are documented in t
 
 ## [Unreleased]
 
+### Fixed - HTTP Overlay Display & Font Locking (January 12, 2026)
+- **BMG-75 Follow-up**: Fixed overlay display toggle and locked fonts to prevent host-page interference
+  - Fixed bug where overlay display toggle wasn't working (was toggling wrong element)
+  - Corrected element reference: now properly targets `.bmg-overlay-container` instead of root
+  - Locked fonts to root element: system font stack immune to host-page font overrides
+  - Added font properties: `font-family`, `font-size: 14px`, `font-weight: 400`, `line-height: 1.5`
+  - Enabled font smoothing: `-webkit-font-smoothing` and `-moz-osx-font-smoothing`
+  - Ensures consistent, readable overlay appearance across all websites
+
 ### Fixed - HTTP Overlay CSS Isolation & LTR (January 12, 2026)
 - **BMG-75**: Custom CSS isolation for HTTP search overlay with LTR enforcement
   - Wrapped HTTP overlay in scoped root element (`#bmg-http-overlay`)
