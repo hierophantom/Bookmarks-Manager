@@ -1,0 +1,334 @@
+/* ============================================
+   LEFT PANEL STYLING
+   ============================================ */
+
+#bmg-left-panel {
+  position: fixed;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 300px;
+  background-color: var(--theme-bg, #ffffff);
+  border-right: 1px solid var(--theme-border, #e0e0e0);
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+  z-index: 999;
+  transform: translateX(-100%);
+  transition: transform 0.3s ease, width 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  color: var(--theme-text, #000);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  overflow: hidden;
+}
+
+#bmg-left-panel.open {
+  transform: translateX(0);
+}
+
+#bmg-left-panel.docked {
+  position: absolute;
+  left: 0;
+  top: 48px;
+  height: calc(100vh - 48px);
+  transform: none;
+  box-shadow: 1px 0 4px rgba(0, 0, 0, 0.05);
+  z-index: 100;
+}
+
+/* Panel Header */
+.bmg-left-panel-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--theme-border, #e0e0e0);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  background-color: var(--theme-header-bg, var(--theme-bg));
+}
+
+.bmg-left-panel-title {
+  font-weight: 600;
+  font-size: 14px;
+  flex: 1;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.bmg-left-panel-controls {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.bmg-left-panel-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  color: var(--theme-text);
+  font-size: 12px;
+  transition: background-color 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 28px;
+}
+
+.bmg-left-panel-btn:hover {
+  background-color: var(--theme-hover-bg, rgba(0, 0, 0, 0.08));
+}
+
+.bmg-left-panel-btn:active {
+  background-color: var(--theme-active-bg, rgba(0, 0, 0, 0.12));
+}
+
+/* Panel Content */
+#bmg-left-panel-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 8px 0;
+}
+
+/* Tree Structure */
+.bmg-left-panel-tree {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.bmg-left-panel-item {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.bmg-left-panel-folder-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  margin: 0 4px;
+  border-radius: 4px;
+}
+
+.bmg-left-panel-folder-header:hover {
+  background-color: var(--theme-hover-bg, rgba(0, 0, 0, 0.08));
+}
+
+.bmg-left-panel-item.selected .bmg-left-panel-folder-header {
+  background-color: var(--theme-active-bg, rgba(0, 0, 0, 0.12));
+  font-weight: 500;
+}
+
+/* Chevron/Expand Toggle */
+.bmg-left-panel-chevron {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  font-size: 10px;
+  cursor: pointer;
+  transform: rotate(0deg);
+  transition: transform 0.2s ease;
+  color: var(--theme-secondary-text, #666);
+  flex-shrink: 0;
+}
+
+.bmg-left-panel-chevron.expanded {
+  transform: rotate(90deg);
+}
+
+.bmg-left-panel-chevron-spacer {
+  display: inline-block;
+  width: 16px;
+  flex-shrink: 0;
+}
+
+/* Folder Label */
+.bmg-left-panel-folder-label {
+  flex: 1;
+  font-size: 13px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  color: var(--theme-text);
+}
+
+/* Bookmark Count Badge */
+.bmg-left-panel-count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  background-color: var(--theme-accent, #5b5bea);
+  color: white;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+/* Nested children */
+.bmg-left-panel-tree .bmg-left-panel-tree {
+  margin-left: 8px;
+}
+
+/* Bookmark Items */
+.bmg-left-panel-bookmark-item {
+  user-select: none;
+  -webkit-user-select: none;
+  padding: 4px 8px;
+  margin: 0 4px 2px 28px;
+  border-radius: 4px;
+  transition: background-color 0.15s ease;
+  list-style: none;
+}
+
+.bmg-left-panel-bookmark-item:hover {
+  background-color: var(--theme-hover-bg, rgba(0, 0, 0, 0.05));
+}
+
+.bmg-left-panel-bookmark-link {
+  display: block;
+  font-size: 12px;
+  color: var(--theme-text, #000);
+  text-decoration: none;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  opacity: 0.8;
+}
+
+.bmg-left-panel-bookmark-link:hover {
+  opacity: 1;
+  text-decoration: underline;
+}
+
+/* Toggle Button (fixed left edge) */
+#bmg-left-panel-toggle-btn {
+  position: fixed;
+  left: 8px;
+  top: 8px;
+  z-index: 998;
+  background-color: var(--theme-bg, #ffffff);
+  border: 1px solid var(--theme-border, #e0e0e0);
+  border-radius: 4px;
+  padding: 6px 8px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+  color: var(--theme-text, #000);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  opacity: 1;
+}
+
+#bmg-left-panel-toggle-btn:hover {
+  background-color: var(--theme-hover-bg, rgba(0, 0, 0, 0.08));
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+#bmg-left-panel-toggle-btn:active {
+  transform: scale(0.95);
+}
+
+/* When panel is docked, hide the floating toggle button but keep panel visible */
+#bmg-left-panel.docked ~ #bmg-left-panel-toggle-btn {
+  display: none;
+}
+
+/* In docked mode, the close button in the header should still work and close to floating mode */
+
+/* Main content adjustment when panel is docked */
+#bmg-main-content {
+  transition: margin-left 0.3s ease;
+  margin-left: 0;
+}
+
+#bmg-left-panel.docked ~ #bmg-main-content {
+  margin-left: 300px;
+}
+
+/* Error state */
+.bmg-left-panel-error {
+  padding: 16px;
+  text-align: center;
+  color: var(--theme-error, #e74c3c);
+  font-size: 12px;
+}
+
+/* Clear Selection Footer */
+.bmg-left-panel-clear-footer {
+  padding: 12px 8px;
+  border-top: 1px solid var(--theme-border, #e0e0e0);
+  background-color: var(--theme-header-bg, var(--theme-bg));
+  flex-shrink: 0;
+}
+
+.bmg-left-panel-clear-btn {
+  width: 100%;
+  padding: 8px 12px;
+  background-color: var(--theme-hover-bg, rgba(0, 0, 0, 0.08));
+  border: 1px solid var(--theme-border, #e0e0e0);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--theme-text);
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.bmg-left-panel-clear-btn:hover {
+  background-color: var(--theme-active-bg, rgba(0, 0, 0, 0.12));
+  border-color: var(--theme-text);
+}
+
+.bmg-left-panel-clear-btn:active {
+  transform: scale(0.98);
+}
+
+/* Scrollbar styling */
+#bmg-left-panel-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+#bmg-left-panel-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+#bmg-left-panel-content::-webkit-scrollbar-thumb {
+  background-color: var(--theme-scrollbar, #ccc);
+  border-radius: 3px;
+}
+
+#bmg-left-panel-content::-webkit-scrollbar-thumb:hover {
+  background-color: var(--theme-scrollbar-hover, #999);
+}
+
+/* Responsive - hide panel on very small screens */
+@media (max-width: 600px) {
+  #bmg-left-panel {
+    width: 280px;
+  }
+
+  #bmg-left-panel.docked ~ #bmg-main-content {
+    margin-left: 280px;
+  }
+
+  #bmg-left-panel.open ~ #bmg-left-panel-toggle-btn {
+    left: 288px;
+  }
+}

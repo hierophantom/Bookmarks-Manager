@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="../utils/tailwind-modal.css">
   <link rel="stylesheet" href="../utils/modal.css">
   <link rel="stylesheet" href="../utils/tagify.min.css">
+  <link rel="stylesheet" href="../utils/left-panel.css">
   <!-- Load main overlay for this chrome-extension:// page -->
   <script type="module" src="../service-search-engine/main-overlay/overlay.js"></script>
   <!-- Load BaseModal class for all modals -->
@@ -16,7 +17,23 @@
   <script src="../utils/tag-multiselect.js"></script>
 </head>
 <body>
-  <div id="app">
+  <!-- Left Panel -->
+  <div id="bmg-left-panel" class="left-panel">
+    <div class="bmg-left-panel-header">
+      <h3 class="bmg-left-panel-title">Folders</h3>
+      <div class="bmg-left-panel-controls">
+        <button id="bmg-left-panel-mode-toggle" class="bmg-left-panel-btn" title="Toggle floating/docked">⊟</button>
+        <button id="bmg-left-panel-close-btn" class="bmg-left-panel-btn" title="Close panel">✕</button>
+      </div>
+    </div>
+    <div id="bmg-left-panel-content"></div>
+  </div>
+
+  <!-- Toggle button for left panel -->
+  <button id="bmg-left-panel-toggle-btn" title="Folders Panel - Toggle (Ctrl+Shift+F or Cmd+Shift+F)">☰</button>
+
+  <!-- Main content wrapper -->
+  <div id="bmg-main-content">
     <!-- Top Bar with general settings -->
     <header class="topbar">
       <div class="topbar__title">Bookmark Manager</div>
@@ -105,6 +122,8 @@
       <button class="nav-btn" data-target="2">🧭 Journey</button>
     </nav>
   </div>
+  </div>
+  <!-- End bmg-main-content -->
 
   <template id="folder-template">
     <section class="folder">
@@ -125,6 +144,8 @@
   <script src="../services/bookmarks.js"></script>
   <script src="../services/tags.js"></script>
   <script src="../services/tab-groups.js"></script>
+  <script src="../services/left-panel.js"></script>
+  <script src="../utils/left-panel-ui.js"></script>
   <script src="../services/bookmark-modals.js"></script>
   <script src="../services/widgets.js"></script>
   <script src="../modals/theme-settings.js"></script>

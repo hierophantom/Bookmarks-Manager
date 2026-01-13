@@ -634,6 +634,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     let folders = (tree && tree[0] && tree[0].children) ? tree[0].children : [];
     folders = sortFolders(folders);
+
     for (const folder of folders) {
       await renderFolder(folder, root);
     }
@@ -761,6 +762,35 @@ document.addEventListener('DOMContentLoaded', async () => {
     personalizeBtn.addEventListener('click', () => {
       ThemeSettingsModal.show();
     });
+  }
+
+  // Initialize Left Panel
+  try {
+    if (typeof LeftPanelUI !== 'undefined' && typeof LeftPanelService !== 'undefined') {
+      await LeftPanelUI.init({
+        onPanelToggle: (isOpen) => {
+          console.log('Left panel toggled:', isOpen);
+        }
+      });
+
+      // Setup left panel toggle button
+      const toggleBtn = document.getElementById('bmg-left-panel-toggle-btn');
+      if (toggleBtn) {
+        toggleBtn.addEventListener('click', () => {
+          LeftPanelUI.handlePanelToggle();
+        });
+      }
+
+      // Keyboard shortcut: Ctrl+Shift+F (Cmd+Shift+F on Mac) to toggle left panel
+      window.addEventListener('keydown', (e) => {
+        if ((e.metaKey || e.ctrlKey) && e.shiftKey && (e.key === 'f' || e.key === 'F')) {
+          e.preventDefault();
+          LeftPanelUI.handlePanelToggle();
+        }
+      });
+    }
+  } catch (e) {
+    console.warn('Left panel initialization failed:', e);
   }
 
   // Helper: Jump to folder by ID
