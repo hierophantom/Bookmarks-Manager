@@ -95,6 +95,7 @@ class MainOverlay {
     // Search input
     this.elements.input.addEventListener('input', (e) => this.handleSearch(e.target.value));
 
+
     // Prevent modal click from closing
     this.elements.modal.addEventListener('click', (e) => e.stopPropagation());
 
@@ -191,6 +192,54 @@ class MainOverlay {
     }
   }
 
+  /**
+   * Save current window tabs as a session
+   */
+  async handleSaveSession() {
+    try {
+      // Determine current window
+      let windowId = null;
+      try {
+        const currentTab = await chrome.tabs.getCurrent();
+        windowId = currentTab ? currentTab.windowId : null;
+      } catch (err) {
+        console.warn('[MainOverlay] getCurrent tab failed, fallback to getCurrent window', err);
+      }
+
+      if (!windowId) {
+        const currentWindow = await chrome.windows.getCurrent();
+        windowId = currentWindow.id;
+      }
+
+      const windows = await chrome.windows.getAll({ populate: true });
+      const currentUrl = chrome.runtime.getURL('core/main.html');
+      const targetWindow = windows.find(w => w.id === windowId);
+      const tabs = (targetWindow?.tabs || [])
+        .filter(tab => tab.url && !tab.url.includes(currentUrl))
+        .map(tab => ({
+          id: tab.id,
+          title: tab.title || tab.url,
+          url: tab.url
+        }));
+
+      if (!tabs.length) {
+        alert('No tabs to save in this window');
+        return;
+      }
+
+      if (typeof SaveTabsModal === 'undefined') {
+        console.error('SaveTabsModal not available');
+        alert('Save modal not available');
+        return;
+      }
+
+      await SaveTabsModal.show(tabs);
+    } catch (error) {
+      console.error('[MainOverlay] handleSaveSession failed:', error);
+      alert('Failed to save session');
+    }
+  }
+
   
 
   /**
@@ -214,6 +263,45 @@ class MainOverlay {
       'Extensions': 'chrome://extensions',
       'Calculator': null
     };
+
+    // Ensure save-session is part of Actions category
+    const desiredOrder = [
+      'action-new-tab',
+      'action-new-window',
+      'action-close-tab',
+      'action-remove-favorite',
+      'action-add-favorite',
+      'save-session'
+    ];
+    const actionMap = {
+      'save-session': {
+        id: 'save-session',
+        type: 'action',
+        icon: '💾',
+        title: 'Save session',
+        description: 'Save all tabs in this window as bookmarks'
+      }
+    };
+
+    const actions = this.currentResults['Actions'] || [];
+    const merged = [...actions];
+
+    // Ensure save-session exists
+    if (!merged.some(a => a.id === 'save-session')) {
+      merged.push(actionMap['save-session']);
+    }
+
+    // Build ordered list, append any extras at the end
+    const ordered = [];
+    desiredOrder.forEach(id => {
+      const found = merged.find(a => a.id === id);
+      if (found) ordered.push(found);
+    });
+    merged.forEach(a => {
+      if (!ordered.includes(a)) ordered.push(a);
+    });
+
+    this.currentResults['Actions'] = ordered;
 
     // Group results by category
     for (const [category, items] of Object.entries(this.currentResults)) {
@@ -322,7 +410,12 @@ class MainOverlay {
     try {
       let success = false;
 
-      if (item.type === 'calculator') {
+      if (item.id === 'save-session') {
+        // Close overlay first to avoid visual collision, then open modal
+        this.close();
+        await this.handleSaveSession();
+        success = true;
+      } else if (item.type === 'calculator') {
         // Copy calculator result to clipboard
         await navigator.clipboard.writeText(item.value);
         console.log('[MainOverlay] Copied to clipboard:', item.value);
@@ -504,12 +597,21 @@ class MainOverlay {
         overflow: hidden;
       }
 
+      .bm-search-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 12px 0 12px;
+      }
+
       .bm-search-input {
-        padding: 16px;
-        border: none;
+        flex: 1;
+        padding: 12px 14px;
+        border: 1px solid #e5e7eb;
+        border-radius: 10px;
         font-size: 16px;
         outline: none;
-        border-bottom: 1px solid #eee;
+        background: #f9fafb;
       }
 
       .bm-search-input::placeholder {

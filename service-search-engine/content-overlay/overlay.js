@@ -243,6 +243,50 @@ class ContentOverlay {
   }
 
   /**
+   * Save current window tabs as a session
+   */
+  async handleSaveSession() {
+    try {
+      console.log('[ContentOverlay] handleSaveSession called');
+      console.log('[ContentOverlay] ContentSaveSessionModal available?', typeof ContentSaveSessionModal);
+      
+      if (typeof ContentSaveSessionModal === 'undefined') {
+        console.error('[ContentOverlay] ContentSaveSessionModal not available');
+        alert('Save modal not available');
+        return;
+      }
+
+      // Request tabs from background (content scripts can't access chrome.windows)
+      chrome.runtime.sendMessage({ type: 'GET_CURRENT_WINDOW_TABS' }, (response) => {
+        if (chrome.runtime.lastError) {
+          console.error('[ContentOverlay] Failed to get tabs:', chrome.runtime.lastError.message);
+          alert('Failed to get tabs');
+          return;
+        }
+
+        if (!response || !response.success) {
+          console.error('[ContentOverlay] Failed to get tabs:', response?.error);
+          alert('Failed to get tabs');
+          return;
+        }
+
+        console.log('[ContentOverlay] Got tabs:', response.tabs.length);
+
+        if (!response.tabs.length) {
+          alert('No tabs to save in this window');
+          return;
+        }
+
+        console.log('[ContentOverlay] Opening ContentSaveSessionModal');
+        ContentSaveSessionModal.show(response.tabs);
+      });
+    } catch (error) {
+      console.error('[ContentOverlay] handleSaveSession failed:', error);
+      alert('Failed to save session');
+    }
+  }
+
+  /**
    * Display results
    */
   displayResults() {
@@ -265,6 +309,45 @@ class ContentOverlay {
       'Extensions': 'chrome://extensions',
       'Calculator': null
     };
+
+    // Ensure save-session is part of Actions category
+    const desiredOrder = [
+      'action-new-tab',
+      'action-new-window',
+      'action-close-tab',
+      'action-remove-favorite',
+      'action-add-favorite',
+      'save-session'
+    ];
+    const actionMap = {
+      'save-session': {
+        id: 'save-session',
+        type: 'action',
+        icon: '💾',
+        title: 'Save session',
+        description: 'Save all tabs in this window as bookmarks'
+      }
+    };
+
+    const actions = this.currentResults['Actions'] || [];
+    const merged = [...actions];
+
+    // Ensure save-session exists
+    if (!merged.some(a => a.id === 'save-session')) {
+      merged.push(actionMap['save-session']);
+    }
+
+    // Build ordered list, append any extras at the end
+    const ordered = [];
+    desiredOrder.forEach(id => {
+      const found = merged.find(a => a.id === id);
+      if (found) ordered.push(found);
+    });
+    merged.forEach(a => {
+      if (!ordered.includes(a)) ordered.push(a);
+    });
+
+    this.currentResults['Actions'] = ordered;
 
     // Group results by category
     for (const [category, items] of Object.entries(this.currentResults)) {
@@ -372,7 +455,11 @@ class ContentOverlay {
   executeResult(item) {
     try {
       // Handle different result types
-      if (item.type === 'calculator') {
+      if (item.id === 'save-session') {
+        // Close overlay first to avoid visual collision, then open modal
+        this.close();
+        this.handleSaveSession();
+      } else if (item.type === 'calculator') {
         // Copy calculator result to clipboard
         navigator.clipboard.writeText(item.value).then(() => {
           this.close();

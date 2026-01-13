@@ -833,4 +833,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     await WidgetsService.addWidgetToFirstEmpty(pick);
     await WidgetsService.render('widgets-container');
   }); }
-});
+
+  // Listen for save session modal request from content overlay
+  chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    if (request.type === 'OPEN_SAVE_SESSION_MODAL' && request.tabs) {
+      console.log('[Main] Opening save session modal with', request.tabs.length, 'tabs');
+      if (typeof SaveTabsModal !== 'undefined') {
+        SaveTabsModal.show(request.tabs);
+        sendResponse({ success: true });
+      } else {
+        console.error('[Main] SaveTabsModal not available');
+        sendResponse({ success: false, error: 'SaveTabsModal not available' });
+      }
+    }
+  });});

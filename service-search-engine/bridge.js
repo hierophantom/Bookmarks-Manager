@@ -79,6 +79,18 @@ function handleMessage(request, sender, sendResponse) {
       handleExecuteResult(request, sender, sendResponse);
       break;
 
+    case 'OPEN_SAVE_SESSION_MODAL':
+      handleOpenSaveSessionModal(request, sender, sendResponse);
+      break;
+
+    case 'SAVE_TABS_AS_BOOKMARKS':
+      handleSaveTabsAsBookmarks(request, sender, sendResponse);
+      break;
+
+    case 'GET_CURRENT_WINDOW_TABS':
+      handleGetCurrentWindowTabs(request, sender, sendResponse);
+      break;
+
     case 'OVERLAY_READY':
       readyTabs.add(request.tabId);
       console.log('[Bridge] Tab ready:', request.tabId, 'Total ready:', readyTabs.size);
@@ -169,6 +181,170 @@ async function handleExecuteResult(request, sender, sendResponse) {
       success: false,
       error: error.message
     });
+  }
+}
+
+/**
+ * Handle open save session modal request
+ */
+async function handleOpenSaveSessionModal(request, sender, sendResponse) {
+  try {
+    console.log('[Bridge] Opening save session modal');
+
+    // Get all windows with tabs
+    const windows = await chrome.windows.getAll({ populate: true });
+    const mainExtensionUrl = chrome.runtime.getURL('core/main.html');
+    
+    // Find the focused window
+    const focusedWindow = windows.find(w => w.focused);
+    if (!focusedWindow) {
+      console.error('[Bridge] No focused window found');
+      sendResponse({ success: false, error: 'No focused window' });
+      return;
+    }
+
+    // Filter tabs (exclude extension UI)
+    const tabs = focusedWindow.tabs
+      .filter(tab => tab.url && !tab.url.includes(mainExtensionUrl))
+      .map(tab => ({
+        id: tab.id,
+        title: tab.title || tab.url,
+        url: tab.url
+      }));
+
+    if (!tabs.length) {
+      sendResponse({ success: false, error: 'No tabs to save' });
+      return;
+    }
+
+    console.log('[Bridge] Found', tabs.length, 'tabs to save');
+
+    // Store tabs in chrome.storage for main.html to access
+    await chrome.storage.session.set({
+      'pendingSaveSessionTabs': tabs
+    });
+
+    // Find or open main.html window
+    const mainWindows = await chrome.windows.getAll();
+    let mainWindow = null;
+    let mainTab = null;
+
+    // Look for existing main.html tab
+    for (const w of mainWindows) {
+      const tabs = await chrome.tabs.query({ windowId: w.id });
+      const found = tabs.find(t => t.url && t.url.includes('core/main.html'));
+      if (found) {
+        mainWindow = w;
+        mainTab = found;
+        break;
+      }
+    }
+
+    // If no main.html tab found, open it
+    if (!mainTab) {
+      mainTab = await chrome.tabs.create({
+        url: chrome.runtime.getURL('core/main.html'),
+        active: true
+      });
+    } else {
+      // Activate existing tab
+      await chrome.tabs.update(mainTab.id, { active: true });
+      if (mainWindow) {
+        await chrome.windows.update(mainWindow.id, { focused: true });
+      }
+    }
+
+    // Send message to main.html to open the modal
+    chrome.tabs.sendMessage(mainTab.id, {
+      type: 'OPEN_SAVE_SESSION_MODAL',
+      tabs: tabs
+    }, (response) => {
+      if (chrome.runtime.lastError) {
+        console.error('[Bridge] Failed to send modal message:', chrome.runtime.lastError.message);
+      } else {
+        console.log('[Bridge] Modal message sent successfully');
+      }
+    });
+
+    sendResponse({ success: true });
+  } catch (error) {
+    console.error('[Bridge] handleOpenSaveSessionModal error:', error);
+    sendResponse({
+      success: false,
+      error: error.message
+    });
+  }
+}
+
+/**
+ * Save tabs as bookmarks
+ */
+async function handleSaveTabsAsBookmarks(request, sender, sendResponse) {
+  try {
+    console.log('[Bridge] Saving tabs:', request.tabs.length, 'folder name:', request.folderName);
+    
+    // Create session folder in Bookmarks Bar (parentId: '1')
+    const sessionFolder = await chrome.bookmarks.create({
+      title: request.folderName,
+      parentId: '1'
+    });
+
+    console.log('[Bridge] Created session folder:', sessionFolder.id, sessionFolder.title);
+
+    // Save each tab as a bookmark inside the session folder
+    for (const tab of request.tabs) {
+      const bookmark = await chrome.bookmarks.create({
+        title: tab.title,
+        url: tab.url,
+        parentId: sessionFolder.id
+      });
+      console.log('[Bridge] Created bookmark:', bookmark.title);
+    }
+
+    console.log('[Bridge] Successfully saved', request.tabs.length, 'bookmarks');
+    sendResponse({ success: true });
+  } catch (error) {
+    console.error('[Bridge] Save tabs error:', error);
+    sendResponse({ success: false, error: error.message });
+  }
+}
+
+/**
+ * Get current window tabs for content script
+ */
+async function handleGetCurrentWindowTabs(request, sender, sendResponse) {
+  try {
+    const windows = await chrome.windows.getAll({ populate: true });
+    const mainExtensionUrl = chrome.runtime.getURL('core/main.html');
+    
+    // Find the window containing the sender tab
+    let targetWindow = null;
+    if (sender.tab?.windowId) {
+      targetWindow = windows.find(w => w.id === sender.tab.windowId);
+    }
+    
+    // Fallback to focused window
+    if (!targetWindow) {
+      targetWindow = windows.find(w => w.focused);
+    }
+
+    if (!targetWindow) {
+      sendResponse({ success: false, error: 'No window found' });
+      return;
+    }
+
+    const tabs = targetWindow.tabs
+      .filter(tab => tab.url && !tab.url.includes(mainExtensionUrl))
+      .map(tab => ({
+        id: tab.id,
+        title: tab.title || tab.url,
+        url: tab.url
+      }));
+
+    sendResponse({ success: true, tabs });
+  } catch (error) {
+    console.error('[Bridge] Get current window tabs error:', error);
+    sendResponse({ success: false, error: error.message });
   }
 }
 
