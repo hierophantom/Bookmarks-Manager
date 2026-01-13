@@ -1,0 +1,308 @@
+/* ============================================
+   RIGHT PANEL STYLING
+   ============================================ */
+
+#bmg-right-panel {
+  position: fixed;
+  right: 0;
+  top: 0;
+  height: 100%;
+  width: 320px;
+  background-color: var(--theme-bg, #ffffff);
+  border-left: 1px solid var(--theme-border, #e0e0e0);
+  box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
+  z-index: 999;
+  transform: translateX(100%);
+  transition: transform 0.3s ease, width 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  color: var(--theme-text, #000);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  overflow: hidden;
+}
+
+#bmg-right-panel.open {
+  transform: translateX(0);
+}
+
+#bmg-right-panel.docked {
+  position: absolute;
+  right: 0;
+  top: 48px;
+  height: calc(100vh - 48px);
+  transform: none;
+  box-shadow: -1px 0 4px rgba(0, 0, 0, 0.05);
+  z-index: 100;
+}
+
+/* Panel Header */
+.bmg-right-panel-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--theme-border, #e0e0e0);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  background-color: var(--theme-header-bg, var(--theme-bg));
+}
+
+.bmg-right-panel-title {
+  font-weight: 600;
+  font-size: 14px;
+  flex: 1;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.bmg-right-panel-controls {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.bmg-right-panel-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  color: var(--theme-text);
+  font-size: 12px;
+  transition: background-color 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 28px;
+}
+
+.bmg-right-panel-btn:hover {
+  background-color: var(--theme-hover-bg, rgba(0, 0, 0, 0.08));
+}
+
+.bmg-right-panel-btn:active {
+  background-color: var(--theme-active-bg, rgba(0, 0, 0, 0.12));
+}
+
+/* Panel Content */
+#bmg-right-panel-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 8px 0;
+}
+
+/* Window Sections */
+.bmg-right-panel-window {
+  margin-bottom: 20px;
+}
+
+.bmg-right-panel-window-header {
+  padding: 8px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: var(--theme-hover-bg, rgba(0, 0, 0, 0.05));
+  border-bottom: 1px solid var(--theme-border, #e0e0e0);
+}
+
+.bmg-right-panel-window-label {
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--theme-text);
+}
+
+.bmg-right-panel-tab-count {
+  font-size: 11px;
+  color: var(--theme-secondary-text, #666);
+}
+
+/* Tabs List */
+.bmg-right-panel-tabs-list {
+  padding: 4px;
+}
+
+.bmg-right-panel-tab-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  margin: 2px 0;
+  border-radius: 4px;
+  transition: background-color 0.15s ease;
+  cursor: default;
+  user-select: none;
+}
+
+.bmg-right-panel-tab-item:hover {
+  background-color: var(--theme-hover-bg, rgba(0, 0, 0, 0.05));
+}
+
+.bmg-right-panel-tab-favicon {
+  font-size: 16px;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bmg-right-panel-tab-title {
+  flex: 1;
+  font-size: 13px;
+  color: var(--theme-text);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.bmg-right-panel-tab-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 3px;
+  color: var(--theme-secondary-text, #666);
+  font-size: 18px;
+  line-height: 1;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  opacity: 0;
+}
+
+.bmg-right-panel-tab-item:hover .bmg-right-panel-tab-close {
+  opacity: 1;
+}
+
+.bmg-right-panel-tab-close:hover {
+  background-color: var(--theme-hover-bg, rgba(0, 0, 0, 0.08));
+  color: var(--theme-text);
+}
+
+/* Window Footer with Save Button */
+.bmg-right-panel-window-footer {
+  padding: 8px 12px;
+  border-top: 1px solid var(--theme-border, rgba(0, 0, 0, 0.06));
+  background-color: var(--theme-hover-bg, rgba(0, 0, 0, 0.02));
+}
+
+.bmg-right-panel-save-window-btn {
+  width: 100%;
+  padding: 8px 12px;
+  background-color: var(--theme-accent, #5b5bea);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.bmg-right-panel-save-window-btn:hover {
+  background-color: var(--theme-accent-hover, #4a4ad8);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(91, 91, 234, 0.25);
+}
+
+.bmg-right-panel-save-window-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 3px rgba(91, 91, 234, 0.2);
+}
+
+/* Toggle Button (fixed right edge) */
+#bmg-right-panel-toggle-btn {
+  position: fixed;
+  right: 8px;
+  top: 8px;
+  z-index: 998;
+  background-color: var(--theme-bg, #ffffff);
+  border: 1px solid var(--theme-border, #e0e0e0);
+  border-radius: 4px;
+  padding: 6px 8px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+  color: var(--theme-text, #000);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  opacity: 1;
+}
+
+#bmg-right-panel-toggle-btn:hover {
+  background-color: var(--theme-hover-bg, rgba(0, 0, 0, 0.08));
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+#bmg-right-panel-toggle-btn:active {
+  transform: scale(0.95);
+}
+
+/* When panel is docked, hide the floating toggle button */
+#bmg-right-panel.docked ~ #bmg-right-panel-toggle-btn {
+  display: none;
+}
+
+/* Main content adjustment when panel is docked */
+#bmg-main-content {
+  transition: margin-right 0.3s ease;
+}
+
+#bmg-right-panel.docked ~ #bmg-main-content {
+  margin-right: 320px;
+}
+
+/* Empty/Error states */
+.bmg-right-panel-empty,
+.bmg-right-panel-error {
+  padding: 24px 16px;
+  text-align: center;
+  color: var(--theme-secondary-text, #666);
+  font-size: 13px;
+}
+
+.bmg-right-panel-error {
+  color: var(--theme-error, #e74c3c);
+}
+
+/* Scrollbar styling */
+#bmg-right-panel-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+#bmg-right-panel-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+#bmg-right-panel-content::-webkit-scrollbar-thumb {
+  background-color: var(--theme-scrollbar, #ccc);
+  border-radius: 3px;
+}
+
+#bmg-right-panel-content::-webkit-scrollbar-thumb:hover {
+  background-color: var(--theme-scrollbar-hover, #999);
+}
+
+/* Responsive - adjust panel width on smaller screens */
+@media (max-width: 600px) {
+  #bmg-right-panel {
+    width: 280px;
+  }
+
+  #bmg-right-panel.docked ~ #bmg-main-content {
+    margin-right: 280px;
+  }
+}

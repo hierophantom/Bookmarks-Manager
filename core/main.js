@@ -793,6 +793,34 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.warn('Left panel initialization failed:', e);
   }
 
+  // ============================================
+  // RIGHT PANEL - ACTIVE TABS
+  // ============================================
+  try {
+    if (typeof RightPanelUI !== 'undefined' && typeof RightPanelService !== 'undefined') {
+      // Initialize right panel
+      await RightPanelUI.init();
+
+      // Attach toggle button click event
+      const rightPanelToggleBtn = document.getElementById('bmg-right-panel-toggle-btn');
+      if (rightPanelToggleBtn) {
+        rightPanelToggleBtn.addEventListener('click', () => {
+          RightPanelUI.handlePanelToggle();
+        });
+      }
+
+      // Keyboard shortcut: Ctrl+Shift+S (Cmd+Shift+S on Mac) to toggle right panel
+      window.addEventListener('keydown', (e) => {
+        if ((e.metaKey || e.ctrlKey) && e.shiftKey && (e.key === 's' || e.key === 'S')) {
+          e.preventDefault();
+          RightPanelUI.handlePanelToggle();
+        }
+      });
+    }
+  } catch (e) {
+    console.warn('Right panel initialization failed:', e);
+  }
+
   // Helper: Jump to folder by ID
   window.jumpToFolder = function(folderId) {
     const targetEl = document.getElementById(`folder-${folderId}`);

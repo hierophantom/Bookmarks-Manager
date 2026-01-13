@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="../utils/modal.css">
   <link rel="stylesheet" href="../utils/tagify.min.css">
   <link rel="stylesheet" href="../utils/left-panel.css">
+  <link rel="stylesheet" href="../utils/right-panel.css">
   <!-- Load main overlay for this chrome-extension:// page -->
   <script type="module" src="../service-search-engine/main-overlay/overlay.js"></script>
   <!-- Load BaseModal class for all modals -->
@@ -31,6 +32,21 @@
 
   <!-- Toggle button for left panel -->
   <button id="bmg-left-panel-toggle-btn" title="Folders Panel - Toggle (Ctrl+Shift+F or Cmd+Shift+F)">☰</button>
+
+  <!-- Right Panel -->
+  <div id="bmg-right-panel" class="right-panel">
+    <div class="bmg-right-panel-header">
+      <h3 class="bmg-right-panel-title">Active Tabs</h3>
+      <div class="bmg-right-panel-controls">
+        <button id="bmg-right-panel-mode-toggle" class="bmg-right-panel-btn" title="Toggle floating/docked">⊟</button>
+        <button id="bmg-right-panel-close-btn" class="bmg-right-panel-btn" title="Close panel">✕</button>
+      </div>
+    </div>
+    <div id="bmg-right-panel-content"></div>
+  </div>
+
+  <!-- Toggle button for right panel -->
+  <button id="bmg-right-panel-toggle-btn" title="Active Tabs Panel - Toggle (Ctrl+Shift+S or Cmd+Shift+S)">📑</button>
 
   <!-- Main content wrapper -->
   <div id="bmg-main-content">
@@ -146,6 +162,9 @@
   <script src="../services/tab-groups.js"></script>
   <script src="../services/left-panel.js"></script>
   <script src="../utils/left-panel-ui.js"></script>
+  <script src="../services/right-panel.js"></script>
+  <script src="../utils/save-tabs-modal.js"></script>
+  <script src="../utils/right-panel-ui.js"></script>
   <script src="../services/bookmark-modals.js"></script>
   <script src="../services/widgets.js"></script>
   <script src="../modals/theme-settings.js"></script>
