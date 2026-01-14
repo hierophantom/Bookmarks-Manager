@@ -432,11 +432,32 @@ document.addEventListener('DOMContentLoaded', async () => {
         return; // Skip rendering hidden folders
       }
 
+      // Get folder customization
+      let customization = null;
+      if (typeof FolderCustomizationService !== 'undefined') {
+        customization = await FolderCustomizationService.get(folder.id);
+      }
+
       const sec = document.importNode(document.getElementById('folder-template').content, true);
       const section = sec.querySelector('.folder');
       section.dataset.folderId = folder.id;
       section.id = `folder-${folder.id}`;
-      sec.querySelector('.folder-title').textContent = folder.title || folder.id;
+      
+      // Apply custom folder icon and styles
+      const folderTitle = sec.querySelector('.folder-title');
+      if (customization) {
+        const iconHtml = FolderCustomizationService.getFolderIconHtml(customization);
+        folderTitle.innerHTML = `${iconHtml} ${folder.title || folder.id}`;
+        
+        const styles = FolderCustomizationService.getFolderStyles(customization);
+        if (styles.borderColor) {
+          section.style.borderColor = styles.borderColor;
+          section.style.backgroundColor = styles.backgroundColor;
+        }
+      } else {
+        folderTitle.textContent = folder.title || folder.id;
+      }
+      
       const slots = sec.querySelector('.slots');
 
       // folder-level controls
@@ -483,7 +504,15 @@ document.addEventListener('DOMContentLoaded', async () => {
           console.error('Open all failed', err); 
         } 
       });
-      headerControls.querySelector('.add-folder').addEventListener('click', async ()=>{ const data = await Modal.openFolderForm({ title: '' }); if (!data) return; await BookmarksService.createFolder(folder.id, data.title); await render(true); });
+      headerControls.querySelector('.add-folder').addEventListener('click', async ()=>{ 
+        const data = await Modal.openFolderForm({ title: '' }); 
+        if (!data) return; 
+        const newFolder = await BookmarksService.createFolder(folder.id, data.title); 
+        if (data.customization && typeof FolderCustomizationService !== 'undefined') {
+          await FolderCustomizationService.set(newFolder.id, data.customization);
+        }
+        await render(true); 
+      });
       const hideBtn = headerControls.querySelector('.hide-folder');
       if (hideBtn) hideBtn.addEventListener('click', async ()=>{ const hidden = await Storage.get('hiddenFolders') || []; if (!hidden.includes(folder.id)) hidden.push(folder.id); await Storage.set({ hiddenFolders: hidden }); await render(true); });
       const delBtn = headerControls.querySelector('.del-folder');
@@ -593,7 +622,25 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (seenChildFolderIds.has(child.id)) return; // dedupe folder slots within this section
             seenChildFolderIds.add(child.id);
             const childCount = (child.children && child.children.length) || 0;
-            slot.innerHTML = `📁 <strong>${child.title || 'Folder'}</strong> <span class="folder-count">(${childCount})</span> <button data-action="jump">→</button> <button data-action="rename">✏️</button> <button data-action="del">🗑️</button>`;
+            
+            // Get folder customization
+            let folderCustomization = null;
+            if (typeof FolderCustomizationService !== 'undefined') {
+              folderCustomization = await FolderCustomizationService.get(child.id);
+            }
+            
+            const folderIcon = folderCustomization ? FolderCustomizationService.getFolderIconHtml(folderCustomization) : '📁';
+            slot.innerHTML = `${folderIcon} <strong>${child.title || 'Folder'}</strong> <span class="folder-count">(${childCount})</span> <button data-action="jump">→</button> <button data-action="rename">✏️</button> <button data-action="del">🗑️</button>`;
+            
+            // Apply custom color styles
+            if (folderCustomization) {
+              const styles = FolderCustomizationService.getFolderStyles(folderCustomization);
+              if (styles.borderColor) {
+                slot.style.borderColor = styles.borderColor;
+                slot.style.backgroundColor = styles.backgroundColor;
+              }
+            }
+            
             slot.style.cursor = 'pointer';
             slot.addEventListener('click', (e) => {
               if (e.target.closest('button')) return;

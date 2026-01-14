@@ -6,11 +6,11 @@ const LeftPanelUI = (() => {
   /**
    * Render the folder tree recursively
    */
-  function renderFolderTree(folders, expandedFolders = []) {
+  async function renderFolderTree(folders, expandedFolders = []) {
     const ul = document.createElement('ul');
     ul.className = 'bmg-left-panel-tree';
 
-    folders.forEach(folder => {
+    for (const folder of folders) {
       const li = document.createElement('li');
       li.className = 'bmg-left-panel-item';
       li.dataset.folderId = folder.id;
@@ -18,9 +18,24 @@ const LeftPanelUI = (() => {
       const hasChildren = (folder.children && folder.children.length > 0) || (folder.bookmarks && folder.bookmarks.length > 0);
       const isExpanded = expandedFolders.includes(folder.id);
 
+      // Get folder customization
+      let customization = null;
+      if (typeof FolderCustomizationService !== 'undefined') {
+        customization = await FolderCustomizationService.get(folder.id);
+      }
+
       // Folder header with expand/collapse toggle
       const folderHeader = document.createElement('div');
       folderHeader.className = 'bmg-left-panel-folder-header';
+
+      // Apply custom color styles
+      if (customization) {
+        const styles = FolderCustomizationService.getFolderStyles(customization);
+        if (styles.borderColor) {
+          folderHeader.style.borderLeft = `3px solid ${styles.borderColor}`;
+          folderHeader.style.paddingLeft = '8px';
+        }
+      }
 
       // Expand/collapse chevron
       if (hasChildren) {
@@ -38,10 +53,25 @@ const LeftPanelUI = (() => {
         folderHeader.appendChild(spacer);
       }
 
-      // Folder name and bookmark count
+      // Folder icon and name
       const folderLabel = document.createElement('span');
       folderLabel.className = 'bmg-left-panel-folder-label';
-      folderLabel.textContent = folder.title;
+      
+      if (customization) {
+        const iconElement = document.createElement('span');
+        if (customization.emoji && customization.color) {
+          iconElement.style.cssText = `display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; background: ${customization.color}; border-radius: 3px; font-size: 12px; margin-right: 6px;`;
+          iconElement.textContent = customization.emoji;
+        } else if (customization.emoji) {
+          iconElement.style.marginRight = '6px';
+          iconElement.textContent = customization.emoji;
+        }
+        folderLabel.appendChild(iconElement);
+        folderLabel.appendChild(document.createTextNode(folder.title));
+      } else {
+        folderLabel.textContent = folder.title;
+      }
+      
       folderHeader.appendChild(folderLabel);
 
       // Bookmark count badge
@@ -68,7 +98,7 @@ const LeftPanelUI = (() => {
 
         // Render subfolders first
         if (folder.children && folder.children.length > 0) {
-          const subfoldersTree = renderFolderTree(folder.children, expandedFolders);
+          const subfoldersTree = await renderFolderTree(folder.children, expandedFolders);
           subfoldersTree.childNodes.forEach(child => childrenContainer.appendChild(child));
         }
 
@@ -115,7 +145,7 @@ const LeftPanelUI = (() => {
       }
 
       ul.appendChild(li);
-    });
+    }
 
     return ul;
   }
@@ -135,7 +165,7 @@ const LeftPanelUI = (() => {
 
       // Update UI and notify
       currentState = await LeftPanelService.getState();
-      updatePanelUI();
+      await updatePanelUI();
 
       if (onFolderSelected) {
         onFolderSelected(currentState.selectedFolderId);
@@ -152,7 +182,7 @@ const LeftPanelUI = (() => {
     try {
       await LeftPanelService.toggleFolderExpansion(folderId);
       currentState = await LeftPanelService.getState();
-      updatePanelUI();
+      await updatePanelUI();
     } catch (e) {
       console.error('Error toggling folder:', e);
     }
@@ -174,7 +204,7 @@ const LeftPanelUI = (() => {
 
       // Build and render tree
       const folderTree = await LeftPanelService.buildFolderTree();
-      const treeElement = renderFolderTree(folderTree, state.expandedFolders);
+      const treeElement = await renderFolderTree(folderTree, state.expandedFolders);
       panelContent.appendChild(treeElement);
 
       // Highlight selected folder
@@ -291,7 +321,7 @@ const LeftPanelUI = (() => {
     try {
       await LeftPanelService.clearSelection();
       currentState = await LeftPanelService.getState();
-      updatePanelUI();
+      await updatePanelUI();
 
       if (onFolderSelected) {
         onFolderSelected(null);

@@ -94,8 +94,17 @@ const BookmarkModals = (()=>{
 
   async function editFolder(folderId){
     const info = await BookmarksService.getBookmark(folderId);
-    const data = await Modal.openFolderForm({ title: info.title });
+    const data = await Modal.openFolderForm({ title: info.title, folderId: folderId });
     if (!data) return null;
+    
+    // Save customization if provided
+    if (data.customization && typeof FolderCustomizationService !== 'undefined') {
+      await FolderCustomizationService.set(folderId, data.customization);
+    } else if (data.customization === null && typeof FolderCustomizationService !== 'undefined') {
+      // Remove customization if cleared
+      await FolderCustomizationService.remove(folderId);
+    }
+    
     return new Promise((res,reject)=>{
       chrome.bookmarks.update(folderId, { title: data.title }, updated=>{
         if (chrome.runtime.lastError) reject(chrome.runtime.lastError); else res(updated);
