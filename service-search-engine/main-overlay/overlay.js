@@ -379,8 +379,8 @@ class MainOverlay {
     el.innerHTML = `
       ${iconHtml}
       <div class="bm-result-content">
-        <div class="bm-result-title">${this.escapeHtml(item.title)}</div>
-        <div class="bm-result-description">${this.escapeHtml(item.description || '')}</div>
+        <div class="bm-result-title" dir="auto">${this.escapeHtml(item.title)}</div>
+        <div class="bm-result-description" dir="auto">${this.escapeHtml(item.description || '')}</div>
       </div>
     `;
     

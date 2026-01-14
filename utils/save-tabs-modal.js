@@ -140,6 +140,7 @@ const SaveTabsModal = (() => {
           label.style.fontSize = '13px';
           label.style.color = '#111827';
           label.style.flex = '1';
+          label.setAttribute('dir', 'auto');
           label.textContent = opt.label;
 
           row.appendChild(label);

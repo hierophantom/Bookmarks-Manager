@@ -388,6 +388,7 @@ const ContentSaveSessionModal = (() => {
       
       const tabTitle = document.createElement('div');
       tabTitle.className = 'bmg-tab-title';
+      tabTitle.setAttribute('dir', 'auto');
       tabTitle.textContent = tab.title;
       
       const tabUrl = document.createElement('div');

@@ -430,8 +430,8 @@ class ContentOverlay {
     el.innerHTML = `
       ${iconHtml}
       <div class="bmg-result-content">
-        <div class="bmg-result-title">${this.escapeHtml(item.title)}</div>
-        <div class="bmg-result-description">${this.escapeHtml(item.description || '')}</div>
+        <div class="bmg-result-title" dir="auto">${this.escapeHtml(item.title)}</div>
+        <div class="bmg-result-description" dir="auto">${this.escapeHtml(item.description || '')}</div>
       </div>
     `;
 

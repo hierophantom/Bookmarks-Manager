@@ -63,6 +63,7 @@ const RightPanelUI = (() => {
           // Tab title
           const title = document.createElement('span');
           title.className = 'bmg-right-panel-tab-title';
+          title.setAttribute('dir', 'auto');
           title.textContent = tab.title;
           title.title = tab.url;
           tabItem.appendChild(title);

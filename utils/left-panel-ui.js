@@ -97,6 +97,7 @@ const LeftPanelUI = (() => {
             
             // Add bookmark title as text node
             const titleSpan = document.createElement('span');
+            titleSpan.setAttribute('dir', 'auto');
             titleSpan.textContent = bookmark.title;
             bookmarkLink.appendChild(titleSpan);
             
