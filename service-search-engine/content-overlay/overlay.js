@@ -736,9 +736,9 @@ class ContentOverlay {
          Prevents host-page CSS collisions and forces LTR layout
          ============================================ */
       #bmg-http-overlay {
-        /* LTR Layout Isolation - Forces left-to-right regardless of page locale */
+        /* LTR Layout Isolation - Isolate from host page but allow text direction detection */
         direction: ltr;
-        unicode-bidi: bidi-override;
+        unicode-bidi: isolate;
         text-align: left;
         
         /* Font Locking - Specific fonts for overlay, immune to host-page fonts */
@@ -758,7 +758,7 @@ class ContentOverlay {
       /* Reset directional properties on container that handles display toggle */
       #bmg-http-overlay .bmg-overlay-container {
         direction: ltr;
-        unicode-bidi: bidi-override;
+        unicode-bidi: isolate;
       }
       
       /* Extra protection for form inputs and text elements */
@@ -767,7 +767,7 @@ class ContentOverlay {
       #bmg-http-overlay textarea,
       #bmg-http-overlay select {
         direction: ltr;
-        unicode-bidi: bidi-override;
+        unicode-bidi: isolate;
         text-align: left;
         margin: 0;
         padding: 0;
@@ -811,7 +811,7 @@ class ContentOverlay {
         flex-direction: column;
         overflow: hidden;
         direction: ltr;
-        unicode-bidi: bidi-override;
+        unicode-bidi: isolate;
         text-align: left;
       }
 
@@ -822,7 +822,7 @@ class ContentOverlay {
         outline: none;
         border-bottom: 1px solid #eee;
         direction: ltr;
-        unicode-bidi: bidi-override;
+        unicode-bidi: isolate;
         text-align: left;
       }
 
@@ -912,9 +912,6 @@ class ContentOverlay {
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-        direction: ltr;
-        unicode-bidi: bidi-override;
-        text-align: left;
       }
 
       #bmg-http-overlay .bmg-result-description {
@@ -924,9 +921,6 @@ class ContentOverlay {
         overflow: hidden;
         text-overflow: ellipsis;
         margin-top: 2px;
-        direction: ltr;
-        unicode-bidi: bidi-override;
-        text-align: left;
       }
 
       #bmg-http-overlay .bmg-show-more {

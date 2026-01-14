@@ -260,8 +260,6 @@ const ContentSaveSessionModal = (() => {
         text-overflow: ellipsis !important;
         margin: 0 0 4px 0 !important;
         padding: 0 !important;
-        text-align: left !important;
-        direction: ltr !important;
       }
 
       #bmg-content-save-session-modal .bmg-tab-url {
@@ -272,8 +270,6 @@ const ContentSaveSessionModal = (() => {
         text-overflow: ellipsis !important;
         margin: 0 !important;
         padding: 0 !important;
-        text-align: left !important;
-        direction: ltr !important;
       }
 
       #bmg-content-save-session-modal .bmg-modal-footer {
