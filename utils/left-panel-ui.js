@@ -83,8 +83,22 @@ const LeftPanelUI = (() => {
             bookmarkLink.className = 'bmg-left-panel-bookmark-link';
             bookmarkLink.href = bookmark.url;
             bookmarkLink.target = '_blank';
-            bookmarkLink.textContent = bookmark.title;
             bookmarkLink.title = bookmark.url;
+            
+            // Add favicon
+            if (typeof FaviconService !== 'undefined') {
+              const favicon = FaviconService.createFaviconElement(bookmark.url, {
+                size: 16,
+                className: 'bmg-left-panel-favicon',
+                alt: 'Favicon'
+              });
+              bookmarkLink.appendChild(favicon);
+            }
+            
+            // Add bookmark title as text node
+            const titleSpan = document.createElement('span');
+            titleSpan.textContent = bookmark.title;
+            bookmarkLink.appendChild(titleSpan);
             
             // Prevent the link from propagating click to parent
             bookmarkLink.addEventListener('click', (e) => {

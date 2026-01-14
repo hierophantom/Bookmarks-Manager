@@ -45,11 +45,20 @@ const RightPanelUI = (() => {
           tabItem.className = 'bmg-right-panel-tab-item';
           tabItem.dataset.tabId = tab.id;
 
-          // Favicon placeholder
-          const favicon = document.createElement('span');
-          favicon.className = 'bmg-right-panel-tab-favicon';
-          favicon.textContent = '📄'; // Placeholder
-          tabItem.appendChild(favicon);
+          // Favicon with fallback
+          if (typeof FaviconService !== 'undefined' && tab.url) {
+            const favicon = FaviconService.createFaviconElement(tab.url, {
+              size: 16,
+              className: 'bmg-right-panel-tab-favicon',
+              alt: 'Favicon'
+            });
+            tabItem.appendChild(favicon);
+          } else {
+            const favicon = document.createElement('span');
+            favicon.className = 'bmg-right-panel-tab-favicon';
+            favicon.textContent = '📄'; // Fallback placeholder
+            tabItem.appendChild(favicon);
+          }
 
           // Tab title
           const title = document.createElement('span');

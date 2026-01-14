@@ -8,6 +8,57 @@ const ContentSaveSessionModal = (() => {
   let currentTabs = [];
 
   /**
+   * Helper: Extract domain from URL
+   */
+  function extractDomain(url) {
+    try {
+      const urlObj = new URL(url);
+      return urlObj.hostname.replace(/^www\./, '');
+    } catch (e) {
+      return '';
+    }
+  }
+
+  /**
+   * Helper: Generate deterministic color for domain
+   */
+  function getDomainColor(domain) {
+    if (!domain) return '#6B7280';
+    
+    let hash = 0;
+    for (let i = 0; i < domain.length; i++) {
+      hash = domain.charCodeAt(i) + ((hash << 5) - hash);
+      hash = hash & hash;
+    }
+    
+    const colors = [
+      '#EF4444', '#F59E0B', '#10B981', '#3B82F6', '#8B5CF6',
+      '#EC4899', '#06B6D4', '#84CC16', '#F97316', '#6366F1'
+    ];
+    
+    return colors[Math.abs(hash) % colors.length];
+  }
+
+  /**
+   * Helper: Generate letter-based fallback favicon
+   */
+  function generateLetterFallback(url) {
+    const domain = extractDomain(url);
+    const letter = domain ? domain.charAt(0).toUpperCase() : '?';
+    const color = getDomainColor(domain);
+    
+    const svg = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+        <rect width="32" height="32" fill="${color}" rx="4"/>
+        <text x="16" y="21" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" 
+              font-size="16" font-weight="600" fill="white">${letter}</text>
+      </svg>
+    `;
+    
+    return 'data:image/svg+xml;base64,' + btoa(svg);
+  }
+
+  /**
    * Create modal HTML structure
    */
   function createModal() {
@@ -184,13 +235,20 @@ const ContentSaveSessionModal = (() => {
         flex-shrink: 0 !important;
       }
 
-      #bmg-content-save-session-modal .bmg-tab-info {
+      #bmg-content-save-session-modal .bmg-tab-favicon {
+        width: 16px !important;
+        height: 16px !important;
+        flex-shrink: 0 !important;
+        border-radius: 2px !important;
+        object-fit: contain !important;
+        margin-left: 4px !important;
+      }
+
+      #bmg-content-save-session-modal .bmg-tab-content {
         flex: 1 !important;
         min-width: 0 !important;
         margin: 0 !important;
         padding: 0 !important;
-        text-align: left !important;
-        direction: ltr !important;
       }
 
       #bmg-content-save-session-modal .bmg-tab-title {
@@ -295,13 +353,55 @@ const ContentSaveSessionModal = (() => {
     tabs.forEach((tab, index) => {
       const tabItem = document.createElement('div');
       tabItem.className = 'bmg-tab-item';
-      tabItem.innerHTML = `
-        <input type="checkbox" id="bmg-tab-${index}" data-index="${index}" checked>
-        <div class="bmg-tab-info">
-          <div class="bmg-tab-title">${escapeHtml(tab.title)}</div>
-          <div class="bmg-tab-url">${escapeHtml(tab.url)}</div>
-        </div>
-      `;
+      
+      // Create checkbox
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.id = `bmg-tab-${index}`;
+      checkbox.dataset.index = index;
+      checkbox.checked = true;
+      
+      tabItem.appendChild(checkbox);
+      
+      // Add favicon using Google S2 service
+      if (tab.url) {
+        const favicon = document.createElement('img');
+        const domain = extractDomain(tab.url);
+        favicon.src = `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=16`;
+        favicon.width = 16;
+        favicon.height = 16;
+        favicon.className = 'bmg-tab-favicon';
+        favicon.alt = 'Favicon';
+        favicon.loading = 'lazy';
+        
+        // Fallback on error
+        const fallbackUrl = generateLetterFallback(tab.url);
+        favicon.onerror = function() {
+          if (!this.dataset.fallbackAttempted) {
+            this.dataset.fallbackAttempted = 'true';
+            this.src = fallbackUrl;
+          }
+        };
+        
+        tabItem.appendChild(favicon);
+      }
+      
+      // Create tab content container
+      const tabContent = document.createElement('div');
+      tabContent.className = 'bmg-tab-content';
+      
+      const tabTitle = document.createElement('div');
+      tabTitle.className = 'bmg-tab-title';
+      tabTitle.textContent = tab.title;
+      
+      const tabUrl = document.createElement('div');
+      tabUrl.className = 'bmg-tab-url';
+      tabUrl.textContent = tab.url;
+      
+      tabContent.appendChild(tabTitle);
+      tabContent.appendChild(tabUrl);
+      tabItem.appendChild(tabContent);
+      
       tabsList.appendChild(tabItem);
     });
 

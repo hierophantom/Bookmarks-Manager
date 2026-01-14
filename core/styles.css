@@ -343,6 +343,23 @@ body {
   text-decoration: none;
 }
 
+/* Favicon styling */
+.bookmark-favicon {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  margin-right: 8px;
+  vertical-align: middle;
+  flex-shrink: 0;
+  border-radius: 2px;
+  object-fit: contain;
+}
+
+.slot {
+  display: flex;
+  align-items: center;
+}
+
 .slot.dragover {
   border-color: var(--theme-primary);
   background: var(--theme-hover-bg);

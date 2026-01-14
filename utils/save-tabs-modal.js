@@ -123,12 +123,25 @@ const SaveTabsModal = (() => {
           checkbox.dataset.tabId = opt.value;
           checkbox.style.cursor = 'pointer';
 
+          row.appendChild(checkbox);
+
+          // Add favicon if available
+          if (typeof FaviconService !== 'undefined' && opt.data && opt.data.url) {
+            const favicon = FaviconService.createFaviconElement(opt.data.url, {
+              size: 16,
+              className: 'tab-favicon',
+              alt: 'Favicon'
+            });
+            favicon.style.marginLeft = '4px';
+            row.appendChild(favicon);
+          }
+
           const label = document.createElement('span');
           label.style.fontSize = '13px';
           label.style.color = '#111827';
+          label.style.flex = '1';
           label.textContent = opt.label;
 
-          row.appendChild(checkbox);
           row.appendChild(label);
           tabsList.appendChild(row);
         });

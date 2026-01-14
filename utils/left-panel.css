@@ -198,7 +198,9 @@
 }
 
 .bmg-left-panel-bookmark-link {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-size: 12px;
   color: var(--theme-text, #000);
   text-decoration: none;
@@ -211,6 +213,14 @@
 .bmg-left-panel-bookmark-link:hover {
   opacity: 1;
   text-decoration: underline;
+}
+
+.bmg-left-panel-favicon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  border-radius: 2px;
+  object-fit: contain;
 }
 
 /* Toggle Button (fixed left edge) */

@@ -408,8 +408,27 @@ class ContentOverlay {
   createResultItem(item) {
     const el = document.createElement('div');
     el.className = 'bmg-result-item';
+    
+    // Use favicon for bookmark items if available
+    let iconHtml = `<span class="bmg-result-icon">${item.icon}</span>`;
+    if (item.type === 'bookmark' && item.url) {
+      // Use Google S2 favicon service (works in content scripts)
+      const domain = this.extractDomain(item.url);
+      const faviconUrl = `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=20`;
+      const fallbackIcon = this.generateLetterFallback(item.url);
+      
+      iconHtml = `<img src="${faviconUrl}" 
+                       width="20" 
+                       height="20" 
+                       alt="Favicon" 
+                       class="bmg-result-icon bmg-result-favicon" 
+                       loading="lazy"
+                       onerror="if(!this.dataset.fallbackAttempted){this.dataset.fallbackAttempted='true';this.src='${fallbackIcon}';}else{this.style.display='none';this.nextElementSibling.style.display='inline-block';}"
+                  /><span class="bmg-result-icon" style="display:none;">${item.icon}</span>`;
+    }
+    
     el.innerHTML = `
-      <span class="bmg-result-icon">${item.icon}</span>
+      ${iconHtml}
       <div class="bmg-result-content">
         <div class="bmg-result-title">${this.escapeHtml(item.title)}</div>
         <div class="bmg-result-description">${this.escapeHtml(item.description || '')}</div>
@@ -636,6 +655,48 @@ class ContentOverlay {
   /**
    * Utility
    */
+  extractDomain(url) {
+    try {
+      const urlObj = new URL(url);
+      return urlObj.hostname.replace(/^www\./, '');
+    } catch (e) {
+      return '';
+    }
+  }
+
+  getDomainColor(domain) {
+    if (!domain) return '#6B7280';
+    
+    let hash = 0;
+    for (let i = 0; i < domain.length; i++) {
+      hash = domain.charCodeAt(i) + ((hash << 5) - hash);
+      hash = hash & hash;
+    }
+    
+    const colors = [
+      '#EF4444', '#F59E0B', '#10B981', '#3B82F6', '#8B5CF6',
+      '#EC4899', '#06B6D4', '#84CC16', '#F97316', '#6366F1'
+    ];
+    
+    return colors[Math.abs(hash) % colors.length];
+  }
+
+  generateLetterFallback(url) {
+    const domain = this.extractDomain(url);
+    const letter = domain ? domain.charAt(0).toUpperCase() : '?';
+    const color = this.getDomainColor(domain);
+    
+    const svg = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+        <rect width="32" height="32" fill="${color}" rx="4"/>
+        <text x="16" y="21" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" 
+              font-size="16" font-weight="600" fill="white">${letter}</text>
+      </svg>
+    `;
+    
+    return 'data:image/svg+xml;base64,' + btoa(svg);
+  }
+
   escapeHtml(text) {
     if (!text) return '';
     const map = {
@@ -818,6 +879,13 @@ class ContentOverlay {
       #bmg-http-overlay .bmg-result-icon {
         font-size: 20px;
         flex-shrink: 0;
+      }
+
+      #bmg-http-overlay .bmg-result-favicon {
+        width: 20px;
+        height: 20px;
+        border-radius: 3px;
+        object-fit: contain;
       }
 
       #bmg-http-overlay .bmg-result-content {

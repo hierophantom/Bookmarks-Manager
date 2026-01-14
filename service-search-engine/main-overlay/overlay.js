@@ -361,8 +361,23 @@ class MainOverlay {
     const el = document.createElement('div');
     el.className = 'bm-result-item';
     
+    // Use favicon for bookmark items if available
+    let iconHtml = `<span class="bm-result-icon">${item.icon}</span>`;
+    if (item.type === 'bookmark' && item.url && typeof FaviconService !== 'undefined') {
+      const faviconUrl = FaviconService.getFaviconUrl(item.url, 20);
+      const fallbackUrl = FaviconService.getFallbackIcon(item.url);
+      iconHtml = `<img src="${faviconUrl}" 
+                       width="20" 
+                       height="20" 
+                       alt="Favicon" 
+                       class="bm-result-icon bm-result-favicon" 
+                       loading="lazy"
+                       onerror="if(!this.dataset.fallbackAttempted){this.dataset.fallbackAttempted='true';this.src='${fallbackUrl}';}else{this.style.display='none';this.nextElementSibling.style.display='inline-block';}"
+                  /><span class="bm-result-icon" style="display:none;">${item.icon}</span>`;
+    }
+    
     el.innerHTML = `
-      <span class="bm-result-icon">${item.icon}</span>
+      ${iconHtml}
       <div class="bm-result-content">
         <div class="bm-result-title">${this.escapeHtml(item.title)}</div>
         <div class="bm-result-description">${this.escapeHtml(item.description || '')}</div>
@@ -684,6 +699,13 @@ class MainOverlay {
       .bm-result-icon {
         font-size: 20px;
         flex-shrink: 0;
+      }
+
+      .bm-result-favicon {
+        width: 20px;
+        height: 20px;
+        border-radius: 3px;
+        object-fit: contain;
       }
 
       .bm-result-content {

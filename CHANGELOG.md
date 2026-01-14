@@ -4,6 +4,21 @@ All notable changes to the Bookmark Manager Chrome Extension are documented in t
 
 ## [Unreleased]
 
+### Added - Automatic Favicon Display (January 14, 2026)
+- **BMG-67**: Automatic favicon display for all bookmarks with reliable fallbacks
+  - Created standalone `FaviconService` in `services/favicon.js` for reusable favicon handling
+  - Integrated favicons in main bookmarks view, left panel, right panel, and search overlay
+  - Implemented cascading fallback strategy:
+    1. Chrome's internal favicon API (most reliable)
+    2. Google S2 favicon service (external fallback)
+    3. Letter-based SVG generation (deterministic per domain)
+    4. Default globe icon (final fallback)
+  - Deterministic color generation: same domain always gets same color
+  - Non-blocking lazy loading for optimal performance
+  - Automatic error handling with seamless fallback switching
+  - Comprehensive test suite and documentation added
+  - Favicons display in all bookmark contexts across the extension
+
 ### Fixed - HTTP Overlay Display & Font Locking (January 12, 2026)
 - **BMG-75 Follow-up**: Fixed overlay display toggle and locked fonts to prevent host-page interference
   - Fixed bug where overlay display toggle wasn't working (was toggling wrong element)

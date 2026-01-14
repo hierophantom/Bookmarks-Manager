@@ -394,7 +394,8 @@ document.addEventListener('DOMContentLoaded', async () => {
           }
         }
         const path = getFolderPath(child.id);
-        slot.innerHTML = `<a href="${child.url}" target="_blank" title="${path ? 'Path: ' + path : ''}">${child.title || child.url}</a> ${tagChips} <button data-action="edit">Edit</button> <button data-action="del">Delete</button>`;
+        const faviconHtml = FaviconService.getFaviconHtml(child.url, { size: 16, className: 'bookmark-favicon' });
+        slot.innerHTML = `${faviconHtml}<a href="${child.url}" target="_blank" title="${path ? 'Path: ' + path : ''}">${child.title || child.url}</a> ${tagChips} <button data-action="edit">Edit</button> <button data-action="del">Delete</button>`;
         slot.querySelectorAll('button').forEach(btn => {
           btn.addEventListener('click', (e) => {
             const action = btn.dataset.action;
@@ -568,7 +569,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }</div>`;
               }
             }
-            slot.innerHTML = `<a href="${child.url}" target="_blank">${child.title || child.url}</a> ${tagChips} <button data-action="edit">Edit</button> <button data-action="del">Delete</button>`;
+            const faviconHtml = FaviconService.getFaviconHtml(child.url, { size: 16, className: 'bookmark-favicon' });
+            slot.innerHTML = `${faviconHtml}<a href="${child.url}" target="_blank">${child.title || child.url}</a> ${tagChips} <button data-action="edit">Edit</button> <button data-action="del">Delete</button>`;
             
             
             
