@@ -1,38 +1,83 @@
 const Modal = (() => {
   /**
    * BookmarkForm Modal with Tagify integration
+   * @param {Object} defaults - Default values { id, title, url, tags, folderId }
+   * @param {Object} options - Options { showFolderSelector: boolean, showTabsSuggestions: boolean }
    */
-  function openBookmarkForm(defaults = {}) {
+  async function openBookmarkForm(defaults = {}, options = {}) {
     const tagArr = Array.isArray(defaults.tags) ? defaults.tags : [];
+    const showFolderSelector = options.showFolderSelector || false;
+    const showTabsSuggestions = options.showTabsSuggestions !== false; // Default true
+
+    const fields = [
+      {
+        id: 'bm_title',
+        label: 'Title',
+        type: 'text',
+        value: defaults.title || '',
+        required: true
+      },
+      {
+        id: 'bm_url',
+        label: 'URL',
+        type: 'url',
+        value: defaults.url || '',
+        placeholder: 'https://example.com'
+      },
+      {
+        id: 'bm_tags',
+        label: 'Tags',
+        type: 'text',
+        value: tagArr.join(','),
+        placeholder: 'Add tags...'
+      }
+    ];
+
+    // Add folder selector if requested
+    if (showFolderSelector) {
+      // Fetch folder tree
+      const tree = await BookmarksService.getTree();
+      const folders = [];
+      
+      function collectFolders(node, depth = 0) {
+        if (!node || node.url) return; // Skip bookmarks
+        if (node.id !== '0') { // Skip root
+          folders.push({
+            value: node.id,
+            label: '  '.repeat(depth) + (node.title || '(Untitled)')
+          });
+        }
+        if (node.children) {
+          node.children.forEach(child => collectFolders(child, depth + 1));
+        }
+      }
+      
+      if (tree[0] && tree[0].children) {
+        tree[0].children.forEach(child => collectFolders(child, 0));
+      }
+
+      fields.splice(2, 0, {
+        id: 'bm_folder',
+        label: 'Folder',
+        type: 'select',
+        value: defaults.folderId || '1',
+        required: true,
+        options: folders
+      });
+    }
 
     const modal = new BaseModal({
       title: defaults.id ? 'Edit Bookmark' : 'Add Bookmark',
-      fields: [
-        {
-          id: 'bm_title',
-          label: 'Title',
-          type: 'text',
-          value: defaults.title || '',
-          required: true
-        },
-        {
-          id: 'bm_url',
-          label: 'URL',
-          type: 'url',
-          value: defaults.url || '',
-          placeholder: 'https://example.com'
-        },
-        {
-          id: 'bm_tags',
-          label: 'Tags',
-          type: 'text',
-          value: tagArr.join(','),
-          placeholder: 'Add tags...'
-        }
-      ]
+      fields: fields
     });
 
-    return modal.show().then(async (data) => {
+    // Store tabs for suggestions
+    let openTabs = [];
+    if (showTabsSuggestions) {
+      openTabs = await new Promise(res => chrome.tabs.query({}, tabs => res(tabs)));
+    }
+
+    const modalPromise = modal.show().then(async (data) => {
       console.log('[Modal] openBookmarkForm - received data from modal:', data);
       
       // Clean up Tagify instance
@@ -44,17 +89,168 @@ const Modal = (() => {
       
       if (!data) {
         console.log('[Modal] openBookmarkForm - modal was cancelled');
+        // Clean up tabs suggestions dropdown if exists
+        const dropdown = document.getElementById('bm-tabs-suggestions');
+        if (dropdown) dropdown.remove();
         return null;
       }
 
       const result = {
         title: data.bm_title,
         url: data.bm_url || null,
-        tags: data.bm_tags || []
+        tags: data.bm_tags || [],
+        folderId: data.bm_folder || null
       };
+      
+      // Clean up tabs suggestions dropdown
+      const dropdown = document.getElementById('bm-tabs-suggestions');
+      if (dropdown) dropdown.remove();
       
       console.log('[Modal] openBookmarkForm - returning result:', result);
       return result;
+    });
+
+    // After modal is shown, add tabs suggestions dropdown
+    if (showTabsSuggestions && openTabs.length > 0) {
+      // Wait for modal to be rendered
+      setTimeout(() => {
+        setupTabsSuggestions(openTabs);
+      }, 100);
+    }
+
+    return modalPromise;
+  }
+
+  // Setup tabs suggestions dropdown
+  function setupTabsSuggestions(tabs) {
+    const urlInput = document.getElementById('bm_url');
+    const titleInput = document.getElementById('bm_title');
+    if (!urlInput || !titleInput) return;
+
+    // Create suggestions dropdown
+    const dropdown = document.createElement('div');
+    dropdown.id = 'bm-tabs-suggestions';
+    dropdown.style.cssText = `
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      max-height: 200px;
+      overflow-y: auto;
+      background: white;
+      border: 1px solid #d1d5db;
+      border-top: none;
+      border-radius: 0 0 0.375rem 0.375rem;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      z-index: 1000;
+      display: none;
+    `;
+
+    // Find the URL field wrapper
+    const urlField = urlInput.closest('.bm-field');
+    if (!urlField) return;
+    
+    urlField.style.position = 'relative';
+    urlField.appendChild(dropdown);
+
+    // Populate dropdown with tabs
+    function updateSuggestions(filter = '') {
+      dropdown.innerHTML = '';
+      const filterLower = filter.toLowerCase();
+      const filteredTabs = tabs.filter(tab => 
+        (tab.title && tab.title.toLowerCase().includes(filterLower)) ||
+        (tab.url && tab.url.toLowerCase().includes(filterLower))
+      ).slice(0, 10); // Limit to 10 suggestions
+
+      if (filteredTabs.length === 0) {
+        dropdown.style.display = 'none';
+        return;
+      }
+
+      filteredTabs.forEach(tab => {
+        const item = document.createElement('div');
+        item.style.cssText = `
+          padding: 8px 12px;
+          cursor: pointer;
+          border-bottom: 1px solid #f3f4f6;
+          display: flex;
+          gap: 8px;
+          align-items: center;
+        `;
+        
+        // Create favicon element - use FaviconService for proper handling
+        let faviconElement;
+        if (typeof FaviconService !== 'undefined' && tab.url) {
+          faviconElement = FaviconService.createFaviconElement(tab.url, { size: 16 });
+        } else {
+          // Fallback if FaviconService not available
+          faviconElement = document.createElement('span');
+          faviconElement.textContent = '📄';
+          faviconElement.style.cssText = 'flex-shrink: 0; width: 16px; height: 16px; font-size: 12px; text-align: center;';
+        }
+        
+        // Create text container
+        const textContainer = document.createElement('div');
+        textContainer.style.cssText = 'flex: 1; min-width: 0;';
+        
+        const titleDiv = document.createElement('div');
+        titleDiv.style.cssText = 'font-size: 13px; font-weight: 500; color: #111827; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;';
+        titleDiv.textContent = tab.title || tab.url;
+        
+        const urlDiv = document.createElement('div');
+        urlDiv.style.cssText = 'font-size: 11px; color: #6b7280; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;';
+        urlDiv.textContent = tab.url;
+        
+        textContainer.appendChild(titleDiv);
+        textContainer.appendChild(urlDiv);
+        
+        item.appendChild(faviconElement);
+        item.appendChild(textContainer);
+
+        item.addEventListener('mouseenter', () => {
+          item.style.background = '#f3f4f6';
+        });
+        item.addEventListener('mouseleave', () => {
+          item.style.background = 'white';
+        });
+        item.addEventListener('click', () => {
+          urlInput.value = tab.url;
+          if (!titleInput.value) {
+            titleInput.value = tab.title || tab.url;
+          }
+          dropdown.style.display = 'none';
+          urlInput.focus();
+        });
+
+        dropdown.appendChild(item);
+      });
+
+      dropdown.style.display = 'block';
+    }
+
+    // Show suggestions when URL field is focused
+    urlInput.addEventListener('focus', () => {
+      updateSuggestions(urlInput.value);
+    });
+
+    // Update suggestions as user types
+    urlInput.addEventListener('input', () => {
+      updateSuggestions(urlInput.value);
+    });
+
+    // Hide suggestions when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!urlField.contains(e.target)) {
+        dropdown.style.display = 'none';
+      }
+    });
+
+    // Hide dropdown on Escape
+    urlInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && dropdown.style.display === 'block') {
+        e.stopPropagation();
+        dropdown.style.display = 'none';
+      }
     });
   }
 

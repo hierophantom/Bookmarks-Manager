@@ -772,6 +772,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
+  // Global Add Bookmark button handler
+  const globalAddBookmarkBtn = document.getElementById('global-add-bookmark-btn');
+  if (globalAddBookmarkBtn) {
+    globalAddBookmarkBtn.addEventListener('click', async () => {
+      await BookmarkModals.addBookmarkGlobal();
+      await render(true);
+    });
+  }
+
   // Initialize Left Panel
   try {
     if (typeof LeftPanelUI !== 'undefined' && typeof LeftPanelService !== 'undefined') {

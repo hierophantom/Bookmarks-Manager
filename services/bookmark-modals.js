@@ -103,5 +103,42 @@ const BookmarkModals = (()=>{
     });
   }
 
-  return { addBookmark, editBookmark, addTabs, editFolder };
+  async function addBookmarkGlobal(){
+    console.log('[BookmarkModals] addBookmarkGlobal - opening form with folder selector');
+    const data = await Modal.openBookmarkForm({}, { showFolderSelector: true, showTabsSuggestions: true });
+    console.log('[BookmarkModals] addBookmarkGlobal - form returned:', data);
+    if (!data) {
+      console.log('[BookmarkModals] addBookmarkGlobal - cancelled');
+      return null;
+    }
+    
+    const createObj = { parentId: data.folderId || '1', title: data.title };
+    if (data.url) createObj.url = data.url;
+    
+    console.log('[BookmarkModals] addBookmarkGlobal - creating bookmark:', createObj);
+    return new Promise((res, reject) => {
+      chrome.bookmarks.create(createObj, async (node) => {
+        if (chrome.runtime.lastError) {
+          console.error('[BookmarkModals] addBookmarkGlobal - create failed:', chrome.runtime.lastError);
+          reject(chrome.runtime.lastError);
+          return;
+        }
+        
+        console.log('[BookmarkModals] addBookmarkGlobal - bookmark created with id:', node.id);
+        try {
+          if (node && node.id && Array.isArray(data.tags) && data.tags.length > 0) {
+            console.log('[BookmarkModals] addBookmarkGlobal - saving tags:', data.tags);
+            await TagsService.setTags(node.id, data.tags);
+            console.log('[BookmarkModals] addBookmarkGlobal - tags saved successfully');
+          }
+          res(node);
+        } catch (e) {
+          console.error('[BookmarkModals] addBookmarkGlobal - error saving tags:', e);
+          reject(e);
+        }
+      });
+    });
+  }
+
+  return { addBookmark, editBookmark, addTabs, editFolder, addBookmarkGlobal };
 })();

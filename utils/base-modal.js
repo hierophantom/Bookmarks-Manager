@@ -70,9 +70,29 @@ class BaseModal {
    * Render a single field
    */
   renderField(field) {
-    const { id, label, type = 'text', value = '', placeholder = '', required = false } = field;
+    const { id, label, type = 'text', value = '', placeholder = '', required = false, options = [] } = field;
     const requiredAttr = required ? 'required' : '';
     const requiredLabel = required ? '<span class="text-red-500">*</span>' : '';
+
+    // Handle select fields
+    if (type === 'select') {
+      return `
+        <div class="bm-field mb-4">
+          <label for="${id}" class="block text-sm font-medium text-gray-700 mb-1">
+            ${this.escapeHtml(label)} ${requiredLabel}
+          </label>
+          <select
+            id="${id}"
+            ${requiredAttr}
+            aria-label="${this.escapeHtml(label)}"
+            aria-required="${required}"
+            class="bm-input w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            ${options.map(opt => `<option value="${opt.value}" ${opt.value === value ? 'selected' : ''}>${this.escapeHtml(opt.label)}</option>`).join('')}
+          </select>
+        </div>
+      `;
+    }
 
     const inputAttrs = `
       id="${id}"
@@ -207,6 +227,7 @@ class BaseModal {
       return formData;
     }
 
+    // Get inputs
     const inputs = form.querySelectorAll('input');
     console.log('[BaseModal] getFormData - found', inputs.length, 'inputs');
     
@@ -231,6 +252,14 @@ class BaseModal {
         console.log('[BaseModal] getFormData - regular input:', input.id, '=', value);
         formData[input.id] = value;
       }
+    });
+
+    // Get selects
+    const selects = form.querySelectorAll('select');
+    console.log('[BaseModal] getFormData - found', selects.length, 'selects');
+    selects.forEach((select) => {
+      console.log('[BaseModal] getFormData - processing select:', select.id, '=', select.value);
+      formData[select.id] = select.value;
     });
 
     console.log('[BaseModal] getFormData - complete:', formData);
