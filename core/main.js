@@ -410,6 +410,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         slots.appendChild(slot);
       }));
 
+      // Attach error handlers for favicon fallback
+      FaviconService.attachErrorHandlers(slots);
+
       if (thisRender !== renderVersion) return; // stale
       if (preserveScroll) {
         requestAnimationFrame(() => { window.scrollTo(0, savedScrollY); });
@@ -621,6 +624,9 @@ document.addEventListener('DOMContentLoaded', async () => {
           slots.appendChild(slot);
         }));
       }
+
+      // Attach error handlers for favicon fallback
+      FaviconService.attachErrorHandlers(slots);
 
       parentEl.appendChild(sec);
 

@@ -372,7 +372,7 @@ class MainOverlay {
                        alt="Favicon" 
                        class="bm-result-icon bm-result-favicon" 
                        loading="lazy"
-                       onerror="if(!this.dataset.fallbackAttempted){this.dataset.fallbackAttempted='true';this.src='${fallbackUrl}';}else{this.style.display='none';this.nextElementSibling.style.display='inline-block';}"
+                       data-fallback-url="${fallbackUrl}"
                   /><span class="bm-result-icon" style="display:none;">${item.icon}</span>`;
     }
     
@@ -383,6 +383,19 @@ class MainOverlay {
         <div class="bm-result-description">${this.escapeHtml(item.description || '')}</div>
       </div>
     `;
+    
+    // Attach error handler for favicon fallback
+    const faviconImg = el.querySelector('img.bm-result-favicon[data-fallback-url]');
+    if (faviconImg && !faviconImg.dataset.handlerAttached) {
+      faviconImg.onerror = function() {
+        if (!this.dataset.fallbackAttempted) {
+          this.dataset.fallbackAttempted = 'true';
+          const fallback = this.dataset.fallbackUrl;
+          if (fallback) this.src = fallback;
+        }
+      };
+      faviconImg.dataset.handlerAttached = 'true';
+    }
 
     // Render tag chips for bookmark items (after innerHTML so description exists)
     if (item.type === 'bookmark') {

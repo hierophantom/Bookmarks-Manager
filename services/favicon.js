@@ -259,7 +259,35 @@ const FaviconService = (() => {
   }
 
   /**
+   * Attach error handlers to favicon images
+   * Call this after inserting HTML with favicon images to enable fallback
+   * @param {HTMLElement} container - Container element with favicon images
+   */
+  function attachErrorHandlers(container) {
+    if (!container) return;
+    
+    const faviconImages = container.querySelectorAll('img.bookmark-favicon[data-fallback-url]');
+    faviconImages.forEach(img => {
+      if (img.dataset.handlerAttached) return; // Already attached
+      
+      img.onerror = function() {
+        if (!this.dataset.fallbackAttempted) {
+          this.dataset.fallbackAttempted = 'true';
+          const fallbackUrl = this.dataset.fallbackUrl;
+          if (fallbackUrl) {
+            this.src = fallbackUrl;
+          }
+        }
+      };
+      
+      img.dataset.handlerAttached = 'true';
+    });
+  }
+
+  /**
    * Get favicon HTML string for inline rendering
+   * Note: Does not include onerror handler due to CSP restrictions
+   * Use createFaviconElement() for automatic fallback handling
    * @param {string} url - The bookmark URL
    * @param {Object} options - Configuration options
    * @returns {string} - HTML string for the favicon img element
@@ -272,15 +300,16 @@ const FaviconService = (() => {
     } = options;
     
     const faviconUrl = getFaviconUrl(url, size);
-    const fallbackUrl = getFallbackIcon(url);
     
+    // Note: No inline onerror handler due to CSP
+    // Fallback must be handled separately if needed
     return `<img src="${faviconUrl}" 
                  width="${size}" 
                  height="${size}" 
                  alt="${alt}" 
                  class="${className}" 
                  loading="lazy"
-                 onerror="if(!this.dataset.fallbackAttempted){this.dataset.fallbackAttempted='true';this.src='${fallbackUrl}';}"
+                 data-fallback-url="${getFallbackIcon(url)}"
             />`;
   }
 
@@ -292,6 +321,7 @@ const FaviconService = (() => {
     preloadFavicon,
     clearCache,
     getFaviconHtml,
+    attachErrorHandlers,
     getChromeFaviconUrl,
     getGoogleFaviconUrl
   };
