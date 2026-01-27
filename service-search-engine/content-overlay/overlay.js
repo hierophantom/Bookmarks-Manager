@@ -885,7 +885,10 @@ class ContentOverlay {
       }
 
       #bmg-http-overlay .bmg-result-item:hover,
-      #bmg-http-overlay .bmg-result-item.bmg-selected {
+      #bmg-http-overlay .bmg-result-item.bm-selected {
+        background: #f5f5f5;
+      }
+      #bmg-http-overlay .bmg-result-item:hover {
         background: #f5f5f5;
       }
 
