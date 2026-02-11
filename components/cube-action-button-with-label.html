@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cube Action Button with Label - Design System</title>
+  <style>
+    /* Design tokens */
+    :root {
+      --corner-radius-small: 4px;
+      --spacing-small: 2px;
+      --spacing-medium: 4px;
+      --spacing-large: 8px;
+      --common-common-bright-05: rgba(255, 255, 255, 0.1);
+      --common-common-bright-10: rgba(255, 255, 255, 0.15);
+      --common-common-bright-20: rgba(255, 255, 255, 0.4);
+      --common-common-bright-25: rgba(255, 255, 255, 0.5);
+      --primary-primary-20: rgba(46, 51, 185, 0.1);
+      --primary-primary-25: #2e33b9;
+      
+      /* Typography */
+      --font-body: Lato, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --label-sma-size: 12px;
+      --label-sma-weight: 400;
+    }
+    
+    body {
+      font-family: var(--font-body);
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      color: #ffffff;
+      padding: 40px;
+      margin: 0;
+    }
+    
+    .demo-container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    h1 {
+      font-size: 32px;
+      font-weight: 400;
+      margin-bottom: 8px;
+    }
+    
+    .subtitle {
+      color: rgba(255, 255, 255, 0.6);
+      margin-bottom: 40px;
+      font-size: 16px;
+    }
+    
+    .section {
+      margin-bottom: 40px;
+      padding: 24px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+    }
+    
+    .section h2 {
+      font-size: 20px;
+      font-weight: 400;
+      margin-bottom: 20px;
+      color: rgba(255, 255, 255, 0.9);
+    }
+    
+    .button-grid {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    
+    .color-scheme-group {
+      padding: 16px;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 4px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    
+    .color-scheme-label {
+      font-size: 14px;
+      font-weight: 300;
+      color: rgba(255, 255, 255, 0.7);
+      margin-bottom: 4px;
+    }
+    
+    .button-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    
+    .spec-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: grid;
+      gap: 8px;
+    }
+    
+    .spec-list li {
+      padding: 12px 16px;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 4px;
+      font-size: 14px;
+      display: flex;
+      justify-content: space-between;
+    }
+    
+    .spec-label {
+      color: rgba(255, 255, 255, 0.6);
+    }
+    
+    .spec-value {
+      color: rgba(255, 255, 255, 0.95);
+      font-weight: 300;
+    }
+    
+    .note {
+      padding: 12px 16px;
+      background: rgba(46, 51, 185, 0.1);
+      border-left: 3px solid var(--primary-primary-25);
+      border-radius: 4px;
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.8);
+      margin-top: 16px;
+    }
+  </style>
+  <link rel="stylesheet" href="cube-action-button-with-label.css">
+</head>
+<body>
+  <div class="demo-container">
+    <h1>Cube Action Button with Label</h1>
+    <p class="subtitle">Design System Component - BMG-98</p>
+    
+    <!-- Color Schemes -->
+    <div class="section">
+      <h2>Color Schemes</h2>
+      
+      <div style="display: grid; gap: 16px;">
+        <div class="color-scheme-group">
+          <div class="color-scheme-label">Primary</div>
+          <div class="button-row" id="primary-buttons"></div>
+        </div>
+        
+        <div class="color-scheme-group">
+          <div class="color-scheme-label">Default</div>
+          <div class="button-row" id="default-buttons"></div>
+        </div>
+        
+        <div class="color-scheme-group">
+          <div class="color-scheme-label">Destructive</div>
+          <div class="button-row" id="destructive-buttons"></div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Sizes -->
+    <div class="section">
+      <h2>Sizes</h2>
+      <div class="button-row">
+        <div id="size-small"></div>
+        <div id="size-medium"></div>
+      </div>
+    </div>
+    
+    <!-- States -->
+    <div class="section">
+      <h2>States</h2>
+      <div class="button-row">
+        <div id="state-idle"></div>
+        <div id="state-hover"></div>
+        <div id="state-disabled"></div>
+      </div>
+    </div>
+    
+    <!-- Icon + Label vs Icon Only -->
+    <div class="section">
+      <h2>Icon + Label vs Icon Only</h2>
+      <div class="button-row">
+        <div id="icon-label-1"></div>
+        <div id="icon-only-1"></div>
+      </div>
+      <div class="note">
+        <strong>Note:</strong> When label is omitted, the button automatically adjusts to icon-only mode with appropriate padding.
+      </div>
+    </div>
+    
+    <!-- Use Cases -->
+    <div class="section">
+      <h2>Use Cases</h2>
+      
+      <div style="display: flex; flex-direction: column; gap: 20px;">
+        <!-- Filters -->
+        <div>
+          <div style="font-size: 12px; color: rgba(255, 255, 255, 0.5); margin-bottom: 8px;">Filter Bar</div>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;" id="filter-bar"></div>
+        </div>
+        
+        <!-- Form actions -->
+        <div>
+          <div style="font-size: 12px; color: rgba(255, 255, 255, 0.5); margin-bottom: 8px;">Form Actions</div>
+          <div style="display: flex; gap: 8px;" id="form-actions"></div>
+        </div>
+        
+        <!-- Toolbar -->
+        <div>
+          <div style="font-size: 12px; color: rgba(255, 255, 255, 0.5); margin-bottom: 8px;">Editor Toolbar</div>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;" id="toolbar"></div>
+        </div>
+        
+        <!-- Action menu -->
+        <div>
+          <div style="font-size: 12px; color: rgba(255, 255, 255, 0.5); margin-bottom: 8px;">Quick Actions</div>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;" id="quick-actions"></div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Interactive Demo -->
+    <div class="section">
+      <h2>Interactive Demo</h2>
+      <div style="display: flex; gap: 16px; align-items: center; flex-wrap: wrap;">
+        <div id="interactive-button"></div>
+        <span id="click-counter" style="font-size: 14px; color: rgba(255, 255, 255, 0.7);">
+          Clicks: 0
+        </span>
+        <button 
+          id="toggle-scheme"
+          style="padding: 8px 16px; background: rgba(255, 255, 255, 0.1); border: none; border-radius: 4px; color: white; cursor: pointer; font-size: 12px;"
+        >
+          Cycle Color Scheme
+        </button>
+        <button 
+          id="toggle-size"
+          style="padding: 8px 16px; background: rgba(255, 255, 255, 0.1); border: none; border-radius: 4px; color: white; cursor: pointer; font-size: 12px;"
+        >
+          Toggle Size
+        </button>
+      </div>
+    </div>
+    
+    <!-- Specifications -->
+    <div class="section">
+      <h2>Specifications</h2>
+      <ul class="spec-list">
+        <li>
+          <span class="spec-label">Height (Small)</span>
+          <span class="spec-value">14px</span>
+        </li>
+        <li>
+          <span class="spec-label">Height (Medium)</span>
+          <span class="spec-value">20px</span>
+        </li>
+        <li>
+          <span class="spec-label">Icon Size (Small)</span>
+          <span class="spec-value">12×12px</span>
+        </li>
+        <li>
+          <span class="spec-label">Icon Size (Medium)</span>
+          <span class="spec-value">16×16px</span>
+        </li>
+        <li>
+          <span class="spec-label">Gap (Icon-Label)</span>
+          <span class="spec-value">4px (spacing-medium)</span>
+        </li>
+        <li>
+          <span class="spec-label">Padding (Small)</span>
+          <span class="spec-value">4px 8px (spacing-medium, spacing-large)</span>
+        </li>
+        <li>
+          <span class="spec-label">Padding (Medium)</span>
+          <span class="spec-value">4px 12px</span>
+        </li>
+        <li>
+          <span class="spec-label">Font Size (Small)</span>
+          <span class="spec-value">12px (label-sma)</span>
+        </li>
+        <li>
+          <span class="spec-label">Font Size (Medium)</span>
+          <span class="spec-value">14px</span>
+        </li>
+        <li>
+          <span class="spec-label">Border Radius</span>
+          <span class="spec-value">4px (corner-radius-small)</span>
+        </li>
+        <li>
+          <span class="spec-label">Transition</span>
+          <span class="spec-value">0.2s ease</span>
+        </li>
+        <li>
+          <span class="spec-label">Color Schemes</span>
+          <span class="spec-value">Primary, Default, Destructive</span>
+        </li>
+      </ul>
+    </div>
+  </div>
+  
+  <script src="cube-action-button-with-label.js"></script>
+  <script>
+    // Primary color scheme
+    const primaryButtons = [
+      { icon: CUBE_ACTION_WITH_LABEL_ICONS.ADD, label: 'Add Item' },
+      { icon: CUBE_ACTION_WITH_LABEL_ICONS.EDIT, label: 'Edit' },
+      { icon: CUBE_ACTION_WITH_LABEL_ICONS.SAVE, label: 'Save' },
+      { icon: CUBE_ACTION_WITH_LABEL_ICONS.SHARE, label: 'Share' }
+    ];
+    
+    primaryButtons.forEach(btn => {
+      const button = createCubeActionButtonWithLabel({
+        icon: btn.icon,
+        label: btn.label,
+        colorScheme: 'primary',
+        onClick: () => alert(`${btn.label} clicked`)
+      });
+      document.getElementById('primary-buttons').appendChild(button);
+    });
+    
+    // Default color scheme
+    const defaultButtons = [
+      { icon: CUBE_ACTION_WITH_LABEL_ICONS.SETTINGS, label: 'Settings' },
+      { icon: CUBE_ACTION_WITH_LABEL_ICONS.FILTER, label: 'Filter' },
+      { icon: CUBE_ACTION_WITH_LABEL_ICONS.SORT, label: 'Sort' },
+      { icon: CUBE_ACTION_WITH_LABEL_ICONS.MORE, label: 'More' }
+    ];
+    
+    defaultButtons.forEach(btn => {
+      const button = createCubeActionButtonWithLabel({
+        icon: btn.icon,
+        label: btn.label,
+        colorScheme: 'default',
+        onClick: () => alert(`${btn.label} clicked`)
+      });
+      document.getElementById('default-buttons').appendChild(button);
+    });
+    
+    // Destructive color scheme
+    const destructiveButtons = [
+      { icon: CUBE_ACTION_WITH_LABEL_ICONS.DELETE, label: 'Delete' },
+      { icon: CUBE_ACTION_WITH_LABEL_ICONS.CANCEL, label: 'Cancel' }
+    ];
+    
+    destructiveButtons.forEach(btn => {
+      const button = createCubeActionButtonWithLabel({
+        icon: btn.icon,
+        label: btn.label,
+        colorScheme: 'destructive',
+        onClick: () => alert(`${btn.label} clicked`)
+      });
+      document.getElementById('destructive-buttons').appendChild(button);
+    });
+    
+    // Sizes
+    const sizeSmall = createCubeActionButtonWithLabel({
+      icon: CUBE_ACTION_WITH_LABEL_ICONS.ADD,
+      label: 'Small (14px)',
+      colorScheme: 'primary',
+      size: 'small'
+    });
+    document.getElementById('size-small').appendChild(sizeSmall);
+    
+    const sizeMedium = createCubeActionButtonWithLabel({
+      icon: CUBE_ACTION_WITH_LABEL_ICONS.ADD,
+      label: 'Medium (20px)',
+      colorScheme: 'primary',
+      size: 'medium'
+    });
+    document.getElementById('size-medium').appendChild(sizeMedium);
+    
+    // States
+    const stateIdle = createCubeActionButtonWithLabel({
+      icon: CUBE_ACTION_WITH_LABEL_ICONS.STAR,
+      label: 'Idle',
+      colorScheme: 'primary'
+    });
+    document.getElementById('state-idle').appendChild(stateIdle);
+    
+    const stateHover = createCubeActionButtonWithLabel({
+      icon: CUBE_ACTION_WITH_LABEL_ICONS.STAR,
+      label: 'Hover (try it)',
+      colorScheme: 'primary'
+    });
+    document.getElementById('state-hover').appendChild(stateHover);
+    
+    const stateDisabled = createCubeActionButtonWithLabel({
+      icon: CUBE_ACTION_WITH_LABEL_ICONS.STAR,
+      label: 'Disabled',
+      colorScheme: 'primary',
+      disabled: true
+    });
+    document.getElementById('state-disabled').appendChild(stateDisabled);
+    
+    // Icon + Label vs Icon Only
+    const iconLabel = createCubeActionButtonWithLabel({
+      icon: CUBE_ACTION_WITH_LABEL_ICONS.BOOKMARK,
+      label: 'Bookmark',
+      colorScheme: 'primary'
+    });
+    document.getElementById('icon-label-1').appendChild(iconLabel);
+    
+    const iconOnly = createCubeActionButtonWithLabel({
+      icon: CUBE_ACTION_WITH_LABEL_ICONS.BOOKMARK,
+      label: '',
+      colorScheme: 'primary'
+    });
+    document.getElementById('icon-only-1').appendChild(iconOnly);
+    
+    // Filter bar
+    ['All', 'Active', 'Completed', 'Archived'].forEach(label => {
+      const btn = createCubeActionButtonWithLabel({
+        icon: CUBE_ACTION_WITH_LABEL_ICONS.FILTER,
+        label: label,
+        colorScheme: 'default'
+      });
+      document.getElementById('filter-bar').appendChild(btn);
+    });
+    
+    // Form actions
+    const saveBtn = createCubeActionButtonWithLabel({
+      icon: CUBE_ACTION_WITH_LABEL_ICONS.CONFIRM,
+      label: 'Save Changes',
+      colorScheme: 'primary'
+    });
+    document.getElementById('form-actions').appendChild(saveBtn);
+    
+    const cancelBtn = createCubeActionButtonWithLabel({
+      icon: CUBE_ACTION_WITH_LABEL_ICONS.CANCEL,
+      label: 'Cancel',
+      colorScheme: 'destructive'
+    });
+    document.getElementById('form-actions').appendChild(cancelBtn);
+    
+    // Toolbar
+    const toolbarActions = [
+      { icon: CUBE_ACTION_WITH_LABEL_ICONS.ADD, label: 'New' },
+      { icon: CUBE_ACTION_WITH_LABEL_ICONS.EDIT, label: 'Edit' },
+      { icon: CUBE_ACTION_WITH_LABEL_ICONS.DOWNLOAD, label: 'Export' },
+      { icon: CUBE_ACTION_WITH_LABEL_ICONS.REFRESH, label: 'Refresh' }
+    ];
+    
+    toolbarActions.forEach(action => {
+      const btn = createCubeActionButtonWithLabel({
+        icon: action.icon,
+        label: action.label,
+        colorScheme: 'default'
+      });
+      document.getElementById('toolbar').appendChild(btn);
+    });
+    
+    // Quick actions
+    const quickActions = [
+      { icon: CUBE_ACTION_WITH_LABEL_ICONS.SHARE, label: 'Share', scheme: 'primary' },
+      { icon: CUBE_ACTION_WITH_LABEL_ICONS.DOWNLOAD, label: 'Download', scheme: 'default' },
+      { icon: CUBE_ACTION_WITH_LABEL_ICONS.TAG, label: 'Tag', scheme: 'default' },
+      { icon: CUBE_ACTION_WITH_LABEL_ICONS.DELETE, label: 'Delete', scheme: 'destructive' }
+    ];
+    
+    quickActions.forEach(action => {
+      const btn = createCubeActionButtonWithLabel({
+        icon: action.icon,
+        label: action.label,
+        colorScheme: action.scheme
+      });
+      document.getElementById('quick-actions').appendChild(btn);
+    });
+    
+    // Interactive demo
+    let clickCount = 0;
+    const schemes = ['primary', 'default', 'destructive'];
+    let currentSchemeIndex = 0;
+    let currentSize = 'small';
+    
+    const interactiveBtn = createCubeActionButtonWithLabel({
+      icon: CUBE_ACTION_WITH_LABEL_ICONS.STAR,
+      label: 'Click Me',
+      colorScheme: schemes[currentSchemeIndex],
+      size: currentSize,
+      onClick: () => {
+        clickCount++;
+        document.getElementById('click-counter').textContent = `Clicks: ${clickCount}`;
+      }
+    });
+    document.getElementById('interactive-button').appendChild(interactiveBtn);
+    
+    document.getElementById('toggle-scheme').addEventListener('click', () => {
+      currentSchemeIndex = (currentSchemeIndex + 1) % schemes.length;
+      updateCubeActionButtonWithLabelColorScheme(interactiveBtn, schemes[currentSchemeIndex]);
+    });
+    
+    document.getElementById('toggle-size').addEventListener('click', () => {
+      currentSize = currentSize === 'small' ? 'medium' : 'small';
+      interactiveBtn.classList.toggle('cube-action-button-with-label--small');
+      interactiveBtn.classList.toggle('cube-action-button-with-label--medium');
+    });
+  </script>
+</body>
+</html>

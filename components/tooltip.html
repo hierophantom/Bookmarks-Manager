@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tooltip Component Demo</title>
+  <link rel="stylesheet" href="tooltip.css">
+  <style>
+    :root {
+      /* Design tokens */
+      --font-family-sans-serif: 'Lato', sans-serif;
+      --size-medium: 12px;
+      --weight-regular: 400;
+      --common-common-dark-25: rgba(0, 0, 0, 0.8);
+      --common-common-bright-25: rgba(255, 255, 255, 0.9);
+      --corner-radius-small: 4px;
+    }
+
+    body {
+      margin: 0;
+      padding: 40px;
+      background: linear-gradient(135deg, #1e2875 0%, #2e3598 100%);
+      font-family: var(--font-family-sans-serif);
+      min-height: 100vh;
+      color: white;
+    }
+
+    .demo-section {
+      margin-bottom: 40px;
+      padding: 40px;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 8px;
+      min-height: 200px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 40px;
+      flex-wrap: wrap;
+    }
+
+    h1 {
+      font-size: 32px;
+      margin-bottom: 8px;
+    }
+
+    h2 {
+      font-size: 24px;
+      margin-top: 0;
+      margin-bottom: 20px;
+      opacity: 0.8;
+    }
+
+    .demo-button {
+      padding: 12px 24px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 4px;
+      color: white;
+      font-family: inherit;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .demo-button:hover {
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    .demo-icon {
+      width: 40px;
+      height: 40px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 20px;
+      transition: all 0.2s ease;
+    }
+
+    .demo-icon:hover {
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    .description {
+      text-align: center;
+      margin-bottom: 20px;
+      font-size: 14px;
+      opacity: 0.8;
+    }
+  </style>
+</head>
+<body>
+  <h1>Tooltip Component</h1>
+  <h2>Design System Component - BMG-95</h2>
+
+  <div class="demo-section">
+    <h3 style="width: 100%; text-align: center; margin: 0 0 20px 0;">Positions</h3>
+    <p class="description" style="width: 100%;">Hover over elements to see tooltips at different positions (4px spacing from target)</p>
+    
+    <button class="demo-button" id="btn-top">Hover (Top)</button>
+    <button class="demo-button" id="btn-bottom">Hover (Bottom)</button>
+    <button class="demo-button" id="btn-left">Hover (Left)</button>
+    <button class="demo-button" id="btn-right">Hover (Right)</button>
+  </div>
+
+  <div class="demo-section">
+    <h3 style="width: 100%; text-align: center; margin: 0 0 20px 0;">Icon Tooltips</h3>
+    <p class="description" style="width: 100%;">Common use case: icon buttons with explanatory tooltips</p>
+    
+    <div class="demo-icon" id="icon-edit">✏️</div>
+    <div class="demo-icon" id="icon-delete">🗑️</div>
+    <div class="demo-icon" id="icon-share">📤</div>
+    <div class="demo-icon" id="icon-star">⭐</div>
+  </div>
+
+  <div class="demo-section">
+    <h3 style="width: 100%; text-align: center; margin: 0 0 20px 0;">Delay Variants</h3>
+    <p class="description" style="width: 100%;">Different show delays for different contexts</p>
+    
+    <button class="demo-button" id="btn-instant">Instant</button>
+    <button class="demo-button" id="btn-fast">Fast (200ms)</button>
+    <button class="demo-button" id="btn-slow">Slow (800ms)</button>
+  </div>
+
+  <div class="demo-section">
+    <h3 style="width: 100%; text-align: center; margin: 0 0 20px 0;">Long Content</h3>
+    <p class="description" style="width: 100%;">Tooltips with longer text content</p>
+    
+    <button class="demo-button" id="btn-long">Hover for details</button>
+  </div>
+
+  <script src="tooltip.js"></script>
+  <script>
+    // Position examples
+    createTooltip({
+      text: 'Tooltip appears above',
+      target: document.getElementById('btn-top'),
+      position: 'top'
+    });
+
+    createTooltip({
+      text: 'Tooltip appears below',
+      target: document.getElementById('btn-bottom'),
+      position: 'bottom'
+    });
+
+    createTooltip({
+      text: 'Tooltip appears on left',
+      target: document.getElementById('btn-left'),
+      position: 'left'
+    });
+
+    createTooltip({
+      text: 'Tooltip appears on right',
+      target: document.getElementById('btn-right'),
+      position: 'right'
+    });
+
+    // Icon tooltips
+    createTooltip({
+      text: 'Edit bookmark',
+      target: document.getElementById('icon-edit'),
+      position: 'top'
+    });
+
+    createTooltip({
+      text: 'Delete bookmark',
+      target: document.getElementById('icon-delete'),
+      position: 'top'
+    });
+
+    createTooltip({
+      text: 'Share bookmark',
+      target: document.getElementById('icon-share'),
+      position: 'top'
+    });
+
+    createTooltip({
+      text: 'Add to favorites',
+      target: document.getElementById('icon-star'),
+      position: 'top'
+    });
+
+    // Delay variants
+    createTooltip({
+      text: 'Shows immediately',
+      target: document.getElementById('btn-instant'),
+      position: 'top',
+      delay: 'instant'
+    });
+
+    createTooltip({
+      text: 'Shows after 200ms',
+      target: document.getElementById('btn-fast'),
+      position: 'top',
+      delay: 'fast'
+    });
+
+    createTooltip({
+      text: 'Shows after 800ms',
+      target: document.getElementById('btn-slow'),
+      position: 'top',
+      delay: 'slow'
+    });
+
+    // Long content
+    createTooltip({
+      text: 'This button performs a complex operation that requires user confirmation',
+      target: document.getElementById('btn-long'),
+      position: 'top'
+    });
+  </script>
+</body>
+</html>

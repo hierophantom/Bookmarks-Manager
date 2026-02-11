@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Search Bar - Design System Component</title>
+  <link rel="stylesheet" href="search-bar.css">
+  <style>
+    /* Demo page styles */
+    :root {
+      /* Typography tokens */
+      --font-family-sans-serif: 'Lato', sans-serif;
+      --size-large: 16px;
+      --weight-regular: 400;
+      
+      /* Color tokens */
+      --common-common-bright-25: rgba(255, 255, 255, 0.9);
+      --common-common-bright-15: rgba(255, 255, 255, 0.6);
+      --common-common-bright-05: rgba(255, 255, 255, 0.1);
+      
+      /* Border radius tokens */
+      --corner-radius-pill: 999px;
+    }
+    
+    body {
+      font-family: var(--font-family-sans-serif);
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      margin: 0;
+      padding: 40px;
+      color: white;
+    }
+    
+    .demo-container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    .demo-section {
+      margin-bottom: 60px;
+      padding: 40px;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 16px;
+      backdrop-filter: blur(10px);
+    }
+    
+    .demo-section h2 {
+      margin-top: 0;
+      margin-bottom: 24px;
+      font-size: 24px;
+    }
+    
+    .demo-section h3 {
+      margin-top: 32px;
+      margin-bottom: 16px;
+      font-size: 18px;
+      color: rgba(255, 255, 255, 0.8);
+    }
+    
+    .demo-group {
+      display: flex;
+      gap: 32px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+    
+    .demo-item {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      align-items: flex-start;
+    }
+    
+    .demo-label {
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.6);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .note {
+      padding: 16px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      font-size: 14px;
+      line-height: 1.5;
+      margin-top: 16px;
+    }
+  </style>
+</head>
+<body>
+  <div class="demo-container">
+    <h1>Search Bar Component</h1>
+    <p>Design System Component - BMG-89</p>
+    
+    <div class="note">
+      <strong>⚠️ Note:</strong> This component acts as a button to trigger the search overlay, not as an input field. Hover over the search bar to see the keyboard shortcut hint.
+    </div>
+    
+    <!-- States -->
+    <div class="demo-section">
+      <h2>States</h2>
+      
+      <h3>Idle → Hover</h3>
+      <div class="demo-group">
+        <div class="demo-item">
+          <span class="demo-label">Idle</span>
+          <button class="search-bar">
+            <div class="search-bar__content">
+              <img class="search-bar__icon" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z' /%3E%3C/svg%3E" alt="">
+              <span class="search-bar__text">Search</span>
+            </div>
+            <div class="search-bar__shortcut">
+              <span class="search-bar__shortcut-key">⌘</span>
+              <span class="search-bar__shortcut-key">E</span>
+            </div>
+          </button>
+        </div>
+        
+        <div class="demo-item">
+          <span class="demo-label">Hover (try hovering)</span>
+          <button class="search-bar">
+            <div class="search-bar__content">
+              <img class="search-bar__icon" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z' /%3E%3C/svg%3E" alt="">
+              <span class="search-bar__text">Search</span>
+            </div>
+            <div class="search-bar__shortcut">
+              <span class="search-bar__shortcut-key">⌘</span>
+              <span class="search-bar__shortcut-key">E</span>
+            </div>
+          </button>
+        </div>
+      </div>
+      
+      <p style="font-size: 14px; color: rgba(255, 255, 255, 0.7); margin-top: 16px;">
+        On hover: text changes to "Search...", border appears, shadow added, and keyboard shortcut becomes visible.
+      </p>
+    </div>
+    
+    <!-- Variants -->
+    <div class="demo-section">
+      <h2>Variants</h2>
+      
+      <h3>Different Shortcut Keys</h3>
+      <div class="demo-group">
+        <div class="demo-item">
+          <span class="demo-label">⌘ + K</span>
+          <button class="search-bar">
+            <div class="search-bar__content">
+              <img class="search-bar__icon" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z' /%3E%3C/svg%3E" alt="">
+              <span class="search-bar__text">Search</span>
+            </div>
+            <div class="search-bar__shortcut">
+              <span class="search-bar__shortcut-key">⌘</span>
+              <span class="search-bar__shortcut-key">K</span>
+            </div>
+          </button>
+        </div>
+        
+        <div class="demo-item">
+          <span class="demo-label">Ctrl + F</span>
+          <button class="search-bar">
+            <div class="search-bar__content">
+              <img class="search-bar__icon" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z' /%3E%3C/svg%3E" alt="">
+              <span class="search-bar__text">Search</span>
+            </div>
+            <div class="search-bar__shortcut">
+              <span class="search-bar__shortcut-key">Ctrl</span>
+              <span class="search-bar__shortcut-key">F</span>
+            </div>
+          </button>
+        </div>
+        
+        <div class="demo-item">
+          <span class="demo-label">/</span>
+          <button class="search-bar">
+            <div class="search-bar__content">
+              <img class="search-bar__icon" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z' /%3E%3C/svg%3E" alt="">
+              <span class="search-bar__text">Search</span>
+            </div>
+            <div class="search-bar__shortcut">
+              <span class="search-bar__shortcut-key">/</span>
+            </div>
+          </button>
+        </div>
+      </div>
+      
+      <h3>Custom Text</h3>
+      <div class="demo-group">
+        <button class="search-bar">
+          <div class="search-bar__content">
+            <img class="search-bar__icon" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z' /%3E%3C/svg%3E" alt="">
+            <span class="search-bar__text">Find bookmarks</span>
+          </div>
+          <div class="search-bar__shortcut">
+            <span class="search-bar__shortcut-key">⌘</span>
+            <span class="search-bar__shortcut-key">F</span>
+          </div>
+        </button>
+        
+        <button class="search-bar">
+          <div class="search-bar__content">
+            <img class="search-bar__icon" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z' /%3E%3C/svg%3E" alt="">
+            <span class="search-bar__text">Quick search</span>
+          </div>
+          <div class="search-bar__shortcut">
+            <span class="search-bar__shortcut-key">⌘</span>
+            <span class="search-bar__shortcut-key">K</span>
+          </div>
+        </button>
+      </div>
+      
+      <h3>Disabled State</h3>
+      <div class="demo-group">
+        <button class="search-bar" disabled>
+          <div class="search-bar__content">
+            <img class="search-bar__icon" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z' /%3E%3C/svg%3E" alt="">
+            <span class="search-bar__text">Search</span>
+          </div>
+          <div class="search-bar__shortcut">
+            <span class="search-bar__shortcut-key">⌘</span>
+            <span class="search-bar__shortcut-key">E</span>
+          </div>
+        </button>
+      </div>
+    </div>
+    
+    <!-- JavaScript API Demo -->
+    <div class="demo-section">
+      <h2>JavaScript API Demo</h2>
+      <div id="js-demo" class="demo-group"></div>
+      <p style="margin-top: 20px; font-size: 14px;">
+        <strong>Try clicking the buttons!</strong> Click events are logged to console.
+      </p>
+    </div>
+  </div>
+  
+  <script src="search-bar.js"></script>
+  <script>
+    // Demo: Create search bars using JavaScript API
+    const demoContainer = document.getElementById('js-demo');
+    
+    // Create default search bar
+    const searchBar1 = createSearchBar({
+      onClick: () => {
+        console.log('Search clicked!');
+        alert('Search overlay would open here');
+      }
+    });
+    
+    // Create search bar with custom shortcut
+    const searchBar2 = createSearchBar({
+      text: 'Find',
+      shortcutKeys: ['⌘', 'K'],
+      onClick: () => console.log('Find clicked!')
+    });
+    
+    // Create search bar with single key shortcut
+    const searchBar3 = createSearchBar({
+      text: 'Quick search',
+      shortcutKeys: ['/'],
+      onClick: () => console.log('Quick search clicked!')
+    });
+    
+    demoContainer.appendChild(searchBar1);
+    demoContainer.appendChild(searchBar2);
+    demoContainer.appendChild(searchBar3);
+    
+    // Demo: Update text dynamically
+    setTimeout(() => {
+      updateSearchBarText(searchBar1, 'Updated text');
+      console.log('Search bar text updated after 3 seconds');
+    }, 3000);
+  </script>
+</body>
+</html>

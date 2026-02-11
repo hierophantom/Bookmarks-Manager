@@ -1,0 +1,70 @@
+/**
+ * Keyboard Shortcut Hint Component
+ * 
+ * Design System Component - BMG-92
+ * Based on Figma: node-id=92-9900
+ * 
+ * Displays keyboard shortcut keys in a pill-shaped container
+ * No hover state - static display only
+ */
+
+/* Base keyboard shortcut hint styles */
+.kbd-hint {
+  /* Layout */
+  display: inline-flex;
+  align-items: center;
+  justify-center: center;
+  gap: 2px;
+  
+  /* Sizing */
+  height: 20px;
+  min-width: 20px;
+  padding: 0 4px;
+  
+  /* Appearance */
+  background: var(--common-common-bright-05, rgba(255, 255, 255, 0.1));
+  border-radius: var(--corner-radius-pill, 999px);
+  
+  /* Behavior */
+  user-select: none;
+  pointer-events: none;
+}
+
+/* Individual key/icon */
+.kbd-hint__key {
+  width: 6px;
+  height: 6px;
+  flex-shrink: 0;
+  opacity: 0.6;
+}
+
+/* Text variant (for text-based keys) */
+.kbd-hint__text {
+  font-family: var(--font-family-sans-serif, 'Lato', sans-serif);
+  font-size: 10px;
+  font-weight: var(--weight-regular, 400);
+  color: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
+  line-height: 1;
+  white-space: nowrap;
+}
+
+/* Size variants */
+.kbd-hint--small {
+  height: 16px;
+  padding: 0 3px;
+}
+
+.kbd-hint--small .kbd-hint__key {
+  width: 5px;
+  height: 5px;
+}
+
+.kbd-hint--large {
+  height: 24px;
+  padding: 0 6px;
+}
+
+.kbd-hint--large .kbd-hint__key {
+  width: 8px;
+  height: 8px;
+}

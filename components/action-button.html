@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Action Button - Design System</title>
+  <style>
+    /* Design tokens */
+    :root {
+      --corner-radius-small: 4px;
+      --common-common-bright-05: rgba(255, 255, 255, 0.1);
+      --common-common-bright-10: rgba(255, 255, 255, 0.2);
+      --primary-primary-25: #2e33b9;
+      
+      /* Typography */
+      --font-body: Lato, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --label-reg-size: 16px;
+      --label-reg-weight: 400;
+    }
+    
+    body {
+      font-family: var(--font-body);
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      color: #ffffff;
+      padding: 40px;
+      margin: 0;
+    }
+    
+    .demo-container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    h1 {
+      font-size: 32px;
+      font-weight: 400;
+      margin-bottom: 8px;
+    }
+    
+    .subtitle {
+      color: rgba(255, 255, 255, 0.6);
+      margin-bottom: 40px;
+      font-size: 16px;
+    }
+    
+    .section {
+      margin-bottom: 40px;
+      padding: 24px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+    }
+    
+    .section h2 {
+      font-size: 20px;
+      font-weight: 400;
+      margin-bottom: 20px;
+      color: rgba(255, 255, 255, 0.9);
+    }
+    
+    .button-grid {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    
+    .button-item {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      align-items: center;
+    }
+    
+    .button-label {
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.5);
+    }
+    
+    .spec-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: grid;
+      gap: 8px;
+    }
+    
+    .spec-list li {
+      padding: 12px 16px;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 4px;
+      font-size: 14px;
+      display: flex;
+      justify-content: space-between;
+    }
+    
+    .spec-label {
+      color: rgba(255, 255, 255, 0.6);
+    }
+    
+    .spec-value {
+      color: rgba(255, 255, 255, 0.95);
+      font-weight: 300;
+    }
+  </style>
+  <link rel="stylesheet" href="action-button.css">
+</head>
+<body>
+  <div class="demo-container">
+    <h1>Action Button</h1>
+    <p class="subtitle">Design System Component - BMG-96</p>
+    
+    <!-- Basic Examples -->
+    <div class="section">
+      <h2>Basic Examples</h2>
+      <div class="button-grid">
+        <div class="button-item">
+          <div id="settings-button"></div>
+          <span class="button-label">Settings</span>
+        </div>
+        <div class="button-item">
+          <div id="add-button"></div>
+          <span class="button-label">Add</span>
+        </div>
+        <div class="button-item">
+          <div id="edit-button"></div>
+          <span class="button-label">Edit</span>
+        </div>
+        <div class="button-item">
+          <div id="delete-button"></div>
+          <span class="button-label">Delete</span>
+        </div>
+        <div class="button-item">
+          <div id="close-button"></div>
+          <span class="button-label">Close</span>
+        </div>
+        <div class="button-item">
+          <div id="menu-button"></div>
+          <span class="button-label">Menu</span>
+        </div>
+      </div>
+    </div>
+    
+    <!-- States -->
+    <div class="section">
+      <h2>States</h2>
+      <div class="button-grid">
+        <div class="button-item">
+          <div id="idle-button"></div>
+          <span class="button-label">Idle</span>
+        </div>
+        <div class="button-item">
+          <div id="hover-hint"></div>
+          <span class="button-label">Hover (try it)</span>
+        </div>
+        <div class="button-item">
+          <div id="disabled-button"></div>
+          <span class="button-label">Disabled</span>
+        </div>
+      </div>
+    </div>
+    
+    <!-- With Tooltips -->
+    <div class="section">
+      <h2>With Tooltips</h2>
+      <div class="button-grid">
+        <div id="tooltip-button-1"></div>
+        <div id="tooltip-button-2"></div>
+        <div id="tooltip-button-3"></div>
+      </div>
+      <p style="font-size: 12px; color: rgba(255, 255, 255, 0.5); margin-top: 16px;">
+        Note: Tooltips require the tooltip component to be loaded
+      </p>
+    </div>
+    
+    <!-- Interactive Demo -->
+    <div class="section">
+      <h2>Interactive Demo</h2>
+      <div style="display: flex; gap: 16px; align-items: center;">
+        <div id="interactive-button"></div>
+        <span id="click-counter" style="font-size: 14px; color: rgba(255, 255, 255, 0.7);">
+          Clicks: 0
+        </span>
+      </div>
+    </div>
+    
+    <!-- Specifications -->
+    <div class="section">
+      <h2>Specifications</h2>
+      <ul class="spec-list">
+        <li>
+          <span class="spec-label">Size</span>
+          <span class="spec-value">32×32px</span>
+        </li>
+        <li>
+          <span class="spec-label">Icon Size</span>
+          <span class="spec-value">24×24px</span>
+        </li>
+        <li>
+          <span class="spec-label">Border Radius</span>
+          <span class="spec-value">4px (corner-radius-small)</span>
+        </li>
+        <li>
+          <span class="spec-label">Background (Idle)</span>
+          <span class="spec-value">common-bright-05 (rgba(255, 255, 255, 0.1))</span>
+        </li>
+        <li>
+          <span class="spec-label">Transition</span>
+          <span class="spec-value">0.2s ease</span>
+        </li>
+        <li>
+          <span class="spec-label">States</span>
+          <span class="spec-value">Idle, Hover, Active, Disabled</span>
+        </li>
+      </ul>
+    </div>
+  </div>
+  
+  <script src="action-button.js"></script>
+  <script>
+    // Basic examples
+    const settingsBtn = createActionButton({
+      icon: ACTION_BUTTON_ICONS.SETTINGS,
+      label: 'Settings',
+      onClick: () => alert('Settings clicked')
+    });
+    document.getElementById('settings-button').appendChild(settingsBtn);
+    
+    const addBtn = createActionButton({
+      icon: ACTION_BUTTON_ICONS.ADD,
+      label: 'Add',
+      onClick: () => alert('Add clicked')
+    });
+    document.getElementById('add-button').appendChild(addBtn);
+    
+    const editBtn = createActionButton({
+      icon: ACTION_BUTTON_ICONS.EDIT,
+      label: 'Edit',
+      onClick: () => alert('Edit clicked')
+    });
+    document.getElementById('edit-button').appendChild(editBtn);
+    
+    const deleteBtn = createActionButton({
+      icon: ACTION_BUTTON_ICONS.DELETE,
+      label: 'Delete',
+      onClick: () => alert('Delete clicked')
+    });
+    document.getElementById('delete-button').appendChild(deleteBtn);
+    
+    const closeBtn = createActionButton({
+      icon: ACTION_BUTTON_ICONS.CLOSE,
+      label: 'Close',
+      onClick: () => alert('Close clicked')
+    });
+    document.getElementById('close-button').appendChild(closeBtn);
+    
+    const menuBtn = createActionButton({
+      icon: ACTION_BUTTON_ICONS.MENU,
+      label: 'Menu',
+      onClick: () => alert('Menu clicked')
+    });
+    document.getElementById('menu-button').appendChild(menuBtn);
+    
+    // States
+    const idleBtn = createActionButton({
+      icon: ACTION_BUTTON_ICONS.STAR,
+      label: 'Idle state'
+    });
+    document.getElementById('idle-button').appendChild(idleBtn);
+    
+    const hoverBtn = createActionButton({
+      icon: ACTION_BUTTON_ICONS.STAR,
+      label: 'Hover over me'
+    });
+    document.getElementById('hover-hint').appendChild(hoverBtn);
+    
+    const disabledBtn = createActionButton({
+      icon: ACTION_BUTTON_ICONS.STAR,
+      label: 'Disabled',
+      disabled: true
+    });
+    document.getElementById('disabled-button').appendChild(disabledBtn);
+    
+    // With tooltips
+    const tooltip1 = createActionButton({
+      icon: ACTION_BUTTON_ICONS.SHARE,
+      label: 'Share',
+      tooltip: 'Share this page',
+      onClick: () => alert('Share clicked')
+    });
+    document.getElementById('tooltip-button-1').appendChild(tooltip1);
+    
+    const tooltip2 = createActionButton({
+      icon: ACTION_BUTTON_ICONS.DOWNLOAD,
+      label: 'Download',
+      tooltip: 'Download file',
+      onClick: () => alert('Download clicked')
+    });
+    document.getElementById('tooltip-button-2').appendChild(tooltip2);
+    
+    const tooltip3 = createActionButton({
+      icon: ACTION_BUTTON_ICONS.REFRESH,
+      label: 'Refresh',
+      tooltip: 'Refresh page',
+      onClick: () => alert('Refresh clicked')
+    });
+    document.getElementById('tooltip-button-3').appendChild(tooltip3);
+    
+    // Interactive demo
+    let clickCount = 0;
+    const interactiveBtn = createActionButton({
+      icon: ACTION_BUTTON_ICONS.STAR,
+      label: 'Click me',
+      onClick: () => {
+        clickCount++;
+        document.getElementById('click-counter').textContent = `Clicks: ${clickCount}`;
+      }
+    });
+    document.getElementById('interactive-button').appendChild(interactiveBtn);
+  </script>
+</body>
+</html>

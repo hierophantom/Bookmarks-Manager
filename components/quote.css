@@ -1,0 +1,122 @@
+/**
+ * Quote Component
+ * 
+ * Design System Component - BMG-90
+ * Based on Figma: node-id=92-9407
+ * 
+ * Displays an inspirational quote with an interactive author link
+ * States: Idle, Hover (on author)
+ */
+
+/* Base quote styles */
+.quote {
+  /* Layout */
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  
+  /* Typography */
+  font-family: var(--font-family-sans-serif, 'Lato', sans-serif);
+  font-size: var(--size-large, 16px);
+  font-weight: var(--weight-regular, 400);
+  line-height: 1;
+  
+  /* Behavior */
+  user-select: none;
+}
+
+/* Quote text (the actual quote with quotes) */
+.quote__text {
+  color: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
+  flex-shrink: 0;
+  
+  /* Enable text truncation */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 600px; /* Default max width, can be overridden */
+}
+
+/* Quote separator (dash) */
+.quote__separator {
+  color: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
+  flex-shrink: 0;
+}
+
+/* Author name (clickable) */
+.quote__author {
+  /* Reset button styles */
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  
+  /* Typography */
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+  text-align: left;
+  
+  /* Appearance */
+  color: var(--common-common-bright-10, rgba(255, 255, 255, 0.4));
+  flex-shrink: 0;
+  white-space: nowrap; /* Never truncate author name */
+  
+  /* Behavior */
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+/* ========================================
+   STATE: HOVER (on author)
+   ======================================== */
+
+.quote__author:hover {
+  color: var(--primary-primary-25, #2e33b9);
+  text-decoration: underline;
+}
+
+/* ========================================
+   STATE: FOCUS (accessibility)
+   ======================================== */
+
+.quote__author:focus {
+  outline: 2px solid var(--primary-primary-25, #2e33b9);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.quote__author:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* ========================================
+   MODIFIERS
+   ======================================== */
+
+/* Allow custom max-width for quote text */
+.quote--short .quote__text {
+  max-width: 300px;
+}
+
+.quote--medium .quote__text {
+  max-width: 600px;
+}
+
+.quote--long .quote__text {
+  max-width: 900px;
+}
+
+.quote--full .quote__text {
+  max-width: none;
+}
+
+/* Variant: No truncation */
+.quote--no-truncate .quote__text {
+  max-width: none;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+}

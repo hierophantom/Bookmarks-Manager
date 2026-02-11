@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quote - Design System Component</title>
+  <link rel="stylesheet" href="quote.css">
+  <style>
+    /* Demo page styles */
+    :root {
+      /* Typography tokens */
+      --font-family-sans-serif: 'Lato', sans-serif;
+      --size-large: 16px;
+      --weight-regular: 400;
+      
+      /* Color tokens */
+      --primary-primary-25: #2e33b9;
+      --common-common-bright-25: rgba(255, 255, 255, 0.9);
+      --common-common-bright-10: rgba(255, 255, 255, 0.4);
+    }
+    
+    body {
+      font-family: var(--font-family-sans-serif);
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      margin: 0;
+      padding: 40px;
+      color: white;
+    }
+    
+    .demo-container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    .demo-section {
+      margin-bottom: 60px;
+      padding: 40px;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 16px;
+      backdrop-filter: blur(10px);
+    }
+    
+    .demo-section h2 {
+      margin-top: 0;
+      margin-bottom: 24px;
+      font-size: 24px;
+    }
+    
+    .demo-section h3 {
+      margin-top: 32px;
+      margin-bottom: 16px;
+      font-size: 18px;
+      color: rgba(255, 255, 255, 0.8);
+    }
+    
+    .demo-group {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      margin-bottom: 24px;
+    }
+    
+    .demo-item {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    
+    .demo-label {
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.6);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .note {
+      padding: 16px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      font-size: 14px;
+      line-height: 1.5;
+      margin-top: 16px;
+    }
+    
+    .width-container {
+      border: 1px dashed rgba(255, 255, 255, 0.3);
+      padding: 16px;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="demo-container">
+    <h1>Quote Component</h1>
+    <p>Design System Component - BMG-90</p>
+    
+    <div class="note">
+      <strong>💡 Key Features:</strong>
+      <ul style="margin: 8px 0; padding-left: 20px;">
+        <li>Quote text truncates with ellipsis when too long</li>
+        <li>Author name never truncates (always fully visible)</li>
+        <li>Author name is clickable/interactive</li>
+        <li>Hover on author shows underline and color change</li>
+        <li>user-select: none (text cannot be selected)</li>
+      </ul>
+    </div>
+    
+    <!-- States -->
+    <div class="demo-section">
+      <h2>States</h2>
+      
+      <div class="demo-group">
+        <div class="demo-item">
+          <span class="demo-label">Idle</span>
+          <div class="quote">
+            <span class="quote__text">"inspirational quote"</span>
+            <span class="quote__separator">-</span>
+            <button class="quote__author" type="button">Inspirational person</button>
+          </div>
+        </div>
+        
+        <div class="demo-item">
+          <span class="demo-label">Hover (hover over the author name)</span>
+          <div class="quote">
+            <span class="quote__text">"inspirational quote"</span>
+            <span class="quote__separator">-</span>
+            <button class="quote__author" type="button">Inspirational person</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Truncation Behavior -->
+    <div class="demo-section">
+      <h2>Truncation Behavior</h2>
+      
+      <h3>Quote Truncates, Author Does Not</h3>
+      <div class="width-container" style="max-width: 600px;">
+        <div class="demo-label" style="margin-bottom: 12px;">Container limited to 600px width</div>
+        <div class="quote">
+          <span class="quote__text">"If this sentence is too long it should truncate at some point but do keep the author whole and not cut"</span>
+          <span class="quote__separator">-</span>
+          <button class="quote__author" type="button">Inspirational person with a long name</button>
+        </div>
+      </div>
+      
+      <h3>Different Max Widths</h3>
+      <div class="demo-group">
+        <div class="demo-item">
+          <span class="demo-label">Max width: 300px</span>
+          <div class="width-container" style="max-width: 300px;">
+            <div class="quote">
+              <span class="quote__text" style="max-width: 300px;">"The only way to do great work is to love what you do"</span>
+              <span class="quote__separator">-</span>
+              <button class="quote__author" type="button">Steve Jobs</button>
+            </div>
+          </div>
+        </div>
+        
+        <div class="demo-item">
+          <span class="demo-label">Max width: 600px</span>
+          <div class="width-container" style="max-width: 600px;">
+            <div class="quote">
+              <span class="quote__text" style="max-width: 600px;">"The only way to do great work is to love what you do"</span>
+              <span class="quote__separator">-</span>
+              <button class="quote__author" type="button">Steve Jobs</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <h3>No Truncation (wraps to multiple lines)</h3>
+      <div class="width-container" style="max-width: 400px;">
+        <div class="quote quote--no-truncate">
+          <span class="quote__text">"The only way to do great work is to love what you do. Stay hungry, stay foolish."</span>
+          <span class="quote__separator">-</span>
+          <button class="quote__author" type="button">Steve Jobs</button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Real Examples -->
+    <div class="demo-section">
+      <h2>Real Examples</h2>
+      
+      <div class="demo-group">
+        <div class="quote">
+          <span class="quote__text">"Be yourself; everyone else is already taken."</span>
+          <span class="quote__separator">-</span>
+          <button class="quote__author" type="button">Oscar Wilde</button>
+        </div>
+        
+        <div class="quote">
+          <span class="quote__text">"The future belongs to those who believe in the beauty of their dreams."</span>
+          <span class="quote__separator">-</span>
+          <button class="quote__author" type="button">Eleanor Roosevelt</button>
+        </div>
+        
+        <div class="quote">
+          <span class="quote__text">"Innovation distinguishes between a leader and a follower."</span>
+          <span class="quote__separator">-</span>
+          <button class="quote__author" type="button">Steve Jobs</button>
+        </div>
+        
+        <div class="quote">
+          <span class="quote__text">"The only impossible journey is the one you never begin."</span>
+          <span class="quote__separator">-</span>
+          <button class="quote__author" type="button">Tony Robbins</button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- JavaScript API Demo -->
+    <div class="demo-section">
+      <h2>JavaScript API Demo</h2>
+      <div id="js-demo" class="demo-group"></div>
+      <p style="margin-top: 20px; font-size: 14px;">
+        <strong>Try clicking the author names!</strong> Click events are logged to console.
+      </p>
+      <button id="update-btn" style="margin-top: 16px; padding: 8px 16px; background: rgba(255, 255, 255, 0.2); border: 1px solid rgba(255, 255, 255, 0.3); color: white; border-radius: 8px; cursor: pointer;">
+        Update First Quote
+      </button>
+    </div>
+  </div>
+  
+  <script src="quote.js"></script>
+  <script>
+    // Demo: Create quotes using JavaScript API
+    const demoContainer = document.getElementById('js-demo');
+    
+    // Create quotes with different settings
+    const quote1 = createQuote({
+      text: 'The best time to plant a tree was 20 years ago. The second best time is now.',
+      author: 'Chinese Proverb',
+      onAuthorClick: (author) => {
+        console.log(`Author clicked: ${author}`);
+        alert(`Navigating to quotes by ${author}`);
+      }
+    });
+    
+    const quote2 = createQuote({
+      text: 'Success is not final, failure is not fatal: it is the courage to continue that counts.',
+      author: 'Winston Churchill',
+      maxWidth: 400,
+      onAuthorClick: (author) => console.log(`Clicked: ${author}`)
+    });
+    
+    const quote3 = createQuote({
+      text: 'Life is 10% what happens to you and 90% how you react to it.',
+      author: 'Charles R. Swindoll',
+      onAuthorClick: (author) => console.log(`Clicked: ${author}`)
+    });
+    
+    demoContainer.appendChild(quote1);
+    demoContainer.appendChild(quote2);
+    demoContainer.appendChild(quote3);
+    
+    // Demo: Update quote dynamically
+    document.getElementById('update-btn').addEventListener('click', () => {
+      const newQuotes = [
+        { text: 'Do not go where the path may lead, go instead where there is no path and leave a trail.', author: 'Ralph Waldo Emerson' },
+        { text: 'The only limit to our realization of tomorrow is our doubts of today.', author: 'Franklin D. Roosevelt' },
+        { text: 'In the middle of difficulty lies opportunity.', author: 'Albert Einstein' }
+      ];
+      
+      const random = newQuotes[Math.floor(Math.random() * newQuotes.length)];
+      updateQuote(quote1, random.text, random.author);
+      console.log('Quote updated!');
+    });
+  </script>
+</body>
+</html>

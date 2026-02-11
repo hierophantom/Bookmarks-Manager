@@ -1,0 +1,281 @@
+/**
+ * Modal Component
+ * 
+ * Design System Component - BMG-93
+ * Based on Figma: node-id=92-9674
+ * 
+ * Two types of modals:
+ * - Dialog box: Yes/no questions
+ * - Form modal: Contains form inputs
+ * 
+ * Keyboard behaviors:
+ * - ESC closes modal and discards changes
+ * - Enter submits form and closes modal
+ */
+
+/* Overlay backdrop */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  padding: 16px;
+  user-select: none;
+}
+
+/* Modal container */
+.modal {
+  /* Layout */
+  display: flex;
+  flex-direction: column;
+  gap: var(--padding-and-gap-x-large, 16px);
+  
+  /* Sizing */
+  min-width: 500px;
+  max-width: 90vw;
+  max-height: 90vh;
+  
+  /* Appearance */
+  background: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0.2) 0%,
+    rgba(0, 0, 0, 0.2) 100%
+  ),
+  linear-gradient(
+    90deg,
+    var(--primary-primary-10, rgba(46, 51, 185, 0.4)) 0%,
+    var(--primary-primary-10, rgba(46, 51, 185, 0.4)) 100%
+  );
+  border-radius: var(--corner-radius-medium, 8px);
+  padding: var(--padding-and-gap-x-large, 16px);
+  
+  /* Visual effects */
+  backdrop-filter: blur(7px);
+  box-shadow: 
+    0px 2px 4px 0px rgba(0, 0, 0, 0.1),
+    0px 7px 7px 0px rgba(0, 0, 0, 0.09),
+    0px 15px 9px 0px rgba(0, 0, 0, 0.05),
+    0px 26px 10px 0px rgba(0, 0, 0, 0.01),
+    0px 41px 11px 0px rgba(0, 0, 0, 0);
+  
+  /* Behavior */
+  user-select: none;
+}
+
+/* Modal variants */
+.modal--dialog {
+  width: 532px;
+}
+
+.modal--form {
+  width: auto;
+}
+
+/* Modal content section */
+.modal__content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--padding-and-gap-large, 8px);
+  width: 100%;
+}
+
+.modal--dialog .modal__content {
+  min-height: auto;
+}
+
+.modal--form .modal__content {
+  min-height: 200px;
+}
+
+/* Modal title */
+.modal__title {
+  font-family: var(--font-family-sans-serif, 'Lato', sans-serif);
+  font-size: var(--size-x-large-2, 24px);
+  font-weight: var(--weight-regular, 400);
+  color: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
+  line-height: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Modal subtitle */
+.modal__subtitle {
+  font-family: var(--font-family-sans-serif, 'Lato', sans-serif);
+  font-size: var(--size-medium, 12px);
+  font-weight: var(--weight-light, 300);
+  color: var(--common-common-bright-15, rgba(255, 255, 255, 0.6));
+  line-height: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Modal form content area */
+.modal__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--padding-and-gap-large, 8px);
+  width: 100%;
+}
+
+/* Modal actions section */
+.modal__actions {
+  display: flex;
+  gap: var(--padding-and-gap-large, 8px);
+  width: 100%;
+}
+
+/* Modal buttons */
+.modal__button {
+  /* Layout */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  flex: 1;
+  
+  /* Sizing */
+  height: 36px;
+  padding: 8px 12px;
+  
+  /* Typography */
+  font-family: var(--font-family-sans-serif, 'Lato', sans-serif);
+  font-size: var(--size-medium, 12px);
+  font-weight: var(--weight-regular, 400);
+  line-height: 1;
+  
+  /* Appearance */
+  border-radius: var(--corner-radius-small, 4px);
+  border: 1px solid transparent;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  
+  /* Transition */
+  transition: all 0.2s ease;
+}
+
+/* Common button (secondary) */
+.modal__button--common {
+  background: var(--common-common-bright-05, rgba(255, 255, 255, 0.1));
+  border-color: var(--common-common-bright-05, rgba(255, 255, 255, 0.1));
+  color: var(--common-common-bright-15, rgba(255, 255, 255, 0.6));
+}
+
+.modal__button--common:hover {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.05) 0%,
+    rgba(255, 255, 255, 0.05) 100%
+  ),
+  var(--common-common-bright-05, rgba(255, 255, 255, 0.1));
+  border-color: var(--common-common-bright-10, rgba(255, 255, 255, 0.2));
+}
+
+.modal__button--common:active {
+  background: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0.1) 0%,
+    rgba(0, 0, 0, 0.1) 100%
+  ),
+  var(--common-common-bright-05, rgba(255, 255, 255, 0.1));
+}
+
+/* Primary button */
+.modal__button--primary {
+  background: var(--primary-primary-20, rgba(46, 51, 185, 0.8));
+  border-color: var(--primary-primary-25, #2e33b9);
+  color: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
+}
+
+.modal__button--primary:hover {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.05) 0%,
+    rgba(255, 255, 255, 0.05) 100%
+  ),
+  var(--primary-primary-20, rgba(46, 51, 185, 0.8));
+}
+
+.modal__button--primary:active {
+  background: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0.1) 0%,
+    rgba(0, 0, 0, 0.1) 100%
+  ),
+  var(--primary-primary-20, rgba(46, 51, 185, 0.8));
+}
+
+/* Disabled state */
+.modal__button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.modal__button:disabled:hover {
+  background: var(--common-common-bright-05, rgba(255, 255, 255, 0.1));
+}
+
+/* Animation */
+.modal-overlay--entering {
+  animation: fadeIn 0.2s ease;
+}
+
+.modal-overlay--exiting {
+  animation: fadeOut 0.2s ease;
+}
+
+.modal--entering {
+  animation: slideUp 0.2s ease;
+}
+
+.modal--exiting {
+  animation: slideDown 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+}

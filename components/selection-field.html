@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Selection Field - Design System</title>
+  <link rel="stylesheet" href="selection-field.css">
+  <link rel="stylesheet" href="selection-menu.css">
+  <link rel="stylesheet" href="tag.css">
+  <style>
+    :root {
+      --font-family-sans-serif: 'Lato', sans-serif;
+      --size-medium: 12px;
+      --size-large: 16px;
+      --weight-light: 300;
+      --weight-regular: 400;
+      --weight-bold: 700;
+
+      --corner-radius-small: 4px;
+      --corner-radius-pill: 999px;
+
+      --padding-and-gap-medium: 4px;
+      --padding-and-gap-large: 8px;
+
+      --primary-primary-10: rgba(46, 51, 185, 0.4);
+      --primary-primary-15: rgba(46, 51, 185, 0.6);
+      --primary-primary-20: rgba(46, 51, 185, 0.8);
+      --primary-primary-25: #2e33b9;
+
+      --common-common-bright-05: rgba(255, 255, 255, 0.1);
+      --common-common-bright-15: rgba(255, 255, 255, 0.6);
+      --common-common-bright-20: rgba(255, 255, 255, 0.8);
+      --common-common-bright-25: rgba(255, 255, 255, 0.9);
+      --common-common-dark-10: rgba(0, 0, 0, 0.8);
+    }
+
+    body {
+      font-family: var(--font-family-sans-serif);
+      background: linear-gradient(135deg, #1b1d2f 0%, #242a3f 100%);
+      color: white;
+      margin: 0;
+      padding: 40px;
+    }
+
+    .demo-container {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .demo-section {
+      margin-bottom: 40px;
+      padding: 24px;
+      background: rgba(0, 0, 0, 0.25);
+      border-radius: 12px;
+    }
+
+    .demo-section h2 {
+      margin: 0 0 16px;
+      font-size: 20px;
+      font-weight: 400;
+    }
+
+    .demo-row {
+      display: flex;
+      gap: 24px;
+      flex-wrap: wrap;
+      align-items: flex-start;
+    }
+
+    .note {
+      margin-top: 12px;
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.6);
+    }
+  </style>
+</head>
+<body>
+  <div class="demo-container">
+    <h1>Selection Field</h1>
+    <p>Design System Component - BMG-101</p>
+
+    <div class="demo-section">
+      <h2>States</h2>
+      <div class="demo-row" id="state-row"></div>
+    </div>
+
+    <div class="demo-section">
+      <h2>Color Schemes</h2>
+      <div class="demo-row" id="contrast-row"></div>
+    </div>
+
+    <div class="demo-section">
+      <h2>Active with Menu</h2>
+      <div class="demo-row" id="menu-row"></div>
+      <p class="note">Active state displays the selection menu beneath the field.</p>
+    </div>
+  </div>
+
+  <script src="tag.js"></script>
+  <script src="selection-menu.js"></script>
+  <script src="selection-field.js"></script>
+  <script>
+    // States
+    const idleField = createSelectionField({
+      label: 'Label',
+      state: 'idle',
+      contrast: 'low'
+    });
+    const hoverField = createSelectionField({
+      label: 'Label',
+      state: 'hover',
+      contrast: 'low'
+    });
+    const activeField = createSelectionField({
+      label: 'Label',
+      state: 'active',
+      contrast: 'low'
+    });
+    const selectionField = createSelectionField({
+      label: 'Label',
+      selectionText: 'X tags selected',
+      state: 'selection',
+      contrast: 'low'
+    });
+
+    document.getElementById('state-row').appendChild(idleField);
+    document.getElementById('state-row').appendChild(hoverField);
+    document.getElementById('state-row').appendChild(activeField);
+    document.getElementById('state-row').appendChild(selectionField);
+
+    // Contrast row
+    const lowContrast = createSelectionField({
+      label: 'Label',
+      state: 'idle',
+      contrast: 'low'
+    });
+    const highContrast = createSelectionField({
+      label: 'Label',
+      state: 'idle',
+      contrast: 'high'
+    });
+
+    document.getElementById('contrast-row').appendChild(lowContrast);
+    document.getElementById('contrast-row').appendChild(highContrast);
+
+    // Active with menu
+    const menu = createSelectionMenu({
+      type: 'tag',
+      contrast: 'low',
+      items: ['#value', '#value', '#value', '#value', '#value']
+    });
+
+    const activeWithMenu = createSelectionField({
+      label: 'Select tags',
+      state: 'active',
+      contrast: 'low',
+      menu
+    });
+
+    document.getElementById('menu-row').appendChild(activeWithMenu);
+  </script>
+</body>
+</html>

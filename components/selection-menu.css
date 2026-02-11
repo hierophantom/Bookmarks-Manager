@@ -1,0 +1,174 @@
+/**
+ * Selection Menu Component
+ * 
+ * Design System Component - BMG-102
+ * Based on Figma: node-id=95-14656
+ * 
+ * Variants: multi-select (tags), single-select (sort)
+ * Color scheme: low, high contrast
+ */
+
+.selection-menu {
+  display: flex;
+  flex-direction: column;
+  gap: var(--padding-and-gap-large, 8px);
+  width: 200px;
+  padding: var(--padding-and-gap-large, 8px) 0;
+  border-radius: var(--corner-radius-small, 4px);
+  border: 1px solid var(--selection-menu-border, var(--primary-primary-25, #2e33b9));
+  background: var(--selection-menu-bg, var(--primary-primary-20, rgba(46, 51, 185, 0.8)));
+  box-shadow: 0px 2px 4px 0px rgba(0, 0, 0, 0.1),
+              0px 7px 7px 0px rgba(0, 0, 0, 0.09),
+              0px 15px 9px 0px rgba(0, 0, 0, 0.05),
+              0px 26px 10px 0px rgba(0, 0, 0, 0.01),
+              0px 41px 11px 0px rgba(0, 0, 0, 0);
+}
+
+.selection-menu__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 var(--padding-and-gap-large, 8px);
+}
+
+.selection-menu__title {
+  font-family: var(--font-family-sans-serif, 'Lato', sans-serif);
+  font-size: var(--size-large, 16px);
+  font-weight: var(--weight-regular, 400);
+  color: var(--selection-menu-text, var(--common-common-bright-20, rgba(255, 255, 255, 0.8)));
+}
+
+.selection-menu__clear {
+  font-family: var(--font-family-sans-serif, 'Lato', sans-serif);
+  font-size: var(--size-medium, 12px);
+  font-weight: var(--weight-bold, 700);
+  color: var(--selection-menu-muted, var(--common-common-bright-15, rgba(255, 255, 255, 0.6)));
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+.selection-menu__section-title {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 var(--padding-and-gap-large, 8px);
+  font-family: var(--font-family-sans-serif, 'Lato', sans-serif);
+  font-size: var(--size-medium, 12px);
+  font-weight: var(--weight-light, 300);
+  color: var(--selection-menu-muted, var(--common-common-bright-15, rgba(255, 255, 255, 0.6)));
+}
+
+.selection-menu__item {
+  display: flex;
+  align-items: center;
+  gap: var(--padding-and-gap-medium, 4px);
+  padding: var(--padding-and-gap-medium, 4px) var(--padding-and-gap-large, 8px);
+  font-family: var(--font-family-sans-serif, 'Lato', sans-serif);
+  font-size: var(--size-medium, 12px);
+  font-weight: var(--weight-bold, 700);
+  color: var(--selection-menu-text, var(--common-common-bright-20, rgba(255, 255, 255, 0.8)));
+  cursor: pointer;
+}
+
+.selection-menu__item--selected {
+  color: var(--selection-menu-selected, var(--common-common-bright-20, rgba(255, 255, 255, 0.8)));
+}
+
+.selection-menu__checkbox {
+  width: 11px;
+  height: 11px;
+  border-radius: 2px;
+  border: 1px solid var(--selection-menu-muted, rgba(255, 255, 255, 0.6));
+  position: relative;
+  flex-shrink: 0;
+}
+
+.selection-menu__checkbox--checked {
+  background: var(--selection-menu-check-bg, var(--common-common-bright-05, rgba(255, 255, 255, 0.1)));
+  border-color: var(--selection-menu-text, rgba(255, 255, 255, 0.8));
+}
+
+.selection-menu__checkbox--checked::after {
+  content: '';
+  position: absolute;
+  left: 3px;
+  top: 1px;
+  width: 3px;
+  height: 6px;
+  border-right: 2px solid var(--selection-menu-text, rgba(255, 255, 255, 0.8));
+  border-bottom: 2px solid var(--selection-menu-text, rgba(255, 255, 255, 0.8));
+  transform: rotate(45deg);
+}
+
+.selection-menu__checkmark {
+  width: 16px;
+  height: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--selection-menu-text, rgba(255, 255, 255, 0.8));
+  flex-shrink: 0;
+}
+
+.selection-menu__checkmark svg {
+  width: 12px;
+  height: 12px;
+  display: block;
+  fill: currentColor;
+}
+
+.selection-menu__tag {
+  display: inline-flex;
+  align-items: center;
+  height: 16px;
+  padding: 0 8px;
+  border-radius: var(--corner-radius-pill, 999px);
+  font-family: var(--font-family-sans-serif, 'Lato', sans-serif);
+  font-size: var(--size-medium, 12px);
+  font-weight: var(--weight-light, 300);
+  background: var(--selection-menu-tag-bg, var(--common-common-bright-05, rgba(255, 255, 255, 0.1)));
+  color: var(--selection-menu-tag-text, var(--common-common-bright-25, rgba(255, 255, 255, 0.9)));
+}
+
+.selection-menu__select-all {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--padding-and-gap-medium, 4px) var(--padding-and-gap-large, 8px);
+}
+
+.selection-menu__select-all button {
+  font-family: var(--font-family-sans-serif, 'Lato', sans-serif);
+  font-size: var(--size-medium, 12px);
+  font-weight: var(--weight-bold, 700);
+  color: var(--selection-menu-muted, rgba(255, 255, 255, 0.6));
+  text-decoration: underline;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+/* Contrast variants */
+.selection-menu--low {
+  --selection-menu-bg: var(--primary-primary-20, rgba(46, 51, 185, 0.8));
+  --selection-menu-border: var(--primary-primary-25, #2e33b9);
+  --selection-menu-text: var(--common-common-bright-20, rgba(255, 255, 255, 0.8));
+  --selection-menu-muted: var(--common-common-bright-15, rgba(255, 255, 255, 0.6));
+  --selection-menu-tag-bg: var(--common-common-bright-05, rgba(255, 255, 255, 0.1));
+  --selection-menu-tag-text: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
+  --selection-menu-check-bg: var(--common-common-bright-05, rgba(255, 255, 255, 0.1));
+}
+
+.selection-menu--high {
+  --selection-menu-bg: var(--primary-primary-20, rgba(46, 51, 185, 0.4));
+  --selection-menu-border: var(--primary-primary-25, rgba(46, 51, 185, 0.2));
+  --selection-menu-text: var(--common-common-dark-10, rgba(0, 0, 0, 0.8));
+  --selection-menu-muted: var(--common-common-dark-10, rgba(0, 0, 0, 0.6));
+  --selection-menu-tag-bg: var(--common-common-bright-05, rgba(0, 0, 0, 0.1));
+  --selection-menu-tag-text: var(--common-common-dark-10, rgba(0, 0, 0, 0.8));
+  --selection-menu-check-bg: var(--common-common-bright-05, rgba(0, 0, 0, 0.1));
+}

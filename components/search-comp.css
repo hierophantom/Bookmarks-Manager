@@ -1,0 +1,158 @@
+/**
+ * Search Component
+ * 
+ * Design System Component - BMG-99
+ * Based on Figma: node-id=93-12309
+ * 
+ * Search input field with optional keyboard shortcut hint
+ * States: Idle, Hover, Active
+ * Contrast: Low, High
+ */
+
+/* Base search component styles */
+.search-comp {
+  /* Layout */
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  
+  /* Sizing */
+  height: 36px;
+  padding: 8px 12px;
+  
+  /* Appearance */
+  background: var(--search-bg, var(--common-common-bright-05, rgba(255, 255, 255, 0.1)));
+  border: 1px solid var(--search-border, transparent);
+  border-radius: var(--corner-radius-medium, 8px);
+  
+  /* Typography */
+  font-family: var(--font-family-sans-serif, 'Lato', sans-serif);
+  font-size: var(--size-large, 16px);
+  font-weight: var(--weight-regular, 400);
+  line-height: 1;
+  
+  /* Behavior */
+  transition: all 0.2s ease;
+}
+
+/* Icon */
+.search-comp__icon {
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--search-icon, var(--common-common-bright-15, rgba(255, 255, 255, 0.6)));
+  flex-shrink: 0;
+}
+
+.search-comp__icon svg {
+  width: 16px;
+  height: 16px;
+  display: block;
+  fill: currentColor;
+}
+
+.search-comp__icon img {
+  width: 16px;
+  height: 16px;
+  display: block;
+}
+
+/* Input */
+.search-comp__input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+  outline: none;
+  color: var(--search-text, var(--common-common-bright-25, rgba(255, 255, 255, 0.9)));
+  font: inherit;
+}
+
+.search-comp__input::placeholder {
+  color: var(--search-placeholder, var(--common-common-bright-15, rgba(255, 255, 255, 0.6)));
+}
+
+/* Shortcut hint */
+.search-comp__shortcut {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: var(--corner-radius-pill, 999px);
+  background: var(--search-shortcut-bg, var(--common-common-bright-05, rgba(255, 255, 255, 0.1)));
+  color: var(--search-shortcut-text, var(--common-common-bright-15, rgba(255, 255, 255, 0.6)));
+  font-size: 12px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.search-comp__shortcut-key {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 12px;
+  height: 12px;
+}
+
+/* Low contrast variant */
+.search-comp--low {
+  --search-bg: var(--common-common-bright-05, rgba(255, 255, 255, 0.1));
+  --search-border: transparent;
+  --search-text: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
+  --search-placeholder: var(--common-common-bright-15, rgba(255, 255, 255, 0.6));
+  --search-icon: var(--common-common-bright-15, rgba(255, 255, 255, 0.6));
+  --search-bg-hover: var(--common-common-bright-10, rgba(255, 255, 255, 0.2));
+  --search-border-hover: var(--common-common-bright-10, rgba(255, 255, 255, 0.2));
+  --search-bg-active: var(--common-common-bright-10, rgba(255, 255, 255, 0.2));
+  --search-border-active: var(--primary-primary-25, #2e33b9);
+  --search-shortcut-bg: var(--common-common-bright-05, rgba(255, 255, 255, 0.1));
+  --search-shortcut-text: var(--common-common-bright-15, rgba(255, 255, 255, 0.6));
+}
+
+/* High contrast variant */
+.search-comp--high {
+  --search-bg: var(--common-common-bright-10, rgba(255, 255, 255, 0.2));
+  --search-border: var(--common-common-bright-20, rgba(255, 255, 255, 0.8));
+  --search-text: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
+  --search-placeholder: var(--common-common-bright-20, rgba(255, 255, 255, 0.8));
+  --search-icon: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
+  --search-bg-hover: var(--common-common-bright-10, rgba(255, 255, 255, 0.2));
+  --search-border-hover: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
+  --search-bg-active: var(--common-common-bright-10, rgba(255, 255, 255, 0.2));
+  --search-border-active: var(--primary-primary-25, #2e33b9);
+  --search-shortcut-bg: var(--common-common-bright-10, rgba(255, 255, 255, 0.2));
+  --search-shortcut-text: var(--common-common-bright-20, rgba(255, 255, 255, 0.8));
+}
+
+/* States */
+
+.search-comp:hover {
+  background: var(--search-bg-hover, var(--common-common-bright-10, rgba(255, 255, 255, 0.2)));
+  border-color: var(--search-border-hover, var(--common-common-bright-10, rgba(255, 255, 255, 0.2)));
+}
+
+.search-comp:focus-within {
+  background: var(--search-bg-active, var(--common-common-bright-10, rgba(255, 255, 255, 0.2)));
+  border-color: var(--search-border-active, var(--primary-primary-25, #2e33b9));
+}
+
+.search-comp:focus-within .search-comp__icon {
+  color: var(--search-text, var(--common-common-bright-25, rgba(255, 255, 255, 0.9)));
+}
+
+/* Disabled */
+.search-comp--disabled,
+.search-comp--disabled .search-comp__input {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.search-comp--disabled {
+  background: var(--search-bg, var(--common-common-bright-05, rgba(255, 255, 255, 0.1)));
+  border-color: var(--search-border, transparent);
+}

@@ -1,0 +1,119 @@
+/**
+ * Tooltip Component
+ * 
+ * Design System Component - BMG-95
+ * Based on Figma: node-id=92-10132
+ * 
+ * Displays contextual information 4px above the calling component
+ * No hover state - controlled externally
+ */
+
+/* Tooltip container */
+.tooltip {
+  /* Layout */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  
+  /* Sizing */
+  height: 18px;
+  padding: 2px 4px;
+  
+  /* Appearance */
+  background: var(--common-common-dark-25, rgba(0, 0, 0, 0.8));
+  border-radius: var(--corner-radius-small, 4px);
+  
+  /* Typography */
+  font-family: var(--font-family-sans-serif, 'Lato', sans-serif);
+  font-size: var(--size-medium, 12px);
+  font-weight: var(--weight-regular, 400);
+  color: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
+  line-height: 1;
+  white-space: nowrap;
+  
+  /* Positioning */
+  position: absolute;
+  z-index: 9999;
+  pointer-events: none;
+  
+  /* Behavior */
+  user-select: none;
+  
+  /* Animation */
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+/* Visible state */
+.tooltip--visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Tooltip text */
+.tooltip__text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+}
+
+/* Position variants */
+.tooltip--top {
+  bottom: calc(100% + 4px);
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+}
+
+.tooltip--top.tooltip--visible {
+  transform: translateX(-50%) translateY(0);
+}
+
+.tooltip--bottom {
+  top: calc(100% + 4px);
+  left: 50%;
+  transform: translateX(-50%) translateY(-4px);
+}
+
+.tooltip--bottom.tooltip--visible {
+  transform: translateX(-50%) translateY(0);
+}
+
+.tooltip--left {
+  right: calc(100% + 4px);
+  top: 50%;
+  transform: translateY(-50%) translateX(4px);
+}
+
+.tooltip--left.tooltip--visible {
+  transform: translateY(-50%) translateX(0);
+}
+
+.tooltip--right {
+  left: calc(100% + 4px);
+  top: 50%;
+  transform: translateY(-50%) translateX(-4px);
+}
+
+.tooltip--right.tooltip--visible {
+  transform: translateY(-50%) translateX(0);
+}
+
+/* Tooltip trigger wrapper */
+.tooltip-trigger {
+  position: relative;
+  display: inline-block;
+}
+
+/* Delay variants */
+.tooltip--instant {
+  transition-delay: 0s;
+}
+
+.tooltip--fast {
+  transition-delay: 0.2s;
+}
+
+.tooltip--slow {
+  transition-delay: 0.8s;
+}

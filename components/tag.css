@@ -1,0 +1,154 @@
+/**
+ * Tag Component
+ * 
+ * Design System Component - BMG-94
+ * Based on Figma: node-id=92-10046
+ * 
+ * States: Idle, Hover
+ * Color scheme: Low/High contrast
+ * Optional X button for removal
+ */
+
+/* Base tag styles */
+.tag {
+  /* Layout */
+  display: inline-flex;
+  align-items: center;
+  gap: var(--padding-and-gap-medium, 4px);
+  
+  /* Sizing */
+  height: 16px;
+  padding: 0 8px;
+  
+  /* Appearance */
+  border-radius: var(--corner-radius-pill, 999px);
+  
+  /* Typography */
+  font-family: var(--font-family-sans-serif, 'Lato', sans-serif);
+  font-size: var(--size-medium, 12px);
+  font-weight: var(--weight-light, 300);
+  line-height: 1;
+  
+  /* Behavior */
+  user-select: none;
+  transition: all 0.2s ease;
+  cursor: default;
+}
+
+/* Low contrast (default) */
+.tag--low-contrast {
+  background: var(--common-common-bright-05, rgba(255, 255, 255, 0.1));
+  color: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
+}
+
+.tag--low-contrast:hover {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.05) 0%,
+    rgba(255, 255, 255, 0.05) 100%
+  ),
+  var(--common-common-bright-05, rgba(255, 255, 255, 0.1));
+}
+
+/* High contrast */
+.tag--high-contrast {
+  background: var(--common-common-dark-10, rgba(0, 0, 0, 0.4));
+  color: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
+}
+
+.tag--high-contrast:hover {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.05) 0%,
+    rgba(255, 255, 255, 0.05) 100%
+  ),
+  var(--common-common-dark-10, rgba(0, 0, 0, 0.4));
+}
+
+/* Tag text */
+.tag__text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex-shrink: 1;
+}
+
+/* Remove button */
+.tag__remove {
+  /* Layout */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  
+  /* Sizing */
+  width: 8px;
+  height: 8px;
+  padding: 0;
+  
+  /* Appearance */
+  background: none;
+  border: none;
+  cursor: pointer;
+  opacity: 0.6;
+  
+  /* Transition */
+  transition: opacity 0.2s ease;
+}
+
+.tag__remove:hover {
+  opacity: 1;
+}
+
+.tag__remove:active {
+  opacity: 0.8;
+}
+
+/* Remove icon */
+.tag__remove-icon {
+  width: 100%;
+  height: 100%;
+  stroke: currentColor;
+  stroke-width: 2;
+}
+
+/* Clickable variant */
+.tag--clickable {
+  cursor: pointer;
+}
+
+.tag--clickable:active {
+  transform: scale(0.98);
+}
+
+/* Disabled state */
+.tag--disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.tag--disabled:hover {
+  background: var(--common-common-bright-05, rgba(255, 255, 255, 0.1));
+}
+
+.tag--disabled.tag--high-contrast:hover {
+  background: var(--common-common-dark-10, rgba(0, 0, 0, 0.4));
+}
+
+/* Size variants */
+.tag--small {
+  height: 14px;
+  padding: 0 6px;
+  font-size: 10px;
+}
+
+.tag--large {
+  height: 20px;
+  padding: 0 10px;
+  font-size: 14px;
+}
+
+/* Color variants - allow custom colors */
+.tag--color {
+  /* These will be set via inline styles */
+}

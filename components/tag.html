@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tag Component Demo</title>
+  <link rel="stylesheet" href="tag.css">
+  <style>
+    :root {
+      /* Design tokens */
+      --font-family-sans-serif: 'Lato', sans-serif;
+      --size-medium: 12px;
+      --weight-light: 300;
+      --common-common-bright-05: rgba(255, 255, 255, 0.1);
+      --common-common-bright-25: rgba(255, 255, 255, 0.9);
+      --common-common-dark-10: rgba(0, 0, 0, 0.4);
+      --corner-radius-pill: 999px;
+      --padding-and-gap-medium: 4px;
+    }
+
+    body {
+      margin: 0;
+      padding: 40px;
+      background: linear-gradient(135deg, #1e2875 0%, #2e3598 100%);
+      font-family: var(--font-family-sans-serif);
+      min-height: 100vh;
+      color: white;
+    }
+
+    .demo-section {
+      margin-bottom: 40px;
+      padding: 20px;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 8px;
+    }
+
+    h1 {
+      font-size: 32px;
+      margin-bottom: 8px;
+    }
+
+    h2 {
+      font-size: 24px;
+      margin-top: 0;
+      margin-bottom: 20px;
+      opacity: 0.8;
+    }
+
+    .tag-container {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+
+    .demo-label {
+      font-size: 14px;
+      opacity: 0.8;
+      margin-bottom: 8px;
+    }
+
+    .result {
+      margin-top: 12px;
+      padding: 12px;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 4px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Tag Component</h1>
+  <h2>Design System Component - BMG-94</h2>
+
+  <div class="demo-section">
+    <h3>States</h3>
+    <div class="demo-label">Hover over tags to see hover state</div>
+    <div class="tag-container" id="states-demo"></div>
+  </div>
+
+  <div class="demo-section">
+    <h3>Color Scheme</h3>
+    
+    <div class="demo-label">Low Contrast (default)</div>
+    <div class="tag-container" id="low-contrast-demo"></div>
+    
+    <div class="demo-label" style="margin-top: 20px;">High Contrast</div>
+    <div class="tag-container" id="high-contrast-demo"></div>
+  </div>
+
+  <div class="demo-section">
+    <h3>Removable Tags</h3>
+    <div class="demo-label">With X button</div>
+    <div class="tag-container" id="removable-demo"></div>
+    <div id="remove-result" class="result" style="display: none;"></div>
+  </div>
+
+  <div class="demo-section">
+    <h3>Clickable Tags</h3>
+    <div class="demo-label">Click to select</div>
+    <div class="tag-container" id="clickable-demo"></div>
+    <div id="click-result" class="result" style="display: none;"></div>
+  </div>
+
+  <div class="demo-section">
+    <h3>Size Variants</h3>
+    <div class="tag-container" id="size-demo"></div>
+  </div>
+
+  <div class="demo-section">
+    <h3>Custom Colors</h3>
+    <div class="tag-container" id="color-demo"></div>
+  </div>
+
+  <div class="demo-section">
+    <h3>Tag List</h3>
+    <div class="demo-label">Common use case: filter tags</div>
+    <div id="tag-list-demo"></div>
+  </div>
+
+  <script src="tag.js"></script>
+  <script>
+    // States demo
+    ['JavaScript', 'React', 'TypeScript'].forEach(text => {
+      document.getElementById('states-demo').appendChild(
+        createTag({ text, contrast: 'low' })
+      );
+    });
+
+    // Low contrast
+    ['Work', 'Personal', 'Important', 'Reading List'].forEach(text => {
+      document.getElementById('low-contrast-demo').appendChild(
+        createTag({ text, contrast: 'low' })
+      );
+    });
+
+    // High contrast
+    ['Work', 'Personal', 'Important', 'Reading List'].forEach(text => {
+      document.getElementById('high-contrast-demo').appendChild(
+        createTag({ text, contrast: 'high' })
+      );
+    });
+
+    // Removable tags
+    const removableContainer = document.getElementById('removable-demo');
+    const removeResult = document.getElementById('remove-result');
+    
+    ['JavaScript', 'Python', 'Go', 'Rust', 'TypeScript'].forEach(text => {
+      const tag = createTag({
+        text,
+        contrast: 'low',
+        removable: true,
+        onRemove: (tagEl) => {
+          tagEl.remove();
+          removeResult.style.display = 'block';
+          removeResult.textContent = `✓ Removed: ${text}`;
+          setTimeout(() => {
+            removeResult.style.display = 'none';
+          }, 2000);
+        }
+      });
+      removableContainer.appendChild(tag);
+    });
+
+    // Clickable tags
+    const clickableContainer = document.getElementById('clickable-demo');
+    const clickResult = document.getElementById('click-result');
+    let selectedTag = null;
+    
+    ['Frontend', 'Backend', 'DevOps', 'Design'].forEach(text => {
+      const tag = createTag({
+        text,
+        contrast: 'low',
+        onClick: (tagEl) => {
+          // Remove previous selection
+          if (selectedTag) {
+            selectedTag.style.borderColor = 'transparent';
+          }
+          
+          // Highlight selected
+          tagEl.style.border = '1px solid rgba(255, 255, 255, 0.5)';
+          selectedTag = tagEl;
+          
+          clickResult.style.display = 'block';
+          clickResult.textContent = `✓ Selected: ${text}`;
+        }
+      });
+      clickableContainer.appendChild(tag);
+    });
+
+    // Size variants
+    const sizeContainer = document.getElementById('size-demo');
+    sizeContainer.appendChild(createTag({ text: 'Small', size: 'small' }));
+    sizeContainer.appendChild(createTag({ text: 'Default', size: 'default' }));
+    sizeContainer.appendChild(createTag({ text: 'Large', size: 'large' }));
+
+    // Custom colors
+    const colorContainer = document.getElementById('color-demo');
+    colorContainer.appendChild(createTag({
+      text: 'Red',
+      customColor: { background: '#ef4444', text: '#fff' }
+    }));
+    colorContainer.appendChild(createTag({
+      text: 'Green',
+      customColor: { background: '#10b981', text: '#fff' }
+    }));
+    colorContainer.appendChild(createTag({
+      text: 'Blue',
+      customColor: { background: '#3b82f6', text: '#fff' }
+    }));
+    colorContainer.appendChild(createTag({
+      text: 'Purple',
+      customColor: { background: '#a855f7', text: '#fff' }
+    }));
+
+    // Tag list
+    const tagList = createTagList([
+      { text: 'Technology', contrast: 'high', removable: true },
+      { text: 'Programming', contrast: 'high', removable: true },
+      { text: 'Tutorial', contrast: 'high', removable: true },
+      { text: 'Reference', contrast: 'high', removable: true },
+      { text: 'Documentation', contrast: 'high', removable: true }
+    ], { gap: '8px', wrap: true });
+    
+    document.getElementById('tag-list-demo').appendChild(tagList);
+  </script>
+</body>
+</html>

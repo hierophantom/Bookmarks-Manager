@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tab Component Demo</title>
+  <link rel="stylesheet" href="tab.css">
+  <style>
+    :root {
+      /* Design tokens */
+      --font-family-sans-serif: 'Lato', sans-serif;
+      --size-medium: 12px;
+      --weight-regular: 400;
+      --weight-light: 300;
+      --primary-primary-20: rgba(46, 51, 185, 0.8);
+      --common-common-bright-05: rgba(255, 255, 255, 0.1);
+      --common-common-bright-10: rgba(255, 255, 255, 0.2);
+      --common-common-bright-15: rgba(255, 255, 255, 0.6);
+      --common-common-bright-25: rgba(255, 255, 255, 0.9);
+      --corner-radius-small: 4px;
+      --padding-and-gap-medium: 4px;
+      --padding-and-gap-large: 8px;
+    }
+
+    body {
+      margin: 0;
+      padding: 40px;
+      background: linear-gradient(135deg, #1e2875 0%, #2e3598 100%);
+      font-family: var(--font-family-sans-serif);
+      min-height: 100vh;
+      color: white;
+    }
+
+    .demo-section {
+      margin-bottom: 40px;
+      padding: 20px;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 8px;
+    }
+
+    h1 {
+      font-size: 32px;
+      margin-bottom: 8px;
+    }
+
+    h2 {
+      font-size: 24px;
+      margin-top: 0;
+      margin-bottom: 20px;
+      opacity: 0.8;
+    }
+
+    .tab-container {
+      margin-bottom: 20px;
+    }
+
+    .content-panel {
+      margin-top: 20px;
+      padding: 20px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Tab Component</h1>
+  <h2>Design System Component - BMG-91</h2>
+
+  <div class="demo-section">
+    <h3>Basic Tab Group</h3>
+    <div id="tab-group-1" class="tab-container"></div>
+    <div id="content-1" class="content-panel">Select a tab to see content</div>
+  </div>
+
+  <div class="demo-section">
+    <h3>Tabs with Subtitles</h3>
+    <div id="tab-group-2" class="tab-container"></div>
+    <div id="content-2" class="content-panel">Select a tab to see content</div>
+  </div>
+
+  <div class="demo-section">
+    <h3>Disabled Tab</h3>
+    <div id="tab-group-3" class="tab-container"></div>
+    <div id="content-3" class="content-panel">Select a tab to see content</div>
+  </div>
+
+  <script src="tab.js"></script>
+  <script>
+    // Demo 1: Basic tabs
+    const tabs1 = createTabGroup([
+      { label: 'Overview', id: 'overview' },
+      { label: 'Details', id: 'details' },
+      { label: 'Settings', id: 'settings' }
+    ], (tab, index) => {
+      document.getElementById('content-1').textContent = `Content for: ${tab.getAttribute('data-tab-id')}`;
+    });
+    document.getElementById('tab-group-1').appendChild(tabs1);
+    setActiveTab(tabs1, 0);
+
+    // Demo 2: Tabs with subtitles
+    const tabs2 = createTabGroup([
+      { label: 'Active', subtitle: '12 items', id: 'active' },
+      { label: 'Archived', subtitle: '45 items', id: 'archived' },
+      { label: 'Deleted', subtitle: '3 items', id: 'deleted' }
+    ], (tab, index) => {
+      document.getElementById('content-2').textContent = `Content for: ${tab.getAttribute('data-tab-id')}`;
+    });
+    document.getElementById('tab-group-2').appendChild(tabs2);
+    setActiveTab(tabs2, 0);
+
+    // Demo 3: Tabs with one disabled
+    const tabs3 = createTabGroup([
+      { label: 'Public', id: 'public' },
+      { label: 'Private', id: 'private' },
+      { label: 'Shared', id: 'shared', disabled: true }
+    ], (tab, index) => {
+      document.getElementById('content-3').textContent = `Content for: ${tab.getAttribute('data-tab-id')}`;
+    });
+    document.getElementById('tab-group-3').appendChild(tabs3);
+    setActiveTab(tabs3, 0);
+  </script>
+</body>
+</html>

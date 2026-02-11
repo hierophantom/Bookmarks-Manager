@@ -1,0 +1,129 @@
+/**
+ * Navigation Bar Button Component
+ * 
+ * Design System Component - BMG-87
+ * Based on Figma: node-id=90-35294
+ * 
+ * Types:
+ * - Current: currently selected page (states: idle, hover)
+ * - Other: non-selected pages (states: idle, hover, pressed)
+ */
+
+/* Base button styles */
+.nav-button {
+  /* Layout */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  
+  /* Sizing */
+  height: 40px;
+  padding: 0 16px;
+  
+  /* Typography */
+  font-family: var(--font-family-sans-serif, 'Lato', sans-serif);
+  font-size: var(--size-large, 16px);
+  font-weight: var(--weight-regular, 400);
+  line-height: 1;
+  
+  /* Appearance */
+  border-radius: var(--corner-radius-pill, 999px);
+  border: 1px solid;
+  backdrop-filter: blur(7px);
+  
+  /* Behavior */
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.2s ease;
+  
+  /* Reset */
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+/* Icon styles */
+.nav-button__icon {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+/* Label styles */
+.nav-button__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Icon-only variant */
+.nav-button--icon-only {
+  padding: 0;
+  width: 40px;
+  max-width: 40px;
+}
+
+.nav-button--icon-only .nav-button__label {
+  display: none;
+}
+
+/* ========================================
+   TYPE: CURRENT (selected page)
+   ======================================== */
+
+.nav-button--current {
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0.4) 100%),
+              var(--primary-primary-20, rgba(46, 51, 185, 0.8));
+  border-color: var(--primary-primary-25, #2e33b9);
+  color: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
+  box-shadow: 0px 2px 4px 0px rgba(0, 0, 0, 0.1),
+              0px 7px 7px 0px rgba(0, 0, 0, 0.09),
+              0px 15px 9px 0px rgba(0, 0, 0, 0.05),
+              0px 26px 10px 0px rgba(0, 0, 0, 0.01),
+              0px 41px 11px 0px rgba(0, 0, 0, 0);
+}
+
+.nav-button--current:hover {
+  /* Subtle brightness increase on hover */
+  filter: brightness(1.1);
+}
+
+/* ========================================
+   TYPE: OTHER (non-selected pages)
+   ======================================== */
+
+/* Idle state */
+.nav-button--other {
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0.4) 100%),
+              linear-gradient(90deg, rgba(46, 51, 185, 0.6) 0%, rgba(46, 51, 185, 0.6) 100%);
+  border-color: var(--primary-primary-25, #2e33b9);
+  color: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
+  box-shadow: 0px 2px 4px 0px rgba(0, 0, 0, 0.1),
+              0px 7px 7px 0px rgba(0, 0, 0, 0.09),
+              0px 15px 9px 0px rgba(0, 0, 0, 0.05),
+              0px 26px 10px 0px rgba(0, 0, 0, 0.01),
+              0px 41px 11px 0px rgba(0, 0, 0, 0);
+}
+
+/* Hover state */
+.nav-button--other:hover {
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0.4) 100%),
+              linear-gradient(90deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.4) 100%);
+  border-color: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
+  color: var(--common-common-bright-15, rgba(255, 255, 255, 0.6));
+}
+
+/* Pressed state */
+.nav-button--other:active {
+  background: var(--common-common-bright-05, rgba(255, 255, 255, 0.1));
+  border-color: var(--common-common-bright-05, rgba(255, 255, 255, 0.1));
+  transform: scale(0.98);
+}
+
+/* Disabled state (optional) */
+.nav-button:disabled,
+.nav-button--disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}

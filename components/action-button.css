@@ -1,0 +1,89 @@
+/**
+ * Action Button Component
+ * 
+ * Design System Component - BMG-96
+ * Based on Figma: node-id=93-11917
+ * 
+ * Icon-only button (32x32px) with three states
+ * States: Idle, Hover, Active
+ */
+
+/* Base action button styles */
+.action-button {
+  /* Layout */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  /* Sizing */
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  
+  /* Appearance */
+  background: var(--common-common-bright-05, rgba(255, 255, 255, 0.1));
+  border: none;
+  border-radius: var(--corner-radius-small, 4px);
+  
+  /* Behavior */
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.2s ease;
+}
+
+/* Icon */
+.action-button__icon {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  opacity: 0.9;
+}
+
+/* States */
+
+/* Idle (base) */
+.action-button {
+  background: var(--common-common-bright-05, rgba(255, 255, 255, 0.1));
+}
+
+/* Hover */
+.action-button:hover {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.05) 0%,
+    rgba(255, 255, 255, 0.05) 100%
+  ),
+  var(--common-common-bright-05, rgba(255, 255, 255, 0.1));
+}
+
+/* Active (pressed) */
+.action-button:active {
+  background: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0.1) 0%,
+    rgba(0, 0, 0, 0.1) 100%
+  ),
+  var(--common-common-bright-05, rgba(255, 255, 255, 0.1));
+  transform: scale(0.98);
+}
+
+/* Disabled */
+.action-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.action-button:disabled:hover {
+  background: var(--common-common-bright-05, rgba(255, 255, 255, 0.1));
+  transform: none;
+}
+
+/* Focus (keyboard navigation) */
+.action-button:focus {
+  outline: 2px solid var(--primary-primary-25, #2e33b9);
+  outline-offset: 2px;
+}
+
+.action-button:focus:not(:focus-visible) {
+  outline: none;
+}

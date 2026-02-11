@@ -1,0 +1,159 @@
+/**
+ * Cube Action Button with Label Component
+ * 
+ * Design System Component - BMG-98
+ * Based on Figma: node-id=93-12064
+ * 
+ * Button with icon (12x12px) + text label
+ * Height: 14px
+ * Color Schemes: Primary, Default, Destructive
+ */
+
+/* Base cube action button with label styles */
+.cube-action-button-with-label {
+  /* Layout */
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-medium, 4px);
+  
+  /* Sizing */
+  height: 14px;
+  padding: var(--spacing-medium, 4px) var(--spacing-large, 8px);
+  
+  /* Appearance */
+  background: transparent;
+  border: none;
+  border-radius: var(--corner-radius-small, 4px);
+  
+  /* Typography */
+  font-family: var(--font-body, Lato);
+  font-size: var(--label-sma-size, 12px);
+  font-weight: var(--label-sma-weight, 400);
+  line-height: 1;
+  
+  /* Behavior */
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+/* Icon */
+.cube-action-button-with-label__icon {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.2s ease;
+}
+
+/* Label */
+.cube-action-button-with-label__label {
+  line-height: 1;
+}
+
+/* Color Schemes */
+
+/* Primary */
+.cube-action-button-with-label--primary {
+  color: var(--primary-primary-25, #2e33b9);
+}
+
+.cube-action-button-with-label--primary:hover {
+  background: var(--primary-primary-20, rgba(46, 51, 185, 0.1));
+  color: var(--primary-primary-25, #2e33b9);
+}
+
+.cube-action-button-with-label--primary:active {
+  background: var(--primary-primary-25, rgba(46, 51, 185, 0.15));
+}
+
+/* Default */
+.cube-action-button-with-label--default {
+  color: var(--common-common-bright-20, rgba(255, 255, 255, 0.4));
+}
+
+.cube-action-button-with-label--default:hover {
+  background: var(--common-common-bright-05, rgba(255, 255, 255, 0.1));
+  color: var(--common-common-bright-25, rgba(255, 255, 255, 0.5));
+}
+
+.cube-action-button-with-label--default:active {
+  background: var(--common-common-bright-10, rgba(255, 255, 255, 0.15));
+}
+
+/* Destructive */
+.cube-action-button-with-label--destructive {
+  color: #ff4444;
+}
+
+.cube-action-button-with-label--destructive:hover {
+  background: rgba(255, 68, 68, 0.1);
+  color: #ff6666;
+}
+
+.cube-action-button-with-label--destructive:active {
+  background: rgba(255, 68, 68, 0.15);
+}
+
+/* States */
+
+/* Active (pressed) */
+.cube-action-button-with-label:active {
+  transform: scale(0.98);
+}
+
+/* Disabled */
+.cube-action-button-with-label:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.cube-action-button-with-label:disabled:hover {
+  background: transparent;
+  transform: none;
+}
+
+/* Focus (keyboard navigation) */
+.cube-action-button-with-label:focus {
+  outline: 2px solid var(--primary-primary-25, #2e33b9);
+  outline-offset: 2px;
+}
+
+.cube-action-button-with-label:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Icon-only variant (no label) */
+.cube-action-button-with-label--icon-only {
+  padding: var(--spacing-small, 2px);
+  width: 16px;
+  height: 16px;
+}
+
+/* Size variants */
+
+/* Small (default) */
+.cube-action-button-with-label--small {
+  height: 14px;
+  font-size: 12px;
+}
+
+.cube-action-button-with-label--small .cube-action-button-with-label__icon {
+  width: 12px;
+  height: 12px;
+}
+
+/* Medium */
+.cube-action-button-with-label--medium {
+  height: 20px;
+  font-size: 14px;
+  padding: 4px 12px;
+}
+
+.cube-action-button-with-label--medium .cube-action-button-with-label__icon {
+  width: 16px;
+  height: 16px;
+}

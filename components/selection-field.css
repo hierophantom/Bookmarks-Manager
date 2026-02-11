@@ -1,0 +1,98 @@
+/**
+ * Selection Field Component
+ * 
+ * Design System Component - BMG-101
+ * Based on Figma: node-id=93-12599
+ * 
+ * States: Idle, Hover, Active, Selection applied
+ * Color scheme: Low, High contrast
+ */
+
+.selection-field {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 200px;
+  height: 36px;
+  padding: 8px 12px;
+  border-radius: var(--corner-radius-small, 4px);
+  border: 1px solid transparent;
+  background: var(--selection-field-bg, var(--primary-primary-10, rgba(46, 51, 185, 0.4)));
+  font-family: var(--font-family-sans-serif, 'Lato', sans-serif);
+  font-size: var(--size-medium, 12px);
+  font-weight: var(--weight-regular, 400);
+  color: var(--selection-field-text, var(--common-common-bright-20, rgba(255, 255, 255, 0.8)));
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.selection-field__label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.selection-field__icon {
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: currentColor;
+  flex-shrink: 0;
+}
+
+.selection-field__icon svg {
+  width: 12px;
+  height: 12px;
+  display: block;
+  fill: currentColor;
+}
+
+/* State styles */
+.selection-field--hover {
+  background: var(--selection-field-bg-hover, var(--primary-primary-15, rgba(46, 51, 185, 0.6)));
+}
+
+.selection-field--active {
+  background: var(--selection-field-bg-active, var(--primary-primary-15, rgba(46, 51, 185, 0.6)));
+  border-color: var(--selection-field-border-active, var(--primary-primary-25, #2e33b9));
+  color: var(--selection-field-text-active, var(--common-common-bright-25, rgba(255, 255, 255, 0.9)));
+}
+
+.selection-field--selection {
+  background: var(--selection-field-bg-selection, var(--primary-primary-10, rgba(46, 51, 185, 0.4)));
+}
+
+/* Contrast variants */
+.selection-field--low {
+  --selection-field-bg: var(--primary-primary-10, rgba(46, 51, 185, 0.4));
+  --selection-field-bg-hover: var(--primary-primary-15, rgba(46, 51, 185, 0.6));
+  --selection-field-bg-active: var(--primary-primary-15, rgba(46, 51, 185, 0.6));
+  --selection-field-bg-selection: var(--primary-primary-10, rgba(46, 51, 185, 0.4));
+  --selection-field-border-active: var(--primary-primary-25, #2e33b9);
+  --selection-field-text: var(--common-common-bright-20, rgba(255, 255, 255, 0.8));
+  --selection-field-text-active: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
+}
+
+.selection-field--high {
+  --selection-field-bg: var(--primary-primary-10, rgba(46, 51, 185, 0.8));
+  --selection-field-bg-hover: var(--primary-primary-15, rgba(46, 51, 185, 0.8));
+  --selection-field-bg-active: var(--primary-primary-15, rgba(46, 51, 185, 0.8));
+  --selection-field-bg-selection: var(--primary-primary-10, rgba(46, 51, 185, 0.8));
+  --selection-field-border-active: var(--primary-primary-25, rgba(46, 51, 185, 0.2));
+  --selection-field-text: var(--common-common-dark-10, rgba(0, 0, 0, 0.8));
+  --selection-field-text-active: var(--common-common-dark-10, rgba(0, 0, 0, 0.9));
+}
+
+/* Menu positioning */
+.selection-field__menu {
+  position: absolute;
+  top: 39px;
+  left: -1px;
+  z-index: 5;
+}

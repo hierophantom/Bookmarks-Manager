@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Text Field - Design System</title>
+  <link rel="stylesheet" href="text-field.css">
+  <style>
+    :root {
+      --font-family-sans-serif: 'Lato', sans-serif;
+      --size-large: 16px;
+      --weight-regular: 400;
+      
+      --corner-radius-medium: 8px;
+      
+      --common-common-bright-05: rgba(255, 255, 255, 0.1);
+      --common-common-bright-10: rgba(255, 255, 255, 0.2);
+      --common-common-bright-15: rgba(255, 255, 255, 0.6);
+      --common-common-bright-20: rgba(255, 255, 255, 0.8);
+      --common-common-bright-25: rgba(255, 255, 255, 0.9);
+      
+      --primary-primary-25: #2e33b9;
+    }
+
+    body {
+      font-family: var(--font-family-sans-serif);
+      background: linear-gradient(135deg, #1b1d2f 0%, #242a3f 100%);
+      color: white;
+      margin: 0;
+      padding: 40px;
+    }
+
+    .demo-container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .demo-section {
+      margin-bottom: 40px;
+      padding: 24px;
+      background: rgba(0, 0, 0, 0.25);
+      border-radius: 12px;
+    }
+
+    .demo-section h2 {
+      margin: 0 0 16px;
+      font-size: 20px;
+      font-weight: 400;
+    }
+
+    .demo-row {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .demo-item {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .demo-label {
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.6);
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+    }
+
+    .note {
+      margin-top: 12px;
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.6);
+    }
+  </style>
+</head>
+<body>
+  <div class="demo-container">
+    <h1>Text Field</h1>
+    <p>Design System Component - BMG-100</p>
+
+    <div class="demo-section">
+      <h2>Contrast Variants</h2>
+      <div class="demo-row" id="contrast-row"></div>
+      <p class="note">Low contrast is subtle. High contrast is for stronger visibility.</p>
+    </div>
+
+    <div class="demo-section">
+      <h2>States</h2>
+      <div class="demo-row">
+        <div class="demo-item" id="state-idle"></div>
+        <div class="demo-item" id="state-focus"></div>
+        <div class="demo-item" id="state-disabled"></div>
+      </div>
+      <p class="note">Focus state shows active styling. Click inside the field to see the border change.</p>
+    </div>
+
+    <div class="demo-section">
+      <h2>Input Types</h2>
+      <div class="demo-row" id="type-row"></div>
+    </div>
+
+    <div class="demo-section">
+      <h2>Interactive Demo</h2>
+      <div class="demo-row" id="interactive-row"></div>
+      <p class="note" id="interactive-output">Type to update output.</p>
+    </div>
+  </div>
+
+  <script src="text-field.js"></script>
+  <script>
+    // Contrast variants
+    const lowContrast = createTextField({
+      placeholder: 'Low contrast input',
+      contrast: 'low'
+    });
+
+    const highContrast = createTextField({
+      placeholder: 'High contrast input',
+      contrast: 'high'
+    });
+
+    document.getElementById('contrast-row').appendChild(lowContrast);
+    document.getElementById('contrast-row').appendChild(highContrast);
+
+    // States
+    const idleState = createTextField({
+      placeholder: 'Idle state',
+      contrast: 'low'
+    });
+    const focusState = createTextField({
+      placeholder: 'Focus state',
+      contrast: 'low'
+    });
+    const disabledState = createTextField({
+      placeholder: 'Disabled state',
+      contrast: 'low',
+      disabled: true
+    });
+
+    document.getElementById('state-idle').appendChild(idleState);
+    document.getElementById('state-focus').appendChild(focusState);
+    document.getElementById('state-disabled').appendChild(disabledState);
+
+    setTimeout(() => {
+      const input = focusState.querySelector('.text-field__input');
+      if (input) {
+        input.focus();
+      }
+    }, 200);
+
+    // Input types
+    const emailField = createTextField({
+      placeholder: 'Email address',
+      type: 'email',
+      contrast: 'high'
+    });
+
+    const passwordField = createTextField({
+      placeholder: 'Password',
+      type: 'password',
+      contrast: 'high'
+    });
+
+    document.getElementById('type-row').appendChild(emailField);
+    document.getElementById('type-row').appendChild(passwordField);
+
+    // Interactive demo
+    const interactive = createTextField({
+      placeholder: 'Type to update output',
+      contrast: 'high',
+      onInput: (event, value) => {
+        document.getElementById('interactive-output').textContent = value
+          ? `Current value: ${value}`
+          : 'Type to update output.';
+      },
+      onSubmit: (event, value) => {
+        alert(`Submitted: ${value}`);
+      }
+    });
+
+    document.getElementById('interactive-row').appendChild(interactive);
+  </script>
+</body>
+</html>

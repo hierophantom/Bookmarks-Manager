@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Modal Component Demo</title>
+  <link rel="stylesheet" href="modal.css">
+  <link rel="stylesheet" href="keyboard-shortcut-hint.css">
+  <style>
+    :root {
+      /* Design tokens */
+      --font-family-sans-serif: 'Lato', sans-serif;
+      --size-medium: 12px;
+      --size-large: 16px;
+      --size-x-large-2: 24px;
+      --weight-regular: 400;
+      --weight-light: 300;
+      --primary-primary-10: rgba(46, 51, 185, 0.4);
+      --primary-primary-20: rgba(46, 51, 185, 0.8);
+      --primary-primary-25: #2e33b9;
+      --common-common-bright-05: rgba(255, 255, 255, 0.1);
+      --common-common-bright-10: rgba(255, 255, 255, 0.2);
+      --common-common-bright-15: rgba(255, 255, 255, 0.6);
+      --common-common-bright-20: rgba(255, 255, 255, 0.8);
+      --common-common-bright-25: rgba(255, 255, 255, 0.9);
+      --corner-radius-small: 4px;
+      --corner-radius-medium: 8px;
+      --padding-and-gap-large: 8px;
+      --padding-and-gap-x-large: 16px;
+    }
+
+    body {
+      margin: 0;
+      padding: 40px;
+      background: linear-gradient(135deg, #1e2875 0%, #2e3598 100%);
+      font-family: var(--font-family-sans-serif);
+      min-height: 100vh;
+      color: white;
+    }
+
+    .demo-section {
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      font-size: 32px;
+      margin-bottom: 8px;
+    }
+
+    h2 {
+      font-size: 24px;
+      margin-top: 0;
+      margin-bottom: 20px;
+      opacity: 0.8;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .demo-button {
+      padding: 12px 24px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 4px;
+      color: white;
+      font-family: inherit;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .demo-button:hover {
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 8px 12px;
+      background: var(--primary-primary-10);
+      border: 1px solid var(--common-common-bright-10);
+      border-radius: var(--corner-radius-small);
+      color: var(--common-common-bright-25);
+      font-family: var(--font-family-sans-serif);
+      font-size: var(--size-medium);
+      margin-bottom: 8px;
+    }
+
+    .form-input::placeholder {
+      color: var(--common-common-bright-15);
+    }
+
+    .result {
+      margin-top: 12px;
+      padding: 12px;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 4px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Modal Component</h1>
+  <h2>Design System Component - BMG-93</h2>
+
+  <div class="demo-section">
+    <h3>Dialog Box</h3>
+    <p>Simple yes/no questions</p>
+    <div class="button-group">
+      <button class="demo-button" onclick="showDialogExample()">Delete Confirmation</button>
+      <button class="demo-button" onclick="showWarningDialog()">Warning Dialog</button>
+      <button class="demo-button" onclick="showInfoDialog()">Info Dialog</button>
+    </div>
+    <div id="dialog-result" class="result" style="display: none;"></div>
+  </div>
+
+  <div class="demo-section">
+    <h3>Form Modal</h3>
+    <p>Contains form inputs</p>
+    <div class="button-group">
+      <button class="demo-button" onclick="showFormExample()">Add Bookmark</button>
+      <button class="demo-button" onclick="showSearchModal()">Search Modal</button>
+    </div>
+    <div id="form-result" class="result" style="display: none;"></div>
+  </div>
+
+  <div class="demo-section">
+    <h3>Keyboard Shortcuts</h3>
+    <p>Press ESC to close • Press Enter to submit</p>
+  </div>
+
+  <script src="modal.js"></script>
+  <script src="keyboard-shortcut-hint.js"></script>
+  <script>
+    function showDialogExample() {
+      const modal = createModal({
+        type: 'dialog',
+        title: 'Delete bookmark?',
+        subtitle: 'This action cannot be undone',
+        buttons: [
+          { label: 'Cancel', type: 'common', shortcut: 'ESC' },
+          { label: 'Delete', type: 'primary', shortcut: '↵' }
+        ],
+        onClose: (confirmed) => {
+          const result = document.getElementById('dialog-result');
+          result.style.display = 'block';
+          result.textContent = confirmed 
+            ? '✓ Bookmark deleted' 
+            : '✗ Action cancelled';
+        }
+      });
+      showModal(modal);
+    }
+
+    function showWarningDialog() {
+      const modal = createModal({
+        type: 'dialog',
+        title: 'Unsaved changes',
+        subtitle: 'You have unsaved changes. Do you want to continue?',
+        buttons: [
+          { label: 'Stay', type: 'common', shortcut: 'ESC' },
+          { label: 'Leave', type: 'primary', shortcut: '↵' }
+        ],
+        onClose: (confirmed) => {
+          const result = document.getElementById('dialog-result');
+          result.style.display = 'block';
+          result.textContent = confirmed 
+            ? 'Left without saving' 
+            : 'Stayed on page';
+        }
+      });
+      showModal(modal);
+    }
+
+    function showInfoDialog() {
+      const modal = createModal({
+        type: 'dialog',
+        title: 'Cloud sync enabled',
+        subtitle: 'Your bookmarks will be synced across all devices',
+        buttons: [
+          { label: 'Got it', type: 'primary', shortcut: '↵' }
+        ]
+      });
+      showModal(modal);
+    }
+
+    function showFormExample() {
+      const formHTML = `
+        <input type="text" class="form-input" placeholder="Bookmark name..." id="bookmark-name">
+        <input type="url" class="form-input" placeholder="URL..." id="bookmark-url">
+        <input type="text" class="form-input" placeholder="Tags (comma separated)..." id="bookmark-tags">
+      `;
+
+      const modal = createModal({
+        type: 'form',
+        title: 'Add bookmark',
+        subtitle: 'Enter bookmark details',
+        content: formHTML,
+        buttons: [
+          { label: 'Cancel', type: 'common', shortcut: 'ESC' },
+          { label: 'Save', type: 'primary', shortcut: '↵' }
+        ],
+        onSubmit: () => {
+          const name = document.getElementById('bookmark-name').value;
+          const url = document.getElementById('bookmark-url').value;
+          const tags = document.getElementById('bookmark-tags').value;
+          
+          const result = document.getElementById('form-result');
+          result.style.display = 'block';
+          result.innerHTML = `
+            <strong>Bookmark saved:</strong><br>
+            Name: ${name || '(empty)'}<br>
+            URL: ${url || '(empty)'}<br>
+            Tags: ${tags || '(none)'}
+          `;
+          
+          return true; // Allow modal to close
+        }
+      });
+      showModal(modal);
+    }
+
+    function showSearchModal() {
+      const formHTML = `
+        <input type="text" class="form-input" placeholder="Search bookmarks..." id="search-query">
+        <input type="text" class="form-input" placeholder="Filter by name..." id="filter-name">
+        <select class="form-input" id="filter-tag">
+          <option value="">Filter by tag</option>
+          <option value="work">Work</option>
+          <option value="personal">Personal</option>
+          <option value="reading">Reading List</option>
+        </select>
+      `;
+
+      const modal = createModal({
+        type: 'form',
+        title: 'Search bookmarks',
+        subtitle: 'Find bookmarks by name, URL, or tag',
+        content: formHTML,
+        buttons: [
+          { label: 'Cancel', type: 'common', shortcut: 'ESC' },
+          { label: 'Search', type: 'primary', shortcut: '↵' }
+        ],
+        onSubmit: () => {
+          const query = document.getElementById('search-query').value;
+          const name = document.getElementById('filter-name').value;
+          const tag = document.getElementById('filter-tag').value;
+          
+          const result = document.getElementById('form-result');
+          result.style.display = 'block';
+          result.innerHTML = `
+            <strong>Search executed:</strong><br>
+            Query: ${query || '(none)'}<br>
+            Name filter: ${name || '(none)'}<br>
+            Tag filter: ${tag || '(all)'}
+          `;
+          
+          return true;
+        }
+      });
+      showModal(modal);
+    }
+
+    // Demo: Async confirmation
+    async function deleteWithConfirmation() {
+      const confirmed = await confirmDialog({
+        title: 'Delete all bookmarks?',
+        subtitle: 'This will permanently delete all your bookmarks',
+        cancelLabel: 'Cancel',
+        confirmLabel: 'Delete All'
+      });
+
+      console.log('User confirmed:', confirmed);
+    }
+  </script>
+</body>
+</html>

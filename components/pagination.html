@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pagination - Design System Component</title>
+  <link rel="stylesheet" href="pagination.css">
+  <style>
+    :root {
+      --font-family-sans-serif: 'Lato', sans-serif;
+      --size-large: 16px;
+      --weight-regular: 400;
+
+      --primary-primary-20: rgba(46, 51, 185, 0.8);
+      --primary-primary-25: #2e33b9;
+
+      --common-common-bright-05: rgba(255, 255, 255, 0.1);
+      --common-common-bright-25: rgba(255, 255, 255, 0.9);
+
+      --corner-radius-pill: 999px;
+    }
+
+    body {
+      font-family: var(--font-family-sans-serif);
+      background: linear-gradient(135deg, #1e235e 0%, #3a3f97 100%);
+      min-height: 100vh;
+      margin: 0;
+      padding: 40px;
+      color: white;
+    }
+
+    .demo-container {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .demo-section {
+      margin-bottom: 40px;
+      padding: 32px;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 16px;
+      backdrop-filter: blur(10px);
+    }
+
+    .demo-section h2 {
+      margin-top: 0;
+      margin-bottom: 24px;
+      font-size: 24px;
+    }
+
+    .pagination-row {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+  </style>
+</head>
+<body>
+  <div class="demo-container">
+    <h1>Pagination Component</h1>
+    <p>Design System Component - BMG-88</p>
+
+    <div class="demo-section">
+      <h2>Anatomy</h2>
+      <div class="pagination-row">
+        <div class="pagination">
+          <button class="pagination__button pagination__button--current" aria-current="page">
+            <img class="pagination__icon" src="http://localhost:3845/assets/585b825f89b288c15bf8ce1772fa6fbd00d1d06b.svg" alt="">
+            <span class="pagination__label">Homepage</span>
+          </button>
+          <button class="pagination__button pagination__button--other pagination__button--icon-only" aria-label="Bookmarks">
+            <img class="pagination__icon" src="http://localhost:3845/assets/f5ddd70f62f4ba91749d622a2f1f60d2f7e7a375.svg" alt="">
+          </button>
+          <button class="pagination__button pagination__button--other pagination__button--icon-only" aria-label="Routes">
+            <img class="pagination__icon" src="http://localhost:3845/assets/d64dd1926380195094db47b67b6d78c7756258be.svg" alt="">
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="demo-section">
+      <h2>JavaScript API Demo</h2>
+      <div id="js-demo"></div>
+    </div>
+  </div>
+
+  <script src="pagination.js"></script>
+  <script>
+    const iconCastle = 'http://localhost:3845/assets/585b825f89b288c15bf8ce1772fa6fbd00d1d06b.svg';
+    const iconBook = 'http://localhost:3845/assets/f5ddd70f62f4ba91749d622a2f1f60d2f7e7a375.svg';
+    const iconRoute = 'http://localhost:3845/assets/d64dd1926380195094db47b67b6d78c7756258be.svg';
+
+    const pagination = createPagination({
+      items: [
+        { label: 'Homepage', icon: iconCastle, type: 'current' },
+        { icon: iconBook, type: 'other', iconOnly: true, ariaLabel: 'Bookmarks' },
+        { icon: iconRoute, type: 'other', iconOnly: true, ariaLabel: 'Routes' }
+      ],
+      onItemClick: (item, index) => {
+        console.log('Pagination item clicked:', item, index);
+        updatePaginationCurrent(pagination, index);
+      }
+    });
+
+    document.getElementById('js-demo').appendChild(pagination);
+  </script>
+</body>
+</html>

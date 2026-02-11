@@ -1,0 +1,136 @@
+/**
+ * Tab Component
+ * 
+ * Design System Component - BMG-91
+ * Based on Figma: node-id=92-9510
+ * 
+ * Navigation tab with label, subtitle, and optional icon
+ * States: Idle, Hover, Active
+ */
+
+/* Base tab styles */
+.tab {
+  /* Layout */
+  display: flex;
+  align-items: center;
+  gap: var(--padding-and-gap-small, 2px);
+  width: 200px;
+  padding: var(--padding-and-gap-medium, 4px) var(--padding-and-gap-large, 8px);
+  
+  /* Appearance */
+  border-radius: var(--corner-radius-small, 4px);
+  border: none;
+  
+  /* Behavior */
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.2s ease;
+  
+  /* Reset */
+  background: none;
+  text-align: left;
+}
+
+/* Tab content (label + subtitle) */
+.tab__content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+  line-height: 1;
+}
+
+/* Tab label */
+.tab__label {
+  font-family: var(--font-family-sans-serif, 'Lato', sans-serif);
+  font-size: var(--size-medium, 12px);
+  font-weight: var(--weight-regular, 400);
+  color: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Tab subtitle */
+.tab__subtitle {
+  font-family: var(--font-family-sans-serif, 'Lato', sans-serif);
+  font-size: var(--size-medium, 12px);
+  font-weight: var(--weight-light, 300);
+  color: var(--common-common-bright-15, rgba(255, 255, 255, 0.6));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Tab icon (chevron) */
+.tab__icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  display: none;
+}
+
+/* ========================================
+   STATE: IDLE
+   ======================================== */
+
+.tab--idle {
+  background: none;
+}
+
+.tab--idle .tab__icon {
+  display: none;
+}
+
+/* ========================================
+   STATE: HOVER
+   ======================================== */
+
+.tab--hover,
+.tab:hover:not(.tab--active) {
+  background: var(--common-common-dark-05, rgba(0, 0, 0, 0.1));
+}
+
+.tab--hover .tab__icon,
+.tab:hover:not(.tab--active) .tab__icon {
+  display: block;
+}
+
+/* ========================================
+   STATE: ACTIVE (selected)
+   ======================================== */
+
+.tab--active,
+.tab[aria-selected="true"] {
+  background: var(--primary-primary-20, rgba(46, 51, 185, 0.8));
+}
+
+.tab--active .tab__icon,
+.tab[aria-selected="true"] .tab__icon {
+  display: block;
+}
+
+/* ========================================
+   FOCUS (accessibility)
+   ======================================== */
+
+.tab:focus {
+  outline: 2px solid var(--primary-primary-25, #2e33b9);
+  outline-offset: 2px;
+}
+
+.tab:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* ========================================
+   DISABLED STATE
+   ======================================== */
+
+.tab:disabled,
+.tab--disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}

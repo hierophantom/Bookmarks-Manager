@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Selection Menu - Design System</title>
+  <link rel="stylesheet" href="selection-menu.css">
+  <link rel="stylesheet" href="tag.css">
+  <style>
+    :root {
+      --font-family-sans-serif: 'Lato', sans-serif;
+      --size-medium: 12px;
+      --size-large: 16px;
+      --weight-light: 300;
+      --weight-regular: 400;
+      --weight-bold: 700;
+
+      --corner-radius-small: 4px;
+      --corner-radius-pill: 999px;
+
+      --padding-and-gap-medium: 4px;
+      --padding-and-gap-large: 8px;
+
+      --primary-primary-10: rgba(46, 51, 185, 0.4);
+      --primary-primary-15: rgba(46, 51, 185, 0.6);
+      --primary-primary-20: rgba(46, 51, 185, 0.8);
+      --primary-primary-25: #2e33b9;
+
+      --common-common-bright-05: rgba(255, 255, 255, 0.1);
+      --common-common-bright-15: rgba(255, 255, 255, 0.6);
+      --common-common-bright-20: rgba(255, 255, 255, 0.8);
+      --common-common-bright-25: rgba(255, 255, 255, 0.9);
+      --common-common-dark-10: rgba(0, 0, 0, 0.8);
+    }
+
+    body {
+      font-family: var(--font-family-sans-serif);
+      background: linear-gradient(135deg, #1b1d2f 0%, #242a3f 100%);
+      color: white;
+      margin: 0;
+      padding: 40px;
+    }
+
+    .demo-container {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .demo-section {
+      margin-bottom: 40px;
+      padding: 24px;
+      background: rgba(0, 0, 0, 0.25);
+      border-radius: 12px;
+    }
+
+    .demo-section h2 {
+      margin: 0 0 16px;
+      font-size: 20px;
+      font-weight: 400;
+    }
+
+    .demo-row {
+      display: flex;
+      gap: 32px;
+      flex-wrap: wrap;
+      align-items: flex-start;
+    }
+
+    .note {
+      margin-top: 12px;
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.6);
+    }
+  </style>
+</head>
+<body>
+  <div class="demo-container">
+    <h1>Selection Menu</h1>
+    <p>Design System Component - BMG-102</p>
+
+    <div class="demo-section">
+      <h2>Multi-select (Tags)</h2>
+      <div class="demo-row" id="tag-menus"></div>
+      <p class="note">Multi-select menu uses tags and checkboxes. Clear and Select all are optional helpers.</p>
+    </div>
+
+    <div class="demo-section">
+      <h2>Single-select (Sort)</h2>
+      <div class="demo-row" id="sort-menus"></div>
+      <p class="note">Single-select menu highlights the current selection and groups items into sections.</p>
+    </div>
+  </div>
+
+  <script src="tag.js"></script>
+  <script src="selection-menu.js"></script>
+  <script>
+    const tagItems = ['#value', '#value', '#value', '#value', '#value'];
+
+    const tagMenuLow = createSelectionMenu({
+      type: 'tag',
+      contrast: 'low',
+      items: tagItems,
+      selectedIndices: [1, 3],
+      onSelect: (index) => console.log('Tag selected', index)
+    });
+
+    const tagMenuHigh = createSelectionMenu({
+      type: 'tag',
+      contrast: 'high',
+      items: tagItems,
+      selectedIndices: [0],
+      onSelect: (index) => console.log('Tag selected', index)
+    });
+
+    document.getElementById('tag-menus').appendChild(tagMenuLow);
+    document.getElementById('tag-menus').appendChild(tagMenuHigh);
+
+    const sortSections = [
+      {
+        title: 'Sort folders',
+        items: ['Folders: A -> Z', 'Folders: Z -> A', 'Folders: Last added', 'Folders: First added']
+      },
+      {
+        title: 'Sort bookmarks',
+        items: ['Bookmarks: A -> Z', 'Bookmarks: Z -> A', 'Bookmarks: Last added', 'Bookmarks: First added']
+      }
+    ];
+
+    const sortMenuLow = createSelectionMenu({
+      type: 'sort',
+      contrast: 'low',
+      sections: sortSections,
+      selectedIndex: 0,
+      onSelect: (index) => console.log('Sort selected', index)
+    });
+
+    const sortMenuHigh = createSelectionMenu({
+      type: 'sort',
+      contrast: 'high',
+      sections: sortSections,
+      selectedIndex: 2,
+      onSelect: (index) => console.log('Sort selected', index)
+    });
+
+    document.getElementById('sort-menus').appendChild(sortMenuLow);
+    document.getElementById('sort-menus').appendChild(sortMenuHigh);
+  </script>
+</body>
+</html>

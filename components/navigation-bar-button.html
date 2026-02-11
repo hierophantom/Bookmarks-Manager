@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Navigation Bar Button - Design System Component</title>
+  <link rel="stylesheet" href="navigation-bar-button.css">
+  <style>
+    /* Demo page styles */
+    :root {
+      /* Typography tokens */
+      --font-family-sans-serif: 'Lato', sans-serif;
+      --size-large: 16px;
+      --weight-regular: 400;
+      
+      /* Color tokens */
+      --primary-primary-20: rgba(46, 51, 185, 0.8);
+      --primary-primary-25: #2e33b9;
+      --common-common-bright-25: rgba(255, 255, 255, 0.9);
+      --common-common-bright-15: rgba(255, 255, 255, 0.6);
+      --common-common-bright-10: rgba(255, 255, 255, 0.4);
+      --common-common-bright-05: rgba(255, 255, 255, 0.1);
+      
+      /* Border radius tokens */
+      --corner-radius-pill: 999px;
+    }
+    
+    body {
+      font-family: var(--font-family-sans-serif);
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      margin: 0;
+      padding: 40px;
+      color: white;
+    }
+    
+    .demo-container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    .demo-section {
+      margin-bottom: 60px;
+      padding: 40px;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 16px;
+      backdrop-filter: blur(10px);
+    }
+    
+    .demo-section h2 {
+      margin-top: 0;
+      margin-bottom: 24px;
+      font-size: 24px;
+    }
+    
+    .demo-section h3 {
+      margin-top: 32px;
+      margin-bottom: 16px;
+      font-size: 18px;
+      color: rgba(255, 255, 255, 0.8);
+    }
+    
+    .button-group {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    
+    .state-label {
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.6);
+      margin-right: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="demo-container">
+    <h1>Navigation Bar Button Component</h1>
+    <p>Design System Component - BMG-87</p>
+    
+    <!-- Type: Current -->
+    <div class="demo-section">
+      <h2>Type: Current (Selected Page)</h2>
+      <p>States: Idle, Hover</p>
+      
+      <h3>With Label</h3>
+      <div class="button-group">
+        <button class="nav-button nav-button--current" aria-current="page">
+          <img class="nav-button__icon" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253' /%3E%3C/svg%3E" alt="">
+          <span class="nav-button__label">Page 1</span>
+        </button>
+        
+        <button class="nav-button nav-button--current" aria-current="page">
+          <img class="nav-button__icon" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253' /%3E%3C/svg%3E" alt="">
+          <span class="nav-button__label">Current Page</span>
+        </button>
+      </div>
+    </div>
+    
+    <!-- Type: Other -->
+    <div class="demo-section">
+      <h2>Type: Other (Non-Selected Pages)</h2>
+      <p>States: Idle, Hover, Pressed</p>
+      
+      <h3>With Label</h3>
+      <div class="button-group">
+        <button class="nav-button nav-button--other">
+          <img class="nav-button__icon" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253' /%3E%3C/svg%3E" alt="">
+          <span class="nav-button__label">Page 2</span>
+        </button>
+        
+        <button class="nav-button nav-button--other">
+          <img class="nav-button__icon" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253' /%3E%3C/svg%3E" alt="">
+          <span class="nav-button__label">Page 3</span>
+        </button>
+        
+        <button class="nav-button nav-button--other">
+          <img class="nav-button__icon" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253' /%3E%3C/svg%3E" alt="">
+          <span class="nav-button__label">Another Page</span>
+        </button>
+      </div>
+      
+      <h3>Icon Only</h3>
+      <div class="button-group">
+        <button class="nav-button nav-button--other nav-button--icon-only" aria-label="Previous page">
+          <img class="nav-button__icon" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M15 19l-7-7 7-7' /%3E%3C/svg%3E" alt="">
+        </button>
+        
+        <button class="nav-button nav-button--other nav-button--icon-only" aria-label="Next page">
+          <img class="nav-button__icon" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M9 5l7 7-7 7' /%3E%3C/svg%3E" alt="">
+        </button>
+      </div>
+      
+      <h3>Disabled State</h3>
+      <div class="button-group">
+        <button class="nav-button nav-button--other" disabled>
+          <img class="nav-button__icon" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253' /%3E%3C/svg%3E" alt="">
+          <span class="nav-button__label">Disabled</span>
+        </button>
+      </div>
+    </div>
+    
+    <!-- JavaScript API Demo -->
+    <div class="demo-section">
+      <h2>JavaScript API Demo</h2>
+      <div id="js-demo" class="button-group"></div>
+      <p style="margin-top: 20px; font-size: 14px;">
+        <strong>Try clicking the buttons!</strong> Click events are logged to console.
+      </p>
+    </div>
+  </div>
+  
+  <script src="navigation-bar-button.js"></script>
+  <script>
+    // Demo: Create buttons using JavaScript API
+    const demoContainer = document.getElementById('js-demo');
+    
+    // Create button with label
+    const btn1 = createNavigationButton({
+      label: 'JS Created Button',
+      icon: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253' /%3E%3C/svg%3E",
+      type: 'other',
+      onClick: () => console.log('Button 1 clicked!')
+    });
+    
+    // Create icon-only button
+    const btn2 = createNavigationButton({
+      icon: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M5 13l4 4L19 7' /%3E%3C/svg%3E",
+      type: 'other',
+      iconOnly: true,
+      ariaLabel: 'Check icon',
+      onClick: () => console.log('Icon button clicked!')
+    });
+    
+    // Create current page button
+    const btn3 = createNavigationButton({
+      label: 'Current',
+      icon: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253' /%3E%3C/svg%3E",
+      type: 'current',
+      onClick: () => console.log('Current page button clicked!')
+    });
+    
+    demoContainer.appendChild(btn1);
+    demoContainer.appendChild(btn2);
+    demoContainer.appendChild(btn3);
+  </script>
+</body>
+</html>
