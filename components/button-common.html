@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Button Common - Design System</title>
+  <link rel="stylesheet" href="button-common.css">
+  <style>
+    :root {
+      --font-family-sans-serif: 'Lato', sans-serif;
+      --size-medium: 12px;
+      --weight-regular: 400;
+      --corner-radius-small: 4px;
+      --corner-radius-pill: 999px;
+      --common-common-bright-05: rgba(255, 255, 255, 0.1);
+      --common-common-bright-10: rgba(255, 255, 255, 0.2);
+      --common-common-bright-25: rgba(255, 255, 255, 0.9);
+      --common-common-dark-10: rgba(0, 0, 0, 0.4);
+      --common-common-dark-15: rgba(0, 0, 0, 0.6);
+      --primary-primary-25: #2e33b9;
+    }
+
+    body {
+      margin: 0;
+      padding: 40px;
+      background: linear-gradient(135deg, #1a1f4a 0%, #2b2f6f 100%);
+      color: #ffffff;
+      font-family: var(--font-family-sans-serif);
+      min-height: 100vh;
+    }
+
+    .demo-section {
+      margin-bottom: 32px;
+      padding: 20px;
+      background: rgba(0, 0, 0, 0.25);
+      border-radius: 8px;
+    }
+
+    h1 {
+      font-size: 28px;
+      margin-bottom: 8px;
+    }
+
+    h2 {
+      font-size: 18px;
+      margin: 0 0 12px;
+      opacity: 0.8;
+    }
+
+    .demo-row {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+  </style>
+</head>
+<body>
+  <h1>Button Common</h1>
+  <h2>Design System Component - BMG-104</h2>
+
+  <div class="demo-section">
+    <h2>Contrast</h2>
+    <div class="demo-row" id="contrast-demo"></div>
+  </div>
+
+  <div class="demo-section">
+    <h2>States</h2>
+    <div class="demo-row" id="states-demo"></div>
+  </div>
+
+  <div class="demo-section">
+    <h2>Optional Elements</h2>
+    <div class="demo-row" id="optional-demo"></div>
+  </div>
+
+  <script src="button-common.js"></script>
+  <script>
+    const contrastDemo = document.getElementById('contrast-demo');
+    contrastDemo.appendChild(createCommonButton({ label: 'Low contrast', contrast: 'low' }));
+    contrastDemo.appendChild(createCommonButton({ label: 'High contrast', contrast: 'high' }));
+
+    const statesDemo = document.getElementById('states-demo');
+    statesDemo.appendChild(createCommonButton({ label: 'Idle', state: 'idle' }));
+    statesDemo.appendChild(createCommonButton({ label: 'Hover', state: 'hover' }));
+
+    const optionalDemo = document.getElementById('optional-demo');
+    optionalDemo.appendChild(createCommonButton({ label: 'With icon', icon: '+' }));
+    optionalDemo.appendChild(createCommonButton({
+      label: 'With shortcut',
+      shortcutKeys: ['Ctrl', 'K'],
+      shortcutText: true
+    }));
+  </script>
+</body>
+</html>

@@ -1,0 +1,101 @@
+/**
+ * Button Common Component
+ *
+ * Design System Component - BMG-104
+ * Based on Figma: node-id=96-22667
+ *
+ * States: Idle, Hover
+ * Color scheme: Low, High contrast
+ * Optional icon and keyboard hint
+ */
+
+.button-common {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: var(--corner-radius-small, 4px);
+  border: 1px solid transparent;
+  background: var(--button-common-bg, var(--common-common-bright-05, rgba(255, 255, 255, 0.1)));
+  color: var(--button-common-text, var(--common-common-bright-25, rgba(255, 255, 255, 0.9)));
+  font-family: var(--font-family-sans-serif, 'Lato', sans-serif);
+  font-size: var(--size-medium, 12px);
+  font-weight: var(--weight-regular, 400);
+  line-height: 1;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.2s ease;
+}
+
+.button-common__icon {
+  width: 16px;
+  height: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: currentColor;
+}
+
+.button-common__label {
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.button-common__hint {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+}
+
+.button-common__hint--fallback {
+  height: 18px;
+  padding: 0 4px;
+  border-radius: var(--corner-radius-pill, 999px);
+  background: var(--common-common-bright-05, rgba(255, 255, 255, 0.1));
+  gap: 2px;
+}
+
+.button-common__hint-key {
+  font-size: 10px;
+  line-height: 1;
+  color: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
+}
+
+.button-common--hover,
+.button-common:hover {
+  background: var(--button-common-bg-hover, var(--common-common-bright-10, rgba(255, 255, 255, 0.2)));
+  border-color: var(--button-common-border-hover, transparent);
+}
+
+.button-common--low {
+  --button-common-bg: var(--common-common-bright-05, rgba(255, 255, 255, 0.1));
+  --button-common-bg-hover: var(--common-common-bright-10, rgba(255, 255, 255, 0.2));
+  --button-common-text: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
+}
+
+.button-common--high {
+  --button-common-bg: var(--common-common-dark-10, rgba(0, 0, 0, 0.4));
+  --button-common-bg-hover: var(--common-common-dark-15, rgba(0, 0, 0, 0.6));
+  --button-common-text: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
+}
+
+.button-common:active {
+  transform: scale(0.98);
+}
+
+.button-common:disabled,
+.button-common--disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.button-common:focus {
+  outline: 2px solid var(--primary-primary-25, #2e33b9);
+  outline-offset: 2px;
+}
+
+.button-common:focus:not(:focus-visible) {
+  outline: none;
+}

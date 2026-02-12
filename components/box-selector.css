@@ -1,0 +1,64 @@
+/**
+ * Box Selector Component
+ *
+ * Design System Component - BMG-107
+ * Based on Figma: node-id=99-8052
+ *
+ * States: Idle, Hover, Active
+ */
+
+.box-selector {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 28px;
+  padding: 0 8px;
+  border-radius: var(--corner-radius-small, 4px);
+  border: 1px solid transparent;
+  background: var(--box-selector-bg, var(--common-common-bright-05, rgba(255, 255, 255, 0.1)));
+  color: var(--box-selector-text, var(--common-common-bright-25, rgba(255, 255, 255, 0.9)));
+  font-family: var(--font-family-sans-serif, 'Lato', sans-serif);
+  font-size: var(--size-medium, 12px);
+  font-weight: var(--weight-regular, 400);
+  line-height: 1;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.2s ease;
+}
+
+.box-selector__icon {
+  width: 14px;
+  height: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: currentColor;
+}
+
+.box-selector__label {
+  line-height: 1;
+}
+
+.box-selector--hover,
+.box-selector:hover {
+  background: var(--box-selector-bg-hover, var(--common-common-bright-10, rgba(255, 255, 255, 0.2)));
+}
+
+.box-selector--active,
+.box-selector:active {
+  background: var(--box-selector-bg-active, var(--primary-primary-20, rgba(46, 51, 185, 0.8)));
+  border-color: var(--box-selector-border-active, var(--primary-primary-25, #2e33b9));
+  color: var(--box-selector-text-active, var(--common-common-bright-25, rgba(255, 255, 255, 0.9)));
+}
+
+.box-selector:active {
+  transform: scale(0.98);
+}
+
+.box-selector:disabled,
+.box-selector--disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

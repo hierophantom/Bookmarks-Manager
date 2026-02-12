@@ -1,0 +1,68 @@
+/**
+ * Breadcrumbs Component
+ *
+ * Design System Component - BMG-106
+ * Based on Figma: node-id=99-7970
+ *
+ * Types: Root, Current
+ * States: Idle (current), Idle/Hover (root)
+ */
+
+.breadcrumbs {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-family-sans-serif, 'Lato', sans-serif);
+  font-size: var(--size-medium, 12px);
+  font-weight: var(--weight-regular, 400);
+  color: var(--common-common-bright-15, rgba(255, 255, 255, 0.6));
+  user-select: none;
+}
+
+.breadcrumbs__list {
+  list-style: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  margin: 0;
+}
+
+.breadcrumbs__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.breadcrumbs__separator {
+  color: var(--common-common-bright-10, rgba(255, 255, 255, 0.4));
+}
+
+.breadcrumbs__link {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 6px;
+  border-radius: var(--corner-radius-small, 4px);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--common-common-bright-15, rgba(255, 255, 255, 0.6));
+  cursor: pointer;
+  text-decoration: none;
+  user-select: none;
+  transition: all 0.2s ease;
+}
+
+.breadcrumbs__link--root:hover,
+.breadcrumbs__link--hover {
+  background: var(--common-common-bright-05, rgba(255, 255, 255, 0.1));
+  color: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
+}
+
+.breadcrumbs__link--current {
+  color: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
+  cursor: default;
+}
+
+.breadcrumbs__link--current:hover {
+  background: transparent;
+}

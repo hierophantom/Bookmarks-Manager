@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Breadcrumbs - Design System</title>
+  <link rel="stylesheet" href="breadcrumbs.css">
+  <style>
+    :root {
+      --font-family-sans-serif: 'Lato', sans-serif;
+      --size-medium: 12px;
+      --weight-regular: 400;
+      --common-common-bright-05: rgba(255, 255, 255, 0.1);
+      --common-common-bright-10: rgba(255, 255, 255, 0.4);
+      --common-common-bright-15: rgba(255, 255, 255, 0.6);
+      --common-common-bright-25: rgba(255, 255, 255, 0.9);
+      --corner-radius-small: 4px;
+    }
+
+    body {
+      margin: 0;
+      padding: 40px;
+      background: linear-gradient(135deg, #1a1f4a 0%, #2b2f6f 100%);
+      color: #ffffff;
+      font-family: var(--font-family-sans-serif);
+      min-height: 100vh;
+    }
+
+    .demo-section {
+      margin-bottom: 32px;
+      padding: 20px;
+      background: rgba(0, 0, 0, 0.25);
+      border-radius: 8px;
+    }
+
+    h1 {
+      font-size: 28px;
+      margin-bottom: 8px;
+    }
+
+    h2 {
+      font-size: 18px;
+      margin: 0 0 12px;
+      opacity: 0.8;
+    }
+
+    .demo-row {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Breadcrumbs</h1>
+  <h2>Design System Component - BMG-106</h2>
+
+  <div class="demo-section">
+    <h2>Types</h2>
+    <div class="demo-row" id="types-demo"></div>
+  </div>
+
+  <div class="demo-section">
+    <h2>States</h2>
+    <div class="demo-row" id="states-demo"></div>
+  </div>
+
+  <script src="breadcrumbs.js"></script>
+  <script>
+    const typesDemo = createBreadcrumbs({
+      items: [
+        { label: 'Home', type: 'root' },
+        { label: 'Bookmarks', type: 'root' },
+        { label: 'Current', type: 'current' }
+      ]
+    });
+    document.getElementById('types-demo').appendChild(typesDemo);
+
+    const statesDemo = createBreadcrumbs({
+      items: [
+        { label: 'Root Hover', type: 'root', state: 'hover' },
+        { label: 'Current', type: 'current' }
+      ]
+    });
+    document.getElementById('states-demo').appendChild(statesDemo);
+  </script>
+</body>
+</html>

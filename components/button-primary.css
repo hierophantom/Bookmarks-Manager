@@ -1,0 +1,103 @@
+/**
+ * Button Primary Component
+ *
+ * Design System Component - BMG-103
+ * Based on Figma: node-id=96-16677
+ *
+ * States: Idle, Hover
+ * Color scheme: Low, High contrast
+ * Optional icon and keyboard hint
+ */
+
+.button-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: var(--corner-radius-small, 4px);
+  border: 1px solid transparent;
+  background: var(--button-primary-bg, var(--primary-primary-10, rgba(46, 51, 185, 0.4)));
+  color: var(--button-primary-text, var(--common-common-bright-25, rgba(255, 255, 255, 0.9)));
+  font-family: var(--font-family-sans-serif, 'Lato', sans-serif);
+  font-size: var(--size-medium, 12px);
+  font-weight: var(--weight-regular, 400);
+  line-height: 1;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.2s ease;
+}
+
+.button-primary__icon {
+  width: 16px;
+  height: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: currentColor;
+}
+
+.button-primary__label {
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.button-primary__hint {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+}
+
+.button-primary__hint--fallback {
+  height: 18px;
+  padding: 0 4px;
+  border-radius: var(--corner-radius-pill, 999px);
+  background: var(--common-common-bright-05, rgba(255, 255, 255, 0.1));
+  gap: 2px;
+}
+
+.button-primary__hint-key {
+  font-size: 10px;
+  line-height: 1;
+  color: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
+}
+
+.button-primary--hover,
+.button-primary:hover {
+  background: var(--button-primary-bg-hover, var(--primary-primary-15, rgba(46, 51, 185, 0.6)));
+  border-color: var(--button-primary-border-hover, transparent);
+}
+
+.button-primary--low {
+  --button-primary-bg: var(--primary-primary-10, rgba(46, 51, 185, 0.4));
+  --button-primary-bg-hover: var(--primary-primary-15, rgba(46, 51, 185, 0.6));
+  --button-primary-text: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
+  --button-primary-border-hover: var(--primary-primary-25, #2e33b9);
+}
+
+.button-primary--high {
+  --button-primary-bg: var(--primary-primary-25, #2e33b9);
+  --button-primary-bg-hover: var(--primary-primary-20, rgba(46, 51, 185, 0.8));
+  --button-primary-text: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
+  --button-primary-border-hover: var(--primary-primary-25, #2e33b9);
+}
+
+.button-primary:active {
+  transform: scale(0.98);
+}
+
+.button-primary:disabled,
+.button-primary--disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.button-primary:focus {
+  outline: 2px solid var(--primary-primary-25, #2e33b9);
+  outline-offset: 2px;
+}
+
+.button-primary:focus:not(:focus-visible) {
+  outline: none;
+}

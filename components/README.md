@@ -22,6 +22,12 @@ Pill-shaped pagination control composed of current and icon-only buttons.
 - **States**: Current, Other (icon-only)
 - **Use cases**: Page navigation, section switching
 
+#### [Breadcrumbs](README-breadcrumbs.md) (BMG-106)
+Breadcrumb navigation with root and current types.
+- **Files**: `breadcrumbs.css`, `breadcrumbs.js`, `breadcrumbs.html`
+- **States**: Root (idle, hover), Current (idle)
+- **Use cases**: Section navigation, path context
+
 #### [Search Bar](README-search-bar.md) (BMG-89)
 Button-styled search trigger with keyboard shortcut hint.
 - **Files**: `search-bar.css`, `search-bar.js`, `search-bar.html`
@@ -51,6 +57,24 @@ Compact button with icon and text label.
 - **Files**: `cube-action-button-with-label.css`, `cube-action-button-with-label.js`, `cube-action-button-with-label.html`
 - **States**: Idle, hover, active, disabled
 - **Use cases**: Compact toolbars, filter rows
+
+#### [Button Common](README-button-common.md) (BMG-104)
+Neutral action button with contrast variants and optional icon/shortcut.
+- **Files**: `button-common.css`, `button-common.js`, `button-common.html`
+- **States**: Idle, Hover
+- **Use cases**: Secondary actions, dialogs
+
+#### [Button Primary](README-button-primary.md) (BMG-103)
+Primary action button with contrast variants and optional icon/shortcut.
+- **Files**: `button-primary.css`, `button-primary.js`, `button-primary.html`
+- **States**: Idle, Hover
+- **Use cases**: Main actions, confirmations
+
+#### [Button Destructive](README-button-destructive.md) (BMG-105)
+Destructive action button with contrast variants and optional icon/shortcut.
+- **Files**: `button-destructive.css`, `button-destructive.js`, `button-destructive.html`
+- **States**: Idle, Hover
+- **Use cases**: Delete or remove actions
 
 #### [Text Field](README-text-field.md) (BMG-100)
 Standard text input field with contrast variants.
@@ -91,6 +115,12 @@ Pill-shaped tags for categorization and filtering.
 - **Files**: `tag.css`, `tag.js`, `tag.html`
 - **Features**: Low/high contrast, removable, clickable, custom colors
 - **Use cases**: Filters, categories, labels
+
+#### [Box Selector](README-box-selector.md) (BMG-107)
+Compact selector button with idle, hover, and active states.
+- **Files**: `box-selector.css`, `box-selector.js`, `box-selector.html`
+- **States**: Idle, Hover, Active
+- **Use cases**: Option selection, quick filters
 
 ### Feedback & Interaction
 
@@ -220,6 +250,7 @@ Each component consists of:
 ```
 components/
 ├── navigation-bar-button.*    # BMG-87
+├── breadcrumbs.*              # BMG-106
 ├── search-bar.*               # BMG-89
 ├── search-comp.*              # BMG-99
 ├── quote.*                    # BMG-90
@@ -227,10 +258,14 @@ components/
 ├── keyboard-shortcut-hint.*   # BMG-92
 ├── modal.*                    # BMG-93
 ├── tag.*                      # BMG-94
+├── box-selector.*             # BMG-107
 ├── tooltip.*                  # BMG-95
 ├── action-button.*            # BMG-96
 ├── cube-action-button.*       # BMG-97
 ├── cube-action-button-with-label.* # BMG-98
+├── button-common.*            # BMG-104
+├── button-primary.*           # BMG-103
+├── button-destructive.*       # BMG-105
 ├── text-field.*               # BMG-100
 ├── selection-menu.*           # BMG-102
 ├── selection-field.*          # BMG-101
@@ -305,6 +340,11 @@ All components tracked in Linear with "Design system" label:
 - BMG-93: Modals
 - BMG-94: Tag
 - BMG-95: Tooltip
+- BMG-103: Button primary
+- BMG-104: Button common
+- BMG-105: Button destructive
+- BMG-106: Breadcrumbs
+- BMG-107: Box selector
 
 ## Contributing
 
