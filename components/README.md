@@ -108,6 +108,18 @@ Quote display with truncating text and clickable author.
 - **Features**: Text truncation, author hover state, max-width control
 - **Use cases**: Daily quotes, testimonials
 
+#### [Widget Small](README-widget-small.md) (BMG-108)
+Compact 80x80 widget tile used for homepage widgets and empty slots.
+- **Files**: `widget-small.css`, `widget-small.js`, `widget-small.html`
+- **States**: Widget (idle, hover), Empty slot (idle, dragged active)
+- **Use cases**: Homepage widgets, empty slots
+
+#### [Cube Section](README-cube-section.md) (BMG-109)
+Container for widget tiles with hover actions and vertical wrapping support.
+- **Files**: `cube-section.css`, `cube-section.js`, `cube-section.html`
+- **States**: Idle, Hover
+- **Use cases**: Widget group sections
+
 ### Data & Tags
 
 #### [Tag](README-tag.md) (BMG-94)
@@ -259,6 +271,8 @@ components/
 ├── modal.*                    # BMG-93
 ├── tag.*                      # BMG-94
 ├── box-selector.*             # BMG-107
+├── widget-small.*             # BMG-108
+├── cube-section.*             # BMG-109
 ├── tooltip.*                  # BMG-95
 ├── action-button.*            # BMG-96
 ├── cube-action-button.*       # BMG-97
@@ -345,6 +359,8 @@ All components tracked in Linear with "Design system" label:
 - BMG-105: Button destructive
 - BMG-106: Breadcrumbs
 - BMG-107: Box selector
+- BMG-108: Widget small
+- BMG-109: Cube section
 
 ## Contributing
 

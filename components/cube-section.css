@@ -1,0 +1,50 @@
+/**
+ * Cube Section Component
+ *
+ * Design System Component - BMG-109
+ * Based on Figma: node-id=99-8521
+ *
+ * States: Idle, Hover
+ * Supports wrapping widgets vertically
+ */
+
+.cube-section {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  border-radius: var(--corner-radius-medium, 8px);
+  backdrop-filter: blur(7px);
+  min-height: 112px;
+  user-select: none;
+  transition: all 0.2s ease;
+}
+
+.cube-section--hover {
+  background: var(--common-common-dark-10, rgba(0, 0, 0, 0.2));
+}
+
+.cube-section__items {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.cube-section__items--wrap-vertical {
+  flex-direction: column;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  max-height: var(--cube-section-wrap-height, 240px);
+}
+
+.cube-section__actions {
+  position: absolute;
+  top: -8px;
+  right: -4px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}

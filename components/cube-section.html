@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cube Section - Design System</title>
+  <link rel="stylesheet" href="cube-section.css">
+  <link rel="stylesheet" href="widget-small.css">
+  <link rel="stylesheet" href="cube-action-button-with-label.css">
+  <style>
+    :root {
+      --font-family-sans-serif: 'Lato', sans-serif;
+      --size-large: 16px;
+      --weight-regular: 400;
+      --corner-radius-medium: 8px;
+      --common-common-bright-05: rgba(255, 255, 255, 0.1);
+      --common-common-bright-10: rgba(255, 255, 255, 0.4);
+      --common-common-bright-25: rgba(255, 255, 255, 0.9);
+      --common-common-dark-10: rgba(0, 0, 0, 0.2);
+      --primary-primary-20: rgba(46, 51, 185, 0.8);
+      --primary-primary-25: #2e33b9;
+      --cube-section-wrap-height: 112px;
+    }
+
+    body {
+      margin: 0;
+      padding: 40px;
+      background: linear-gradient(135deg, #1a1f4a 0%, #2b2f6f 100%);
+      color: #ffffff;
+      font-family: var(--font-family-sans-serif);
+      min-height: 100vh;
+    }
+
+    .demo-section {
+      margin-bottom: 32px;
+      padding: 20px;
+      background: rgba(0, 0, 0, 0.25);
+      border-radius: 8px;
+    }
+
+    h1 {
+      font-size: 28px;
+      margin-bottom: 8px;
+    }
+
+    h2 {
+      font-size: 18px;
+      margin: 0 0 12px;
+      opacity: 0.8;
+    }
+  </style>
+</head>
+<body>
+  <h1>Cube Section</h1>
+  <h2>Design System Component - BMG-109</h2>
+
+  <div class="demo-section" id="idle-section"></div>
+  <div class="demo-section" id="hover-section"></div>
+  <div class="demo-section" id="wrap-section"></div>
+
+  <script src="widget-small.js"></script>
+  <script src="cube-action-button-with-label.js"></script>
+  <script src="cube-section.js"></script>
+  <script>
+    const widgetItems = Array.from({ length: 7 }, () => {
+      return createWidgetSmall({
+        type: 'widget',
+        state: 'idle',
+        label: 'Label',
+        subtext: 'Subtext',
+        icon: 'B'
+      });
+    });
+
+    const idleSection = createCubeSection({
+      state: 'idle',
+      items: widgetItems
+    });
+    document.getElementById('idle-section').appendChild(idleSection);
+
+    const addWidgetAction = createCubeActionButtonWithLabel({
+      icon: '+',
+      label: 'Add widget',
+      colorScheme: 'primary'
+    });
+
+    const hoverSection = createCubeSection({
+      state: 'hover',
+      items: widgetItems,
+      action: addWidgetAction
+    });
+    document.getElementById('hover-section').appendChild(hoverSection);
+
+    const wrapItems = Array.from({ length: 12 }, () => {
+      return createWidgetSmall({
+        type: 'widget',
+        state: 'idle',
+        label: 'Label',
+        subtext: 'Subtext',
+        icon: 'B'
+      });
+    });
+
+    const wrapSection = createCubeSection({
+      state: 'hover',
+      wrap: 'vertical',
+      items: wrapItems,
+      action: addWidgetAction
+    });
+    document.getElementById('wrap-section').appendChild(wrapSection);
+  </script>
+</body>
+</html>
