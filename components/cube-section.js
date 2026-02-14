@@ -42,12 +42,21 @@ function createCubeSection(options = {}) {
 
   section.appendChild(itemsEl);
 
-  if (state === 'hover' && action instanceof HTMLElement) {
+  if (action instanceof HTMLElement) {
     const actionsEl = document.createElement('div');
     actionsEl.className = 'cube-section__actions';
     actionsEl.appendChild(action);
     section.appendChild(actionsEl);
   }
+
+  // Add hover interaction
+  section.addEventListener('mouseenter', () => {
+    applyCubeSectionState(section, 'hover');
+  });
+  
+  section.addEventListener('mouseleave', () => {
+    applyCubeSectionState(section, 'idle');
+  });
 
   return section;
 }
@@ -58,6 +67,7 @@ function createCubeSection(options = {}) {
  * @param {string} state - 'idle' or 'hover'
  */
 function applyCubeSectionState(section, state) {
+  if (!section || !section.classList) return;
   section.classList.remove('cube-section--idle', 'cube-section--hover');
   section.classList.add(`cube-section--${state}`);
 }

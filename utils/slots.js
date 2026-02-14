@@ -11,6 +11,14 @@ const SlotSystem = (()=>{
     if (!arr || !Array.isArray(arr)){
       arr = new Array(count).fill(null);
       await save(key, arr);
+    } else if (arr.length < count) {
+      // Expand array if current length is less than requested count
+      arr = arr.concat(new Array(count - arr.length).fill(null));
+      await save(key, arr);
+    } else if (arr.length > count) {
+      // Shrink array if current length is more than requested count
+      arr = arr.slice(0, count);
+      await save(key, arr);
     }
     return arr;
   }

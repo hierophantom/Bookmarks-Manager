@@ -4,7 +4,17 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Bookmark Manager</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;500;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..24,300..700,0..1,-50..200">
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="components.css">
+  <link rel="stylesheet" href="../components/widget-small.css">
+  <link rel="stylesheet" href="../components/cube-section.css">
+  <link rel="stylesheet" href="../components/cube-action-button.css">
+  <link rel="stylesheet" href="../components/cube-action-button-with-label.css">
+  <link rel="stylesheet" href="../components/tooltip.css">
+  <link rel="stylesheet" href="../components/search-bar.css">
   <link rel="stylesheet" href="../utils/tailwind-modal.css">
   <link rel="stylesheet" href="../utils/modal.css">
   <link rel="stylesheet" href="../utils/tagify.min.css">
@@ -18,6 +28,7 @@
   <script src="../utils/tag-multiselect.js"></script>
 </head>
 <body>
+  <div id="bmg-dim-layer" aria-hidden="true"></div>
   <!-- Left Panel -->
   <div id="bmg-left-panel" class="left-panel">
     <div class="bmg-left-panel-header">
@@ -52,10 +63,36 @@
   <div id="bmg-main-content">
     <!-- Top Bar with general settings -->
     <header class="topbar">
-      <div class="topbar__title">Bookmark Manager</div>
+      <div class="topbar__left">
+        <button id="personalize-btn" class="topbar__action-btn" type="button" aria-label="Personalize Your Experience">
+          <span class="material-symbols-outlined" aria-hidden="true">apps</span>
+        </button>
+        <div id="header-inspiration" class="topbar__inspiration" aria-live="polite">
+          <span id="header-quote-text" class="topbar__quote-text"></span>
+          <span class="topbar__quote-sep">-</span>
+          <a id="header-quote-author" class="topbar__quote-author" href="#" target="_blank" rel="noopener noreferrer"></a>
+        </div>
+      </div>
+      <button id="open-search" class="topbar__search" title="Search (Cmd+Shift+E)" type="button">
+        <span class="material-symbols-outlined topbar__search-icon" aria-hidden="true">search</span>
+        <span class="topbar__search-text topbar__search-text--idle">Search</span>
+        <span class="topbar__search-text topbar__search-text--hover">Search</span>
+        <span class="topbar__shortcut" aria-hidden="true">
+          <span class="topbar__shortcut-key">⌘</span>
+          <span class="topbar__shortcut-key">⇧</span>
+          <span class="topbar__shortcut-key">E</span>
+        </span>
+      </button>
       <div class="topbar__actions">
-        <button id="open-search" title="Search (Cmd+Shift+E)">🔍</button>
-        <button id="personalize-btn" title="Personalize themes and backgrounds">🎨</button>
+        <button class="topbar__icon-btn" type="button" aria-label="Header action">
+          <span class="material-symbols-outlined" aria-hidden="true">landscape</span>
+        </button>
+        <button class="topbar__icon-btn" type="button" aria-label="Header action">
+          <span class="material-symbols-outlined" aria-hidden="true">import_contacts</span>
+        </button>
+        <button class="topbar__icon-btn" type="button" aria-label="Header action">
+          <span class="material-symbols-outlined" aria-hidden="true">chat_info</span>
+        </button>
       </div>
     </header>
 
@@ -66,23 +103,13 @@
       <button id="make-default-btn" class="banner__button">Make Default New Tab Page</button>
     </div>
 
-    <!-- Daily Quote Section -->
-    <div id="daily-quote-container" class="quote" style="display: none;">
-      <div id="quote-text" class="quote__text"></div>
-      <a id="quote-author" href="#" target="_blank" class="quote__author"></a>
-    </div>
-
     <!-- Page Container -->
     <div id="page-container">
       <!-- Page 1: Homepage / Widgets -->
-      <section class="page" data-page="0">
-        <div class="section-header">
-          <h2 class="page__title">Homepage</h2>
-          <button id="add-widget-btn" class="pill-btn">Add Widget</button>
-        </div>
-        <section class="widgets-section">
+      <section class="page homepage-page" data-page="0">
+        <div class="homepage-content">
           <div id="widgets-container"></div>
-        </section>
+        </div>
       </section>
 
       <!-- Page 2: Bookmarks -->
@@ -103,7 +130,7 @@
           </span>
           <input id="tag-filter" placeholder="Filter by tags..." />
           <div style="margin-left: auto; display: flex; gap: 8px; align-items: center;">
-            <label for="sort-dropdown" style="font-size: 13px; font-weight: 600;">Sort:</label>
+            <label for="sort-dropdown" class="filter-row__label">Sort:</label>
             <select id="sort-dropdown" style="padding: 4px 8px; border-radius: 6px; border: 1px solid #ccc; background: white; cursor: pointer; font-size: 13px;">
               <option value="none">Default</option>
               <optgroup label="Sort Folders">
@@ -133,10 +160,19 @@
     </div>
 
     <!-- Bottom Navigation -->
-    <nav id="bottom-nav" class="bottom-nav">
-      <button class="nav-btn" data-target="0">🏠 Home</button>
-      <button class="nav-btn" data-target="1">🔖 Bookmarks</button>
-      <button class="nav-btn" data-target="2">🧭 Journey</button>
+    <nav id="bottom-nav" class="bottom-nav c-nav">
+      <button class="c-nav__btn" data-target="0">
+        <span class="c-nav__icon material-symbols-outlined" aria-hidden="true">home</span>
+        <span class="c-nav__label">Home</span>
+      </button>
+      <button class="c-nav__btn" data-target="1">
+        <span class="c-nav__icon material-symbols-outlined" aria-hidden="true">bookmark</span>
+        <span class="c-nav__label">Bookmarks</span>
+      </button>
+      <button class="c-nav__btn" data-target="2">
+        <span class="c-nav__icon material-symbols-outlined" aria-hidden="true">conversion_path</span>
+        <span class="c-nav__label">Journey</span>
+      </button>
     </nav>
   </div>
   </div>
@@ -170,6 +206,11 @@
   <script src="../utils/save-tabs-modal.js"></script>
   <script src="../utils/right-panel-ui.js"></script>
   <script src="../services/bookmark-modals.js"></script>
+  <script src="../components/tooltip.js"></script>
+  <script src="../components/widget-small.js"></script>
+  <script src="../components/cube-section.js"></script>
+  <script src="../components/cube-action-button.js"></script>
+  <script src="../components/cube-action-button-with-label.js"></script>
   <script src="../services/widgets.js"></script>
   <script src="../modals/theme-settings.js"></script>
   <script src="daily-quote.js"></script>

@@ -38,9 +38,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   // Daily Quote initialization
-  const quoteContainer = document.getElementById('daily-quote-container');
-  const quoteText = document.getElementById('quote-text');
-  const quoteAuthor = document.getElementById('quote-author');
+  const quoteContainer = document.getElementById('header-inspiration');
+  const quoteText = document.getElementById('header-quote-text');
+  const quoteAuthor = document.getElementById('header-quote-author');
 
   async function loadQuote() {
     const enabled = await DailyQuoteService.isEnabled();
@@ -55,7 +55,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (quoteAuthor) {
         const authorName = quote.author;
         const wikipediaUrl = `https://en.wikipedia.org/wiki/${encodeURIComponent(authorName.replace(/ /g, '_'))}`;
-        quoteAuthor.textContent = `— ${authorName}`;
+        quoteAuthor.textContent = authorName;
         quoteAuthor.href = wikipediaUrl;
         quoteAuthor.style.cursor = 'pointer';
         quoteAuthor.addEventListener('mouseenter', () => {
@@ -65,7 +65,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           quoteAuthor.style.textDecoration = 'none';
         });
       }
-      if (quoteContainer) quoteContainer.style.display = 'block';
+      if (quoteContainer) quoteContainer.style.display = 'flex';
     } catch (error) {
       console.error('Failed to load quote:', error);
       if (quoteContainer) quoteContainer.style.display = 'none';
@@ -82,7 +82,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Page navigation setup
   const pageContainer = document.getElementById('page-container');
   const pages = Array.from(document.querySelectorAll('.page'));
-  const navButtons = Array.from(document.querySelectorAll('.nav-btn'));
+  const navButtons = Array.from(document.querySelectorAll('.c-nav__btn'));
+  const leftPanelToggleBtn = document.getElementById('bmg-left-panel-toggle-btn');
+  const rightPanelToggleBtn = document.getElementById('bmg-right-panel-toggle-btn');
   let activePageIndex = 0;
   let lastPageIndex = 0;
 
@@ -98,6 +100,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         btn.classList.toggle('active', target === activePageIndex);
       }
     });
+    const showPanels = activePageIndex === 1;
+    if (leftPanelToggleBtn) leftPanelToggleBtn.style.display = showPanels ? '' : 'none';
+    if (rightPanelToggleBtn) rightPanelToggleBtn.style.display = showPanels ? '' : 'none';
   }
 
   async function setActivePage(index, { persist = true } = {}) {
@@ -107,6 +112,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     lastPageIndex = activePageIndex;
     activePageIndex = normalized;
     updatePageVisibility();
+    if (activePageIndex === 0 && typeof WidgetsService !== 'undefined') {
+      try {
+        await WidgetsService.render('widgets-container');
+      } catch (e) {
+        console.warn('Widgets render failed', e);
+      }
+    }
     if (pageContainer && direction) {
       pageContainer.classList.remove('slide-left', 'slide-right');
       void pageContainer.offsetWidth; // reflow to restart animation
@@ -132,6 +144,22 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (Number.isInteger(target)) setActivePage(target);
     });
   });
+
+  // Add keyboard shortcut tooltips to navigation buttons
+  const shortcuts = ['H', 'B', 'J'];
+  if (typeof createTooltip === 'function') {
+    navButtons.forEach((btn, index) => {
+      if (index < shortcuts.length) {
+        const shortcut = shortcuts[index];
+        createTooltip({
+          text: `Keyboard shortcut: ${shortcut}`,
+          target: btn,
+          position: 'top',
+          delay: 'fast'
+        });
+      }
+    });
+  }
 
   // Arrow keys navigate pages
   window.addEventListener('keydown', (e) => {

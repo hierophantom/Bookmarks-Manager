@@ -70,6 +70,9 @@ function createTooltip(options = {}) {
 
   // Create wrapper if target doesn't have relative positioning
   let wrapper = target.parentElement;
+  if (!wrapper) {
+    return null;
+  }
   if (!wrapper.classList.contains('tooltip-trigger')) {
     wrapper = document.createElement('div');
     wrapper.className = 'tooltip-trigger';

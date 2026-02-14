@@ -1,0 +1,85 @@
+:root {
+  --component-nav-btn-height: 40px;
+  --component-nav-btn-padding-x: 12px;
+  --component-nav-btn-padding-y: 8px;
+  --component-nav-btn-gap: 6px;
+}
+
+.c-nav {
+  position: fixed;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: var(--space-gap-medium);
+  padding: 8px 12px;
+  background: var(--role-common-bright-05);
+  backdrop-filter: var(--effect-background-blur-05);
+  border: 1px solid var(--role-common-bright-05);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--effect-drop-shadow-05);
+  z-index: 30;
+}
+
+.c-nav__btn {
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--role-common-bright-15);
+  cursor: pointer;
+  padding: var(--component-nav-btn-padding-y) var(--component-nav-btn-padding-x);
+  border-radius: var(--radius-pill);
+  min-height: var(--component-nav-btn-height);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--component-nav-btn-gap);
+  font-family: var(--font-family-sans);
+  font-size: var(--type-body-reg-size);
+  font-weight: var(--type-body-reg-weight);
+  line-height: 1;
+}
+
+.c-nav__btn:hover {
+  background: var(--role-common-bright-10);
+  color: var(--role-common-bright-25);
+  border-color: var(--role-common-dark-10);
+}
+
+.c-nav__btn:active {
+  background: var(--role-common-dark-10);
+  color: var(--role-common-bright-25);
+  border-color: var(--role-common-dark-15);
+}
+
+.c-nav__btn.active {
+  background: var(--role-primary-15);
+  color: var(--role-common-bright-25);
+  border-color: var(--role-primary-25);
+  box-shadow: var(--effect-shadow-blur-05);
+  backdrop-filter: var(--effect-shadow-blur-05-filter);
+}
+
+.c-nav__btn.active:hover {
+  background: var(--role-primary-20);
+}
+
+.c-nav__btn.active:active {
+  background: var(--role-primary-25);
+}
+
+.c-nav__btn--icon-only {
+  width: var(--component-nav-btn-height);
+  padding: 0;
+}
+
+.c-nav__icon {
+  font-size: 20px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.c-nav__label {
+  line-height: 1;
+}

@@ -61,13 +61,13 @@ function createWidgetSmall(options = {}) {
   }
 
   if (type === 'empty' && state === 'dragged') {
-    const plusEl = createWidgetSmallIcon('+');
+    const plusEl = createWidgetSmallIcon('add');
     if (plusEl) {
       widget.appendChild(plusEl);
     }
   }
 
-  if (type === 'widget' && state === 'hover' && actions.length > 0) {
+  if (type === 'widget' && actions.length > 0) {
     const actionsEl = document.createElement('div');
     actionsEl.className = 'widget-small__actions';
     actions.forEach((actionEl) => {
@@ -87,6 +87,7 @@ function createWidgetSmall(options = {}) {
  * @param {string} type - 'widget' or 'empty'
  */
 function applyWidgetSmallType(widget, type) {
+  if (!widget || !widget.classList) return;
   widget.classList.remove('widget-small--widget', 'widget-small--empty');
   widget.classList.add(`widget-small--${type}`);
 }
@@ -97,6 +98,7 @@ function applyWidgetSmallType(widget, type) {
  * @param {string} state - 'idle', 'hover', or 'dragged'
  */
 function applyWidgetSmallState(widget, state) {
+  if (!widget || !widget.classList) return;
   widget.classList.remove('widget-small--idle', 'widget-small--hover', 'widget-small--dragged');
   widget.classList.add(`widget-small--${state}`);
 }
@@ -158,8 +160,11 @@ function createWidgetSmallIcon(icon) {
     if (icon.startsWith('<svg')) {
       iconEl.innerHTML = icon;
     } else {
-      iconEl.classList.add('widget-small__icon--text');
-      iconEl.textContent = icon;
+      // Use Material Icons
+      const materialIcon = document.createElement('span');
+      materialIcon.className = 'material-symbols-outlined';
+      materialIcon.textContent = icon;
+      iconEl.appendChild(materialIcon);
     }
   } else if (icon instanceof HTMLElement) {
     iconEl.appendChild(icon);

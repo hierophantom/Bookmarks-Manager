@@ -14,21 +14,22 @@
   /* Layout */
   display: inline-flex;
   align-items: center;
-  gap: var(--spacing-medium, 4px);
+  gap: 4px;
   
   /* Sizing */
-  height: 14px;
-  padding: var(--spacing-medium, 4px) var(--spacing-large, 8px);
+  height: 16px;
+  min-width: 16px;
+  padding: 0 8px;
   
   /* Appearance */
   background: transparent;
-  border: none;
-  border-radius: var(--corner-radius-small, 4px);
+  border: 1px solid transparent;
+  border-radius: var(--corner-radius-pill, 999px);
   
   /* Typography */
-  font-family: var(--font-body, Lato);
-  font-size: var(--label-sma-size, 12px);
-  font-weight: var(--label-sma-weight, 400);
+  font-family: var(--font-family-sans-serif, 'Lato', sans-serif);
+  font-size: 12px;
+  font-weight: 400;
   line-height: 1;
   
   /* Behavior */
@@ -46,7 +47,15 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: opacity 0.2s ease;
+}
+
+.cube-action-button-with-label__icon .material-symbols-outlined {
+  font-size: 12px;
+  width: 12px;
+  height: 12px;
+  display: block;
+  line-height: 1;
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
 }
 
 /* Label */
@@ -58,44 +67,39 @@
 
 /* Primary */
 .cube-action-button-with-label--primary {
-  color: var(--primary-primary-25, #2e33b9);
+  background: var(--primary-primary-20, rgba(46, 51, 185, 0.8));
+  border-color: var(--primary-primary-25, #2e33b9);
+  color: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
 }
 
 .cube-action-button-with-label--primary:hover {
-  background: var(--primary-primary-20, rgba(46, 51, 185, 0.1));
-  color: var(--primary-primary-25, #2e33b9);
-}
-
-.cube-action-button-with-label--primary:active {
-  background: var(--primary-primary-25, rgba(46, 51, 185, 0.15));
+  background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), var(--primary-primary-20, rgba(46, 51, 185, 0.6));
+  border-color: var(--primary-primary-25, #2e33b9);
+  color: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
 }
 
 /* Default */
 .cube-action-button-with-label--default {
-  color: var(--common-common-bright-20, rgba(255, 255, 255, 0.4));
+  background: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
+  border-color: transparent;
+  color: var(--common-common-dark-25, rgba(0, 0, 0, 0.8));
 }
 
 .cube-action-button-with-label--default:hover {
-  background: var(--common-common-bright-05, rgba(255, 255, 255, 0.1));
-  color: var(--common-common-bright-25, rgba(255, 255, 255, 0.5));
-}
-
-.cube-action-button-with-label--default:active {
-  background: var(--common-common-bright-10, rgba(255, 255, 255, 0.15));
+  background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
+  color: var(--common-common-dark-25, rgba(0, 0, 0, 0.8));
 }
 
 /* Destructive */
 .cube-action-button-with-label--destructive {
-  color: #ff4444;
+  background: var(--destructive-destructive-25, #de3033);
+  border-color: transparent;
+  color: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
 }
 
 .cube-action-button-with-label--destructive:hover {
-  background: rgba(255, 68, 68, 0.1);
-  color: #ff6666;
-}
-
-.cube-action-button-with-label--destructive:active {
-  background: rgba(255, 68, 68, 0.15);
+  background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), var(--destructive-destructive-25, #de3033);
+  color: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
 }
 
 /* States */
@@ -118,12 +122,13 @@
 
 /* Focus (keyboard navigation) */
 .cube-action-button-with-label:focus {
+  outline: none;
+}
+
+.cube-action-button-with-label:focus-visible {
   outline: 2px solid var(--primary-primary-25, #2e33b9);
   outline-offset: 2px;
 }
-
-.cube-action-button-with-label:focus:not(:focus-visible) {
-  outline: none;
 }
 
 /* Icon-only variant (no label) */
@@ -137,11 +142,17 @@
 
 /* Small (default) */
 .cube-action-button-with-label--small {
-  height: 14px;
+  height: 16px;
   font-size: 12px;
 }
 
 .cube-action-button-with-label--small .cube-action-button-with-label__icon {
+  width: 12px;
+  height: 12px;
+}
+
+.cube-action-button-with-label--small .cube-action-button-with-label__icon .material-symbols-outlined {
+  font-size: 12px;
   width: 12px;
   height: 12px;
 }
@@ -154,6 +165,12 @@
 }
 
 .cube-action-button-with-label--medium .cube-action-button-with-label__icon {
+  width: 16px;
+  height: 16px;
+}
+
+.cube-action-button-with-label--medium .cube-action-button-with-label__icon .material-symbols-outlined {
+  font-size: 16px;
   width: 16px;
   height: 16px;
 }

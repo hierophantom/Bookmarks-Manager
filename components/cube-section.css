@@ -17,8 +17,14 @@
   border-radius: var(--corner-radius-medium, 8px);
   backdrop-filter: blur(7px);
   min-height: 112px;
+  width: 712px;
+  max-width: 712px;
   user-select: none;
-  transition: all 0.2s ease;
+  transition: background 0.2s ease;
+}
+
+.cube-section--idle {
+  background: transparent;
 }
 
 .cube-section--hover {
@@ -46,5 +52,15 @@
   right: -4px;
   display: flex;
   align-items: center;
+  justify-content: flex-end;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+
+.cube-section--hover .cube-section__actions {
+  opacity: 1;
+  pointer-events: auto;
+}
   justify-content: flex-end;
 }

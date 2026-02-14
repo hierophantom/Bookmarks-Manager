@@ -67,9 +67,11 @@ function createCubeActionButtonWithLabel(options = {}) {
         // SVG string
         iconEl.innerHTML = icon;
       } else {
-        // Emoji or text icon
-        iconEl.textContent = icon;
-        iconEl.style.fontSize = size === 'medium' ? '14px' : '10px';
+        // Use Material Icons
+        const materialIcon = document.createElement('span');
+        materialIcon.className = 'material-symbols-outlined';
+        materialIcon.textContent = icon;
+        iconEl.appendChild(materialIcon);
       }
     } else if (icon instanceof HTMLElement) {
       // HTML element (e.g., img)

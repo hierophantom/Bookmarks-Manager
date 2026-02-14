@@ -63,6 +63,14 @@
   color: currentColor;
 }
 
+.widget-small__icon .material-symbols-outlined {
+  font-size: 24px;
+  width: 24px;
+  height: 24px;
+  display: block;
+  line-height: 1;
+}
+
 .widget-small__icon--text {
   font-size: 16px;
   line-height: 1;
@@ -75,6 +83,8 @@
   line-height: 1;
   width: 100%;
   overflow: hidden;
+  height: 28px;
+  justify-content: center;
 }
 
 .widget-small__label {
@@ -97,6 +107,14 @@
   text-overflow: ellipsis;
   overflow: hidden;
   white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  height: 12px;
+}
+
+.widget-small--widget.widget-small--hover .widget-small__subtext,
+.widget-small--widget:hover .widget-small__subtext {
+  opacity: 1;
 }
 
 .widget-small__actions {
@@ -106,6 +124,15 @@
   display: flex;
   align-items: center;
   gap: 4px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+
+.widget-small--widget.widget-small--hover .widget-small__actions,
+.widget-small--widget:hover .widget-small__actions {
+  opacity: 1;
+  pointer-events: auto;
 }
 
 .widget-small--empty .widget-small__actions {

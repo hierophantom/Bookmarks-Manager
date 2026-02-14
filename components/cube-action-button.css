@@ -12,19 +12,21 @@
 /* Base cube action button styles */
 .cube-action-button {
   /* Layout */
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   
   /* Sizing */
   width: 16px;
   height: 16px;
+  min-width: 16px;
+  min-height: 16px;
   padding: 0;
   
   /* Appearance */
-  background: transparent;
+  background: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
   border: none;
-  border-radius: var(--corner-radius-small, 4px);
+  border-radius: var(--corner-radius-pill, 999px);
   
   /* Behavior */
   cursor: pointer;
@@ -37,48 +39,57 @@
   width: 12px;
   height: 12px;
   flex-shrink: 0;
-  opacity: 0.7;
   transition: opacity 0.2s ease;
+  display: block;
+}
+
+.cube-action-button__icon .material-symbols-outlined {
+  font-size: 12px;
+  width: 12px;
+  height: 12px;
+  display: block;
+  line-height: 1;
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
 }
 
 /* Color Schemes */
 
 /* Default scheme */
 .cube-action-button--default {
-  color: var(--common-common-bright-20, rgba(255, 255, 255, 0.4));
+  background: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
+  color: var(--common-common-dark-25, rgba(0, 0, 0, 0.9));
 }
 
 .cube-action-button--default .cube-action-button__icon {
   fill: currentColor;
-  color: var(--common-common-bright-20, rgba(255, 255, 255, 0.4));
+  color: var(--common-common-dark-25, rgba(0, 0, 0, 0.9));
 }
 
 .cube-action-button--default:hover {
-  background: var(--common-common-bright-05, rgba(255, 255, 255, 0.1));
+  background: var(--common-common-bright-20, rgba(255, 255, 255, 0.8));
 }
 
 .cube-action-button--default:hover .cube-action-button__icon {
-  opacity: 1;
-  color: var(--common-common-bright-25, rgba(255, 255, 255, 0.5));
+  color: var(--common-common-dark-25, rgba(0, 0, 0, 0.9));
 }
 
 /* Destructive scheme */
 .cube-action-button--destructive {
-  color: #ff4444;
+  background: var(--destructive-destructive-25, #de3033);
+  color: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
 }
 
 .cube-action-button--destructive .cube-action-button__icon {
   fill: currentColor;
-  color: #ff4444;
+  color: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
 }
 
 .cube-action-button--destructive:hover {
-  background: rgba(255, 68, 68, 0.1);
+  background: var(--destructive-destructive-20, rgba(222, 48, 51, 0.8));
 }
 
 .cube-action-button--destructive:hover .cube-action-button__icon {
-  opacity: 1;
-  color: #ff6666;
+  color: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
 }
 
 /* States */
@@ -105,12 +116,12 @@
 
 /* Focus (keyboard navigation) */
 .cube-action-button:focus {
-  outline: 2px solid var(--primary-primary-25, #2e33b9);
-  outline-offset: 2px;
+  outline: none;
 }
 
-.cube-action-button:focus:not(:focus-visible) {
-  outline: none;
+.cube-action-button:focus-visible {
+  outline: 2px solid var(--primary-primary-25, #2e33b9);
+  outline-offset: 2px;
 }
 
 /* Special styling for when inside a tooltip container */
