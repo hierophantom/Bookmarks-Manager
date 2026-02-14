@@ -1,0 +1,81 @@
+/**
+ * Folder Section Component
+ *
+ * Design System Component - BMG-111
+ * Based on Figma: node-id=112-9789
+ *
+ * States: Idle, Hover
+ */
+
+.folder-section {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: flex-start;
+  padding: 16px;
+  border-radius: var(--corner-radius-medium, 8px);
+  backdrop-filter: blur(7px);
+  min-height: 152px;
+  width: 100%;
+  max-width: 1180px;
+  box-sizing: border-box;
+  user-select: none;
+  transition: background 0.2s ease;
+  flex-shrink: 0;
+}
+
+.folder-section--idle {
+  background: transparent;
+}
+
+.folder-section--hover,
+.folder-section:hover {
+  background: var(--common-common-dark-10, rgba(0, 0, 0, 0.2));
+}
+
+.folder-section__header {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  overflow: hidden;
+}
+
+.folder-section__content {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: flex-start;
+  align-content: flex-start;
+  width: 100%;
+}
+
+.folder-section__actions {
+  position: absolute;
+  top: 7px;
+  right: 6px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 8px;
+  border-radius: 8px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.folder-section--hover .folder-section__actions,
+.folder-section:hover .folder-section__actions {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.folder-section__actions:hover {
+  opacity: 1;
+}
+
+.folder-section__breadcrumb-separator {
+  font-size: 20px;
+  color: var(--common-common-bright-15, rgba(255, 255, 255, 0.6));
+}

@@ -16,7 +16,7 @@
   justify-content: center;
   
   /* Sizing */
-  height: 18px;
+  min-height: 18px;
   padding: 2px 4px;
   
   /* Appearance */
@@ -28,8 +28,7 @@
   font-size: var(--size-medium, 12px);
   font-weight: var(--weight-regular, 400);
   color: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
-  line-height: 1;
-  white-space: nowrap;
+  line-height: 1.2;
   
   /* Positioning */
   position: absolute;
@@ -56,6 +55,8 @@
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 200px;
+  white-space: pre-line;
+  text-align: center;
 }
 
 /* Position variants */

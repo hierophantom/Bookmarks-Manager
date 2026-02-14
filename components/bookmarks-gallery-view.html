@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bookmarks Gallery View - Design System</title>
+  <link rel="stylesheet" href="bookmarks-gallery-view.css">
+  <link rel="stylesheet" href="cube-action-button.css">
+  <style>
+    :root {
+      --font-family-sans-serif: 'Lato', sans-serif;
+      --size-medium: 12px;
+      --size-large: 16px;
+      --weight-light: 300;
+      --weight-regular: 400;
+      --corner-radius-medium: 8px;
+      --common-common-bright-05: rgba(255, 255, 255, 0.1);
+      --common-common-bright-10: rgba(255, 255, 255, 0.4);
+      --common-common-bright-15: rgba(255, 255, 255, 0.6);
+      --common-common-bright-25: rgba(255, 255, 255, 0.9);
+      --common-common-dark-10: rgba(0, 0, 0, 0.2);
+      --primary-primary-20: rgba(46, 51, 185, 0.8);
+      --primary-primary-25: #2e33b9;
+      --destructive-destructive-25: #de3033;
+    }
+
+    body {
+      margin: 0;
+      padding: 40px;
+      background: linear-gradient(135deg, #1a1f4a 0%, #2b2f6f 100%);
+      color: #ffffff;
+      font-family: var(--font-family-sans-serif);
+      min-height: 100vh;
+    }
+
+    .demo-section {
+      margin-bottom: 32px;
+      padding: 20px;
+      background: rgba(0, 0, 0, 0.25);
+      border-radius: 8px;
+    }
+
+    h1 {
+      font-size: 28px;
+      margin-bottom: 8px;
+    }
+
+    h2 {
+      font-size: 18px;
+      margin: 0 0 12px;
+      opacity: 0.8;
+    }
+
+    .demo-row {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+  </style>
+</head>
+<body>
+  <h1>Bookmarks Gallery View</h1>
+  <h2>Design System Component - BMG-110</h2>
+
+  <div class="demo-section">
+    <h2>Bookmark</h2>
+    <div class="demo-row" id="bookmark-states"></div>
+  </div>
+
+  <div class="demo-section">
+    <h2>Folder</h2>
+    <div class="demo-row" id="folder-states"></div>
+  </div>
+
+  <script src="cube-action-button.js"></script>
+  <script src="bookmarks-gallery-view.js"></script>
+  <script>
+    const bookmarkStates = document.getElementById('bookmark-states');
+    bookmarkStates.appendChild(createBookmarksGalleryView({
+      type: 'bookmark',
+      state: 'idle',
+      label: 'Label',
+      subtext: 'Subtext'
+    }));
+
+    bookmarkStates.appendChild(createBookmarksGalleryView({
+      type: 'bookmark',
+      state: 'hover',
+      label: 'Label',
+      subtext: 'Subtext'
+    }));
+
+    const folderStates = document.getElementById('folder-states');
+    folderStates.appendChild(createBookmarksGalleryView({
+      type: 'folder',
+      state: 'idle',
+      label: 'Label',
+      count: '4 items'
+    }));
+
+    folderStates.appendChild(createBookmarksGalleryView({
+      type: 'folder',
+      state: 'hover',
+      label: 'Label',
+      count: '4 items'
+    }));
+  </script>
+</body>
+</html>

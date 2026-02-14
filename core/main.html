@@ -11,10 +11,20 @@
   <link rel="stylesheet" href="components.css">
   <link rel="stylesheet" href="../components/widget-small.css">
   <link rel="stylesheet" href="../components/cube-section.css">
+  <link rel="stylesheet" href="../components/bookmarks-gallery-view.css">
+  <link rel="stylesheet" href="../components/folder-section.css">
   <link rel="stylesheet" href="../components/cube-action-button.css">
   <link rel="stylesheet" href="../components/cube-action-button-with-label.css">
+  <link rel="stylesheet" href="../components/action-button.css">
   <link rel="stylesheet" href="../components/tooltip.css">
   <link rel="stylesheet" href="../components/search-bar.css">
+  <link rel="stylesheet" href="../components/search-comp.css">
+  <link rel="stylesheet" href="../components/selection-field.css">
+  <link rel="stylesheet" href="../components/selection-menu.css">
+  <link rel="stylesheet" href="../components/button-common.css">
+  <link rel="stylesheet" href="../components/button-primary.css">
+  <link rel="stylesheet" href="../components/tag.css">
+  <link rel="stylesheet" href="../components/breadcrumbs.css">
   <link rel="stylesheet" href="../utils/tailwind-modal.css">
   <link rel="stylesheet" href="../utils/modal.css">
   <link rel="stylesheet" href="../utils/tagify.min.css">
@@ -41,9 +51,6 @@
     <div id="bmg-left-panel-content"></div>
   </div>
 
-  <!-- Toggle button for left panel -->
-  <button id="bmg-left-panel-toggle-btn" title="Folders Panel - Toggle (Ctrl+Shift+F or Cmd+Shift+F)">☰</button>
-
   <!-- Right Panel -->
   <div id="bmg-right-panel" class="right-panel">
     <div class="bmg-right-panel-header">
@@ -55,9 +62,6 @@
     </div>
     <div id="bmg-right-panel-content"></div>
   </div>
-
-  <!-- Toggle button for right panel -->
-  <button id="bmg-right-panel-toggle-btn" title="Active Tabs Panel - Toggle (Ctrl+Shift+S or Cmd+Shift+S)">📑</button>
 
   <!-- Main content wrapper -->
   <div id="bmg-main-content">
@@ -113,43 +117,25 @@
       </section>
 
       <!-- Page 2: Bookmarks -->
-      <section class="page" data-page="1">
-        <div class="section-header">
-          <h2 class="page__title">Bookmarks</h2>
-          <button id="global-add-bookmark-btn" class="pill-btn">📖 Add Bookmark</button>
-        </div>
-        <section class="tab-groups-section" id="tab-groups-section" style="display: none;">
-          <h3 class="subheading">Tab Groups</h3>
-          <div id="tab-groups-container"></div>
-        </section>
-
-        <div class="filter-row">
-          <span class="bm-input-wrapper" style="position: relative; flex: 1; margin-right: 8px; display: inline-block;">
-            <input id="text-search" placeholder="Search by title or URL..." style="width: 100%; padding-right: 28px;" />
-            <button id="text-clear" title="Clear" aria-label="Clear" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); border: none; background: transparent; cursor: pointer; font-size: 16px; line-height: 1; color: #888;">×</button>
-          </span>
-          <input id="tag-filter" placeholder="Filter by tags..." />
-          <div style="margin-left: auto; display: flex; gap: 8px; align-items: center;">
-            <label for="sort-dropdown" class="filter-row__label">Sort:</label>
-            <select id="sort-dropdown" style="padding: 4px 8px; border-radius: 6px; border: 1px solid #ccc; background: white; cursor: pointer; font-size: 13px;">
-              <option value="none">Default</option>
-              <optgroup label="Sort Folders">
-                <option value="folders-az">Folders: A → Z</option>
-                <option value="folders-za">Folders: Z → A</option>
-                <option value="folders-newest">Folders: Last Added</option>
-                <option value="folders-oldest">Folders: First Added</option>
-              </optgroup>
-              <optgroup label="Sort Bookmarks">
-                <option value="bookmarks-az">Bookmarks: A → Z</option>
-                <option value="bookmarks-za">Bookmarks: Z → A</option>
-                <option value="bookmarks-newest">Bookmarks: Last Added</option>
-                <option value="bookmarks-oldest">Bookmarks: First Added</option>
-              </optgroup>
-            </select>
+      <section class="page bookmarks-page" data-page="1">
+        <div class="bookmarks-page__content">
+          <div class="bookmarks-actions" id="bookmarks-actions">
+            <div class="bookmarks-actions__left" id="bookmarks-actions-left"></div>
+            <div class="bookmarks-actions__divider" aria-hidden="true"></div>
+            <div class="bookmarks-actions__settings" id="bookmarks-actions-settings"></div>
+            <div class="bookmarks-actions__spacer"></div>
+            <div class="bookmarks-actions__right" id="bookmarks-actions-right"></div>
+          </div>
+          <section class="tab-groups-section" id="tab-groups-section" style="display: none;">
+            <h3 class="subheading">Tab Groups</h3>
+            <div id="tab-groups-container"></div>
+          </section>
+          <div class="bookmarks-sections" id="bookmarks-root"></div>
+          <div class="bookmarks-floating-actions">
+            <div id="bookmarks-floating-left"></div>
+            <div id="bookmarks-floating-right"></div>
           </div>
         </div>
-
-        <main id="bookmarks-root"></main>
       </section>
 
       <!-- Page 3: Journey -->
@@ -178,13 +164,6 @@
   </div>
   <!-- End bmg-main-content -->
 
-  <template id="folder-template">
-    <section class="folder">
-      <h2 class="folder-title"></h2>
-      <div class="slots"></div>
-    </section>
-  </template>
-
   <script src="../utils/storage.js"></script>
   <script src="../utils/keyboard-navigation.js"></script>
   <script src="../utils/tagify.min.js"></script>
@@ -209,8 +188,18 @@
   <script src="../components/tooltip.js"></script>
   <script src="../components/widget-small.js"></script>
   <script src="../components/cube-section.js"></script>
+  <script src="../components/bookmarks-gallery-view.js"></script>
+  <script src="../components/folder-section.js"></script>
+  <script src="../components/breadcrumbs.js"></script>
   <script src="../components/cube-action-button.js"></script>
   <script src="../components/cube-action-button-with-label.js"></script>
+  <script src="../components/action-button.js"></script>
+  <script src="../components/search-comp.js"></script>
+  <script src="../components/selection-field.js"></script>
+  <script src="../components/selection-menu.js"></script>
+  <script src="../components/button-common.js"></script>
+  <script src="../components/button-primary.js"></script>
+  <script src="../components/tag.js"></script>
   <script src="../services/widgets.js"></script>
   <script src="../modals/theme-settings.js"></script>
   <script src="daily-quote.js"></script>

@@ -223,45 +223,6 @@
   object-fit: contain;
 }
 
-/* Toggle Button (fixed left edge) */
-#bmg-left-panel-toggle-btn {
-  position: fixed;
-  left: 8px;
-  top: 8px;
-  z-index: 998;
-  background-color: var(--theme-bg, #ffffff);
-  border: 1px solid var(--theme-border, #e0e0e0);
-  border-radius: 4px;
-  padding: 6px 8px;
-  cursor: pointer;
-  font-size: 14px;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 32px;
-  height: 32px;
-  color: var(--theme-text, #000);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  opacity: 1;
-}
-
-#bmg-left-panel-toggle-btn:hover {
-  background-color: var(--theme-hover-bg, rgba(0, 0, 0, 0.08));
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-}
-
-#bmg-left-panel-toggle-btn:active {
-  transform: scale(0.95);
-}
-
-/* When panel is docked, hide the floating toggle button but keep panel visible */
-#bmg-left-panel.docked ~ #bmg-left-panel-toggle-btn {
-  display: none;
-}
-
-/* In docked mode, the close button in the header should still work and close to floating mode */
-
 /* Main content adjustment when panel is docked */
 #bmg-main-content {
   transition: margin-left 0.3s ease;
@@ -336,9 +297,5 @@
 
   #bmg-left-panel.docked ~ #bmg-main-content {
     margin-left: 280px;
-  }
-
-  #bmg-left-panel.open ~ #bmg-left-panel-toggle-btn {
-    left: 288px;
   }
 }

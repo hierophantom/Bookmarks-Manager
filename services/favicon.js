@@ -31,6 +31,31 @@ const FaviconService = (() => {
     }
   }
 
+  function isHttpUrl(url) {
+    try {
+      const urlObj = new URL(url);
+      return urlObj.protocol === 'http:' || urlObj.protocol === 'https:';
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function isHttpsUrl(url) {
+    try {
+      const urlObj = new URL(url);
+      return urlObj.protocol === 'https:';
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function isLikelyPublicDomain(domain) {
+    if (!domain) return false;
+    if (domain === 'localhost') return true;
+    if (/^\d{1,3}(\.\d{1,3}){3}$/.test(domain)) return true;
+    return domain.includes('.');
+  }
+
   /**
    * Get the first letter of a domain for letter-based fallback
    * @param {string} domain - The domain name
@@ -107,6 +132,7 @@ const FaviconService = (() => {
     
     try {
       const domain = extractDomain(url);
+      if (!isHttpsUrl(url) || !isLikelyPublicDomain(domain)) return null;
       return `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=${size}`;
     } catch (e) {
       console.warn('Error generating Google favicon URL:', e);
@@ -163,6 +189,10 @@ const FaviconService = (() => {
    */
   function getFaviconUrl(url, size = 16) {
     if (!url) return getDefaultGlobeFallback();
+
+    if (!isHttpUrl(url)) {
+      return getFallbackIcon(url);
+    }
     
     // Check cache
     const cacheKey = `${url}:${size}`;

@@ -114,6 +114,18 @@ Compact 80x80 widget tile used for homepage widgets and empty slots.
 - **States**: Widget (idle, hover), Empty slot (idle, dragged active)
 - **Use cases**: Homepage widgets, empty slots
 
+#### [Bookmarks Gallery View](README-bookmarks-gallery-view.md) (BMG-110)
+Compact 80x80 tile for bookmark and folder items used in gallery views.
+- **Files**: `bookmarks-gallery-view.css`, `bookmarks-gallery-view.js`, `bookmarks-gallery-view.html`
+- **States**: Bookmark/Folder (idle, hover)
+- **Use cases**: Bookmark galleries, folder tiles
+
+#### [Folder Section](README-folder-section.md) (BMG-111)
+Container for bookmark gallery tiles with breadcrumb header and hover actions.
+- **Files**: `folder-section.css`, `folder-section.js`, `folder-section.html`
+- **States**: Idle, Hover
+- **Use cases**: Folder group sections
+
 #### [Cube Section](README-cube-section.md) (BMG-109)
 Container for widget tiles with hover actions and vertical wrapping support.
 - **Files**: `cube-section.css`, `cube-section.js`, `cube-section.html`

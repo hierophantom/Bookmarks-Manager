@@ -738,12 +738,64 @@ const Modal = (() => {
     });
   }
 
+  /**
+   * Error modal - shows critical errors that need acknowledgment
+   */
+  function openError(options = {}) {
+    const { 
+      title = 'Error', 
+      message = 'An error occurred', 
+      buttonText = 'OK' 
+    } = options;
+
+    // Escape HTML to prevent XSS
+    const escapeHtml = (str) => String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+
+    const modal = new BaseModal({
+      title: title,
+      customContent: `
+        <div style="
+          display: flex;
+          align-items: flex-start;
+          gap: 12px;
+          margin: 1rem 0;
+          padding: 12px;
+          background: var(--role-destructive-05, rgba(222, 48, 51, 0.2));
+          border: 1px solid var(--role-destructive-15, rgba(222, 48, 51, 0.6));
+          border-radius: var(--radius-medium, 8px);
+        ">
+          <span class="material-symbols-outlined" style="
+            color: var(--role-destructive-25, #DE3033);
+            font-size: 24px;
+            flex-shrink: 0;
+          ">error</span>
+          <p style="
+            margin: 0;
+            line-height: 1.5;
+            color: var(--theme-text, #1a1a1a);
+            word-break: break-word;
+          ">${escapeHtml(message)}</p>
+        </div>
+      `,
+      confirmText: buttonText,
+      cancelText: null // Hide cancel button
+    });
+
+    return modal.show();
+  }
+
   return { 
     openBookmarkForm, 
     openFolderForm, 
     openTabsPicker, 
     openWidgetPicker, 
     openConfirmation,
+    openError,
     initializeTagify 
   };
 })();

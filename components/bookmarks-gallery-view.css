@@ -1,0 +1,126 @@
+/**
+ * Bookmarks Gallery View Component
+ *
+ * Design System Component - BMG-110
+ * Based on Figma: node-id=112-9725
+ *
+ * Types: Bookmark, Folder
+ * States: Idle, Hover
+ */
+
+.bookmarks-gallery-view {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 80px;
+  height: 80px;
+  min-width: 80px;
+  min-height: 80px;
+  padding: 4px 8px;
+  border-radius: var(--corner-radius-medium, 8px);
+  border: 1px solid transparent;
+  background: var(--common-common-bright-05, rgba(255, 255, 255, 0.1));
+  backdrop-filter: blur(7px);
+  color: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
+  font-family: var(--font-family-sans-serif, 'Lato', sans-serif);
+  user-select: none;
+  transition: all 0.2s ease;
+}
+
+.bookmarks-gallery-view--hover,
+.bookmarks-gallery-view:hover {
+  background: var(--common-common-bright-10, rgba(255, 255, 255, 0.4));
+}
+
+.bookmarks-gallery-view__content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+}
+
+.bookmarks-gallery-view__icon {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: currentColor;
+}
+
+.bookmarks-gallery-view__icon .material-symbols-outlined {
+  font-size: 24px;
+  width: 24px;
+  height: 24px;
+  display: block;
+  line-height: 1;
+}
+
+.bookmarks-gallery-view__text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1;
+  width: 100%;
+  overflow: hidden;
+  height: 28px;
+  justify-content: center;
+}
+
+.bookmarks-gallery-view__label {
+  font-size: var(--size-large, 16px);
+  font-weight: var(--weight-regular, 400);
+  color: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
+  text-align: center;
+  width: 100%;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.bookmarks-gallery-view__subtext {
+  font-size: var(--size-medium, 12px);
+  font-weight: var(--weight-light, 300);
+  color: var(--common-common-bright-15, rgba(255, 255, 255, 0.6));
+  text-align: center;
+  width: 100%;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  height: 12px;
+}
+
+.bookmarks-gallery-view--folder .bookmarks-gallery-view__subtext {
+  opacity: 1;
+}
+
+.bookmarks-gallery-view--bookmark.bookmarks-gallery-view--hover .bookmarks-gallery-view__subtext,
+.bookmarks-gallery-view--bookmark:hover .bookmarks-gallery-view__subtext {
+  opacity: 1;
+}
+
+.bookmarks-gallery-view__actions {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+
+.bookmarks-gallery-view--hover .bookmarks-gallery-view__actions,
+.bookmarks-gallery-view:hover .bookmarks-gallery-view__actions,
+.bookmarks-gallery-view--actions-visible .bookmarks-gallery-view__actions {
+  opacity: 1;
+  pointer-events: auto;
+}
