@@ -287,28 +287,46 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     const settingsButton = createActionButton({
-
       icon: createMaterialIcon('settings'),
       label: 'Settings',
-      tooltip: 'Settings',
+      tooltip: 'View Settings',
       onClick: async () => {
-        // Get current engine from storage (default to Google)
-        let engine = await Storage.get('searchEngine');
-        if (!engine) {
-          engine = { key: 'google', url: 'https://www.google.com/search?q=%s' };
-        }
-        // Dynamically load showSearchEngineSelector from modal.js
-        if (typeof showSearchEngineSelector === 'function') {
-          showSearchEngineSelector(engine.key, async (selected) => {
-            await Storage.set({ searchEngine: selected });
-          });
-        } else if (window.Modal && typeof window.Modal.showSearchEngineSelector === 'function') {
-          window.Modal.showSearchEngineSelector(engine.key, async (selected) => {
-            await Storage.set({ searchEngine: selected });
-          });
-        } else {
-          alert('Search engine selector not available.');
-        }
+        // Create settings menu
+        const hideNestedFolders = await Storage.get('hideNestedFolders') || false;
+        
+        const menu = createSelectionMenu({
+          type: 'tag',
+          contrast: 'low',
+          title: 'View Settings',
+          items: ['Hide nested folders'],
+          selectedIndices: hideNestedFolders ? [0] : [],
+          showClear: false,
+          showSelectAll: false,
+          onSelect: async (index, isSelected) => {
+            if (index === 0) {
+              await Storage.set({ hideNestedFolders: isSelected });
+              await render(true);
+            }
+          }
+        });
+
+        // Position menu relative to button
+        menu.style.position = 'absolute';
+        menu.style.zIndex = '1000';
+        const rect = settingsButton.getBoundingClientRect();
+        menu.style.top = (rect.bottom + 4) + 'px';
+        menu.style.left = rect.left + 'px';
+
+        document.body.appendChild(menu);
+
+        // Close on outside click
+        const closeMenu = (e) => {
+          if (!menu.contains(e.target) && e.target !== settingsButton) {
+            menu.remove();
+            document.removeEventListener('click', closeMenu);
+          }
+        };
+        setTimeout(() => document.addEventListener('click', closeMenu), 0);
       }
     });
     bookmarksActionsSettings.appendChild(settingsButton);
@@ -603,6 +621,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Get hidden folders
     const hiddenFolders = await Storage.get('hiddenFolders') || [];
     const hiddenFolderIds = new Set(hiddenFolders);
+    const hideNestedFolders = await Storage.get('hideNestedFolders') || false;
 
     // Add hidden folders indicator if any
     if (hiddenFolderIds.size > 0) {
@@ -980,6 +999,9 @@ document.addEventListener('DOMContentLoaded', async () => {
           if (child.url) {
             items.push(createBookmarkTile(child));
           } else {
+            // Skip nested folders if hideNestedFolders is enabled
+            if (hideNestedFolders) continue;
+            
             if (seenChildFolderIds.has(child.id)) continue;
             seenChildFolderIds.add(child.id);
             items.push(createFolderTile(child));
