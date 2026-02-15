@@ -1420,19 +1420,22 @@ body {
   background: var(--theme-primary);
 }
 
-/* Background Shader Layer */
+/* Background Shader Layer - positioned between background and content */
 #bmg-shader-layer {
-  position: absolute;
+  position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
   pointer-events: none;
   transition: background-color 0.2s ease;
-  z-index: 1;
+  z-index: 5;
 }
 
+/* Main content above shader but below dim layer */
 #bmg-main-content {
   position: relative;
+  z-index: 10;
 }
+
 

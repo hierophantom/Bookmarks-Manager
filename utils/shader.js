@@ -19,11 +19,13 @@ const ShaderService = (() => {
       shaderLayer = document.createElement('div');
       shaderLayer.id = 'bmg-shader-layer';
       
-      // Insert after bmg-main-content background but before content
+      // Insert as sibling to main-content (after body background)
       const mainContent = document.getElementById('bmg-main-content');
-      if (mainContent) {
-        mainContent.style.position = 'relative';
-        mainContent.insertBefore(shaderLayer, mainContent.firstChild);
+      const dimLayer = document.getElementById('bmg-dim-layer');
+      
+      if (mainContent && dimLayer) {
+        // Insert shader after dim-layer but before main-content
+        dimLayer.parentNode.insertBefore(shaderLayer, mainContent);
       }
     }
 
