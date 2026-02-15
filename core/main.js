@@ -1330,6 +1330,31 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
+  // Unsplash Attribution Modal - Initialize button and handler
+  try {
+    if (typeof UnsplashAttributionModal !== 'undefined') {
+      // Set initial button visibility
+      await UnsplashAttributionModal.updateButtonVisibility();
+
+      // Wire up click handler
+      const attributionBtn = document.getElementById('unsplash-attribution-btn');
+      if (attributionBtn) {
+        attributionBtn.addEventListener('click', () => {
+          UnsplashAttributionModal.show();
+        });
+      }
+
+      // Watch for background changes and update button visibility
+      chrome.storage.onChanged.addListener((changes, areaName) => {
+        if (areaName === 'sync' && changes.backgroundSettings) {
+          UnsplashAttributionModal.updateButtonVisibility();
+        }
+      });
+    }
+  } catch (e) {
+    console.warn('Unsplash attribution modal initialization failed:', e);
+  }
+
   // Global Add Bookmark handled by bookmarks action bar
 
   // Initialize Left Panel
