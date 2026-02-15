@@ -302,9 +302,13 @@ document.addEventListener('DOMContentLoaded', async () => {
           selectedIndices: hideNestedFolders ? [0] : [],
           showClear: false,
           showSelectAll: false,
-          onSelect: async (index, isSelected) => {
+          onSelect: async (index) => {
             if (index === 0) {
-              await Storage.set({ hideNestedFolders: isSelected });
+              // Toggle the setting
+              const currentValue = await Storage.get('hideNestedFolders') || false;
+              await Storage.set({ hideNestedFolders: !currentValue });
+              menu.remove();
+              document.removeEventListener('click', closeMenu);
               await render(true);
             }
           }
