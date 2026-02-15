@@ -40,6 +40,7 @@ const BackgroundsService = (() => {
         unsplashCategories: [],
         unsplashFrequency: 'never',
         lastUnsplashUpdate: null,
+        dimmer: 0,
       };
 
       // Attach image data from local storage if it exists
@@ -56,6 +57,7 @@ const BackgroundsService = (() => {
         unsplashCategories: [],
         unsplashFrequency: 'never',
         lastUnsplashUpdate: null,
+        dimmer: 0,
       };
     }
   }

@@ -1321,6 +1321,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Initialize theming and backgrounds
   try{ if (typeof ThemesService !== 'undefined') await ThemesService.init(); }catch(e){ console.warn('Themes init failed', e); }
   try{ if (typeof BackgroundsService !== 'undefined') await BackgroundsService.init(); }catch(e){ console.warn('Backgrounds init failed', e); }
+  try{ if (typeof ShaderService !== 'undefined') await ShaderService.init(); }catch(e){ console.warn('Shader init failed', e); }
 
   // Personalize button handler
   const personalizeBtn = document.getElementById('personalize-btn');

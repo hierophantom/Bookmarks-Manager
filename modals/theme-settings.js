@@ -44,6 +44,7 @@ const ThemeSettingsModal = (() => {
     let selectedColor = bgSettings.color;
     let selectedCategories = bgSettings.unsplashCategories || [];
     let selectedFrequency = bgSettings.unsplashFrequency || 'never';
+    let selectedDimmer = bgSettings.dimmer || 0;
     let newTabOverride = newTabEnabled !== false; // Default to true
     let dailyQuoteShow = quoteEnabled !== false; // Default to true
 
@@ -375,6 +376,28 @@ New Tab Override Section -->
           </div>
         </div>
 
+        <!-- Dimmer/Shader Section -->
+        <div style="margin-bottom: 32px; padding-top: 24px; border-top: 1px solid var(--theme-border);">
+          <h3 style="margin-top: 0; margin-bottom: 8px; color: var(--theme-primary);">Background Shader</h3>
+          <p style="margin: 0 0 16px 0; font-size: 85%; color: var(--theme-secondary);">Dim or lighten your background for better visibility</p>
+          
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <span style="font-size: 12px; color: var(--theme-secondary); font-weight: 600; min-width: 60px;">Dimmest</span>
+            <input 
+              type="range" 
+              id="dimmer-slider" 
+              min="-70" 
+              max="70" 
+              value="${selectedDimmer}" 
+              style="flex: 1; height: 6px; cursor: pointer; accent-color: var(--theme-primary);"
+            />
+            <span style="font-size: 12px; color: var(--theme-secondary); font-weight: 600; min-width: 60px; text-align: right;">Lightest</span>
+          </div>
+          <div style="text-align: center; margin-top: 8px; font-size: 12px; color: var(--theme-secondary);">
+            <span id="dimmer-value">${selectedDimmer > 0 ? '+' : ''}${selectedDimmer}%</span>
+          </div>
+        </div>
+
         <!-- Buttons -->
         <div style="display: flex; gap: 8px; justify-content: flex-end; padding-top: 16px; border-top: 1px solid var(--theme-border);">
           <button id="cancel-settings-btn" style="
@@ -520,6 +543,16 @@ New Tab Override Section -->
       });
     }
 
+    // Dimmer slider
+    const dimmerSlider = modal.querySelector('#dimmer-slider');
+    const dimmerValue = modal.querySelector('#dimmer-value');
+    if (dimmerSlider) {
+      dimmerSlider.addEventListener('input', (e) => {
+        selectedDimmer = parseInt(e.target.value);
+        dimmerValue.textContent = selectedDimmer > 0 ? '+' + selectedDimmer + '%' : selectedDimmer + '%';
+      });
+    }
+
     // Fetch Unsplash image
     const fetchBtn = modal.querySelector('#fetch-unsplash-btn');
     if (fetchBtn) {
@@ -573,6 +606,16 @@ New Tab Override Section -->
           await BackgroundsService.setColorBackground(selectedColor);
         } else if (backgroundType === 'unsplash') {
           await BackgroundsService.updateUnsplashSettings(selectedCategories, selectedFrequency);
+        }
+
+        // Save dimmer preference
+        const currentSettings = await BackgroundsService.getBackgroundSettings();
+        currentSettings.dimmer = selectedDimmer;
+        await BackgroundsService.saveBackgroundSettings(currentSettings);
+
+        // Apply dimmer overlay
+        if (typeof ShaderService !== 'undefined') {
+          ShaderService.applyShader(selectedDimmer);
         }
 
         // Save new tab override preference
