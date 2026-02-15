@@ -247,6 +247,12 @@ body {
   backdrop-filter: blur(7px);
   border: none;
   border-radius: 0;
+  transition: background 0.2s ease, backdrop-filter 0.2s ease;
+}
+
+.topbar--no-backdrop {
+  background: transparent !important;
+  backdrop-filter: none !important;
 }
 
 .topbar__left {

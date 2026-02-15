@@ -37,6 +37,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
+  // Apply topbar backdrop setting
+  const topbarBackdropEnabled = await Storage.get('topbarBackdropEnabled');
+  const topbar = document.querySelector('.topbar');
+  if (topbar && topbarBackdropEnabled === false) {
+    topbar.classList.add('topbar--no-backdrop');
+  }
+
   // Daily Quote initialization
   const quoteContainer = document.getElementById('header-inspiration');
   const quoteText = document.getElementById('header-quote-text');

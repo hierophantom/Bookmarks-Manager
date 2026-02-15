@@ -9,13 +9,14 @@ const ThemeSettingsModal = (() => {
    * Show theme and background settings modal
    */
   async function show() {
-    const [themes, currentThemeId, bgSettings, newTabEnabled, quoteEnabled, storedSearchEngine] = await Promise.all([
+    const [themes, currentThemeId, bgSettings, newTabEnabled, quoteEnabled, storedSearchEngine, topbarBackdropEnabled] = await Promise.all([
       Promise.resolve(ThemesService.getThemes()),
       ThemesService.getCurrentThemeId(),
       BackgroundsService.getBackgroundSettings(),
       Storage.get('newTabOverrideEnabled'),
       Storage.get('dailyQuoteEnabled'),
       Storage.get('searchEngine'),
+      Storage.get('topbarBackdropEnabled'),
     ]);
 
     // Create overlay using BaseModal pattern
@@ -47,6 +48,7 @@ const ThemeSettingsModal = (() => {
     let selectedDimmer = bgSettings.dimmer || 0;
     let newTabOverride = newTabEnabled !== false; // Default to true
     let dailyQuoteShow = quoteEnabled !== false; // Default to true
+    let showTopbarBackdrop = topbarBackdropEnabled !== false; // Default to true
 
     const searchEngines = [
       { key: 'google', name: 'Google', url: 'https://www.google.com/search?q=%s' },
@@ -185,6 +187,34 @@ New Tab Override Section -->
               <div style="font-weight: bold; color: var(--theme-primary);">Open this extension on new tabs</div>
               <div style="font-size: 85%; color: var(--theme-secondary); margin-top: 4px;">
                 When enabled, new tabs will show your bookmarks instead of the default Chrome new tab page.
+              </div>
+            </div>
+          </label>
+        </div>
+
+        <!-- Topbar Backdrop Section -->
+        <div style="margin-bottom: 32px; padding-top: 24px; border-top: 1px solid var(--theme-border);">
+          <h3 style="margin-top: 0; margin-bottom: 16px; color: var(--theme-primary);">Topbar Appearance</h3>
+          <label style="
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            padding: 12px;
+            background: rgba(0,0,0,0.02);
+            border-radius: 4px;
+            margin-bottom: 8px;
+          ">
+            <input 
+              type="checkbox" 
+              id="topbar-backdrop-toggle"
+              ${showTopbarBackdrop ? 'checked' : ''}
+              style="cursor: pointer; width: 18px; height: 18px;"
+            >
+            <div>
+              <div style="font-weight: bold; color: var(--theme-primary);">Show topbar background</div>
+              <div style="font-size: 85%; color: var(--theme-secondary); margin-top: 4px;">
+                When disabled, the topbar will be transparent with no backdrop blur.
               </div>
             </div>
           </label>
@@ -447,6 +477,14 @@ New Tab Override Section -->
       });
     }
 
+    // Topbar backdrop toggle
+    const topbarBackdropToggle = modal.querySelector('#topbar-backdrop-toggle');
+    if (topbarBackdropToggle) {
+      topbarBackdropToggle.addEventListener('change', (e) => {
+        showTopbarBackdrop = e.target.checked;
+      });
+    }
+
     // Theme selection
     modal.querySelectorAll('.theme-preview-item').forEach((item) => {
       item.addEventListener('click', () => {
@@ -623,6 +661,19 @@ New Tab Override Section -->
 
         // Save daily quote preference
         await Storage.set({ dailyQuoteEnabled: dailyQuoteShow });
+
+        // Save topbar backdrop preference
+        await Storage.set({ topbarBackdropEnabled: showTopbarBackdrop });
+        
+        // Apply topbar backdrop immediately
+        const topbar = document.querySelector('.topbar');
+        if (topbar) {
+          if (showTopbarBackdrop) {
+            topbar.classList.remove('topbar--no-backdrop');
+          } else {
+            topbar.classList.add('topbar--no-backdrop');
+          }
+        }
 
         // Save search engine preference
         const selectedEngine = searchEngines.find((engine) => engine.key === selectedSearchEngineKey) || defaultSearchEngine;
