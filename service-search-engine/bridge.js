@@ -47,9 +47,40 @@ async function handleToggleCommand() {
 
   console.log('[Bridge] Active tab:', tab.id, tab.url);
 
-  // Skip extension pages (main.html handles its own toggle)
-  if (tab.url.startsWith('chrome-extension://') || tab.url.startsWith('chrome://')) {
-    console.log('[Bridge] Extension page - skipping toggle');
+  // Extension pages (main.html) should toggle via runtime message
+  if (tab.url.startsWith('chrome-extension://')) {
+    console.log('[Bridge] Extension page - sending TOGGLE_MAIN_OVERLAY');
+    chrome.tabs.sendMessage(tab.id, { type: 'TOGGLE_MAIN_OVERLAY' }, () => {
+      if (chrome.runtime.lastError) {
+        console.error('[Bridge] Toggle main overlay failed:', chrome.runtime.lastError.message);
+      }
+    });
+    return;
+  }
+  if (tab.url.startsWith('chrome://newtab/')) {
+    console.log('[Bridge] Chrome newtab - opening extension main.html');
+    const mainUrl = chrome.runtime.getURL('core/main.html');
+    const listener = (tabId, info) => {
+      if (tabId === tab.id && info.status === 'complete') {
+        chrome.tabs.onUpdated.removeListener(listener);
+        chrome.tabs.sendMessage(tab.id, { type: 'TOGGLE_MAIN_OVERLAY' }, () => {
+          if (chrome.runtime.lastError) {
+            console.error('[Bridge] Toggle main overlay failed:', chrome.runtime.lastError.message);
+          }
+        });
+      }
+    };
+    chrome.tabs.onUpdated.addListener(listener);
+    chrome.tabs.update(tab.id, { url: mainUrl }, () => {
+      if (chrome.runtime.lastError) {
+        chrome.tabs.onUpdated.removeListener(listener);
+        console.error('[Bridge] Failed to open main.html:', chrome.runtime.lastError.message);
+      }
+    });
+    return;
+  }
+  if (tab.url.startsWith('chrome://')) {
+    console.log('[Bridge] Chrome page - skipping toggle');
     return;
   }
 
@@ -121,10 +152,18 @@ async function handleSearch(request, sender, sendResponse) {
       }
     }
 
+    const storageData = await new Promise((resolve) => {
+      chrome.storage.local.get('searchEngine', resolve);
+    });
+    const searchEngine = storageData && storageData.searchEngine && storageData.searchEngine.url && storageData.searchEngine.url.includes('%s')
+      ? storageData.searchEngine
+      : { key: 'google', url: 'https://www.google.com/search?q=%s' };
+
     // Use sender.tab as context (content scripts always provide this)
     const results = await engine.search(request.query, {
       currentTab: currentTab,
-      isExtensionPage: false
+      isExtensionPage: false,
+      searchEngine
     });
 
     console.log('[Bridge] Results keys:', Object.keys(results));

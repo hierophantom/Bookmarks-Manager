@@ -280,9 +280,29 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     const settingsButton = createActionButton({
+
       icon: createMaterialIcon('settings'),
       label: 'Settings',
-      tooltip: 'Settings'
+      tooltip: 'Settings',
+      onClick: async () => {
+        // Get current engine from storage (default to Google)
+        let engine = await Storage.get('searchEngine');
+        if (!engine) {
+          engine = { key: 'google', url: 'https://www.google.com/search?q=%s' };
+        }
+        // Dynamically load showSearchEngineSelector from modal.js
+        if (typeof showSearchEngineSelector === 'function') {
+          showSearchEngineSelector(engine.key, async (selected) => {
+            await Storage.set({ searchEngine: selected });
+          });
+        } else if (window.Modal && typeof window.Modal.showSearchEngineSelector === 'function') {
+          window.Modal.showSearchEngineSelector(engine.key, async (selected) => {
+            await Storage.set({ searchEngine: selected });
+          });
+        } else {
+          alert('Search engine selector not available.');
+        }
+      }
     });
     bookmarksActionsSettings.appendChild(settingsButton);
 
@@ -1236,6 +1256,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
+  // Cmd/Ctrl+Shift+E to toggle overlay on main.html
+  document.addEventListener('keydown', (e) => {
+    const isCtrlOrCmd = e.ctrlKey || e.metaKey;
+    if (!isCtrlOrCmd || !e.shiftKey || e.code !== 'KeyE') return;
+    e.preventDefault();
+    e.stopPropagation();
+    if (window.__bmMainOverlay && typeof window.__bmMainOverlay.toggle === 'function') {
+      window.__bmMainOverlay.toggle();
+      return;
+    }
+    chrome.runtime.sendMessage({ type: 'TOGGLE_OVERLAY_FROM_UI' }, () => {});
+  }, true);
+
   // process any pending persisted undo snapshots after DOM ready
   try{ if (typeof UndoPersist !== 'undefined' && UndoPersist.processPending) { UndoPersist.processPending(); } }catch(e){ console.warn('UndoPersist.processPending() failed', e); }
 
@@ -1363,6 +1396,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       } else {
         console.error('[Main] SaveTabsModal not available');
         sendResponse({ success: false, error: 'SaveTabsModal not available' });
+      }
+    } else if (request.type === 'TOGGLE_MAIN_OVERLAY') {
+      if (window.__bmMainOverlay && typeof window.__bmMainOverlay.toggle === 'function') {
+        window.__bmMainOverlay.toggle();
+        sendResponse({ success: true });
+      } else {
+        sendResponse({ success: false, error: 'Main overlay not available' });
       }
     }
   });});

@@ -9,12 +9,13 @@ const ThemeSettingsModal = (() => {
    * Show theme and background settings modal
    */
   async function show() {
-    const [themes, currentThemeId, bgSettings, newTabEnabled, quoteEnabled] = await Promise.all([
+    const [themes, currentThemeId, bgSettings, newTabEnabled, quoteEnabled, storedSearchEngine] = await Promise.all([
       Promise.resolve(ThemesService.getThemes()),
       ThemesService.getCurrentThemeId(),
       BackgroundsService.getBackgroundSettings(),
       Storage.get('newTabOverrideEnabled'),
       Storage.get('dailyQuoteEnabled'),
+      Storage.get('searchEngine'),
     ]);
 
     // Create overlay using BaseModal pattern
@@ -45,6 +46,18 @@ const ThemeSettingsModal = (() => {
     let selectedFrequency = bgSettings.unsplashFrequency || 'never';
     let newTabOverride = newTabEnabled !== false; // Default to true
     let dailyQuoteShow = quoteEnabled !== false; // Default to true
+
+    const searchEngines = [
+      { key: 'google', name: 'Google', url: 'https://www.google.com/search?q=%s' },
+      { key: 'duckduckgo', name: 'DuckDuckGo', url: 'https://duckduckgo.com/?q=%s' },
+      { key: 'bing', name: 'Bing', url: 'https://www.bing.com/search?q=%s' },
+      { key: 'yahoo', name: 'Yahoo', url: 'https://search.yahoo.com/search?p=%s' },
+      { key: 'custom', name: 'Custom', url: '' }
+    ];
+    const defaultSearchEngine = { key: 'google', url: 'https://www.google.com/search?q=%s' };
+    const resolvedSearchEngine = storedSearchEngine && storedSearchEngine.url ? storedSearchEngine : defaultSearchEngine;
+    let selectedSearchEngineKey = resolvedSearchEngine.key || 'google';
+    let customSearchUrl = selectedSearchEngineKey === 'custom' ? (resolvedSearchEngine.url || '') : '';
 
     const themePreviewsHtml = Object.entries(themes)
       .map(
@@ -202,6 +215,23 @@ New Tab Override Section -->
               </div>
             </div>
           </label>
+        </div>
+
+        <!-- Search Engine Section -->
+        <div style="margin-bottom: 32px; padding-top: 24px; border-top: 1px solid var(--theme-border);">
+          <h3 style="margin-top: 0; margin-bottom: 16px; color: var(--theme-primary);">Search Engine</h3>
+          <label style="display: block; margin-bottom: 8px; font-weight: bold; color: var(--theme-primary);">
+            Preferred search engine
+          </label>
+          <select id="search-engine-select" style="width: 100%; padding: 8px; border: 1px solid var(--theme-border); border-radius: 4px; margin-bottom: 12px; background: white; color: var(--theme-text);">
+            ${searchEngines.map(engine => `
+              <option value="${engine.key}" ${engine.key === selectedSearchEngineKey ? 'selected' : ''}>${engine.name}</option>
+            `).join('')}
+          </select>
+          <input id="custom-engine-url" type="text" placeholder="Custom search URL (use %s for query)" value="${customSearchUrl}" style="width: 100%; padding: 8px; border: 1px solid var(--theme-border); border-radius: 4px; background: white; color: var(--theme-text); display: ${selectedSearchEngineKey === 'custom' ? 'block' : 'none'};" />
+          <div style="font-size: 85%; color: var(--theme-secondary); margin-top: 6px;">
+            Example: https://www.google.com/search?q=%s
+          </div>
         </div>
 
         <!-- 
@@ -405,6 +435,23 @@ New Tab Override Section -->
       });
     });
 
+    // Search engine selector
+    const searchEngineSelect = modal.querySelector('#search-engine-select');
+    const customEngineInput = modal.querySelector('#custom-engine-url');
+    if (searchEngineSelect) {
+      searchEngineSelect.addEventListener('change', (e) => {
+        selectedSearchEngineKey = e.target.value;
+        if (customEngineInput) {
+          customEngineInput.style.display = selectedSearchEngineKey === 'custom' ? 'block' : 'none';
+        }
+      });
+    }
+    if (customEngineInput) {
+      customEngineInput.addEventListener('input', (e) => {
+        customSearchUrl = e.target.value;
+      });
+    }
+
     // Background type radio buttons
     modal.querySelectorAll('input[name="bg-type"]').forEach((radio) => {
       radio.addEventListener('change', (e) => {
@@ -533,6 +580,18 @@ New Tab Override Section -->
 
         // Save daily quote preference
         await Storage.set({ dailyQuoteEnabled: dailyQuoteShow });
+
+        // Save search engine preference
+        const selectedEngine = searchEngines.find((engine) => engine.key === selectedSearchEngineKey) || defaultSearchEngine;
+        let searchUrl = selectedEngine.url;
+        if (selectedSearchEngineKey === 'custom') {
+          searchUrl = (customSearchUrl || '').trim();
+        }
+        if (!searchUrl || !searchUrl.includes('%s')) {
+          alert('Search URL must include %s for query');
+          return;
+        }
+        await Storage.set({ searchEngine: { key: selectedSearchEngineKey, url: searchUrl } });
 
         overlay.remove();
         

@@ -258,6 +258,54 @@ function confirmDialog(options = {}) {
           shortcut: '↵'
         }
       ],
+      /**
+       * Shows a modal for search engine selection
+       * @param {string} currentEngine - Current engine key
+       * @param {Function} onSave - Callback with selected engine
+       */
+      function showSearchEngineSelector(currentEngine, onSave) {
+        const engines = [
+          { key: 'google', name: 'Google', url: 'https://www.google.com/search?q=%s' },
+          { key: 'duckduckgo', name: 'DuckDuckGo', url: 'https://duckduckgo.com/?q=%s' },
+          { key: 'bing', name: 'Bing', url: 'https://www.bing.com/search?q=%s' },
+          { key: 'yahoo', name: 'Yahoo', url: 'https://search.yahoo.com/search?p=%s' },
+          { key: 'custom', name: 'Custom', url: '' }
+        ];
+        const form = document.createElement('form');
+        form.innerHTML = `
+          <label style="margin-bottom:8px;display:block;font-weight:500;">Search Engine</label>
+          <select id="search-engine-select" style="width:100%;margin-bottom:12px;">
+            ${engines.map(e => `<option value="${e.key}" ${e.key===currentEngine?'selected':''}>${e.name}</option>`).join('')}
+          </select>
+          <input id="custom-engine-url" type="text" placeholder="Custom search URL (use %s for query)" style="width:100%;margin-bottom:8px;display:none;" />
+        `;
+        form.querySelector('#search-engine-select').addEventListener('change', e => {
+          const val = e.target.value;
+          form.querySelector('#custom-engine-url').style.display = val==='custom' ? 'block' : 'none';
+        });
+        form.querySelector('#search-engine-select').dispatchEvent(new Event('change'));
+        const modal = createModal({
+          type: 'form',
+          title: 'Select Search Engine',
+          content: form,
+          buttons: [
+            { label: 'Cancel', type: 'common', shortcut: 'ESC' },
+            { label: 'Save', type: 'primary', shortcut: '↵' }
+          ],
+          onSubmit: () => {
+            const key = form.querySelector('#search-engine-select').value;
+            let url = engines.find(e => e.key===key)?.url || '';
+            if (key==='custom') url = form.querySelector('#custom-engine-url').value.trim();
+            if (!url || !url.includes('%s')) {
+              alert('Search URL must include %s for query');
+              return false;
+            }
+            onSave({ key, url });
+            return true;
+          }
+        });
+        showModal(modal);
+      }
       onClose: (confirmed) => {
         resolve(confirmed);
       }

@@ -13,6 +13,8 @@ class MainOverlay {
     this.selectedIndex = -1;
     this.currentResults = {};
     this.resultItems = [];
+    this.searchEngine = { key: 'google', url: 'https://www.google.com/search?q=%s' };
+    this.lastQuery = '';
   }
 
   /**
@@ -20,19 +22,31 @@ class MainOverlay {
    */
   async init() {
     console.log('[MainOverlay] Initializing');
-    
+
+    // Load search engine from storage
+    try {
+      const data = await new Promise((resolve) => {
+        chrome.storage.local.get('searchEngine', resolve);
+      });
+      if (data && data.searchEngine && data.searchEngine.url && data.searchEngine.url.includes('%s')) {
+        this.searchEngine = data.searchEngine;
+      }
+    } catch (e) {
+      // fallback to default
+    }
+
     // Inject overlay HTML
     this.injectOverlay();
-    
+
     // Setup UI elements
     this.setupUI();
-    
+
     // Setup keyboard listeners
     this.setupKeyboardListeners();
-    
+
     // Setup styles
     this.injectStyles();
-    
+
     console.log('[MainOverlay] Initialization complete');
   }
 
@@ -93,7 +107,10 @@ class MainOverlay {
     this.elements.backdrop.addEventListener('click', () => this.close());
 
     // Search input
-    this.elements.input.addEventListener('input', (e) => this.handleSearch(e.target.value));
+    this.elements.input.addEventListener('input', (e) => {
+      const value = e.target.value || '';
+      this.handleSearch(value);
+    });
 
 
     // Prevent modal click from closing
@@ -132,9 +149,9 @@ class MainOverlay {
     document.addEventListener('keydown', (e) => {
       const isCtrlOrCmd = e.ctrlKey || e.metaKey;
       const isShift = e.shiftKey;
-      const isK = e.code === 'KeyK';
+      const isE = e.code === 'KeyE';
 
-      if (isCtrlOrCmd && isShift && isK) {
+      if (isCtrlOrCmd && isShift && isE) {
         e.preventDefault();
         this.toggle();
       }
@@ -158,6 +175,11 @@ class MainOverlay {
         e.preventDefault();
         this.selectPrev();
       } else if (e.key === 'Enter') {
+        // Allow Enter to execute selected result, but ignore if input focused and nothing selected
+        if (this.selectedIndex < 0 && document.activeElement === this.elements.input) {
+          e.preventDefault();
+          return;
+        }
         e.preventDefault();
         this.executeSelected();
       }
@@ -166,22 +188,33 @@ class MainOverlay {
     console.log('[MainOverlay] Keyboard listeners setup');
   }
 
+  openWebSearch(query) {
+    const trimmed = (query || '').trim();
+    if (!trimmed) return;
+    const template = (this.searchEngine && this.searchEngine.url) ? this.searchEngine.url : 'https://www.google.com/search?q=%s';
+    const url = template.replace('%s', encodeURIComponent(trimmed));
+    chrome.tabs.create({ url });
+  }
+
   /**
    * Handle search input
    */
   async handleSearch(query) {
     console.log('[MainOverlay] Searching:', query);
-    
+
+    this.lastQuery = query;
+
     this.showLoading();
-    
+
     try {
       // Get current tab context
       const currentTab = await chrome.tabs.getCurrent();
-      
-      // Search
+
+      // Pass searchEngine to context
       this.currentResults = await this.engine.search(query, {
         currentTab,
-        isExtensionPage: true
+        isExtensionPage: true,
+        searchEngine: this.searchEngine
       });
 
       console.log('[MainOverlay] Results:', Object.keys(this.currentResults));
@@ -251,6 +284,27 @@ class MainOverlay {
     const resultsList = this.elements.results;
     resultsList.innerHTML = '';
     this.resultItems = [];
+
+    const trimmedQuery = (this.lastQuery || '').trim();
+    if (trimmedQuery) {
+      const header = document.createElement('div');
+      header.className = 'bm-result-category';
+      header.textContent = 'Search Online';
+      resultsList.appendChild(header);
+
+      const label = this.getSearchEngineLabel();
+      const item = {
+        id: 'search-online',
+        type: 'search-online',
+        icon: '🔍',
+        title: `${trimmedQuery} - Search with ${label}`,
+        description: '',
+        query: trimmedQuery
+      };
+      const element = this.createResultItem(item);
+      resultsList.appendChild(element);
+      this.resultItems.push({ item, element });
+    }
 
     // Map for "show more" URLs
     const showMoreUrls = {
@@ -438,7 +492,10 @@ class MainOverlay {
     try {
       let success = false;
 
-      if (item.id === 'save-session') {
+      if (item.type === 'search-online') {
+        this.openWebSearch(item.query || this.lastQuery);
+        success = true;
+      } else if (item.id === 'save-session') {
         // Close overlay first to avoid visual collision, then open modal
         this.close();
         await this.handleSaveSession();
@@ -474,6 +531,18 @@ class MainOverlay {
     } catch (error) {
       console.error('[MainOverlay] Execution error:', error);
     }
+  }
+
+  getSearchEngineLabel() {
+    const key = this.searchEngine && this.searchEngine.key ? this.searchEngine.key : 'google';
+    const labels = {
+      google: 'Google',
+      duckduckgo: 'DuckDuckGo',
+      bing: 'Bing',
+      yahoo: 'Yahoo',
+      custom: 'Custom'
+    };
+    return labels[key] || 'Google';
   }
 
   /**
@@ -537,6 +606,9 @@ class MainOverlay {
     this.elements.overlay.style.display = 'flex';
     this.elements.input.focus();
     this.elements.input.value = '';
+    if (this.elements.suffix) {
+      this.elements.suffix.style.display = 'none';
+    }
     // Load default results (actions, tabs, recent history)
     this.handleSearch('');
   }
@@ -627,8 +699,9 @@ class MainOverlay {
 
       .bm-search-wrapper {
         display: flex;
-        align-items: center;
-        gap: 10px;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 6px;
         padding: 12px 12px 0 12px;
       }
 

@@ -356,18 +356,6 @@ export class SearchEngine {
       }
     }
 
-    // If query looks like a URL, add web search
-    if (query && !query.includes(' ')) {
-      actions.push({
-        id: 'action-web-search',
-        type: 'action',
-        title: `Search "${query}"`,
-        description: 'Search the web',
-        icon: '🔍',
-        action: 'web-search',
-        query: query
-      });
-    }
 
     return actions;
   }
@@ -615,12 +603,13 @@ export class SearchEngine {
           }
           return false;
 
-        case 'web-search':
+        case 'web-search': {
           const query = encodeURIComponent(metadata.query || '');
-          await chrome.tabs.create({
-            url: `https://www.google.com/search?q=${query}`
-          });
+          let urlTemplate = metadata.engineUrl || 'https://www.google.com/search?q=%s';
+          let url = urlTemplate.replace('%s', query);
+          await chrome.tabs.create({ url });
           return true;
+        }
 
         case 'add-favorite':
           if (metadata.url && metadata.title) {

@@ -11,6 +11,8 @@ class ContentOverlay {
     this.currentResults = {};
     this.resultItems = [];
     this.myTabId = null;
+    this.searchEngine = { key: 'google', url: 'https://www.google.com/search?q=%s' };
+    this.lastQuery = '';
   }
 
   /**
@@ -21,6 +23,18 @@ class ContentOverlay {
     
     // Note: Content scripts don't have access to chrome.tabs API
     // Tab ID will be set by background when needed
+
+    // Load search engine from storage
+    try {
+      const data = await new Promise((resolve) => {
+        chrome.storage.local.get('searchEngine', resolve);
+      });
+      if (data && data.searchEngine && data.searchEngine.url && data.searchEngine.url.includes('%s')) {
+        this.searchEngine = data.searchEngine;
+      }
+    } catch (e) {
+      // fallback to default
+    }
 
     // Inject overlay HTML
     this.injectOverlay();
@@ -64,13 +78,15 @@ class ContentOverlay {
     overlay.innerHTML = `
       <div class="bmg-overlay-backdrop" id="bmg-overlay-backdrop"></div>
       <div class="bmg-overlay-modal" id="bmg-overlay-modal">
-        <input 
-          type="text" 
-          id="bmg-search-input" 
-          class="bmg-search-input" 
-          placeholder="Search bookmarks, history, tabs..."
-          autocomplete="off"
-        />
+        <div class="bmg-search-wrapper">
+          <input 
+            type="text" 
+            id="bmg-search-input" 
+            class="bmg-search-input" 
+            placeholder="Search bookmarks, history, tabs..."
+            autocomplete="off"
+          />
+        </div>
         <div class="bmg-results-container" id="bmg-results-container">
           <div class="bmg-loading" id="bmg-loading" style="display: none;">
             <div class="bmg-spinner"></div>
@@ -116,7 +132,10 @@ class ContentOverlay {
     this.elements.backdrop.addEventListener('click', () => this.close());
 
     // Search input
-    this.elements.input.addEventListener('input', (e) => this.handleSearch(e.target.value));
+    this.elements.input.addEventListener('input', (e) => {
+      const value = e.target.value || '';
+      this.handleSearch(value);
+    });
 
     // Prevent modal click from closing (but let it bubble for clicks inside)
     this.elements.modal.addEventListener('click', (e) => {
@@ -194,6 +213,11 @@ class ContentOverlay {
         e.preventDefault();
         this.selectPrev();
       } else if (e.key === 'Enter') {
+        // Allow Enter to execute selected result, but ignore if input focused and nothing selected
+        if (this.selectedIndex < 0 && document.activeElement === this.elements.input) {
+          e.preventDefault();
+          return;
+        }
         e.preventDefault();
         this.executeSelected();
       }
@@ -207,6 +231,8 @@ class ContentOverlay {
    */
   handleSearch(query) {
     console.log('[ContentOverlay] Searching:', query);
+
+    this.lastQuery = query;
     
     this.showLoading();
     
@@ -297,6 +323,27 @@ class ContentOverlay {
     this.resultItems = [];
 
     console.log('[ContentOverlay] displayResults called with:', Object.keys(this.currentResults));
+
+    const trimmedQuery = (this.lastQuery || '').trim();
+    if (trimmedQuery) {
+      const header = document.createElement('div');
+      header.className = 'bmg-result-category';
+      header.textContent = 'Search Online';
+      resultsList.appendChild(header);
+
+      const label = this.getSearchEngineLabel();
+      const item = {
+        id: 'search-online',
+        type: 'search-online',
+        icon: '🔍',
+        title: `${trimmedQuery} - Search with ${label}`,
+        description: '',
+        query: trimmedQuery
+      };
+      const element = this.createResultItem(item);
+      resultsList.appendChild(element);
+      this.resultItems.push({ item, element });
+    }
 
     // Map for "show more" URLs
     const showMoreUrls = {
@@ -487,7 +534,9 @@ class ContentOverlay {
   executeResult(item) {
     try {
       // Handle different result types
-      if (item.id === 'save-session') {
+      if (item.type === 'search-online') {
+        this.openWebSearch(item.query || this.lastQuery);
+      } else if (item.id === 'save-session') {
         // Close overlay first to avoid visual collision, then open modal
         this.close();
         this.handleSaveSession();
@@ -507,7 +556,8 @@ class ContentOverlay {
             tabId: item.tabId,
             title: item.title,
             query: item.query,
-            value: item.value
+            value: item.value,
+            engineUrl: item.engineUrl
           }
         }, (response) => {
           if (response && response.success) {
@@ -531,7 +581,8 @@ class ContentOverlay {
             tabId: item.tabId,
             title: item.title,
             query: item.query,
-            value: item.value
+            value: item.value,
+            engineUrl: item.engineUrl
           }
         }, (response) => {
           if (response && response.success) {
@@ -542,6 +593,37 @@ class ContentOverlay {
     } catch (error) {
       console.error('[ContentOverlay] Execute error:', error);
     }
+  }
+
+  openWebSearch(query) {
+    const trimmed = (query || '').trim();
+    if (!trimmed) return;
+    const template = (this.searchEngine && this.searchEngine.url) ? this.searchEngine.url : 'https://www.google.com/search?q=%s';
+    chrome.runtime.sendMessage({
+      type: 'EXECUTE_RESULT',
+      resultId: 'action-web-search',
+      resultType: 'action',
+      metadata: {
+        query: trimmed,
+        engineUrl: template
+      }
+    }, (response) => {
+      if (response && response.success) {
+        this.close();
+      }
+    });
+  }
+
+  getSearchEngineLabel() {
+    const key = this.searchEngine && this.searchEngine.key ? this.searchEngine.key : 'google';
+    const labels = {
+      google: 'Google',
+      duckduckgo: 'DuckDuckGo',
+      bing: 'Bing',
+      yahoo: 'Yahoo',
+      custom: 'Custom'
+    };
+    return labels[key] || 'Google';
   }
 
   /**
@@ -640,6 +722,9 @@ class ContentOverlay {
     this.elements.overlay.style.display = 'flex';
     this.elements.input.focus();
     this.elements.input.value = '';
+    if (this.elements.suffix) {
+      this.elements.suffix.style.display = 'none';
+    }
     // Load default results (actions, tabs, recent history)
     this.handleSearch('');
   }
@@ -815,12 +900,19 @@ class ContentOverlay {
         text-align: left;
       }
 
+      #bmg-http-overlay .bmg-search-wrapper {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        padding: 12px 16px 6px 16px;
+        border-bottom: 1px solid #eee;
+      }
+
       #bmg-http-overlay .bmg-search-input {
-        padding: 16px;
+        padding: 10px 0 0 0;
         border: none;
         font-size: 16px;
         outline: none;
-        border-bottom: 1px solid #eee;
         direction: ltr;
         unicode-bidi: isolate;
         text-align: left;
