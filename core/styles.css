@@ -1343,15 +1343,12 @@ body {
 }
 
 #bookmarks-root::-webkit-scrollbar-thumb {
-  background: var(--theme-border);
+  background: var(--theme-secondary);
   border-radius: 5px;
-  border: 2px solid transparent;
-  background-clip: content-box;
 }
 
 #bookmarks-root::-webkit-scrollbar-thumb:hover {
   background: var(--theme-primary);
-  background-clip: padding-box;
 }
 
 /* Left panel scrollbar */
@@ -1364,15 +1361,12 @@ body {
 }
 
 #bmg-left-panel-content::-webkit-scrollbar-thumb {
-  background: var(--theme-border);
+  background: var(--theme-secondary);
   border-radius: 4px;
-  border: 2px solid transparent;
-  background-clip: content-box;
 }
 
 #bmg-left-panel-content::-webkit-scrollbar-thumb:hover {
   background: var(--theme-primary);
-  background-clip: padding-box;
 }
 
 /* Right panel scrollbar */
@@ -1385,13 +1379,10 @@ body {
 }
 
 #bmg-right-panel-content::-webkit-scrollbar-thumb {
-  background: var(--theme-border);
+  background: var(--theme-secondary);
   border-radius: 4px;
-  border: 2px solid transparent;
-  background-clip: content-box;
 }
 
 #bmg-right-panel-content::-webkit-scrollbar-thumb:hover {
   background: var(--theme-primary);
-  background-clip: padding-box;
 }
