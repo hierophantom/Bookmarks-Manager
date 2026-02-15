@@ -634,6 +634,7 @@ body {
   overflow-x: hidden;
   padding-top: 12px;
   padding-bottom: 170px;
+  -webkit-overflow-scrolling: touch;
 }
 
 .bookmarks-hidden-indicator {
@@ -1331,22 +1332,36 @@ body {
   box-shadow: 0 0 0 3px rgba(0,102,255,0.1);
 }
 
-/* Custom Scrollbars - Theme-aware styling */
+/* Custom Scrollbars - Theme-aware styling with performance optimizations */
 
-/* Main bookmarks view scrollbar */
+/* Main content scrollable areas */
+.bookmarks-sections,
+#bookmarks-root,
+#bmg-left-panel-content,
+#bmg-right-panel-content,
+.debug-panel__output {
+  scrollbar-width: thin;
+  scrollbar-color: var(--theme-secondary) transparent;
+}
+
+/* Webkit browsers: Main bookmarks sections */
+.bookmarks-sections::-webkit-scrollbar,
 #bookmarks-root::-webkit-scrollbar {
   width: 10px;
 }
 
+.bookmarks-sections::-webkit-scrollbar-track,
 #bookmarks-root::-webkit-scrollbar-track {
   background: transparent;
 }
 
+.bookmarks-sections::-webkit-scrollbar-thumb,
 #bookmarks-root::-webkit-scrollbar-thumb {
   background: var(--theme-secondary);
   border-radius: 5px;
 }
 
+.bookmarks-sections::-webkit-scrollbar-thumb:hover,
 #bookmarks-root::-webkit-scrollbar-thumb:hover {
   background: var(--theme-primary);
 }
@@ -1384,5 +1399,23 @@ body {
 }
 
 #bmg-right-panel-content::-webkit-scrollbar-thumb:hover {
+  background: var(--theme-primary);
+}
+
+/* Debug panel scrollbar */
+.debug-panel__output::-webkit-scrollbar {
+  width: 8px;
+}
+
+.debug-panel__output::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.debug-panel__output::-webkit-scrollbar-thumb {
+  background: var(--theme-secondary);
+  border-radius: 4px;
+}
+
+.debug-panel__output::-webkit-scrollbar-thumb:hover {
   background: var(--theme-primary);
 }
