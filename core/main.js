@@ -126,9 +126,28 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (typeof onClose === 'function') {
         onClose();
       }
+      applySelectionFieldState(field, currentFilterTags && currentFilterTags.length > 0 ? 'selection' : 'idle');
     }
 
     function openMenu() {
+      // Close any other open selection field menus
+      document.querySelectorAll('.selection-field--active').forEach(otherField => {
+        if (otherField !== field) {
+          // Trigger click on other field to close it
+          const clickEvent = new MouseEvent('click', {
+            bubbles: true,
+            cancelable: true
+          });
+          otherField.dispatchEvent(clickEvent);
+        }
+      });
+
+      // Close View Settings menu if open
+      const openSettingsMenu = document.querySelector('[data-menu-type="view-settings"]');
+      if (openSettingsMenu) {
+        openSettingsMenu.remove();
+      }
+
       if (menuWrapper) {
         menuWrapper.remove();
       }
@@ -312,6 +331,18 @@ document.addEventListener('DOMContentLoaded', async () => {
               await render(true);
             }
           }
+        });
+
+        // Mark this as view settings menu
+        menu.setAttribute('data-menu-type', 'view-settings');
+
+        // Close any open selection fields
+        document.querySelectorAll('.selection-field--active').forEach(field => {
+          const clickEvent = new MouseEvent('click', {
+            bubbles: true,
+            cancelable: true
+          });
+          field.dispatchEvent(clickEvent);
         });
 
         // Position menu relative to button
