@@ -831,8 +831,8 @@ body {
 /* Favicon styling */
 .bookmark-favicon {
   display: inline-block;
-  width: 16px;
-  height: 16px;
+  width: 30px;
+  height: 30px;
   vertical-align: middle;
   flex-shrink: 0;
   border-radius: 2px;
