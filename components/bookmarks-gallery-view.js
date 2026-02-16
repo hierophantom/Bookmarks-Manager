@@ -80,6 +80,13 @@ function createBookmarksGalleryView(options = {}) {
       }
     });
     view.appendChild(actionsEl);
+
+    if (state === 'idle') {
+      const shouldShow = showIdleActions === null ? true : showIdleActions;
+      if (shouldShow) {
+        view.classList.add('bookmarks-gallery-view--actions-visible');
+      }
+    }
   }
 
   return view;

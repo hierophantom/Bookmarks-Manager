@@ -119,7 +119,8 @@
 }
 
 .bookmarks-gallery-view--hover .bookmarks-gallery-view__actions,
-.bookmarks-gallery-view:hover .bookmarks-gallery-view__actions {
+.bookmarks-gallery-view:hover .bookmarks-gallery-view__actions,
+.bookmarks-gallery-view--actions-visible .bookmarks-gallery-view__actions {
   opacity: 1;
   pointer-events: auto;
 }

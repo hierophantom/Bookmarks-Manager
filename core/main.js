@@ -903,22 +903,17 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function createBookmarkTile(child, tags = []) {
       perf.tilesRendered += 1;
-      const hoverActions = [];
       
-      // Add tag button first if tags exist
-      if (tags && tags.length > 0) {
-        const tagTooltip = tags.map(t => `#${t}`).join(', ');
-        const labelAction = createCubeActionButton({
-          icon: 'label',
-          label: 'Tags',
-          tooltip: tagTooltip,
-          onClick: (event) => {
-            event.stopPropagation();
-            BookmarksService.editBookmarkPrompt(child.id).then(() => render(true));
-          }
-        });
-        hoverActions.push(labelAction);
-      }
+      // Create tag button only if tags exist
+      const labelAction = (tags && tags.length > 0) ? createCubeActionButton({
+        icon: 'label',
+        label: 'Tags',
+        tooltip: tags.map(t => `#${t}`).join(', '),
+        onClick: (event) => {
+          event.stopPropagation();
+          BookmarksService.editBookmarkPrompt(child.id).then(() => render(true));
+        }
+      }) : null;
       
       const editAction = createCubeActionButton({
         icon: 'edit',
@@ -929,8 +924,6 @@ document.addEventListener('DOMContentLoaded', async () => {
           BookmarksService.editBookmarkPrompt(child.id).then(() => render(true));
         }
       });
-      hoverActions.push(editAction);
-      
       const deleteAction = createCubeActionButton({
         icon: 'close',
         label: 'Remove',
@@ -945,7 +938,6 @@ document.addEventListener('DOMContentLoaded', async () => {
           })();
         }
       });
-      hoverActions.push(deleteAction);
 
       const urlHost = (() => {
         try { return new URL(child.url).hostname.replace(/^www\./, ''); } catch (e) { return 'Website'; }
@@ -957,12 +949,35 @@ document.addEventListener('DOMContentLoaded', async () => {
         label: child.title || child.url,
         subtext: urlHost,
         icon: createFaviconIcon(child.url),
-        actions: hoverActions
+        idleActions: [],
+        showIdleActions: false
       });
 
       const actionsContainer = tile.querySelector('.bookmarks-gallery-view__actions');
       if (actionsContainer) {
-        // Actions already set up in createBookmarksGalleryView
+        tile.addEventListener('mouseenter', () => {
+          // Add tag button first if it exists
+          if (labelAction && !actionsContainer.contains(labelAction)) {
+            actionsContainer.appendChild(labelAction);
+          }
+          if (editAction && !actionsContainer.contains(editAction)) {
+            actionsContainer.appendChild(editAction);
+          }
+          if (deleteAction && !actionsContainer.contains(deleteAction)) {
+            actionsContainer.appendChild(deleteAction);
+          }
+        });
+        tile.addEventListener('mouseleave', () => {
+          if (labelAction && labelAction.parentNode === actionsContainer) {
+            actionsContainer.removeChild(labelAction);
+          }
+          if (editAction && editAction.parentNode === actionsContainer) {
+            actionsContainer.removeChild(editAction);
+          }
+          if (deleteAction && deleteAction.parentNode === actionsContainer) {
+            actionsContainer.removeChild(deleteAction);
+          }
+        });
       }
 
       tile.dataset.id = child.id;
