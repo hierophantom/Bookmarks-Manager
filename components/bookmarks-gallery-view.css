@@ -113,26 +113,33 @@
   align-items: center;
   gap: 4px;
   opacity: 0;
-  transition: opacity 0.2s ease;
+  transition: opacity 0.2s ease, top 0.2s ease;
   pointer-events: none;
 }
 
-/* Idle actions positioned lower */
+/* Idle actions start at top */
 .bookmarks-gallery-view__actions--idle {
+  top: -8px;
+}
+
+/* On hover, idle actions move down */
+.bookmarks-gallery-view:hover .bookmarks-gallery-view__actions--idle {
   top: 12px;
 }
 
-/* Hover actions positioned at top */
+/* Hover actions always at top */
 .bookmarks-gallery-view__actions--hover {
   top: -8px;
 }
 
+/* Show hover actions on hover */
 .bookmarks-gallery-view--hover .bookmarks-gallery-view__actions--hover,
 .bookmarks-gallery-view:hover .bookmarks-gallery-view__actions--hover {
   opacity: 1;
   pointer-events: auto;
 }
 
+/* Show idle actions when they should be visible */
 .bookmarks-gallery-view--idle-actions-visible .bookmarks-gallery-view__actions--idle {
   opacity: 1;
   pointer-events: auto;
