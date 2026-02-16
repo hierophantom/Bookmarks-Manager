@@ -99,6 +99,33 @@
   height: 12px;
 }
 
+/* Clear button */
+.search-comp__clear {
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  padding: 0;
+  color: var(--search-icon, var(--common-common-bright-15, rgba(255, 255, 255, 0.6)));
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  flex-shrink: 0;
+}
+
+.search-comp__clear .material-symbols-outlined {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.search-comp--has-value .search-comp__clear {
+  opacity: 1;
+  pointer-events: auto;
+}
+
 /* Low contrast variant */
 .search-comp--low {
   --search-bg: var(--common-common-bright-05, rgba(255, 255, 255, 0.1));

@@ -74,6 +74,17 @@ function createSearchComp(options = {}) {
   input.value = value;
   input.setAttribute('aria-label', ariaLabel);
 
+  // Clear button
+  const clearButton = document.createElement('button');
+  clearButton.className = 'search-comp__clear';
+  clearButton.type = 'button';
+  clearButton.setAttribute('aria-label', 'Clear search');
+  clearButton.innerHTML = "<span class='material-symbols-outlined' aria-hidden='true'>close</span>";
+
+  const setHasValue = (hasValue) => {
+    container.classList.toggle('search-comp--has-value', hasValue);
+  };
+
   if (disabled) {
     input.disabled = true;
     container.classList.add('search-comp--disabled');
@@ -97,14 +108,20 @@ function createSearchComp(options = {}) {
   // Assemble
   container.appendChild(iconEl);
   container.appendChild(input);
+  container.appendChild(clearButton);
   if (shortcutEl) {
     container.appendChild(shortcutEl);
   }
 
+  setHasValue(Boolean(input.value));
+
   // Events
-  if (typeof onInput === 'function') {
-    input.addEventListener('input', event => onInput(event, input.value));
-  }
+  input.addEventListener('input', event => {
+    setHasValue(Boolean(input.value));
+    if (typeof onInput === 'function') {
+      onInput(event, input.value);
+    }
+  });
 
   if (typeof onSubmit === 'function') {
     input.addEventListener('keydown', event => {
@@ -113,6 +130,15 @@ function createSearchComp(options = {}) {
       }
     });
   }
+
+  clearButton.addEventListener('click', (event) => {
+    event.stopPropagation();
+    if (!input.value) return;
+    input.value = '';
+    setHasValue(false);
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    input.focus();
+  });
 
   return container;
 }
@@ -127,6 +153,7 @@ function updateSearchCompValue(searchComp, value) {
   if (input) {
     input.value = value;
   }
+  searchComp.classList.toggle('search-comp--has-value', Boolean(value));
 }
 
 /**

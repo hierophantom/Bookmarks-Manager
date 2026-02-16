@@ -20,6 +20,7 @@
  * @param {string} [options.contrast='low'] - 'low' or 'high'
  * @param {HTMLElement} [options.menu] - Optional selection menu element
  * @param {Function} [options.onToggle] - Toggle handler
+ * @param {Function} [options.onClear] - Clear selection handler
  * @returns {HTMLDivElement} The selection field element
  */
 function createSelectionField(options = {}) {
@@ -29,7 +30,8 @@ function createSelectionField(options = {}) {
     state = 'idle',
     contrast = 'low',
     menu = null,
-    onToggle = null
+    onToggle = null,
+    onClear = null
   } = options;
 
   const field = document.createElement('div');
@@ -45,10 +47,27 @@ function createSelectionField(options = {}) {
     ? "<svg viewBox='0 0 12 12' aria-hidden='true'><path d='M6 4L2 8h8z'/></svg>"
     : "<svg viewBox='0 0 12 12' aria-hidden='true'><path d='M2 4h8L6 8z'/></svg>";
 
+  let clearButton = null;
+  if (typeof onClear === 'function') {
+    clearButton = document.createElement('button');
+    clearButton.className = 'selection-field__clear';
+    clearButton.type = 'button';
+    clearButton.setAttribute('aria-label', 'Clear selection');
+    clearButton.innerHTML = "<span class='material-symbols-outlined' aria-hidden='true'>close</span>";
+    clearButton.addEventListener('click', (event) => {
+      event.stopPropagation();
+      onClear();
+    });
+  }
+
   field.appendChild(labelEl);
+  if (clearButton) {
+    field.appendChild(clearButton);
+  }
   field.appendChild(iconEl);
 
   applySelectionFieldState(field, state);
+  updateSelectionFieldSelectionState(field, state === 'selection');
 
   if (menu) {
     const menuWrapper = document.createElement('div');
@@ -78,6 +97,15 @@ function applySelectionFieldState(field, state) {
 }
 
 /**
+ * Updates selection field selection state
+ * @param {HTMLDivElement} field - Selection field element
+ * @param {boolean} hasSelection - Whether selection exists
+ */
+function updateSelectionFieldSelectionState(field, hasSelection) {
+  field.classList.toggle('selection-field--has-selection', hasSelection);
+}
+
+/**
  * Updates selection field label
  * @param {HTMLDivElement} field - Selection field element
  * @param {string} label - New label
@@ -104,6 +132,7 @@ if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
     createSelectionField,
     applySelectionFieldState,
+    updateSelectionFieldSelectionState,
     updateSelectionFieldLabel,
     updateSelectionFieldContrast
   };

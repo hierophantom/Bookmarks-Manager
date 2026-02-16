@@ -19,7 +19,7 @@
   border: 1px solid transparent;
   background: var(--selection-field-bg, var(--primary-primary-10, rgba(46, 51, 185, 0.4)));
   font-family: var(--font-family-sans-serif, 'Lato', sans-serif);
-  font-size: var(--size-medium, 12px);
+  font-size: 16px;
   font-weight: var(--weight-regular, 400);
   color: var(--selection-field-text, var(--common-common-bright-20, rgba(255, 255, 255, 0.8)));
   cursor: pointer;
@@ -51,6 +51,29 @@
   height: 12px;
   display: block;
   fill: currentColor;
+}
+
+.selection-field__clear {
+  width: 16px;
+  height: 16px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  padding: 0;
+  color: currentColor;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.selection-field__clear .material-symbols-outlined {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.selection-field--has-selection .selection-field__clear {
+  display: flex;
 }
 
 /* State styles */

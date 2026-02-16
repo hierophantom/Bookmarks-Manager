@@ -13,6 +13,7 @@
   /* Layout */
   display: flex;
   align-items: center;
+  gap: 8px;
   
   /* Sizing */
   height: 36px;
@@ -48,6 +49,33 @@
 
 .text-field__input::placeholder {
   color: var(--text-field-placeholder, var(--common-common-bright-15, rgba(255, 255, 255, 0.6)));
+}
+
+/* Clear button */
+.text-field__clear {
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  padding: 0;
+  color: var(--text-field-placeholder, var(--common-common-bright-15, rgba(255, 255, 255, 0.6)));
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  flex-shrink: 0;
+}
+
+.text-field__clear .material-symbols-outlined {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.text-field--has-value .text-field__clear {
+  opacity: 1;
+  pointer-events: auto;
 }
 
 /* Low contrast variant */

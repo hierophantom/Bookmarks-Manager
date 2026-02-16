@@ -191,7 +191,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     const tagField = createSelectionField({
       label: 'Filter by tag',
       contrast: 'low',
-      state: 'idle'
+      state: 'idle',
+      onClear: () => {
+        currentFilterTags = [];
+        updateTagFieldLabel();
+        render(true);
+      }
     });
 
     const sortSections = [
@@ -219,12 +224,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     function updateSortFieldLabel() {
       const selected = sortValues.find(option => option.value === currentSort) || sortValues[0];
       updateSelectionFieldLabel(sortField, `Sort by: ${selected.label}`);
+      const hasSelection = currentSort !== 'none';
+      updateSelectionFieldSelectionState(sortField, hasSelection);
+      applySelectionFieldState(sortField, hasSelection ? 'selection' : 'idle');
     }
 
     const sortField = createSelectionField({
       label: 'Sort by: Default',
       contrast: 'low',
-      state: 'idle'
+      state: 'idle',
+      onClear: () => {
+        currentSort = 'none';
+        updateSortFieldLabel();
+        render(true);
+      }
     });
     updateSortFieldLabel();
 
@@ -245,7 +258,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         ? `${currentFilterTags.length} tags selected`
         : 'Filter by tag';
       updateSelectionFieldLabel(tagField, label);
-      applySelectionFieldState(tagField, currentFilterTags.length > 0 ? 'selection' : 'idle');
+      const hasSelection = currentFilterTags.length > 0;
+      updateSelectionFieldSelectionState(tagField, hasSelection);
+      applySelectionFieldState(tagField, hasSelection ? 'selection' : 'idle');
     }
 
     updateTagFieldLabel();
@@ -302,7 +317,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
     }, () => {
       updateSortFieldLabel();
-      applySelectionFieldState(sortField, 'idle');
     });
 
     const settingsButton = createActionButton({
