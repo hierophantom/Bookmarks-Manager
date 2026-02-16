@@ -32,7 +32,7 @@
   
   /* Positioning */
   position: absolute;
-  z-index: 9999;
+  z-index: 2001;
   pointer-events: none;
   
   /* Behavior */
@@ -54,6 +54,13 @@
 .tooltip__text {
   white-space: pre;
   text-align: center;
+}
+
+.tooltip--quote .tooltip__text {
+  min-width: 400px;
+  max-width: 400px;
+  font-size: 16px;
+  white-space: normal;
 }
 
 /* Position variants */

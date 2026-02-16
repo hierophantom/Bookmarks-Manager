@@ -235,7 +235,8 @@ body {
 
 /* ===== TOPBAR ===== */
 .topbar {
-  z-index: 20;
+  position: relative;
+  z-index: 2000;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -304,12 +305,21 @@ body {
   font-weight: 400;
   color: var(--ui-bright-25);
   min-height: 20px;
+  min-width: 0;
 }
 
 
 .topbar__quote-text {
   color: var(--ui-bright-25);
-  font-size: var(--body--reg);
+  font-size: var(--body--bold, 16px);
+  flex: 1;
+  min-width: 0;
+  max-width: 320px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: inline-block;
+  position: relative;
 }
 
 .topbar__quote-sep {
@@ -322,6 +332,7 @@ body {
   text-decoration: none;
   line-height: 1.2;
   font-size: var(--body--reg);
+  flex-shrink: 0;
 }
 
 .topbar__quote-author:hover {

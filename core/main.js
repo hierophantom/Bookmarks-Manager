@@ -58,7 +58,23 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     try {
       const quote = await DailyQuoteService.getQuote();
-      if (quoteText) quoteText.textContent = `"${quote.text}"`;
+      if (quoteText) {
+        const fullQuote = `"${quote.text}"`;
+        quoteText.textContent = fullQuote;
+        if (typeof createTooltip === 'function') {
+          const quoteTooltip = createTooltip({
+            text: fullQuote,
+            target: quoteText,
+            position: 'bottom',
+            delay: 'fast'
+          });
+          if (quoteTooltip && quoteTooltip.element) {
+            quoteTooltip.element.classList.add('tooltip--quote');
+          }
+        } else {
+          quoteText.setAttribute('title', fullQuote);
+        }
+      }
       if (quoteAuthor) {
         const authorName = quote.author;
         const wikipediaUrl = `https://en.wikipedia.org/wiki/${encodeURIComponent(authorName.replace(/ /g, '_'))}`;
