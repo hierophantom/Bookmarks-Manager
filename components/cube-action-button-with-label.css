@@ -5,7 +5,7 @@
  * Based on Figma: node-id=93-12064
  * 
  * Button with icon (12x12px) + text label
- * Height: 24px
+ * Height: 20px
  * Color Schemes: Primary, Default, Destructive
  */
 
@@ -17,8 +17,8 @@
   gap: 4px;
   
   /* Sizing */
-  height: 24px;
-  min-width: 24px;
+  height: 20px;
+  min-width: 20px;
   padding: 0 12px;
   
   /* Appearance */
@@ -134,15 +134,15 @@
 /* Icon-only variant (no label) */
 .cube-action-button-with-label--icon-only {
   padding: var(--spacing-small, 2px);
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
 }
 
 /* Size variants */
 
 /* Small (default) */
 .cube-action-button-with-label--small {
-  height: 24px;
+  height: 20px;
   font-size: 12px;
 }
 

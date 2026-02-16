@@ -4,7 +4,7 @@
  * Design System Component - BMG-97
  * Based on Figma: node-id=93-11989
  * 
- * Smaller icon-only button (24x24px) with two color schemes
+ * Smaller icon-only button (20x20px) with two color schemes
  * States: Idle, Hover
  * Color Schemes: Default, Destructive
  */
@@ -17,10 +17,10 @@
   justify-content: center;
   
   /* Sizing */
-  width: 24px;
-  height: 24px;
-  min-width: 24px;
-  min-height: 24px;
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  min-height: 20px;
   padding: 0;
   
   /* Appearance */
