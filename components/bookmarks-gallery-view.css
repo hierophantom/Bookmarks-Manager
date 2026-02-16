@@ -108,39 +108,18 @@
 
 .bookmarks-gallery-view__actions {
   position: absolute;
+  top: -8px;
   right: -8px;
   display: flex;
   align-items: center;
   gap: 4px;
   opacity: 0;
-  transition: opacity 0.2s ease, top 0.2s ease;
+  transition: opacity 0.2s ease;
   pointer-events: none;
 }
 
-/* Idle actions start at top */
-.bookmarks-gallery-view__actions--idle {
-  top: -8px;
-}
-
-/* On hover, idle actions move down */
-.bookmarks-gallery-view:hover .bookmarks-gallery-view__actions--idle {
-  top: 12px;
-}
-
-/* Hover actions always at top */
-.bookmarks-gallery-view__actions--hover {
-  top: -8px;
-}
-
-/* Show hover actions on hover */
-.bookmarks-gallery-view--hover .bookmarks-gallery-view__actions--hover,
-.bookmarks-gallery-view:hover .bookmarks-gallery-view__actions--hover {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-/* Show idle actions when they should be visible */
-.bookmarks-gallery-view--idle-actions-visible .bookmarks-gallery-view__actions--idle {
+.bookmarks-gallery-view--hover .bookmarks-gallery-view__actions,
+.bookmarks-gallery-view:hover .bookmarks-gallery-view__actions {
   opacity: 1;
   pointer-events: auto;
 }

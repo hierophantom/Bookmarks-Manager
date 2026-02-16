@@ -903,9 +903,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function createBookmarkTile(child, tags = []) {
       perf.tilesRendered += 1;
-      const idleActions = [];
+      const hoverActions = [];
       
-      // Only show tag button if tags exist
+      // Add tag button first if tags exist
       if (tags && tags.length > 0) {
         const tagTooltip = tags.map(t => `#${t}`).join(', ');
         const labelAction = createCubeActionButton({
@@ -917,7 +917,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             BookmarksService.editBookmarkPrompt(child.id).then(() => render(true));
           }
         });
-        idleActions.push(labelAction);
+        hoverActions.push(labelAction);
       }
       
       const editAction = createCubeActionButton({
@@ -929,6 +929,8 @@ document.addEventListener('DOMContentLoaded', async () => {
           BookmarksService.editBookmarkPrompt(child.id).then(() => render(true));
         }
       });
+      hoverActions.push(editAction);
+      
       const deleteAction = createCubeActionButton({
         icon: 'close',
         label: 'Remove',
@@ -943,6 +945,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           })();
         }
       });
+      hoverActions.push(deleteAction);
 
       const urlHost = (() => {
         try { return new URL(child.url).hostname.replace(/^www\./, ''); } catch (e) { return 'Website'; }
@@ -954,28 +957,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         label: child.title || child.url,
         subtext: urlHost,
         icon: createFaviconIcon(child.url),
-        idleActions: idleActions,
-        showIdleActions: idleActions.length > 0
+        actions: hoverActions
       });
 
       const actionsContainer = tile.querySelector('.bookmarks-gallery-view__actions');
       if (actionsContainer) {
-        tile.addEventListener('mouseenter', () => {
-          if (editAction && !actionsContainer.contains(editAction)) {
-            actionsContainer.appendChild(editAction);
-          }
-          if (deleteAction && !actionsContainer.contains(deleteAction)) {
-            actionsContainer.appendChild(deleteAction);
-          }
-        });
-        tile.addEventListener('mouseleave', () => {
-          if (editAction && editAction.parentNode === actionsContainer) {
-            actionsContainer.removeChild(editAction);
-          }
-          if (deleteAction && deleteAction.parentNode === actionsContainer) {
-            actionsContainer.removeChild(deleteAction);
-          }
-        });
+        // Actions already set up in createBookmarksGalleryView
       }
 
       tile.dataset.id = child.id;

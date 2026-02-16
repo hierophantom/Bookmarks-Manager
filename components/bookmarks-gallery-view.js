@@ -67,35 +67,19 @@ function createBookmarksGalleryView(options = {}) {
   const defaultIdleActions = getDefaultBookmarksGalleryViewActions(type, 'idle');
   const defaultHoverActions = getDefaultBookmarksGalleryViewActions(type, 'hover');
 
-  // Create idle actions container (positioned at top: 12px)
-  const idleActionsToRender = Array.isArray(idleActions) ? idleActions : defaultIdleActions;
-  if (idleActionsToRender.length > 0) {
-    const idleActionsEl = document.createElement('div');
-    idleActionsEl.className = 'bookmarks-gallery-view__actions bookmarks-gallery-view__actions--idle';
-    idleActionsToRender.forEach((actionEl) => {
-      if (actionEl instanceof HTMLElement) {
-        idleActionsEl.appendChild(actionEl);
-      }
-    });
-    view.appendChild(idleActionsEl);
-    
-    const shouldShow = showIdleActions === null ? true : showIdleActions;
-    if (shouldShow) {
-      view.classList.add('bookmarks-gallery-view--idle-actions-visible');
-    }
-  }
+  const actionsToRender = state === 'idle'
+    ? (Array.isArray(idleActions) ? idleActions : defaultIdleActions)
+    : (Array.isArray(actions) ? actions : defaultHoverActions);
 
-  // Create hover actions container (positioned at top: -8px)
-  const hoverActionsToRender = Array.isArray(actions) ? actions : defaultHoverActions;
-  if (hoverActionsToRender.length > 0) {
-    const hoverActionsEl = document.createElement('div');
-    hoverActionsEl.className = 'bookmarks-gallery-view__actions bookmarks-gallery-view__actions--hover';
-    hoverActionsToRender.forEach((actionEl) => {
+  if (actionsToRender.length > 0) {
+    const actionsEl = document.createElement('div');
+    actionsEl.className = 'bookmarks-gallery-view__actions';
+    actionsToRender.forEach((actionEl) => {
       if (actionEl instanceof HTMLElement) {
-        hoverActionsEl.appendChild(actionEl);
+        actionsEl.appendChild(actionEl);
       }
     });
-    view.appendChild(hoverActionsEl);
+    view.appendChild(actionsEl);
   }
 
   return view;
