@@ -789,15 +789,18 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       for (const child of results) {
         if (thisRender !== renderVersion) return;
-        const labelAction = createCubeActionButton({
+        const bookmarkTags = getTagsForId(child.id);
+        const tagAction = bookmarkTags.length > 0 ? createCubeActionButton({
           icon: 'label',
           label: 'Tags',
-          tooltip: 'Tags',
           onClick: (event) => {
             event.stopPropagation();
-            BookmarksService.editBookmarkPrompt(child.id).then(() => render(true));
+            BookmarkModals.tags(child.id).then(() => render(true));
           }
-        });
+        }) : null;
+        if (tagAction && bookmarkTags.length > 0) {
+          tagAction.setAttribute('title', bookmarkTags.join(', '));
+        }
         const editAction = createCubeActionButton({
           icon: 'edit',
           label: 'Edit',
@@ -834,8 +837,8 @@ document.addEventListener('DOMContentLoaded', async () => {
           label: child.title || child.url,
           subtext: urlHost,
           icon: createFaviconIcon(child.url),
-          actions: [labelAction, editAction, deleteAction],
-          idleActions: [labelAction]
+          actions: tagAction ? [tagAction, editAction, deleteAction] : [editAction, deleteAction],
+          idleActions: tagAction ? [tagAction] : []
         });
         tile.dataset.id = child.id;
         tile.draggable = true;
