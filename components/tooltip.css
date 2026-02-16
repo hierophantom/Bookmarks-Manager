@@ -17,7 +17,7 @@
   
   /* Sizing */
   min-height: 18px;
-  padding: 2px 4px;
+  padding: 4px 8px;
   
   /* Appearance */
   background: var(--common-common-dark-25, rgba(0, 0, 0, 0.8));
@@ -52,10 +52,7 @@
 
 /* Tooltip text */
 .tooltip__text {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 200px;
-  white-space: pre-line;
+  white-space: pre;
   text-align: center;
 }
 
