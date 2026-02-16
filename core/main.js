@@ -917,7 +917,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       
       // Debug: Log when tag button is created
       if (window.__bmgPerf) {
-        console.log(`Bookmark: ${child.title}, Tags: ${JSON.stringify(tags)}, Has labelAction: ${!!labelAction}`);
+        console.log('Bookmark:', child.title, 'Tags:', tags, 'Has labelAction:', !!labelAction);
       }
       
       const editAction = createCubeActionButton({
