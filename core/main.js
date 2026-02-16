@@ -674,8 +674,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     let filterText = (textSearchInput && textSearchInput.value.trim().toLowerCase()) || '';
     const filterActive = (currentFilterTags && currentFilterTags.length > 0) || !!filterText;
     const useTagFilter = currentFilterTags && currentFilterTags.length > 0;
-    // Always fetch tagsMap to determine which bookmarks have tags
-    const tagsMap = typeof TagsService !== 'undefined'
+    const tagsMap = useTagFilter && typeof TagsService !== 'undefined'
       ? await TagsService.getAll()
       : null;
     const getTagsForId = (id) => (tagsMap && tagsMap[id]) ? tagsMap[id] : [];
@@ -901,25 +900,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
     }
 
-    function createBookmarkTile(child, tags = []) {
+    function createBookmarkTile(child) {
       perf.tilesRendered += 1;
-      
-      // Debug: Check if tags actually exist
-      console.log(`[BMG] Bookmark: "${child.title}", tags:`, tags, 'length:', tags ? tags.length : 0);
-      
-      // Create tag button only if tags exist
-      const labelAction = (tags && tags.length > 0) ? createCubeActionButton({
-        icon: 'label',
-        label: 'Tags',
-        tooltip: tags.map(t => `#${t}`).join(', '),
-        onClick: (event) => {
-          event.stopPropagation();
-          BookmarksService.editBookmarkPrompt(child.id).then(() => render(true));
-        }
-      }) : null;
-      
-      console.log(`[BMG] labelAction created:`, labelAction !== null);
-      
       const editAction = createCubeActionButton({
         icon: 'edit',
         label: 'Edit',
@@ -954,30 +936,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         label: child.title || child.url,
         subtext: urlHost,
         icon: createFaviconIcon(child.url),
-        actions: []  // Empty actions so container is created for hover
+        idleActions: [],
+        showIdleActions: false
       });
 
-      // Ensure actions container exists (create if not present)
-      let actionsContainer = tile.querySelector('.bookmarks-gallery-view__actions');
-      if (!actionsContainer) {
-        actionsContainer = document.createElement('div');
-        actionsContainer.className = 'bookmarks-gallery-view__actions';
-        tile.appendChild(actionsContainer);
-      }
-      
+      const actionsContainer = tile.querySelector('.bookmarks-gallery-view__actions');
       if (actionsContainer) {
         tile.addEventListener('mouseenter', () => {
-          // Always add edit
           if (editAction && !actionsContainer.contains(editAction)) {
             actionsContainer.appendChild(editAction);
           }
-          // Always add delete
           if (deleteAction && !actionsContainer.contains(deleteAction)) {
             actionsContainer.appendChild(deleteAction);
-          }
-          // Only add tag button if it was created (i.e., bookmark has tags)
-          if (labelAction !== null && !actionsContainer.contains(labelAction)) {
-            actionsContainer.appendChild(labelAction);
           }
         });
         tile.addEventListener('mouseleave', () => {
@@ -986,9 +956,6 @@ document.addEventListener('DOMContentLoaded', async () => {
           }
           if (deleteAction && deleteAction.parentNode === actionsContainer) {
             actionsContainer.removeChild(deleteAction);
-          }
-          if (labelAction !== null && labelAction.parentNode === actionsContainer) {
-            actionsContainer.removeChild(labelAction);
           }
         });
       }
@@ -1264,8 +1231,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
 
             if (child.url) {
-              const tags = getTagsForId(child.id);
-              sectionItems.push(createBookmarkTile(child, tags));
+              sectionItems.push(createBookmarkTile(child));
             } else {
               if (hideNestedFolders) continue;
               if (seenChildFolderIds.has(child.id)) continue;
