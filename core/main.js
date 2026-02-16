@@ -984,7 +984,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             actionsContainer.removeChild(labelAction);
           }
         });
-      }      }
+      }
 
       tile.dataset.id = child.id;
       tile.draggable = true;
