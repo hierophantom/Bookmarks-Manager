@@ -904,6 +904,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     function createBookmarkTile(child, tags = []) {
       perf.tilesRendered += 1;
       
+      // Debug: Check if tags actually exist
+      console.log(`[BMG] Bookmark: "${child.title}", tags:`, tags, 'length:', tags ? tags.length : 0);
+      
       // Create tag button only if tags exist
       const labelAction = (tags && tags.length > 0) ? createCubeActionButton({
         icon: 'label',
@@ -915,10 +918,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
       }) : null;
       
-      // Debug: Log when tag button is created
-      if (window.__bmgPerf) {
-        console.log('Bookmark:', child.title, 'Tags:', tags, 'Has labelAction:', !!labelAction);
-      }
+      console.log(`[BMG] labelAction created:`, labelAction !== null);
       
       const editAction = createCubeActionButton({
         icon: 'edit',
@@ -967,14 +967,16 @@ document.addEventListener('DOMContentLoaded', async () => {
       
       if (actionsContainer) {
         tile.addEventListener('mouseenter', () => {
-          // Add in order: Edit, Delete, Tag (if exists)
+          // Always add edit
           if (editAction && !actionsContainer.contains(editAction)) {
             actionsContainer.appendChild(editAction);
           }
+          // Always add delete
           if (deleteAction && !actionsContainer.contains(deleteAction)) {
             actionsContainer.appendChild(deleteAction);
           }
-          if (labelAction && !actionsContainer.contains(labelAction)) {
+          // Only add tag button if it was created (i.e., bookmark has tags)
+          if (labelAction !== null && !actionsContainer.contains(labelAction)) {
             actionsContainer.appendChild(labelAction);
           }
         });
@@ -985,7 +987,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           if (deleteAction && deleteAction.parentNode === actionsContainer) {
             actionsContainer.removeChild(deleteAction);
           }
-          if (labelAction && labelAction.parentNode === actionsContainer) {
+          if (labelAction !== null && labelAction.parentNode === actionsContainer) {
             actionsContainer.removeChild(labelAction);
           }
         });
