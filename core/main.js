@@ -674,7 +674,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     let filterText = (textSearchInput && textSearchInput.value.trim().toLowerCase()) || '';
     const filterActive = (currentFilterTags && currentFilterTags.length > 0) || !!filterText;
     const useTagFilter = currentFilterTags && currentFilterTags.length > 0;
-    const tagsMap = useTagFilter && typeof TagsService !== 'undefined'
+    // Always fetch tagsMap to show tag button for bookmarks with tags
+    const tagsMap = typeof TagsService !== 'undefined'
       ? await TagsService.getAll()
       : null;
     const getTagsForId = (id) => (tagsMap && tagsMap[id]) ? tagsMap[id] : [];
@@ -900,8 +901,20 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
     }
 
-    function createBookmarkTile(child) {
+    function createBookmarkTile(child, tags = []) {
       perf.tilesRendered += 1;
+      
+      // Only create tag button if bookmark has tags
+      const labelAction = (tags && tags.length > 0) ? createCubeActionButton({
+        icon: 'label',
+        label: 'Tags',
+        tooltip: tags.map(t => `#${t}`).join(', '),
+        onClick: (event) => {
+          event.stopPropagation();
+          BookmarksService.editBookmarkPrompt(child.id).then(() => render(true));
+        }
+      }) : null;
+      
       const editAction = createCubeActionButton({
         icon: 'edit',
         label: 'Edit',
@@ -949,6 +962,10 @@ document.addEventListener('DOMContentLoaded', async () => {
           if (deleteAction && !actionsContainer.contains(deleteAction)) {
             actionsContainer.appendChild(deleteAction);
           }
+          // Add tag button if it exists (bookmark has tags)
+          if (labelAction !== null && !actionsContainer.contains(labelAction)) {
+            actionsContainer.appendChild(labelAction);
+          }
         });
         tile.addEventListener('mouseleave', () => {
           if (editAction && editAction.parentNode === actionsContainer) {
@@ -956,6 +973,10 @@ document.addEventListener('DOMContentLoaded', async () => {
           }
           if (deleteAction && deleteAction.parentNode === actionsContainer) {
             actionsContainer.removeChild(deleteAction);
+          }
+          // Remove tag button if it exists
+          if (labelAction !== null && labelAction.parentNode === actionsContainer) {
+            actionsContainer.removeChild(labelAction);
           }
         });
       }
@@ -1231,7 +1252,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
 
             if (child.url) {
-              sectionItems.push(createBookmarkTile(child));
+              const tags = getTagsForId(child.id);
+              sectionItems.push(createBookmarkTile(child, tags));
             } else {
               if (hideNestedFolders) continue;
               if (seenChildFolderIds.has(child.id)) continue;
