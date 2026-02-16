@@ -949,36 +949,42 @@ document.addEventListener('DOMContentLoaded', async () => {
         label: child.title || child.url,
         subtext: urlHost,
         icon: createFaviconIcon(child.url),
-        idleActions: [],
-        showIdleActions: false
+        actions: []  // Empty actions so container is created for hover
       });
 
-      const actionsContainer = tile.querySelector('.bookmarks-gallery-view__actions');
+      // Ensure actions container exists (create if not present)
+      let actionsContainer = tile.querySelector('.bookmarks-gallery-view__actions');
+      if (!actionsContainer) {
+        actionsContainer = document.createElement('div');
+        actionsContainer.className = 'bookmarks-gallery-view__actions';
+        tile.appendChild(actionsContainer);
+      }
+      
       if (actionsContainer) {
         tile.addEventListener('mouseenter', () => {
-          // Add tag button first if it exists
-          if (labelAction && !actionsContainer.contains(labelAction)) {
-            actionsContainer.appendChild(labelAction);
-          }
+          // Add in order: Edit, Delete, Tag (if exists)
           if (editAction && !actionsContainer.contains(editAction)) {
             actionsContainer.appendChild(editAction);
           }
           if (deleteAction && !actionsContainer.contains(deleteAction)) {
             actionsContainer.appendChild(deleteAction);
           }
+          if (labelAction && !actionsContainer.contains(labelAction)) {
+            actionsContainer.appendChild(labelAction);
+          }
         });
         tile.addEventListener('mouseleave', () => {
-          if (labelAction && labelAction.parentNode === actionsContainer) {
-            actionsContainer.removeChild(labelAction);
-          }
           if (editAction && editAction.parentNode === actionsContainer) {
             actionsContainer.removeChild(editAction);
           }
           if (deleteAction && deleteAction.parentNode === actionsContainer) {
             actionsContainer.removeChild(deleteAction);
           }
+          if (labelAction && labelAction.parentNode === actionsContainer) {
+            actionsContainer.removeChild(labelAction);
+          }
         });
-      }
+      }      }
 
       tile.dataset.id = child.id;
       tile.draggable = true;
