@@ -674,7 +674,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     let filterText = (textSearchInput && textSearchInput.value.trim().toLowerCase()) || '';
     const filterActive = (currentFilterTags && currentFilterTags.length > 0) || !!filterText;
     const useTagFilter = currentFilterTags && currentFilterTags.length > 0;
-    // Always fetch tagsMap to show tag button for bookmarks with tags
+    // Always fetch tagsMap
     const tagsMap = typeof TagsService !== 'undefined'
       ? await TagsService.getAll()
       : null;
@@ -901,20 +901,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
     }
 
-    function createBookmarkTile(child, tags = []) {
+    function createBookmarkTile(child) {
       perf.tilesRendered += 1;
-      
-      // Only create tag button if bookmark has tags
-      const labelAction = (tags && tags.length > 0) ? createCubeActionButton({
-        icon: 'label',
-        label: 'Tags',
-        tooltip: tags.map(t => `#${t}`).join(', '),
-        onClick: (event) => {
-          event.stopPropagation();
-          BookmarksService.editBookmarkPrompt(child.id).then(() => render(true));
-        }
-      }) : null;
-      
       const editAction = createCubeActionButton({
         icon: 'edit',
         label: 'Edit',
@@ -939,6 +927,21 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
       });
 
+      const bookmarkTags = getTagsForId(child.id);
+      const tagAction = bookmarkTags.length > 0 ? createCubeActionButton({
+        icon: 'label',
+        label: 'Tags',
+        onClick: (event) => {
+          event.stopPropagation();
+          BookmarkModals.tags(child.id).then(() => render(true));
+        }
+      }) : null;
+      
+      // Add native tooltip with all tags
+      if (tagAction && bookmarkTags.length > 0) {
+        tagAction.setAttribute('title', bookmarkTags.join(', '));
+      }
+
       const urlHost = (() => {
         try { return new URL(child.url).hostname.replace(/^www\./, ''); } catch (e) { return 'Website'; }
       })();
@@ -949,34 +952,34 @@ document.addEventListener('DOMContentLoaded', async () => {
         label: child.title || child.url,
         subtext: urlHost,
         icon: createFaviconIcon(child.url),
-        idleActions: [],
-        showIdleActions: false
+        idleActions: tagAction ? [tagAction] : [],
+        showIdleActions: true
       });
 
       const actionsContainer = tile.querySelector('.bookmarks-gallery-view__actions');
-      if (actionsContainer) {
+      if (!actionsContainer) {
+        // Create actions container if it doesn't exist (when no idle actions)
+        const newContainer = document.createElement('div');
+        newContainer.className = 'bookmarks-gallery-view__actions';
+        tile.appendChild(newContainer);
+      }
+
+      const container = tile.querySelector('.bookmarks-gallery-view__actions');
+      if (container) {
         tile.addEventListener('mouseenter', () => {
-          if (editAction && !actionsContainer.contains(editAction)) {
-            actionsContainer.appendChild(editAction);
+          if (editAction && !container.contains(editAction)) {
+            container.insertBefore(editAction, tagAction);
           }
-          if (deleteAction && !actionsContainer.contains(deleteAction)) {
-            actionsContainer.appendChild(deleteAction);
-          }
-          // Add tag button if it exists (bookmark has tags)
-          if (labelAction !== null && !actionsContainer.contains(labelAction)) {
-            actionsContainer.appendChild(labelAction);
+          if (deleteAction && !container.contains(deleteAction)) {
+            container.insertBefore(deleteAction, tagAction);
           }
         });
         tile.addEventListener('mouseleave', () => {
-          if (editAction && editAction.parentNode === actionsContainer) {
-            actionsContainer.removeChild(editAction);
+          if (editAction && editAction.parentNode === container) {
+            container.removeChild(editAction);
           }
-          if (deleteAction && deleteAction.parentNode === actionsContainer) {
-            actionsContainer.removeChild(deleteAction);
-          }
-          // Remove tag button if it exists
-          if (labelAction !== null && labelAction.parentNode === actionsContainer) {
-            actionsContainer.removeChild(labelAction);
+          if (deleteAction && deleteAction.parentNode === container) {
+            container.removeChild(deleteAction);
           }
         });
       }
@@ -1252,8 +1255,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
 
             if (child.url) {
-              const tags = getTagsForId(child.id);
-              sectionItems.push(createBookmarkTile(child, tags));
+              sectionItems.push(createBookmarkTile(child));
             } else {
               if (hideNestedFolders) continue;
               if (seenChildFolderIds.has(child.id)) continue;
