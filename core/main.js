@@ -589,18 +589,38 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Render version to avoid stale async writes
   let renderVersion = 0;
 
+  // Perf instrumentation (opt-in via window.__bmgPerf)
+  let renderCallCount = 0;
+
   // Text search is handled by search component listeners
 
   async function render(preserveScroll = false) {
     const thisRender = ++renderVersion;
+    renderCallCount += 1;
+    const perfEnabled = typeof window !== 'undefined' && window.__bmgPerf;
+    const perfStart = perfEnabled ? performance.now() : 0;
+    const perf = {
+      treeFetchMs: 0,
+      tilesRendered: 0,
+      sectionsRendered: 0
+    };
     const savedScrollY = preserveScroll ? window.scrollY : 0;
     const renderedFolderIds = new Set();
+
+    if (root && root._lazyObserver) {
+      root._lazyObserver.disconnect();
+      root._lazyObserver = null;
+    }
     
     root.innerHTML = '';
 
     let tree;
     try{
+      const treeStart = perfEnabled ? performance.now() : 0;
       tree = await BookmarksService.getTree();
+      if (perfEnabled) {
+        perf.treeFetchMs = performance.now() - treeStart;
+      }
     }catch(e){
       console.error('Failed to load bookmarks', e);
       if (typeof Modal !== 'undefined' && Modal.openError) {
@@ -653,6 +673,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Get filter values
     let filterText = (textSearchInput && textSearchInput.value.trim().toLowerCase()) || '';
     const filterActive = (currentFilterTags && currentFilterTags.length > 0) || !!filterText;
+    const useTagFilter = currentFilterTags && currentFilterTags.length > 0;
+    const tagsMap = useTagFilter && typeof TagsService !== 'undefined'
+      ? await TagsService.getAll()
+      : null;
+    const getTagsForId = (id) => (tagsMap && tagsMap[id]) ? tagsMap[id] : [];
 
     // Build id -> node map for folder path resolution
     const idToNode = new Map();
@@ -699,8 +724,8 @@ document.addEventListener('DOMContentLoaded', async () => {
               return;
             }
           }
-          if (currentFilterTags && currentFilterTags.length > 0) {
-            const tags = await TagsService.getTags(node.id);
+          if (useTagFilter) {
+            const tags = getTagsForId(node.id);
             const anyMatch = currentFilterTags.some(t => tags.includes(t));
             if (!anyMatch) return;
           }
@@ -781,6 +806,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         breadcrumbItems: [{ label: `Results (${results.length})`, type: 'current' }],
         actions: []
       });
+      perf.sectionsRendered += 1;
       section.dataset.folderId = 'results';
       root.appendChild(section);
 
@@ -791,32 +817,91 @@ document.addEventListener('DOMContentLoaded', async () => {
       FaviconService.attachErrorHandlers(section);
       setupKeyboardNavigation();
 
+      if (perfEnabled && thisRender === renderVersion) {
+        const totalMs = performance.now() - perfStart;
+        console.log('[BMG PERF] render (filter)', {
+          renderCall: renderCallCount,
+          treeFetchMs: Math.round(perf.treeFetchMs),
+          renderMs: Math.round(totalMs),
+          tilesRendered: perf.tilesRendered,
+          sectionsRendered: perf.sectionsRendered
+        });
+      }
       if (preserveScroll) {
         requestAnimationFrame(() => { window.scrollTo(0, savedScrollY); });
       }
       return;
     }
 
+    const lazyObserver = (typeof IntersectionObserver !== 'undefined')
+      ? new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          const section = entry.target;
+          const renderItems = section && section._renderFolderItems;
+          if (typeof renderItems === 'function') {
+            renderItems();
+          }
+          if (lazyObserver) {
+            lazyObserver.unobserve(section);
+          }
+        });
+      }, { root: document.querySelector('.bookmarks-sections'), rootMargin: '600px 0px', threshold: 0.01 })
+      : null;
+    if (root) {
+      root._lazyObserver = lazyObserver;
+    }
+
+    function focusFolderSection(folderId) {
+      if (!folderId) return;
+      const targetEl = document.getElementById(`folder-${folderId}`);
+      if (!targetEl) return;
+      const scrollContainer = document.querySelector('.bookmarks-sections')
+        || targetEl.closest('.bookmarks-sections');
+      if (scrollContainer) {
+        const containerRect = scrollContainer.getBoundingClientRect();
+        const targetRect = targetEl.getBoundingClientRect();
+        const nextTop = targetRect.top - containerRect.top + scrollContainer.scrollTop - 12;
+        scrollContainer.scrollTo({ top: Math.max(0, nextTop), behavior: 'smooth' });
+      }
+      if (targetEl._highlightTimeoutId) {
+        window.clearTimeout(targetEl._highlightTimeoutId);
+      }
+      targetEl.classList.add('folder-section--highlight');
+      targetEl._highlightTimeoutId = window.setTimeout(() => {
+        targetEl.classList.remove('folder-section--highlight');
+        targetEl._highlightTimeoutId = null;
+      }, 1400);
+    }
+
     function buildBreadcrumbItems(folderId) {
       const items = [];
       let node = idToNode.get(folderId);
       while (node) {
-        if (!node.url) {
+        if (!node.url && node.id !== '0' && node.title !== '0') {
           items.unshift(node);
         }
         if (!node.parentId) break;
         node = idToNode.get(node.parentId);
       }
       if (!items.length && idToNode.get(folderId)) {
-        items.push(idToNode.get(folderId));
+        const fallback = idToNode.get(folderId);
+        if (fallback && fallback.id !== '0' && fallback.title !== '0') {
+          items.push(fallback);
+        }
       }
-      return items.map((entry, index) => ({
-        label: entry.title || entry.id,
-        type: index === items.length - 1 ? 'current' : 'root'
-      }));
+      return items.map((entry, index) => {
+        const isCurrent = index === items.length - 1;
+        return {
+          label: entry.title || entry.id,
+          type: isCurrent ? 'current' : 'root',
+          onClick: isCurrent ? null : () => focusFolderSection(entry.id)
+        };
+      });
     }
 
     function createBookmarkTile(child) {
+      perf.tilesRendered += 1;
       const labelAction = createCubeActionButton({
         icon: 'label',
         label: 'Tags',
@@ -894,6 +979,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     function createFolderTile(child) {
+      perf.tilesRendered += 1;
       const editAction = createCubeActionButton({
         icon: 'edit',
         label: 'Rename',
@@ -931,11 +1017,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       tile.dataset.id = child.id;
       tile.draggable = true;
-      tile.addEventListener('click', (event) => {
-        if (event.target.closest('button')) return;
-        const targetEl = document.getElementById(`folder-${child.id}`);
-        if (targetEl) targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      });
       addDragHandlers(tile);
       return tile;
     }
@@ -948,70 +1029,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       const breadcrumbItems = buildBreadcrumbItems(folder.id);
       const items = [];
-
-      if (folder.children && folder.children.length) {
-        const childFolders = folder.children.filter(c => !c.url);
-        const childBookmarks = folder.children.filter(c => c.url);
-
-        if ((currentFilterTags && currentFilterTags.length > 0) || filterText) {
-          async function folderHasMatch(node) {
-            if (!node || !node.children) return false;
-            for (const child of node.children) {
-              if (child.url) {
-                if (filterText) {
-                  const title = (child.title || '').toLowerCase();
-                  const url = (child.url || '').toLowerCase();
-                  if (!title.includes(filterText) && !url.includes(filterText)) {
-                    continue;
-                  }
-                }
-                if (currentFilterTags && currentFilterTags.length > 0) {
-                  const tags = await TagsService.getTags(child.id);
-                  const anyMatch = currentFilterTags.some(t => tags.includes(t));
-                  if (!anyMatch) continue;
-                }
-                return true;
-              } else if (child.children && child.children.length) {
-                const has = await folderHasMatch(child);
-                if (has) return true;
-              }
-            }
-            return false;
-          }
-
-          const hasMatchingBookmarks = await folderHasMatch(folder);
-          if (!hasMatchingBookmarks) return;
-        }
-
-        const sortedFolders = sortFolders(childFolders);
-        const sortedBookmarks = sortBookmarks(childBookmarks);
-        const sortedChildren = [...sortedFolders, ...sortedBookmarks];
-        const seenChildFolderIds = new Set();
-
-        for (const child of sortedChildren) {
-          if (currentFilterTags && currentFilterTags.length > 0 && child.url) {
-            const tags = await TagsService.getTags(child.id);
-            const anyMatch = currentFilterTags.some(t => tags.includes(t));
-            if (!anyMatch) continue;
-          }
-          if (filterText && child.url) {
-            const title = (child.title || '').toLowerCase();
-            const url = (child.url || '').toLowerCase();
-            if (!title.includes(filterText) && !url.includes(filterText)) continue;
-          }
-
-          if (child.url) {
-            items.push(createBookmarkTile(child));
-          } else {
-            // Skip nested folders if hideNestedFolders is enabled
-            if (hideNestedFolders) continue;
-            
-            if (seenChildFolderIds.has(child.id)) continue;
-            seenChildFolderIds.add(child.id);
-            items.push(createFolderTile(child));
-          }
-        }
-      }
 
       // Check if this is a root-level folder (direct child of Bookmarks Bar or Other Bookmarks)
       const isRootFolder = folder.parentId === '1' || folder.parentId === '2';
@@ -1160,9 +1177,84 @@ document.addEventListener('DOMContentLoaded', async () => {
         breadcrumbItems,
         actions: folderActions.filter(Boolean)
       });
+      perf.sectionsRendered += 1;
       section.dataset.folderId = folder.id;
       section.id = `folder-${folder.id}`;
       parentEl.appendChild(section);
+
+      const renderItemsOnce = async () => {
+        if (section.dataset.itemsRendered === 'true') return;
+        section.dataset.itemsRendered = 'true';
+
+        const sectionItems = [];
+
+        if (folder.children && folder.children.length) {
+          const childFolders = folder.children.filter(c => !c.url);
+          const childBookmarks = folder.children.filter(c => c.url);
+
+          if ((currentFilterTags && currentFilterTags.length > 0) || filterText) {
+            async function folderHasMatch(node) {
+              if (!node || !node.children) return false;
+              for (const child of node.children) {
+                if (child.url) {
+                  if (filterText) {
+                    const title = (child.title || '').toLowerCase();
+                    const url = (child.url || '').toLowerCase();
+                    if (!title.includes(filterText) && !url.includes(filterText)) {
+                      continue;
+                    }
+                  }
+                  if (useTagFilter) {
+                    const tags = getTagsForId(child.id);
+                    const anyMatch = currentFilterTags.some(t => tags.includes(t));
+                    if (!anyMatch) continue;
+                  }
+                  return true;
+                } else if (child.children && child.children.length) {
+                  const has = await folderHasMatch(child);
+                  if (has) return true;
+                }
+              }
+              return false;
+            }
+
+            const hasMatchingBookmarks = await folderHasMatch(folder);
+            if (!hasMatchingBookmarks) return;
+          }
+
+          const sortedFolders = sortFolders(childFolders);
+          const sortedBookmarks = sortBookmarks(childBookmarks);
+          const sortedChildren = [...sortedFolders, ...sortedBookmarks];
+          const seenChildFolderIds = new Set();
+
+          for (const child of sortedChildren) {
+            if (useTagFilter && child.url) {
+              const tags = getTagsForId(child.id);
+              const anyMatch = currentFilterTags.some(t => tags.includes(t));
+              if (!anyMatch) continue;
+            }
+            if (filterText && child.url) {
+              const title = (child.title || '').toLowerCase();
+              const url = (child.url || '').toLowerCase();
+              if (!title.includes(filterText) && !url.includes(filterText)) continue;
+            }
+
+            if (child.url) {
+              sectionItems.push(createBookmarkTile(child));
+            } else {
+              if (hideNestedFolders) continue;
+              if (seenChildFolderIds.has(child.id)) continue;
+              seenChildFolderIds.add(child.id);
+              sectionItems.push(createFolderTile(child));
+            }
+          }
+        }
+
+        updateFolderSectionItems(section, sectionItems);
+        FaviconService.attachErrorHandlers(section);
+      };
+
+      section._renderFolderItems = renderItemsOnce;
 
       // Add tooltips after section is in DOM
       const actionsContainer = section.querySelector('.folder-section__actions');
@@ -1182,9 +1274,25 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       const content = section.querySelector('.folder-section__content');
       if (content) {
+        if (!content.getAttribute('data-folder-nav')) {
+          content.addEventListener('click', (event) => {
+            if (event.target.closest('button')) return;
+            const tile = event.target.closest('.bookmarks-gallery-view--folder');
+            if (!tile || !content.contains(tile)) return;
+            const targetId = tile.dataset.id;
+            if (!targetId) return;
+            focusFolderSection(targetId);
+          });
+          content.setAttribute('data-folder-nav', 'true');
+        }
         addFolderDropHandlers(content, folder.id);
       }
-      FaviconService.attachErrorHandlers(section);
+
+      if (lazyObserver) {
+        lazyObserver.observe(section);
+      } else {
+        renderItemsOnce();
+      }
 
       if (folder.children && folder.children.length) {
         const childFolders = folder.children.filter(c => !c.url);
@@ -1203,6 +1311,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     setupKeyboardNavigation();
+
+    if (perfEnabled && thisRender === renderVersion) {
+      const totalMs = performance.now() - perfStart;
+      console.log('[BMG PERF] render', {
+        renderCall: renderCallCount,
+        treeFetchMs: Math.round(perf.treeFetchMs),
+        renderMs: Math.round(totalMs),
+        tilesRendered: perf.tilesRendered,
+        sectionsRendered: perf.sectionsRendered
+      });
+    }
 
     if (preserveScroll) {
       requestAnimationFrame(() => {

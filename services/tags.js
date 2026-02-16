@@ -4,13 +4,26 @@
  */
 const TagsService = (()=>{
   const STORAGE_KEY = 'bookmarkTags';
+  let cachedAll = null;
+  let cachePromise = null;
   
   /**
    * Get all tags from storage
    * @returns {Promise<Object>} Map of bookmarkId -> tag array
    */
   async function getAll(){
-    return await Storage.get(STORAGE_KEY) || {};
+    if (cachedAll) return cachedAll;
+    if (!cachePromise) {
+      cachePromise = Storage.get(STORAGE_KEY)
+        .then((data) => {
+          cachedAll = data || {};
+          return cachedAll;
+        })
+        .finally(() => {
+          cachePromise = null;
+        });
+    }
+    return cachePromise;
   }
   
   /**
@@ -19,6 +32,7 @@ const TagsService = (()=>{
    */
   async function setAll(map){
     await Storage.set({[STORAGE_KEY]: map});
+    cachedAll = map || {};
   }
   
   /**
@@ -47,7 +61,7 @@ const TagsService = (()=>{
     } else {
       delete all[bookmarkId];
     }
-    
+    cachedAll = all;
     await setAll(all);
   }
   
@@ -83,6 +97,7 @@ const TagsService = (()=>{
     });
     
     if (changed) {
+      cachedAll = all;
       await setAll(all);
     }
   }

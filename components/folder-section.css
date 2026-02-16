@@ -21,7 +21,7 @@
   max-width: 1180px;
   box-sizing: border-box;
   user-select: none;
-  transition: background 0.2s ease;
+  transition: background 0.2s ease, box-shadow 0.2s ease;
   flex-shrink: 0;
 }
 
@@ -32,6 +32,25 @@
 .folder-section--hover,
 .folder-section:hover {
   background: var(--common-common-dark-10, rgba(0, 0, 0, 0.2));
+}
+
+.folder-section--highlight {
+  animation: folder-section-highlight 1.4s ease;
+}
+
+@keyframes folder-section-highlight {
+  0% {
+    background: transparent;
+    box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
+  }
+  30% {
+    background: var(--common-common-dark-10, rgba(0, 0, 0, 0.2));
+    box-shadow: 0 0 0 1px var(--common-common-bright-15, rgba(255, 255, 255, 0.6));
+  }
+  100% {
+    background: transparent;
+    box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
+  }
 }
 
 .folder-section__header {
