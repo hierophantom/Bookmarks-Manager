@@ -672,8 +672,8 @@ body {
 }
 
 .bookmarks-gallery-view__favicon {
-  width: 24px;
-  height: 24px;
+  width: 30px;
+  height: 30px;
   border-radius: 4px;
   object-fit: contain;
 }
