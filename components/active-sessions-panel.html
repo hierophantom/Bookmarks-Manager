@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Active Sessions Panel - Design System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;500;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..24,300..700,0..1,-50..200">
+  <link rel="stylesheet" href="side-panel.css">
+  <link rel="stylesheet" href="active-sessions-panel.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: linear-gradient(135deg, #0a0e27 0%, #1a1f4d 100%);
+      color: #ffffffe5;
+      font-family: 'Lato', sans-serif;
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: 32px;
+      margin-bottom: 10px;
+    }
+
+    .subtitle {
+      color: rgba(255, 255, 255, 0.7);
+      margin-bottom: 40px;
+    }
+
+    section {
+      margin-bottom: 60px;
+      background: rgba(46, 51, 185, 0.1);
+      padding: 30px;
+      border-radius: 8px;
+      border: 1px solid rgba(46, 51, 185, 0.2);
+    }
+
+    section h2 {
+      font-size: 20px;
+      margin-bottom: 20px;
+      border-bottom: 1px solid rgba(46, 51, 185, 0.3);
+      padding-bottom: 10px;
+    }
+
+    .demo-area {
+      position: relative;
+      height: 500px;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px dashed rgba(46, 51, 185, 0.4);
+      display: flex;
+      gap: 20px;
+      padding: 20px;
+    }
+
+    .demo-label {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.6);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      z-index: 1;
+      background: rgba(46, 51, 185, 0.5);
+      padding: 4px 8px;
+      border-radius: 2px;
+    }
+
+    .demo-container {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      border: 1px dashed rgba(46, 51, 185, 0.3);
+      border-radius: 4px;
+      background: rgba(0, 0, 0, 0.2);
+    }
+
+    .demo-docked-container {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      border: 1px dashed rgba(46, 51, 185, 0.3);
+      border-radius: 4px;
+      background: rgba(0, 0, 0, 0.2);
+      padding-top: 48px;
+    }
+
+    .demo-header {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 48px;
+      background: rgba(46, 51, 185, 0.3);
+      border-bottom: 1px solid rgba(46, 51, 185, 0.3);
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    .controls {
+      margin-top: 15px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      padding: 8px 16px;
+      background: rgba(46, 51, 185, 0.6);
+      color: #ffffffe5;
+      border: 1px solid rgba(46, 51, 185, 0.8);
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: 'Lato', sans-serif;
+      font-size: 12px;
+      transition: background 0.2s ease;
+    }
+
+    button:hover {
+      background: rgba(46, 51, 185, 0.8);
+    }
+
+    .note {
+      margin-top: 15px;
+      padding: 10px;
+      background: rgba(46, 51, 185, 0.2);
+      border-left: 2px solid rgba(46, 51, 185, 0.6);
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.8);
+    }
+
+    .status {
+      margin-top: 10px;
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.7);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>Active Sessions Panel</h1>
+    <p class="subtitle">Design System Component - BMG-129</p>
+
+    <section>
+      <h2>Zero State, Float, and Docked States</h2>
+      <div class="demo-area">
+        <div style="flex: 1; position: relative;">
+          <div class="demo-label">Zero State</div>
+          <div class="demo-container" id="demo-zero"></div>
+        </div>
+
+        <div style="flex: 1; position: relative;">
+          <div class="demo-label">Float (Right)</div>
+          <div class="demo-container" id="demo-float"></div>
+        </div>
+
+        <div style="flex: 1; position: relative;">
+          <div class="demo-label">Docked (Right)</div>
+          <div class="demo-docked-container" id="demo-docked">
+            <div class="demo-header">Header (48px)</div>
+          </div>
+        </div>
+      </div>
+      <div class="controls">
+        <button onclick="toggleFloatVisibility()">Show Float Panel</button>
+        <button onclick="addSessionToFloat()">Add Session</button>
+        <button onclick="clearSessionsFloat()">Clear All</button>
+        <button onclick="toggleDockedMode()">Switch Docked to Float</button>
+      </div>
+      <div class="status">
+        <span>Float Panel Sessions: <span id="count-float">0</span></span>
+        &nbsp;|&nbsp;
+        <span>Docked Panel Sessions: <span id="count-docked">0</span></span>
+      </div>
+      <p class="note">Float panel slides in from the right. Docked panel stays fixed below header. Zero state shows when no sessions exist.</p>
+    </section>
+
+  </div>
+
+  <script src="side-panel.js"></script>
+  <script src="active-sessions-panel.js"></script>
+
+  <script>
+    // Zero State Panel
+    const zeroPanel = createActiveSessionsPanel({
+      docked: true
+    });
+
+    const demoZero = document.getElementById('demo-zero');
+    demoZero.appendChild(zeroPanel.element);
+
+    // Float Panel Demo
+    const floatPanel = createActiveSessionsPanel({
+      docked: false,
+      onClose: () => {
+        floatPanel.hide();
+      },
+      onToggleMode: () => {
+        floatPanel.toggleMode();
+      },
+      onViewSession: (session) => {
+        console.log('Viewing session:', session);
+      }
+    });
+
+    const demoFloat = document.getElementById('demo-float');
+    demoFloat.appendChild(floatPanel.element);
+
+    function toggleFloatVisibility() {
+      floatPanel.element.classList.toggle('side-panel--visible');
+      if (floatPanel.isVisible()) {
+        floatPanel.show();
+      } else {
+        floatPanel.hide();
+      }
+    }
+
+    let sessionCounter = 0;
+    function addSessionToFloat() {
+      sessionCounter++;
+      floatPanel.addSession({
+        id: `session-${sessionCounter}`,
+        label: `Session ${sessionCounter} - Tab ${Math.floor(Math.random() * 10) + 1}`,
+        onView: () => console.log(`Opening session ${sessionCounter}`),
+        onRemove: () => updateFloatCount()
+      });
+      updateFloatCount();
+    }
+
+    function updateFloatCount() {
+      document.getElementById('count-float').textContent = floatPanel.getSessions().length;
+    }
+
+    function clearSessionsFloat() {
+      floatPanel.clearSessions();
+      updateFloatCount();
+    }
+
+    // Docked Panel Demo
+    const dockedPanel = createActiveSessionsPanel({
+      docked: true,
+      onToggleMode: () => {
+        dockedPanel.toggleMode();
+      }
+    });
+
+    const demoDocked = document.getElementById('demo-docked');
+    demoDocked.appendChild(dockedPanel.element);
+
+    // Add some sample sessions
+    dockedPanel.addSession({
+      id: 'docked-1',
+      label: 'Work Session - Tab 1',
+      onView: () => console.log('Opening work session'),
+      onRemove: () => updateDockedCount()
+    });
+
+    dockedPanel.addSession({
+      id: 'docked-2',
+      label: 'Research - Tab 5',
+      onView: () => console.log('Opening research session'),
+      onRemove: () => updateDockedCount()
+    });
+
+    dockedPanel.addSession({
+      id: 'docked-3',
+      label: 'Development - Tab 2',
+      onView: () => console.log('Opening development session'),
+      onRemove: () => updateDockedCount()
+    });
+
+    function updateDockedCount() {
+      document.getElementById('count-docked').textContent = dockedPanel.getSessions().length;
+    }
+
+    function toggleDockedMode() {
+      dockedPanel.toggleMode();
+    }
+
+    // Initialize counts
+    updateFloatCount();
+    updateDockedCount();
+
+    // Add initial sessions to float for demo
+    addSessionToFloat();
+    addSessionToFloat();
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,133 @@
+/**
+ * Active Sessions Panel
+ *
+ * Design System Component - BMG-129
+ * Right side panel for viewing and managing active sessions
+ */
+
+.active-sessions-panel {
+  /* Inherits from side-panel */
+}
+
+.active-sessions-panel__content {
+  /* Inherits from side-panel__content */
+  gap: 0;
+}
+
+/* Zero State */
+.active-sessions-panel__zero-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  color: var(--side-panel-text-muted, rgba(255, 255, 255, 0.5));
+  font-size: 14px;
+  text-align: center;
+  min-height: 200px;
+}
+
+.active-sessions-panel__zero-state p {
+  margin: 0;
+  padding: 20px;
+}
+
+/* Session Item */
+.active-sessions-panel__item {
+  padding: 12px 12px;
+  margin: 0 8px 8px 8px;
+  border-radius: 4px;
+  background-color: rgba(46, 51, 185, 0.2);
+  border: 1px solid rgba(46, 51, 185, 0.3);
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+  flex-shrink: 0;
+}
+
+.active-sessions-panel__item:hover {
+  background-color: rgba(46, 51, 185, 0.3);
+  border-color: rgba(46, 51, 185, 0.5);
+}
+
+/* Session Item Header */
+.active-sessions-panel__item-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+/* Session Label */
+.active-sessions-panel__item-label {
+  flex: 1;
+  font-size: 12px;
+  font-weight: 500;
+  color: inherit;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Session Controls */
+.active-sessions-panel__item-controls {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+/* Session Buttons */
+.active-sessions-panel__item-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 2px;
+  color: inherit;
+  font-size: 12px;
+  min-width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.15s ease;
+  font-family: inherit;
+}
+
+.active-sessions-panel__item-btn:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.active-sessions-panel__item-btn:active {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* View button icon */
+.active-sessions-panel__item-btn--view .material-symbols-outlined {
+  font-size: 16px;
+}
+
+/* Remove button */
+.active-sessions-panel__item-btn--remove {
+  font-size: 14px;
+}
+
+/* Last item margin */
+.active-sessions-panel__item:last-of-type {
+  margin-bottom: 12px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .active-sessions-panel__item {
+    padding: 10px;
+    margin: 0 6px 6px 6px;
+  }
+
+  .active-sessions-panel__item-label {
+    font-size: 11px;
+  }
+
+  .active-sessions-panel__item-btn {
+    min-width: 18px;
+    height: 18px;
+  }
+}

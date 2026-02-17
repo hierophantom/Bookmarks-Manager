@@ -1,0 +1,172 @@
+/**
+ * Folder Tree Item Component
+ *
+ * Design System Component - BMG-127
+ * Based on Figma: node-id=136-12629
+ *
+ * Variants: Flat, Collapsed, Expanded
+ * States: Idle, Hover, Active
+ * Supports hierarchical indentation via level prop
+ */
+
+.folder-tree-item {
+  display: flex;
+  align-items: center;
+  height: 40px;
+  padding: 8px 16px 8px 8px;
+  margin-left: calc(var(--indent-level, 0) * 16px);
+  border-radius: var(--corner-radius-small, 4px);
+  font-family: var(--font-family-sans-serif, 'Lato', sans-serif);
+  font-size: 16px;
+  font-weight: 400;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.2s ease;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* Idle state - no background */
+.folder-tree-item--idle {
+  background-color: transparent;
+}
+
+/* Hover state - subtle light overlay */
+.folder-tree-item--hover {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+/* Active state - primary blue background with rounded right edge */
+.folder-tree-item--active {
+  background-color: #2e33b9;
+  border-radius: 0 999px 999px 0;
+}
+
+/* Disabled state */
+.folder-tree-item--disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Content wrapper */
+.folder-tree-item__content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  height: 100%;
+}
+
+/* Expand/collapse icon button */
+.folder-tree-item__expand-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+
+.folder-tree-item__expand-icon:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.folder-tree-item__expand-icon .material-symbols-outlined {
+  font-size: 20px;
+}
+
+/* Folder icon */
+.folder-tree-item__folder-icon {
+  font-size: 24px;
+  color: inherit;
+  flex-shrink: 0;
+}
+
+/* Label */
+.folder-tree-item__label {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: inherit;
+  color: inherit;
+}
+
+/* Counter badge */
+.folder-tree-item__counter {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 2px;
+  background-color: transparent;
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.6);
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+/* Counter styling in hover state */
+.folder-tree-item--hover .folder-tree-item__counter {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* Counter styling in active state */
+.folder-tree-item--active .folder-tree-item__counter {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* Variant-specific styles */
+.folder-tree-item--flat .folder-tree-item__expand-icon {
+  display: none;
+}
+
+/* Flat variant */
+.folder-tree-item--flat {
+  /* No additional styles needed */
+}
+
+/* Collapsed variant */
+.folder-tree-item--collapsed {
+  /* No additional styles needed beyond base */
+}
+
+/* Expanded variant */
+.folder-tree-item--expanded {
+  /* No additional styles needed beyond base */
+}
+
+/* Accessibility: Focus visible */
+.folder-tree-item:focus-visible {
+  outline: 2px solid var(--primary-primary-25, #2e33b9);
+  outline-offset: 2px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .folder-tree-item {
+    height: 36px;
+    font-size: var(--size-medium, 12px);
+  }
+
+  .folder-tree-item__content {
+    gap: 6px;
+  }
+
+  .folder-tree-item__expand-icon,
+  .folder-tree-item__folder-icon {
+    width: 18px;
+    height: 18px;
+    font-size: 18px;
+  }
+}

@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Side Panel - Design System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;500;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..24,300..700,0..1,-50..200">
+  <link rel="stylesheet" href="side-panel.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: linear-gradient(135deg, #0a0e27 0%, #1a1f4d 100%);
+      color: #ffffffe5;
+      font-family: 'Lato', sans-serif;
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: 32px;
+      margin-bottom: 10px;
+    }
+
+    .subtitle {
+      color: rgba(255, 255, 255, 0.7);
+      margin-bottom: 40px;
+    }
+
+    section {
+      margin-bottom: 60px;
+      background: rgba(46, 51, 185, 0.1);
+      padding: 30px;
+      border-radius: 8px;
+      border: 1px solid rgba(46, 51, 185, 0.2);
+    }
+
+    section h2 {
+      font-size: 20px;
+      margin-bottom: 20px;
+      border-bottom: 1px solid rgba(46, 51, 185, 0.3);
+      padding-bottom: 10px;
+    }
+
+    .demo-area {
+      position: relative;
+      height: 400px;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px dashed rgba(46, 51, 185, 0.4);
+    }
+
+    .demo-label {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.6);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      z-index: 1;
+    }
+
+    .controls {
+      margin-top: 15px;
+      display: flex;
+      gap: 10px;
+    }
+
+    button {
+      padding: 8px 16px;
+      background: rgba(46, 51, 185, 0.6);
+      color: #ffffffe5;
+      border: 1px solid rgba(46, 51, 185, 0.8);
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: 'Lato', sans-serif;
+      font-size: 12px;
+      transition: background 0.2s ease;
+    }
+
+    button:hover {
+      background: rgba(46, 51, 185, 0.8);
+    }
+
+    .note {
+      margin-top: 15px;
+      padding: 10px;
+      background: rgba(46, 51, 185, 0.2);
+      border-left: 2px solid rgba(46, 51, 185, 0.6);
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.8);
+    }
+
+    code {
+      background: rgba(0, 0, 0, 0.5);
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-family: 'Courier New', monospace;
+      font-size: 11px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>Side Panel (Base Component)</h1>
+    <p class="subtitle">Generic reusable side panel for BMG-128 and BMG-129</p>
+
+    <section>
+      <h2>Left Panel - Float State</h2>
+      <div class="demo-area" id="demo-left-float">
+        <div class="demo-label">Float (Off-screen then slide in)</div>
+      </div>
+      <div class="controls">
+        <button onclick="toggleLeftFloat()">Toggle Visibility</button>
+        <button onclick="toggleLeftMode()">Toggle Float/Docked</button>
+      </div>
+      <p class="note">Click "Toggle Visibility" to see the float slide in from the left</p>
+    </section>
+
+    <section>
+      <h2>Left Panel - Docked State</h2>
+      <div class="demo-area" id="demo-left-docked">
+        <div class="demo-label">Docked (Always visible)</div>
+      </div>
+      <div class="controls">
+        <button onclick="toggleLeftDocked()">Toggle Float/Docked</button>
+      </div>
+      <p class="note">Docked panels are always visible and positioned at <code>top: 48px</code> (below header)</p>
+    </section>
+
+    <section>
+      <h2>Right Panel - Float State</h2>
+      <div class="demo-area" id="demo-right-float">
+        <div class="demo-label">Float (Off-screen then slide in)</div>
+      </div>
+      <div class="controls">
+        <button onclick="toggleRightFloat()">Toggle Visibility</button>
+        <button onclick="toggleRightMode()">Toggle Float/Docked</button>
+      </div>
+      <p class="note">Click "Toggle Visibility" to see the float slide in from the right</p>
+    </section>
+
+    <section>
+      <h2>Right Panel - Docked State</h2>
+      <div class="demo-area" id="demo-right-docked">
+        <div class="demo-label">Docked (Always visible)</div>
+      </div>
+      <div class="controls">
+        <button onclick="toggleRightDocked()">Toggle Float/Docked</button>
+      </div>
+      <p class="note">Right panels slide from the right edge, with appropriate shadow direction</p>
+    </section>
+
+  </div>
+
+  <script src="side-panel.js"></script>
+  <script src="folder-tree-item.js"></script>
+  <script src="folder-tree-view.js"></script>
+  <script src="active-sessions-panel.js"></script>
+
+  <script>
+    // Left Float Demo
+    const leftFloatPanel = createSidePanel({
+      title: 'Folders (Float)',
+      position: 'left',
+      docked: false,
+      onClose: () => {
+        leftFloatPanel.hide();
+      },
+      onToggleMode: () => {
+        leftFloatPanel.toggleMode();
+      }
+    });
+
+    const demoLeftFloat = document.getElementById('demo-left-float');
+    demoLeftFloat.appendChild(leftFloatPanel.element);
+    leftFloatPanel.setContent('<p style="padding: 20px; color: inherit;">Sample content for left float panel</p>');
+    leftFloatPanel.show();
+
+    function toggleLeftFloat() {
+      leftFloatPanel.element.classList.toggle('side-panel--visible');
+    }
+
+    function toggleLeftMode() {
+      leftFloatPanel.toggleMode();
+    }
+
+    // Left Docked Demo
+    const leftDockedPanel = createSidePanel({
+      title: 'Folders (Docked)',
+      position: 'left',
+      docked: true,
+      onClose: () => {
+        leftDockedPanel.element.remove();
+      },
+      onToggleMode: () => {
+        leftDockedPanel.toggleMode();
+      }
+    });
+
+    const demoLeftDocked = document.getElementById('demo-left-docked');
+    demoLeftDocked.appendChild(leftDockedPanel.element);
+    leftDockedPanel.setContent('<p style="padding: 20px; color: inherit;">Docked content area</p>');
+
+    function toggleLeftDocked() {
+      leftDockedPanel.toggleMode();
+    }
+
+    // Right Float Demo
+    const rightFloatPanel = createSidePanel({
+      title: 'Active Tabs (Float)',
+      position: 'right',
+      docked: false,
+      onClose: () => {
+        rightFloatPanel.hide();
+      },
+      onToggleMode: () => {
+        rightFloatPanel.toggleMode();
+      }
+    });
+
+    const demoRightFloat = document.getElementById('demo-right-float');
+    demoRightFloat.appendChild(rightFloatPanel.element);
+    rightFloatPanel.setContent('<p style="padding: 20px; color: inherit;">Sample content for right float panel</p>');
+    rightFloatPanel.show();
+
+    function toggleRightFloat() {
+      rightFloatPanel.element.classList.toggle('side-panel--visible');
+    }
+
+    function toggleRightMode() {
+      rightFloatPanel.toggleMode();
+    }
+
+    // Right Docked Demo
+    const rightDockedPanel = createSidePanel({
+      title: 'Active Tabs (Docked)',
+      position: 'right',
+      docked: true,
+      onClose: () => {
+        rightDockedPanel.element.remove();
+      },
+      onToggleMode: () => {
+        rightDockedPanel.toggleMode();
+      }
+    });
+
+    const demoRightDocked = document.getElementById('demo-right-docked');
+    demoRightDocked.appendChild(rightDockedPanel.element);
+    rightDockedPanel.setContent('<p style="padding: 20px; color: inherit;">Docked content area</p>');
+
+    function toggleRightDocked() {
+      rightDockedPanel.toggleMode();
+    }
+  </script>
+
+</body>
+</html>

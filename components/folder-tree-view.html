@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Folder Tree View Panel - Design System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;500;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..24,300..700,0..1,-50..200">
+  <link rel="stylesheet" href="side-panel.css">
+  <link rel="stylesheet" href="folder-tree-view.css">
+  <link rel="stylesheet" href="folder-tree-item.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: linear-gradient(135deg, #0a0e27 0%, #1a1f4d 100%);
+      color: #ffffffe5;
+      font-family: 'Lato', sans-serif;
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: 32px;
+      margin-bottom: 10px;
+    }
+
+    .subtitle {
+      color: rgba(255, 255, 255, 0.7);
+      margin-bottom: 40px;
+    }
+
+    section {
+      margin-bottom: 60px;
+      background: rgba(46, 51, 185, 0.1);
+      padding: 30px;
+      border-radius: 8px;
+      border: 1px solid rgba(46, 51, 185, 0.2);
+    }
+
+    section h2 {
+      font-size: 20px;
+      margin-bottom: 20px;
+      border-bottom: 1px solid rgba(46, 51, 185, 0.3);
+      padding-bottom: 10px;
+    }
+
+    .demo-area {
+      position: relative;
+      height: 500px;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px dashed rgba(46, 51, 185, 0.4);
+      display: flex;
+      gap: 20px;
+      padding: 20px;
+    }
+
+    .demo-label {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.6);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      z-index: 1;
+      background: rgba(46, 51, 185, 0.5);
+      padding: 4px 8px;
+      border-radius: 2px;
+    }
+
+    .demo-float-container {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      border: 1px dashed rgba(46, 51, 185, 0.3);
+      border-radius: 4px;
+      background: rgba(0, 0, 0, 0.2);
+    }
+
+    .demo-docked-container {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      border: 1px dashed rgba(46, 51, 185, 0.3);
+      border-radius: 4px;
+      background: rgba(0, 0, 0, 0.2);
+      padding-top: 48px;
+    }
+
+    .demo-header {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 48px;
+      background: rgba(46, 51, 185, 0.3);
+      border-bottom: 1px solid rgba(46, 51, 185, 0.3);
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    .controls {
+      margin-top: 15px;
+      display: flex;
+      gap: 10px;
+    }
+
+    button {
+      padding: 8px 16px;
+      background: rgba(46, 51, 185, 0.6);
+      color: #ffffffe5;
+      border: 1px solid rgba(46, 51, 185, 0.8);
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: 'Lato', sans-serif;
+      font-size: 12px;
+      transition: background 0.2s ease;
+    }
+
+    button:hover {
+      background: rgba(46, 51, 185, 0.8);
+    }
+
+    .note {
+      margin-top: 15px;
+      padding: 10px;
+      background: rgba(46, 51, 185, 0.2);
+      border-left: 2px solid rgba(46, 51, 185, 0.6);
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.8);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="side-panel__content">
+      <div class="folder-tree-view__content">
+        <div class="folder-tree-item folder-tree-item--expanded folder-tree-item--idle">
+          <span class="folder-tree-item__label">All bookmarks</span>
+        </div>
+      </div>
+    </div>
+    <h1>Folder Tree View Panel</h1>
+    <p class="subtitle">Design System Component - BMG-128</p>
+
+    <section>
+      <h2>Float and Docked States</h2>
+      <div class="demo-area">
+        <div class="demo-label">Float (Left)</div>
+        <div class="demo-float-container" id="demo-float"></div>
+
+        <div class="demo-label">Docked (Left)</div>
+        <div class="demo-docked-container" id="demo-docked">
+          <div class="demo-header">Header (48px)</div>
+        </div>
+      </div>
+      <div class="controls">
+        <button onclick="toggleFloatVisibility()">Show Float Panel</button>
+        <button onclick="toggleDockedMode()">Switch Docked to Float</button>
+      </div>
+      <p class="note">Float panel slides in from the left. Docked panel stays fixed below header.</p>
+    </section>
+
+    <section>
+      <h2>Folder Items Demo</h2>
+      <p style="margin-bottom: 20px; color: rgba(255, 255, 255, 0.8); font-size: 12px;">The panel below contains folder tree items with hierarchical indentation:</p>
+      <div class="demo-area" style="height: 400px;">
+        <div class="demo-label">Scrollable Content</div>
+        <div id="demo-items" style="flex: 1; position: relative;"></div>
+      </div>
+    </section>
+
+  </div>
+
+  <script src="side-panel.js"></script>
+  <script src="folder-tree-item.js"></script>
+  <script src="folder-tree-view.js"></script>
+
+  <script>
+    // Float Panel Demo
+    const floatPanel = createFolderTreeViewPanel({
+      docked: false,
+      onClose: () => {
+        floatPanel.hide();
+      },
+      onToggleMode: () => {
+        floatPanel.toggleMode();
+      },
+      onFolderSelect: (folder) => {
+        console.log('Selected folder:', folder);
+      }
+    });
+
+    const demoFloat = document.getElementById('demo-float');
+    demoFloat.appendChild(floatPanel.element);
+
+    // Add sample folders
+    floatPanel.addFolderItem({
+      id: 'all',
+      label: 'All Bookmarks',
+      variant: 'expanded',
+      level: 0,
+      counter: 150
+    });
+
+    floatPanel.addFolderItem({
+      id: 'dev',
+      label: 'Development',
+      variant: 'expanded',
+      level: 1,
+      counter: 45
+    });
+
+    floatPanel.addFolderItem({
+      id: 'react',
+      label: 'React',
+      variant: 'collapsed',
+      level: 2,
+      counter: 12
+    });
+
+    floatPanel.addFolderItem({
+      id: 'design',
+      label: 'Design',
+      variant: 'flat',
+      level: 2,
+      counter: 8
+    });
+
+    function toggleFloatVisibility() {
+      floatPanel.element.classList.toggle('side-panel--visible');
+      if (floatPanel.isVisible()) {
+        floatPanel.show();
+      } else {
+        floatPanel.hide();
+      }
+    }
+
+    // Docked Panel Demo
+    const dockedPanel = createFolderTreeViewPanel({
+      docked: true,
+      onToggleMode: () => {
+        dockedPanel.toggleMode();
+      }
+    });
+
+    const demoDocked = document.getElementById('demo-docked');
+    demoDocked.appendChild(dockedPanel.element);
+
+    dockedPanel.addFolderItem({
+      id: 'docked-all',
+      label: 'All Bookmarks',
+      variant: 'expanded',
+      level: 0,
+      counter: 150
+    });
+
+    dockedPanel.addFolderItem({
+      id: 'docked-work',
+      label: 'Work',
+      variant: 'collapsed',
+      level: 1,
+      counter: 42
+    });
+
+    dockedPanel.addFolderItem({
+      id: 'docked-personal',
+      label: 'Personal',
+      variant: 'expanded',
+      level: 1,
+      counter: 28
+    });
+
+    dockedPanel.addFolderItem({
+      id: 'docked-archive',
+      label: 'Archive',
+      variant: 'flat',
+      level: 1,
+      counter: 80
+    });
+
+    function toggleDockedMode() {
+      dockedPanel.toggleMode();
+    }
+
+    // Folder Items Demo
+    const itemsPanel = createFolderTreeViewPanel({
+      docked: true
+    });
+
+    const demoItems = document.getElementById('demo-items');
+    demoItems.appendChild(itemsPanel.element);
+
+    // Add comprehensive folder structure
+    itemsPanel.addFolderItem({
+      id: 'root',
+      label: 'All Bookmarks',
+      variant: 'expanded',
+      level: 0,
+      counter: 250
+    });
+
+    itemsPanel.addFolderItem({
+      id: 'tech',
+      label: 'Technology',
+      variant: 'expanded',
+      level: 1,
+      counter: 85
+    });
+
+    itemsPanel.addFolderItem({
+      id: 'front',
+      label: 'Frontend',
+      variant: 'expanded',
+      level: 2,
+      counter: 35
+    });
+
+    itemsPanel.addFolderItem({
+      id: 'react-libs',
+      label: 'React Libraries',
+      variant: 'collapsed',
+      level: 3,
+      counter: 12
+    });
+
+    itemsPanel.addFolderItem({
+      id: 'react-util',
+      label: 'React Utils',
+      variant: 'flat',
+      level: 3,
+      counter: 8
+    });
+
+    itemsPanel.addFolderItem({
+      id: 'back',
+      label: 'Backend',
+      variant: 'collapsed',
+      level: 2,
+      counter: 28
+    });
+
+    itemsPanel.addFolderItem({
+      id: 'design-sys',
+      label: 'Design System',
+      variant: 'expanded',
+      level: 1,
+      counter: 45
+    });
+
+    itemsPanel.addFolderItem({
+      id: 'components',
+      label: 'Components',
+      variant: 'flat',
+      level: 2,
+      counter: 32
+    });
+
+    itemsPanel.addFolderItem({
+      id: 'patterns',
+      label: 'Patterns',
+      variant: 'collapsed',
+      level: 2,
+      counter: 13
+    });
+  </script>
+
+</body>
+</html>

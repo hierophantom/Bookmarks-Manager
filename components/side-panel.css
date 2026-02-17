@@ -1,0 +1,220 @@
+/**
+ * Side Panel Component
+ *
+ * Design System Component - Base Panel for BMG-128, BMG-129
+ * Generic reusable side panel with float/docked states
+ *
+ * Float state: position fixed, overlays content with z-index
+ * Docked state: position absolute, content adjusts via parent margins
+ */
+
+/* Container overrides - ensure new panels show */
+#bmg-left-panel,
+#bmg-right-panel {
+  all: initial;
+  display: contents;
+}
+
+.side-panel {
+  position: absolute;
+  top: 48px;
+  height: calc(100vh - 48px);
+  display: flex;
+  flex-direction: column;
+  background-color: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(7px);
+  border: none;
+  color: #ffffffe5;
+  font-family: 'Lato', sans-serif;
+  border-radius: 8px;
+  z-index: 999;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+  opacity: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.side-panel--visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Position variants */
+.side-panel--left {
+  left: 0;
+  width: 300px;
+}
+
+.side-panel--right {
+  right: 0;
+  width: 300px;
+}
+
+/* Float state - overlays content with fixed positioning */
+.side-panel--float {
+  position: fixed;
+  top: 0px;
+  height: calc(100vh - 48px);
+  z-index: 999;
+}
+
+.side-panel--left.side-panel--float {
+  transform: translateX(-100%);
+  left: 0;
+}
+
+.side-panel--right.side-panel--float {
+  transform: translateX(100%);
+  right: 0;
+}
+
+/* Visible float (slid in) */
+.side-panel--float.side-panel--visible {
+  transform: translateX(0);
+}
+
+/* Docked state - positioned absolutely, content adjusts via sibling margins */
+.side-panel--docked {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  transform: none;
+  z-index: 100;
+}
+
+/* Panel Header */
+.side-panel__header {
+  padding: 12px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  background-color: transparent;
+}
+
+/* Title */
+.side-panel__title {
+  margin: 0;
+  padding: 0;
+  font-size: 24px;
+  font-weight: 600;
+  flex: 1;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+  color: inherit;
+}
+
+/* Controls */
+.side-panel__controls {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+/* Control Buttons */
+.side-panel__btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  color: inherit;
+  font-size: 14px;
+  min-width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s ease;
+  font-family: inherit;
+}
+
+
+.side-panel__btn:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.side-panel__btn:active {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+.side-panel__btn--toggle {
+  /* Minimize/dock button */
+}
+
+.side-panel__btn--close {
+  /* Close button */
+}
+
+/* Content Area */
+.side-panel__content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 8px 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Scrollbar styling */
+.side-panel__content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.side-panel__content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.side-panel__content::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+}
+
+.side-panel__content::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+/* Main content adjustment when panels are docked */
+.page.bookmarks-page {
+  position: relative;
+}
+
+#bmg-main-content {
+  transition: margin-left 0.3s ease, margin-right 0.3s ease;
+  margin-left: 0;
+  margin-right: 0;
+}
+
+/* Left panel docked - push content right within bookmarks page */
+.side-panel--left.side-panel--docked ~ .bookmarks-page__content,
+.page.bookmarks-page > .side-panel--left.side-panel--docked ~ * {
+  margin-left: 300px;
+}
+
+/* Right panel docked - push content left within bookmarks page */
+.side-panel--right.side-panel--docked ~ .bookmarks-page__content,
+.page.bookmarks-page > .side-panel--right.side-panel--docked ~ * {
+  margin-right: 320px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .side-panel--left,
+  .side-panel--right {
+    width: 280px;
+  }
+
+  .side-panel__title {
+    font-size: 12px;
+  }
+
+  .side-panel__btn {
+    padding: 3px 6px;
+    min-width: 24px;
+    height: 24px;
+    font-size: 12px;
+  }
+}

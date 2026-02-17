@@ -1,0 +1,27 @@
+/**
+ * Folder Tree View Panel
+ *
+ * Design System Component - BMG-128
+ * Left side panel for folder hierarchy navigation
+ */
+
+.folder-tree-view {
+  /* Inherits from side-panel */
+}
+
+.folder-tree-view__content {
+  /* Inherits from side-panel__content */
+  flex-direction: column;
+  gap: 0;
+}
+
+/* Folder items are added automatically and styled by folder-tree-item.css */
+.folder-tree-view .folder-tree-item {
+  margin: 0 4px;
+  flex-shrink: 0;
+}
+
+/* Add margin between items */
+.folder-tree-view .folder-tree-item + .folder-tree-item {
+  margin-top: 2px;
+}

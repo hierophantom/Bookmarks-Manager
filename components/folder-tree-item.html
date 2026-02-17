@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Folder Tree Item - Design System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;500;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..24,300..700,0..1,-50..200">
+  <link rel="stylesheet" href="folder-tree-item.css">
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      background: #0a0e27;
+      color: #ffffffe5;
+      font-family: 'Lato', sans-serif;
+      min-height: 100vh;
+    }
+
+    h1, h2, h3 {
+      margin-top: 0;
+    }
+
+    h1 {
+      font-size: 32px;
+      margin-bottom: 30px;
+    }
+
+    h2 {
+      font-size: 20px;
+      margin: 40px 0 20px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+      padding-bottom: 10px;
+    }
+
+    section {
+      margin-bottom: 40px;
+      background: rgba(46, 51, 185, 0.1);
+      padding: 20px;
+      border-radius: 8px;
+      border: 1px solid rgba(46, 51, 185, 0.2);
+    }
+
+    .demo-section {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 20px;
+      align-items: flex-start;
+      flex-wrap: wrap;
+    }
+
+    .state-column {
+      flex: 1;
+      min-width: 250px;
+    }
+
+    .state-label {
+      font-size: 12px;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.6);
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .item-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    code {
+      background: rgba(46, 51, 185, 0.3);
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 12px;
+      font-family: 'Courier New', monospace;
+    }
+
+    .anatomy {
+      background: rgba(0, 0, 0, 0.3);
+      padding: 15px;
+      border-radius: 4px;
+      font-size: 12px;
+      margin-top: 15px;
+    }
+
+    .anatomy > div {
+      margin-bottom: 10px;
+      color: rgba(255, 255, 255, 0.8);
+    }
+
+    .anatomy strong {
+      color: #00ff88;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Folder Tree Item</h1>
+
+  <section>
+    <h2>States</h2>
+
+    <h3>Flat</h3>
+    <div class="demo-section">
+      <div class="state-column">
+        <div class="state-label">Idle</div>
+        <div class="item-list" id="flat-idle"></div>
+      </div>
+      <div class="state-column">
+        <div class="state-label">Hover</div>
+        <div class="item-list" id="flat-hover"></div>
+      </div>
+      <div class="state-column">
+        <div class="state-label">Active</div>
+        <div class="item-list" id="flat-active"></div>
+      </div>
+    </div>
+
+    <h3>Collapsed</h3>
+    <div class="demo-section">
+      <div class="state-column">
+        <div class="state-label">Idle</div>
+        <div class="item-list" id="collapsed-idle"></div>
+      </div>
+      <div class="state-column">
+        <div class="state-label">Hover</div>
+        <div class="item-list" id="collapsed-hover"></div>
+      </div>
+      <div class="state-column">
+        <div class="state-label">Active</div>
+        <div class="item-list" id="collapsed-active"></div>
+      </div>
+    </div>
+
+    <h3>Expanded</h3>
+    <div class="demo-section">
+      <div class="state-column">
+        <div class="state-label">Idle</div>
+        <div class="item-list" id="expanded-idle"></div>
+      </div>
+      <div class="state-column">
+        <div class="state-label">Hover</div>
+        <div class="item-list" id="expanded-hover"></div>
+      </div>
+      <div class="state-column">
+        <div class="state-label">Active</div>
+        <div class="item-list" id="expanded-active"></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Variants with Counter</h2>
+    <div class="demo-section">
+      <div class="state-column">
+        <div class="state-label">Flat with Counter</div>
+        <div class="item-list" id="flat-counter"></div>
+      </div>
+      <div class="state-column">
+        <div class="state-label">Collapsed with Counter</div>
+        <div class="item-list" id="collapsed-counter"></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Hierarchical Indentation</h2>
+    <p style="margin: 0 0 15px 0; color: rgba(255, 255, 255, 0.8);">Demonstrating tree hierarchy with multiple indentation levels:</p>
+    <div class="item-list" id="hierarchy"></div>
+  </section>
+
+  <section>
+    <h2>Anatomy</h2>
+    <div class="anatomy">
+      <div><strong>Padding:</strong> 8px (horizontal & vertical)</div>
+      <div><strong>Height:</strong> 40px</div>
+      <div><strong>Gap:</strong> 8px between elements</div>
+      <div><strong>Indentation:</strong> 16px per level</div>
+      <div><strong>Expand Icon:</strong> Material Symbol 'chevron_right' (collapsed) or 'expand_more' (expanded)</div>
+      <div><strong>Folder Icon:</strong> Material Symbol 'folder'</div>
+      <div><strong>Counter:</strong> Badge with rgba(255, 255, 255, 0.2) background</div>
+      <div><strong>Font:</strong> Lato Regular 16px, color: #ffffffe5</div>
+    </div>
+  </section>
+
+  <script src="folder-tree-item.js"></script>
+  <script>
+    // Flat variant
+    document.getElementById('flat-idle').appendChild(createFolderTreeItem({
+      label: 'Label',
+      variant: 'flat',
+      counter: 5
+    }));
+
+    const flatHover = createFolderTreeItem({
+      label: 'Label',
+      variant: 'flat',
+      counter: 5
+    });
+    flatHover.classList.remove('folder-tree-item--idle');
+    flatHover.classList.add('folder-tree-item--hover');
+    document.getElementById('flat-hover').appendChild(flatHover);
+
+    document.getElementById('flat-active').appendChild(createFolderTreeItem({
+      label: 'Label',
+      variant: 'flat',
+      counter: 5,
+      active: true
+    }));
+
+    // Collapsed variant
+    document.getElementById('collapsed-idle').appendChild(createFolderTreeItem({
+      label: 'Label',
+      variant: 'collapsed',
+      counter: 5
+    }));
+
+    const collapsedHover = createFolderTreeItem({
+      label: 'Label',
+      variant: 'collapsed',
+      counter: 5
+    });
+    collapsedHover.classList.remove('folder-tree-item--idle');
+    collapsedHover.classList.add('folder-tree-item--hover');
+    document.getElementById('collapsed-hover').appendChild(collapsedHover);
+
+    document.getElementById('collapsed-active').appendChild(createFolderTreeItem({
+      label: 'Label',
+      variant: 'collapsed',
+      counter: 5,
+      active: true
+    }));
+
+    // Expanded variant
+    document.getElementById('expanded-idle').appendChild(createFolderTreeItem({
+      label: 'Label',
+      variant: 'expanded',
+      counter: 5
+    }));
+
+    const expandedHover = createFolderTreeItem({
+      label: 'Label',
+      variant: 'expanded',
+      counter: 5
+    });
+    expandedHover.classList.remove('folder-tree-item--idle');
+    expandedHover.classList.add('folder-tree-item--hover');
+    document.getElementById('expanded-hover').appendChild(expandedHover);
+
+    document.getElementById('expanded-active').appendChild(createFolderTreeItem({
+      label: 'Label',
+      variant: 'expanded',
+      counter: 5,
+      active: true
+    }));
+
+    // Variants with Counter
+    document.getElementById('flat-counter').appendChild(createFolderTreeItem({
+      label: 'All Bookmarks',
+      variant: 'flat',
+      counter: 42
+    }));
+
+    document.getElementById('collapsed-counter').appendChild(createFolderTreeItem({
+      label: 'Work',
+      variant: 'collapsed',
+      counter: 28,
+      active: true
+    }));
+
+    // Hierarchical indentation
+    const hierarchy = document.getElementById('hierarchy');
+    hierarchy.appendChild(createFolderTreeItem({
+      label: 'All Bookmarks',
+      variant: 'expanded',
+      level: 0,
+      counter: 150
+    }));
+    hierarchy.appendChild(createFolderTreeItem({
+      label: 'Development',
+      variant: 'expanded',
+      level: 1,
+      counter: 45
+    }));
+    hierarchy.appendChild(createFolderTreeItem({
+      label: 'React',
+      variant: 'collapsed',
+      level: 2,
+      counter: 12
+    }));
+    hierarchy.appendChild(createFolderTreeItem({
+      label: 'Vue',
+      variant: 'flat',
+      level: 2,
+      counter: 8
+    }));
+    hierarchy.appendChild(createFolderTreeItem({
+      label: 'Design',
+      variant: 'expanded',
+      level: 1,
+      counter: 32
+    }));
+    hierarchy.appendChild(createFolderTreeItem({
+      label: 'UI Components',
+      variant: 'collapsed',
+      level: 2,
+      counter: 18
+    }));
+    hierarchy.appendChild(createFolderTreeItem({
+      label: 'Resources',
+      variant: 'flat',
+      level: 1,
+      counter: 73
+    }));
+  </script>
+
+</body>
+</html>
