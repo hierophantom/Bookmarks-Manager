@@ -14,21 +14,43 @@ async function loadLeftPanelData(panel) {
     if (!tree || !tree[0]) return;
     
     panel.clearFolders?.();
+    const allItem = panel.addFolderItem?.({
+      id: 'ALL_BOOKMARKS',
+      label: 'All bookmarks',
+      variant: 'flat',
+      level: 0,
+      counter: 0,
+      onClick: () => {
+        if (typeof window.clearFolderFilter === 'function') {
+          window.clearFolderFilter();
+        }
+        panel.setActiveFolder?.('ALL_BOOKMARKS');
+      }
+    });
+    if (allItem) {
+      allItem.dataset.folderId = 'ALL_BOOKMARKS';
+      allItem.dataset.parentId = '';
+      allItem.dataset.level = '0';
+      allItem.dataset.hasChildren = 'false';
+    }
+    panel.setActiveFolder?.('ALL_BOOKMARKS');
     const root = tree[0];
     
     if (root.children) {
       // Recursively add all folders with hierarchy
       for (const folder of root.children) {
-        await addFolderHierarchy(panel, folder, 0);
+        await addFolderHierarchy(panel, folder, 0, '');
       }
     }
+
+    updateFolderTreeVisibility(panel);
   } catch (e) {
     console.error('Error loading folder data:', e);
   }
 }
 
 // Recursively add folders and subfolders
-async function addFolderHierarchy(panel, folderNode, level) {
+async function addFolderHierarchy(panel, folderNode, level, parentId) {
   // Skip non-folders
   if (folderNode.url) return;
   
@@ -45,10 +67,11 @@ async function addFolderHierarchy(panel, folderNode, level) {
   }
   
   // Add folder item to panel
-  panel.addFolderItem?.({
+  const hasChildren = childFolderCount > 0;
+  const item = panel.addFolderItem?.({
     id: folderNode.id,
     label: folderNode.title || 'Untitled',
-    variant: childFolderCount > 0 ? 'expanded' : 'flat',
+    variant: hasChildren ? 'expanded' : 'flat',
     level: level,
     counter: totalItemCount,
     onClick: () => {
@@ -72,17 +95,112 @@ async function addFolderHierarchy(panel, folderNode, level) {
         // Mark as active
         panel.setActiveFolder?.(folderNode.id);
       }
+    },
+    onExpand: () => {
+      toggleFolderExpansion(panel, folderNode.id);
     }
   });
+
+  if (item) {
+    item.dataset.folderId = folderNode.id;
+    item.dataset.parentId = parentId || '';
+    item.dataset.level = `${level}`;
+    item.dataset.hasChildren = hasChildren ? 'true' : 'false';
+    if (hasChildren) {
+      item.dataset.expanded = 'true';
+    }
+  }
   
   // Recursively add subfolders
   if (folderNode.children) {
     for (const child of folderNode.children) {
       if (!child.url) { // Only show folders, not bookmarks
-        await addFolderHierarchy(panel, child, level + 1);
+        await addFolderHierarchy(panel, child, level + 1, folderNode.id);
       }
     }
   }
+}
+
+function toggleFolderExpansion(panel, folderId) {
+  const item = panel.content?.querySelector(`[data-folder-id="${folderId}"]`);
+  if (!item) return;
+  const isExpanded = item.dataset.expanded === 'true';
+  setFolderExpanded(panel, folderId, !isExpanded);
+}
+
+function setFolderExpanded(panel, folderId, expanded) {
+  const item = panel.content?.querySelector(`[data-folder-id="${folderId}"]`);
+  if (!item || item.dataset.hasChildren !== 'true') return;
+
+  const parentId = item.dataset.parentId || '';
+  const items = panel.content?.querySelectorAll('.folder-tree-item') || [];
+
+  if (expanded) {
+    items.forEach((node) => {
+      if (node.dataset.parentId === parentId && node.dataset.folderId !== folderId && node.dataset.hasChildren === 'true') {
+        node.dataset.expanded = 'false';
+        panel.updateFolderItem?.(node.dataset.folderId, { variant: 'collapsed' });
+        collapseDescendants(panel, node.dataset.folderId);
+      }
+    });
+  }
+
+  item.dataset.expanded = expanded ? 'true' : 'false';
+  panel.updateFolderItem?.(folderId, { variant: expanded ? 'expanded' : 'collapsed' });
+
+  if (!expanded) {
+    collapseDescendants(panel, folderId);
+  }
+
+  updateFolderTreeVisibility(panel);
+}
+
+function collapseDescendants(panel, ancestorId) {
+  const items = panel.content?.querySelectorAll('.folder-tree-item') || [];
+  items.forEach((node) => {
+    if (isDescendant(panel, node, ancestorId) && node.dataset.hasChildren === 'true') {
+      node.dataset.expanded = 'false';
+      panel.updateFolderItem?.(node.dataset.folderId, { variant: 'collapsed' });
+    }
+  });
+}
+
+function isDescendant(panel, node, ancestorId) {
+  let current = node;
+  const lookup = panel.content;
+  while (current && current.dataset && current.dataset.parentId) {
+    if (current.dataset.parentId === ancestorId) {
+      return true;
+    }
+    current = lookup?.querySelector(`[data-folder-id="${current.dataset.parentId}"]`);
+  }
+  return false;
+}
+
+function updateFolderTreeVisibility(panel) {
+  const items = panel.content?.querySelectorAll('.folder-tree-item') || [];
+  items.forEach((node) => {
+    if (!node.dataset || !node.dataset.parentId) {
+      node.style.display = '';
+      return;
+    }
+    const isVisible = areAncestorsExpanded(panel, node);
+    node.style.display = isVisible ? '' : 'none';
+  });
+}
+
+function areAncestorsExpanded(panel, node) {
+  let current = node;
+  const lookup = panel.content;
+  while (current && current.dataset && current.dataset.parentId) {
+    const parent = lookup?.querySelector(`[data-folder-id="${current.dataset.parentId}"]`);
+    if (!parent) return true;
+    if (parent.dataset.hasChildren === 'true' && parent.dataset.expanded !== 'true') {
+      return false;
+    }
+    current = parent;
+  }
+  return true;
 }
 
 // Load tabs/sessions data
@@ -148,19 +266,10 @@ document.addEventListener('DOMContentLoaded', () => {
         title: 'Folders',
         position: 'left',
         docked: false,
-        onClose: () => leftPanel.hide(),
-        onToggleMode: () => {
-          leftPanel.isDocked() ? (leftPanel.setFloat(), leftPanel.show()) : leftPanel.setDocked();
-        }
+        onClose: () => leftPanel.hide()
       });
       
-      // Position within bookmarks page if available
-      if (bookmarksPage) {
-        bookmarksPage.style.position = 'relative';
-        bookmarksPage.insertBefore(leftPanel.element, bookmarksPage.firstChild);
-      } else {
-        leftPanelContainer.appendChild(leftPanel.element);
-      }
+      leftPanelContainer.appendChild(leftPanel.element);
       
       window.folderTreeViewPanel = leftPanel;
       
@@ -174,16 +283,8 @@ document.addEventListener('DOMContentLoaded', () => {
       // Initial load
       loadLeftPanelData(leftPanel);
       
-      // Add expected button IDs for old code compatibility
-      const leftButtons = leftPanel.element.querySelectorAll('.side-panel__btn');
-      const leftModeToggle = leftButtons[0];
-      const leftCloseBtn = leftButtons[1];
-      if (leftModeToggle) {
-        leftModeToggle.id = 'bmg-left-panel-mode-toggle';
-        leftModeToggle.addEventListener('click', () => {
-          leftPanel.isDocked() ? (leftPanel.setFloat(), leftPanel.show()) : leftPanel.setDocked();
-        });
-      }
+      // Add expected close button ID for old code compatibility
+      const leftCloseBtn = leftPanel.element.querySelector('.side-panel__btn');
       if (leftCloseBtn) {
         leftCloseBtn.id = 'bmg-left-panel-close-btn';
         leftCloseBtn.addEventListener('click', () => {
@@ -223,19 +324,10 @@ document.addEventListener('DOMContentLoaded', () => {
         title: 'Active Tabs',
         position: 'right',
         docked: false,
-        onClose: () => rightPanel.hide(),
-        onToggleMode: () => {
-          rightPanel.isDocked() ? (rightPanel.setFloat(), rightPanel.show()) : rightPanel.setDocked();
-        }
+        onClose: () => rightPanel.hide()
       });
       
-      // Position within bookmarks page if available
-      if (bookmarksPage) {
-        bookmarksPage.style.position = 'relative';
-        bookmarksPage.appendChild(rightPanel.element);
-      } else {
-        rightPanelContainer.appendChild(rightPanel.element);
-      }
+      rightPanelContainer.appendChild(rightPanel.element);
       
       window.activeSessionsPanel = rightPanel;
       

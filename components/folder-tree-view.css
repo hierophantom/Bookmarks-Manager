@@ -17,7 +17,7 @@
 
 /* Folder items are added automatically and styled by folder-tree-item.css */
 .folder-tree-view .folder-tree-item {
-  margin: 0 4px;
+  margin: 0 4px 0 calc(4px + (var(--indent-level, 0) * 16px));
   flex-shrink: 0;
 }
 

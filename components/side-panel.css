@@ -54,18 +54,20 @@
 .side-panel--float {
   position: fixed;
   top: 0px;
-  height: calc(100vh - 48px);
+  height: calc(100vh - 68px);
   z-index: 999;
 }
 
 .side-panel--left.side-panel--float {
   transform: translateX(-100%);
-  left: 0;
+  left: 8px;
+  top: 68px;
 }
 
 .side-panel--right.side-panel--float {
   transform: translateX(100%);
-  right: 0;
+  right: 8px;
+  top: 68px;
 }
 
 /* Visible float (slid in) */

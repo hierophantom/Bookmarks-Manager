@@ -38,7 +38,8 @@ function createFolderTreeViewPanel(options = {}) {
     onClose = null,
     onToggleMode = null,
     onFolderSelect = null,
-    visible = true
+    visible = true,
+    includeAllBookmarks = true
   } = options;
 
   // Create base side panel
@@ -62,7 +63,7 @@ function createFolderTreeViewPanel(options = {}) {
   const items = new Map();
 
   // Return extended panel with folder methods
-  return Object.assign(panel, {
+  const api = Object.assign(panel, {
     /**
      * Add a folder item to the tree
      * @param {Object} options - Folder item options
@@ -203,4 +204,18 @@ function createFolderTreeViewPanel(options = {}) {
       items.clear();
     }
   });
+
+  if (includeAllBookmarks) {
+    api.addFolderItem({
+      id: 'ALL_BOOKMARKS',
+      label: 'All bookmarks',
+      variant: 'flat',
+      level: 0,
+      counter: 0,
+      onClick: () => api.setActiveFolder('ALL_BOOKMARKS')
+    });
+    api.setActiveFolder('ALL_BOOKMARKS');
+  }
+
+  return api;
 }

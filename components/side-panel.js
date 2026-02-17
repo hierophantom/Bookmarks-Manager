@@ -6,7 +6,7 @@
  * Generic reusable side panel container with:
  * - Header (title + controls)
  * - Scrollable content
- * - Float/Docked states
+ * - Float state
  *
  * @example
  * const panel = createSidePanel({
@@ -24,8 +24,8 @@
  * @param {string} options.title - Panel title (required)
  * @param {string} [options.position='left'] - 'left' or 'right'
  * @param {Function} [options.onClose] - Close button handler
- * @param {Function} [options.onToggleMode] - Minimize/dock button handler
- * @param {boolean} [options.docked=false] - Initial docked state
+ * @param {Function} [options.onToggleMode] - Minimize/dock button handler (unused)
+ * @param {boolean} [options.docked=false] - Initial docked state (unused)
  * @returns {Object} Panel object with methods
  */
 function createSidePanel(options = {}) {
@@ -53,11 +53,7 @@ function createSidePanel(options = {}) {
   container.setAttribute('role', 'complementary');
   container.setAttribute('aria-label', title);
 
-  if (docked) {
-    container.classList.add('side-panel--docked');
-  } else {
-    container.classList.add('side-panel--float');
-  }
+  container.classList.add('side-panel--float');
 
   // Create header
   const header = document.createElement('div');
@@ -72,25 +68,6 @@ function createSidePanel(options = {}) {
   // Create controls
   const controls = document.createElement('div');
   controls.className = 'side-panel__controls';
-
-  // Toggle mode button (minimize/dock)
-  const toggleBtn = document.createElement('button');
-  toggleBtn.className = 'side-panel__btn side-panel__btn--toggle';
-  toggleBtn.type = 'button';
-  toggleBtn.setAttribute('aria-label', 'Toggle floating/docked mode');
-  
-  // Create icon element with Material Symbol
-  const iconSpan = document.createElement('span');
-  iconSpan.className = 'material-symbols-outlined';
-  iconSpan.textContent = position === 'left' ? 'dock_to_left' : 'dock_to_right';
-  toggleBtn.appendChild(iconSpan);
-  
-  toggleBtn.addEventListener('click', () => {
-    if (typeof onToggleMode === 'function') {
-      onToggleMode();
-    }
-  });
-  controls.appendChild(toggleBtn);
 
   // Close button
   const closeBtn = document.createElement('button');
