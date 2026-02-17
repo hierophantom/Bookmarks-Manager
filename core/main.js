@@ -1,3 +1,28 @@
+// Global lazyObserver for folder lazy loading
+let lazyObserver = null;
+
+function setupLazyObserver(root) {
+  if (typeof IntersectionObserver === 'undefined') {
+    lazyObserver = null;
+    return;
+  }
+  lazyObserver = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (!entry.isIntersecting) return;
+      const section = entry.target;
+      const renderItems = section && section._renderFolderItems;
+      if (typeof renderItems === 'function') {
+        renderItems();
+      }
+      if (lazyObserver) {
+        lazyObserver.unobserve(section);
+      }
+    });
+  }, { root: document.querySelector('.bookmarks-sections'), rootMargin: '600px 0px', threshold: 0.01 });
+  if (root) {
+    root._lazyObserver = lazyObserver;
+  }
+}
 document.addEventListener('DOMContentLoaded', async () => {
   // Ensure main content is focused so keyboard shortcuts work immediately on new tab
   // Try to focus a hidden input to force focus out of the URL bar
@@ -128,6 +153,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   let currentFilterTags = [];
   let currentSort = 'none';
   let availableTags = [];
+  let currentFolderFilter = null; // Track which folder is being viewed
 
   function createMaterialIcon(name) {
     const icon = document.createElement('span');
@@ -451,11 +477,25 @@ document.addEventListener('DOMContentLoaded', async () => {
         icon: createMaterialIcon('folder'),
         label: 'Folders',
         onClick: () => {
-          if (typeof LeftPanelUI !== 'undefined') {
+          // Use new panel component if available, fallback to old UI
+          if (window.folderTreeViewPanel) {
+            if (window.folderTreeViewPanel.isVisible()) {
+              // Clear folder filter when closing panel
+              if (typeof window.clearFolderFilter === 'function') {
+                window.clearFolderFilter();
+              }
+              window.folderTreeViewPanel.hide();
+              floatingLeft.style.display = '';
+            } else {
+              window.folderTreeViewPanel.show();
+              floatingLeft.style.display = 'none';
+            }
+          } else if (typeof LeftPanelUI !== 'undefined') {
             LeftPanelUI.handlePanelToggle();
           }
         }
       });
+      window.folderTreeViewTriggerButton = floatingLeft;
       bookmarksFloatingLeft.appendChild(floatingLeft);
 
       // Add tooltip
@@ -474,17 +514,27 @@ document.addEventListener('DOMContentLoaded', async () => {
         icon: createMaterialIcon('tab'),
         label: 'Tabs',
         onClick: () => {
-          if (typeof RightPanelUI !== 'undefined') {
+          // Use new panel component if available, fallback to old UI
+          if (window.activeSessionsPanel) {
+            if (window.activeSessionsPanel.isVisible()) {
+              window.activeSessionsPanel.hide();
+              floatingRight.style.display = '';
+            } else {
+              window.activeSessionsPanel.show();
+              floatingRight.style.display = 'none';
+            }
+          } else if (typeof RightPanelUI !== 'undefined') {
             RightPanelUI.handlePanelToggle();
           }
         }
       });
+      window.activeSessionsTriggerButton = floatingRight;
       bookmarksFloatingRight.appendChild(floatingRight);
 
       // Add tooltip
       if (typeof createTooltip !== 'undefined') {
         createTooltip({
-          text: `Active Tabs\n${modifierKey}+Shift+S`,
+          text: `Active Tabs\n${modifierKey}+Shift+V`,
           target: floatingRight,
           position: 'bottom',
           delay: 'fast'
@@ -589,8 +639,47 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  // Arrow keys navigate pages
+  // Keyboard shortcuts and navigation
   window.addEventListener('keydown', (e) => {
+    // Folder panel toggle: Cmd+Shift+F (Mac) or Ctrl+Shift+F (Windows/Linux)
+    const isLeftPanelShortcut = (e.metaKey || e.ctrlKey) && e.shiftKey && !e.altKey
+      && (e.key === 'f' || e.key === 'F');
+    if (isLeftPanelShortcut) {
+      e.preventDefault();
+      if (window.folderTreeViewPanel) {
+        if (window.folderTreeViewPanel.isVisible()) {
+          // Clear folder filter when closing panel
+          if (typeof window.clearFolderFilter === 'function') {
+            window.clearFolderFilter();
+          }
+          window.folderTreeViewPanel.hide();
+          if (window.folderTreeViewTriggerButton) window.folderTreeViewTriggerButton.style.display = '';
+        } else {
+          window.folderTreeViewPanel.show();
+          if (window.folderTreeViewTriggerButton) window.folderTreeViewTriggerButton.style.display = 'none';
+        }
+      }
+      return;
+    }
+
+    // Active sessions panel toggle: Cmd+Shift+V (Mac) or Ctrl+Shift+V (Windows/Linux)
+    const isRightPanelShortcut = (e.metaKey || e.ctrlKey) && e.shiftKey && !e.altKey
+      && (e.key === 'v' || e.key === 'V');
+    if (isRightPanelShortcut) {
+      e.preventDefault();
+      if (window.activeSessionsPanel) {
+        if (window.activeSessionsPanel.isVisible()) {
+          window.activeSessionsPanel.hide();
+          if (window.activeSessionsTriggerButton) window.activeSessionsTriggerButton.style.display = '';
+        } else {
+          window.activeSessionsPanel.show();
+          if (window.activeSessionsTriggerButton) window.activeSessionsTriggerButton.style.display = 'none';
+        }
+      }
+      return;
+    }
+
+    // Find shortcut: Cmd+F (Mac) or Ctrl+F (Windows/Linux)
     const isFindShortcut = (e.metaKey || e.ctrlKey) && !e.shiftKey && !e.altKey
       && (e.key === 'f' || e.key === 'F');
     if (isFindShortcut) {
@@ -702,7 +791,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       root._lazyObserver.disconnect();
       root._lazyObserver = null;
     }
-    
+    // Always re-setup lazyObserver for new root
+    setupLazyObserver(root);
     root.innerHTML = '';
 
     let tree;
@@ -948,24 +1038,40 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
-    const lazyObserver = (typeof IntersectionObserver !== 'undefined')
-      ? new IntersectionObserver((entries) => {
-        entries.forEach((entry) => {
-          if (!entry.isIntersecting) return;
-          const section = entry.target;
-          const renderItems = section && section._renderFolderItems;
-          if (typeof renderItems === 'function') {
-            renderItems();
-          }
-          if (lazyObserver) {
-            lazyObserver.unobserve(section);
-          }
-        });
-      }, { root: document.querySelector('.bookmarks-sections'), rootMargin: '600px 0px', threshold: 0.01 })
-      : null;
-    if (root) {
-      root._lazyObserver = lazyObserver;
+    // If filtering by folder, show only that folder's contents
+    if (currentFolderFilter) {
+      const focusedFolder = idToNode.get(currentFolderFilter);
+      if (focusedFolder && !focusedFolder.url) {
+        // Render just this folder and its contents
+        await renderFolder(focusedFolder, root);
+        FaviconService.attachErrorHandlers(root);
+        setupKeyboardNavigation();
+      } else {
+        // Folder not found or is invalid, clear filter and show normal view
+        currentFolderFilter = null;
+        // Fall through to normal rendering
+      }
+      
+      if (currentFolderFilter) {
+        // Early return if folder filtering was successful
+        if (perfEnabled && thisRender === renderVersion) {
+          const totalMs = performance.now() - perfStart;
+          console.log('[BMG PERF] render (folder filter)', {
+            renderCall: renderCallCount,
+            treeFetchMs: Math.round(perf.treeFetchMs),
+            renderMs: Math.round(totalMs),
+            tilesRendered: perf.tilesRendered,
+            sectionsRendered: perf.sectionsRendered
+          });
+        }
+        if (preserveScroll) {
+          requestAnimationFrame(() => { window.scrollTo(0, savedScrollY); });
+        }
+        return;
+      }
     }
+
+    // ...existing code...
 
     function focusFolderSection(folderId) {
       if (!folderId) return;
@@ -1417,13 +1523,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         addFolderDropHandlers(content, folder.id);
       }
 
-      if (lazyObserver) {
+      if (lazyObserver && !currentFolderFilter) {
         lazyObserver.observe(section);
       } else {
         renderItemsOnce();
       }
 
-      if (folder.children && folder.children.length) {
+      // Only render nested folders if not filtering by a specific folder
+      if (!currentFolderFilter && folder.children && folder.children.length) {
         const childFolders = folder.children.filter(c => !c.url);
         const sortedChildFolders = sortFolders(childFolders);
         for (const child of sortedChildFolders) {
@@ -1645,6 +1752,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       await LeftPanelUI.init({
         onPanelToggle: (isOpen) => {
           console.log('Left panel toggled:', isOpen);
+        },
+        onFolderSelected: (folderId) => {
+          if (folderId) {
+            window.showBookmarksInFolder(folderId);
+          } else {
+            window.clearFolderFilter();
+          }
         }
       });
 
@@ -1684,6 +1798,18 @@ document.addEventListener('DOMContentLoaded', async () => {
   window.jumpToFolder = function(folderId) {
     const targetEl = document.getElementById(`folder-${folderId}`);
     if (targetEl) targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  // Filter main view to show only a specific folder
+  window.showBookmarksInFolder = async function(folderId) {
+    currentFolderFilter = folderId;
+    await render(false);
+  };
+
+  // Clear folder filter and show normal view
+  window.clearFolderFilter = async function() {
+    currentFolderFilter = null;
+    await render(false);
   };
 
   if (addWidgetBtn){ addWidgetBtn.addEventListener('click', async ()=>{

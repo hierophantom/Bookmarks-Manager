@@ -29,8 +29,11 @@
   <link rel="stylesheet" href="../utils/tailwind-modal.css">
   <link rel="stylesheet" href="../utils/modal.css">
   <link rel="stylesheet" href="../utils/tagify.min.css">
-  <link rel="stylesheet" href="../utils/left-panel.css">
-  <link rel="stylesheet" href="../utils/right-panel.css">
+  <!-- New side panel components -->
+  <link rel="stylesheet" href="../components/side-panel.css">
+  <link rel="stylesheet" href="../components/folder-tree-view.css">
+  <link rel="stylesheet" href="../components/active-sessions-panel.css">
+  <link rel="stylesheet" href="../components/folder-tree-item.css">
   <!-- Load main overlay for this chrome-extension:// page -->
   <script type="module" src="../service-search-engine/main-overlay/overlay.js"></script>
   <!-- Load BaseModal class for all modals -->
@@ -40,29 +43,6 @@
 </head>
 <body>
   <div id="bmg-dim-layer" aria-hidden="true"></div>
-  <!-- Left Panel -->
-  <div id="bmg-left-panel" class="left-panel">
-    <div class="bmg-left-panel-header">
-      <h3 class="bmg-left-panel-title">Folders</h3>
-      <div class="bmg-left-panel-controls">
-        <button id="bmg-left-panel-mode-toggle" class="bmg-left-panel-btn" title="Toggle floating/docked">⊟</button>
-        <button id="bmg-left-panel-close-btn" class="bmg-left-panel-btn" title="Close panel">✕</button>
-      </div>
-    </div>
-    <div id="bmg-left-panel-content"></div>
-  </div>
-
-  <!-- Right Panel -->
-  <div id="bmg-right-panel" class="right-panel">
-    <div class="bmg-right-panel-header">
-      <h3 class="bmg-right-panel-title">Active Tabs</h3>
-      <div class="bmg-right-panel-controls">
-        <button id="bmg-right-panel-mode-toggle" class="bmg-right-panel-btn" title="Toggle floating/docked">⊟</button>
-        <button id="bmg-right-panel-close-btn" class="bmg-right-panel-btn" title="Close panel">✕</button>
-      </div>
-    </div>
-    <div id="bmg-right-panel-content"></div>
-  </div>
 
   <!-- Main content wrapper -->
   <div id="bmg-main-content">
@@ -121,6 +101,12 @@
 
       <!-- Page 2: Bookmarks -->
       <section class="page bookmarks-page" data-page="1">
+        <!-- Left Panel - Folder Tree View -->
+        <div id="bmg-left-panel">
+          <div id="bmg-left-panel-content"></div>
+        </div>
+        <!-- Right Panel -->
+        <div id="bmg-right-panel"></div>
         <div class="bookmarks-page__content">
           <div class="bookmarks-actions" id="bookmarks-actions">
             <div class="bookmarks-actions__left" id="bookmarks-actions-left"></div>
@@ -175,6 +161,13 @@
   <script src="../utils/undo.js"></script>
   <script src="../utils/undo-persist.js"></script>
   <script src="../utils/slots.js"></script>
+  <!-- Load new panel components FIRST -->
+  <script src="../components/side-panel.js"></script>
+  <script src="../components/folder-tree-view.js"></script>
+  <script src="../components/active-sessions-panel.js"></script>
+  <script src="../components/folder-tree-item.js"></script>
+  <!-- Panel initialization -->
+  <script src="panel-init.js"></script>
   <script src="../services/themes.js"></script>
   <script src="../services/backgrounds.js"></script>
   <script src="../services/favicon.js"></script>
@@ -208,6 +201,8 @@
   <script src="daily-quote.js"></script>
   <script src="../utils/unsplash-attribution-modal.js"></script>
   <script src="../utils/shader.js"></script>
+
+  <!-- Main app logic -->
   <script src="main.js"></script>
 </body>
 </html>

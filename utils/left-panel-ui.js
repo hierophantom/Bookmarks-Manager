@@ -6,9 +6,27 @@ const LeftPanelUI = (() => {
   /**
    * Render the folder tree recursively
    */
-  async function renderFolderTree(folders, expandedFolders = []) {
+  async function renderFolderTree(folders, expandedFolders = [], isRoot = true) {
     const ul = document.createElement('ul');
     ul.className = 'bmg-left-panel-tree';
+
+    // Only add 'All bookmarks' at the root level
+    if (isRoot) {
+      const allLi = document.createElement('li');
+      allLi.className = 'bmg-left-panel-item bmg-left-panel-all-bookmarks';
+      allLi.dataset.folderId = 'ALL_BOOKMARKS';
+      const allHeader = document.createElement('div');
+      allHeader.className = 'bmg-left-panel-folder-header';
+      const allLabel = document.createElement('span');
+      allLabel.className = 'bmg-left-panel-folder-label';
+      allLabel.textContent = 'All bookmarks';
+      allHeader.appendChild(allLabel);
+      allLi.appendChild(allHeader);
+      allLi.addEventListener('click', async () => {
+        await handleClearSelection();
+      });
+      ul.appendChild(allLi);
+    }
 
     for (const folder of folders) {
       const li = document.createElement('li');
@@ -98,47 +116,8 @@ const LeftPanelUI = (() => {
 
         // Render subfolders first
         if (folder.children && folder.children.length > 0) {
-          const subfoldersTree = await renderFolderTree(folder.children, expandedFolders);
+          const subfoldersTree = await renderFolderTree(folder.children, expandedFolders, false);
           subfoldersTree.childNodes.forEach(child => childrenContainer.appendChild(child));
-        }
-
-        // Then render bookmarks
-        if (folder.bookmarks && folder.bookmarks.length > 0) {
-          folder.bookmarks.forEach(bookmark => {
-            const bookmarkLi = document.createElement('li');
-            bookmarkLi.className = 'bmg-left-panel-bookmark-item';
-            bookmarkLi.dataset.bookmarkId = bookmark.id;
-
-            const bookmarkLink = document.createElement('a');
-            bookmarkLink.className = 'bmg-left-panel-bookmark-link';
-            bookmarkLink.href = bookmark.url;
-            bookmarkLink.target = '_blank';
-            bookmarkLink.title = bookmark.url;
-            
-            // Add favicon
-            if (typeof FaviconService !== 'undefined') {
-              const favicon = FaviconService.createFaviconElement(bookmark.url, {
-                size: 16,
-                className: 'bmg-left-panel-favicon',
-                alt: 'Favicon'
-              });
-              bookmarkLink.appendChild(favicon);
-            }
-            
-            // Add bookmark title as text node
-            const titleSpan = document.createElement('span');
-            titleSpan.setAttribute('dir', 'auto');
-            titleSpan.textContent = bookmark.title;
-            bookmarkLink.appendChild(titleSpan);
-            
-            // Prevent the link from propagating click to parent
-            bookmarkLink.addEventListener('click', (e) => {
-              e.stopPropagation();
-            });
-
-            bookmarkLi.appendChild(bookmarkLink);
-            childrenContainer.appendChild(bookmarkLi);
-          });
         }
 
         li.appendChild(childrenContainer);
@@ -155,18 +134,15 @@ const LeftPanelUI = (() => {
    */
   async function handleFolderClick(folderId) {
     try {
-      // Toggle selection - if clicking same folder, deselect it
+      // If clicking the same active folder, clear filter and deselect
       const state = await LeftPanelService.getState();
       if (state.selectedFolderId === folderId) {
-        await LeftPanelService.clearSelection();
-      } else {
-        await LeftPanelService.selectFolder(folderId);
+        await handleClearSelection();
+        return;
       }
-
-      // Update UI and notify
+      await LeftPanelService.selectFolder(folderId);
       currentState = await LeftPanelService.getState();
       await updatePanelUI();
-
       if (onFolderSelected) {
         onFolderSelected(currentState.selectedFolderId);
       }
@@ -201,21 +177,9 @@ const LeftPanelUI = (() => {
 
       // Clear existing tree
       panelContent.innerHTML = '';
-
-      // Build and render tree
-      const folderTree = await LeftPanelService.buildFolderTree();
-      const treeElement = await renderFolderTree(folderTree, state.expandedFolders);
-      panelContent.appendChild(treeElement);
-
-      // Highlight selected folder
-      document.querySelectorAll('.bmg-left-panel-item').forEach(item => {
-        item.classList.remove('selected');
-      });
-
-      // No clear selection button needed anymore
     } catch (e) {
       console.error('Error updating panel UI:', e);
-      panelContent.innerHTML = '<div class="bmg-left-panel-error">Error loading folders</div>';
+      panelContent.innerHTML = '';
     }
   }
 
@@ -281,36 +245,11 @@ const LeftPanelUI = (() => {
    */
   async function handlePanelToggle() {
     try {
-      const state = await LeftPanelService.togglePanel();
-      const panel = document.getElementById('bmg-left-panel');
-
-      if (state.isOpen) {
-        panel.classList.add('open');
-        await updatePanelUI();
-      } else {
-        panel.classList.remove('open');
-      }
-
-      if (onPanelToggle) {
-        onPanelToggle(state.isOpen);
-      }
+      const state = await LeftPanelService.getState();
+      currentState = state;
+      await updatePanelUI();
     } catch (e) {
       console.error('Error toggling panel:', e);
-    }
-  }
-
-  /**
-   * Handle mode toggle
-   */
-  async function handleModeToggle() {
-    try {
-      const state = await LeftPanelService.toggleMode();
-      const panel = document.getElementById('bmg-left-panel');
-
-      panel.classList.remove('floating', 'docked');
-      panel.classList.add(state.mode);
-    } catch (e) {
-      console.error('Error toggling mode:', e);
     }
   }
 
@@ -357,6 +296,21 @@ const LeftPanelUI = (() => {
    */
   async function refresh() {
     await updatePanelUI();
+  }
+
+  /**
+   * Handle mode toggle (docked vs floating)
+   */
+  async function handleModeToggle() {
+    try {
+      await LeftPanelService.toggleMode();
+      currentState = await LeftPanelService.getState();
+      const panel = document.getElementById('bmg-left-panel');
+      panel.classList.remove('floating', 'docked');
+      panel.classList.add(currentState.mode);
+    } catch (e) {
+      console.error('Error toggling mode:', e);
+    }
   }
 
   /**
