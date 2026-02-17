@@ -1455,4 +1455,12 @@ body {
   z-index: 10;
 }
 
+/* Hide focus outline from focus hack on page load */
+body:focus,
+body:focus-visible,
+#bmg-main-content:focus,
+#bmg-main-content:focus-visible {
+  outline: none !important;
+}
+
 

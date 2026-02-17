@@ -44,28 +44,6 @@ function createSearchComp(options = {}) {
   const container = document.createElement('div');
   container.className = `search-comp search-comp--${contrast}`;
 
-  // Icon
-  const iconEl = document.createElement('span');
-  iconEl.className = 'search-comp__icon';
-  iconEl.setAttribute('aria-hidden', 'true');
-
-  if (icon) {
-    if (typeof icon === 'string') {
-      if (icon.startsWith('<svg')) {
-        iconEl.innerHTML = icon;
-      } else {
-        const img = document.createElement('img');
-        img.src = icon;
-        img.alt = '';
-        iconEl.appendChild(img);
-      }
-    } else if (icon instanceof HTMLElement) {
-      iconEl.appendChild(icon);
-    }
-  } else {
-    iconEl.innerHTML = "<svg viewBox='0 0 24 24' aria-hidden='true'><path d='M15.5 14h-.79l-.28-.27a6 6 0 10-.71.71l.27.28v.79L20 20.5 21.5 19 15.5 14zm-6.5 0a4 4 0 110-8 4 4 0 010 8z'/></svg>";
-  }
-
   // Input
   const input = document.createElement('input');
   input.className = 'search-comp__input';
@@ -106,12 +84,11 @@ function createSearchComp(options = {}) {
   }
 
   // Assemble
-  container.appendChild(iconEl);
   container.appendChild(input);
-  container.appendChild(clearButton);
   if (shortcutEl) {
     container.appendChild(shortcutEl);
   }
+  container.appendChild(clearButton);
 
   setHasValue(Boolean(input.value));
 
@@ -131,12 +108,28 @@ function createSearchComp(options = {}) {
     });
   }
 
+  input.addEventListener('keydown', event => {
+    if (event.key === 'Escape') {
+      if (!input.value) return;
+      input.value = '';
+      setHasValue(false);
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      event.preventDefault();
+    }
+  });
+
   clearButton.addEventListener('click', (event) => {
     event.stopPropagation();
     if (!input.value) return;
     input.value = '';
     setHasValue(false);
     input.dispatchEvent(new Event('input', { bubbles: true }));
+    input.focus();
+  });
+
+  container.addEventListener('click', (event) => {
+    if (disabled) return;
+    if (event.target.closest('.search-comp__clear')) return;
     input.focus();
   });
 

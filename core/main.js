@@ -1,8 +1,25 @@
 document.addEventListener('DOMContentLoaded', async () => {
-  // Ensure page itself is focused so keyboard shortcuts work immediately on new tab
-  if (document.body) {
-    document.body.setAttribute('tabindex', '-1');
-    document.body.focus();
+  // Ensure main content is focused so keyboard shortcuts work immediately on new tab
+  // Try to focus a hidden input to force focus out of the URL bar
+  const focusHack = document.getElementById('bmg-focus-hack');
+  if (focusHack) {
+    focusHack.focus();
+    // Remove focus from the hack input after a short delay
+    setTimeout(() => {
+      focusHack.blur();
+      // Optionally focus main content for keyboard shortcuts
+      const mainContent = document.getElementById('bmg-main-content');
+      if (mainContent) {
+        mainContent.setAttribute('tabindex', '-1');
+        mainContent.focus();
+      }
+    }, 100);
+  } else {
+    // fallback for legacy: focus body
+    if (document.body) {
+      document.body.setAttribute('tabindex', '-1');
+      document.body.focus();
+    }
   }
 
   // Check new tab override setting
@@ -196,6 +213,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const searchComp = createSearchComp({
       placeholder: 'Search bookmarks...',
       contrast: 'low',
+      shortcutKeys: ['⌘', 'F'],
       onInput: () => {
         render(true);
       }
@@ -573,6 +591,18 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Arrow keys navigate pages
   window.addEventListener('keydown', (e) => {
+    const isFindShortcut = (e.metaKey || e.ctrlKey) && !e.shiftKey && !e.altKey
+      && (e.key === 'f' || e.key === 'F');
+    if (isFindShortcut) {
+      e.preventDefault();
+      const searchInput = document.querySelector('.search-comp__input');
+      if (searchInput) {
+        searchInput.focus();
+        searchInput.select();
+      }
+      return;
+    }
+
     const target = e.target;
     const tag = target && target.tagName;
     if (tag === 'INPUT' || tag === 'TEXTAREA' || (target && target.isContentEditable)) return;
@@ -770,8 +800,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Flat search results mode: when filtering, render only matching bookmarks without folder sections
     if (filterActive) {
-      const matches = [];
-      const seen = new Set();
+      const bookmarkMatches = [];
+      const folderMatches = [];
+      const seenBookmarks = new Set();
+      const seenFolders = new Set();
       async function collectMatches(node) {
         if (!node) return;
         if (Array.isArray(node)) {
@@ -791,7 +823,18 @@ document.addEventListener('DOMContentLoaded', async () => {
             const anyMatch = currentFilterTags.some(t => tags.includes(t));
             if (!anyMatch) return;
           }
-          if (!seen.has(node.id)) { seen.add(node.id); matches.push(node); }
+          if (!seenBookmarks.has(node.id)) {
+            seenBookmarks.add(node.id);
+            bookmarkMatches.push(node);
+          }
+        } else if (filterText) {
+          const title = (node.title || '').toLowerCase();
+          if (title && title.includes(filterText)) {
+            if (!hiddenFolderIds.has(node.id) && !seenFolders.has(node.id)) {
+              seenFolders.add(node.id);
+              folderMatches.push(node);
+            }
+          }
         }
         if (node.children && node.children.length) {
           for (const c of node.children) await collectMatches(c);
@@ -800,10 +843,16 @@ document.addEventListener('DOMContentLoaded', async () => {
       await collectMatches(tree && tree[0] ? tree[0] : null);
       if (thisRender !== renderVersion) return;
 
-      const results = currentSort.startsWith('bookmarks-') ? sortBookmarks(matches) : matches;
+      const folderResults = currentSort.startsWith('folders-') ? sortFolders(folderMatches) : folderMatches;
+      const bookmarkResults = currentSort.startsWith('bookmarks-') ? sortBookmarks(bookmarkMatches) : bookmarkMatches;
       const items = [];
 
-      for (const child of results) {
+      for (const folder of folderResults) {
+        if (thisRender !== renderVersion) return;
+        items.push(createFolderTile(folder));
+      }
+
+      for (const child of bookmarkResults) {
         if (thisRender !== renderVersion) return;
         const bookmarkTags = getTagsForId(child.id);
         const tagAction = bookmarkTags.length > 0 ? createCubeActionButton({
@@ -865,10 +914,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         items.push(tile);
       }
 
+      const totalResults = folderResults.length + bookmarkResults.length;
       const section = createFolderSection({
         state: 'idle',
         items,
-        breadcrumbItems: [{ label: `Results (${results.length})`, type: 'current' }],
+        breadcrumbItems: [{ label: `Results (${totalResults})`, type: 'current' }],
         actions: []
       });
       perf.sectionsRendered += 1;

@@ -11,53 +11,38 @@
 
 /* Base search component styles */
 .search-comp {
-  /* Layout */
   display: flex;
-  align-items: center;
-  gap: 8px;
-  
-  /* Sizing */
+  width: 200px;
   height: 36px;
   padding: 8px 12px;
-  
-  /* Appearance */
-  background: var(--search-bg, var(--common-common-bright-05, rgba(255, 255, 255, 0.1)));
-  border: 1px solid var(--search-border, transparent);
-  border-radius: var(--corner-radius-medium, 8px);
-  
-  /* Typography */
+  align-items: center;
+  gap: 4px;
+  border-radius: var(--corner-radius-small, 4px);
+  background: var(--Primary-primary-10, rgba(46, 51, 185, 0.40));
+  border: none;
+  box-shadow: none;
   font-family: var(--font-family-sans-serif, 'Lato', sans-serif);
-  font-size: var(--size-large, 16px);
-  font-weight: var(--weight-regular, 400);
+  font-size: 16px;
+  font-weight: 400;
   line-height: 1;
-  
-  /* Behavior */
-  transition: all 0.2s ease;
+  transition: background 0.18s ease, border-color 0.18s ease, padding-left 0.18s ease;
+  position: relative;
+  cursor: pointer;
+}
+
+.search-comp:hover {
+  background: var(--Primary-primary-15, rgba(46, 51, 185, 0.60));
+}
+
+.search-comp--active {
+  background: var(--Primary-primary-15, rgba(46, 51, 185, 0.60));
+  border: 1px solid var(--Primary-primary-25, #2E33B9);
+  padding-left: 13px;
+  cursor: text;
 }
 
 /* Icon */
-.search-comp__icon {
-  width: 16px;
-  height: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--search-icon, var(--common-common-bright-15, rgba(255, 255, 255, 0.6)));
-  flex-shrink: 0;
-}
 
-.search-comp__icon svg {
-  width: 16px;
-  height: 16px;
-  display: block;
-  fill: currentColor;
-}
-
-.search-comp__icon img {
-  width: 16px;
-  height: 16px;
-  display: block;
-}
 
 /* Input */
 .search-comp__input {
@@ -70,6 +55,7 @@
   outline: none;
   color: var(--search-text, var(--common-common-bright-25, rgba(255, 255, 255, 0.9)));
   font: inherit;
+  cursor: text;
 }
 
 .search-comp__input::placeholder {
@@ -78,7 +64,7 @@
 
 /* Shortcut hint */
 .search-comp__shortcut {
-  display: flex;
+  display: none;
   align-items: center;
   gap: 4px;
   height: 20px;
@@ -89,6 +75,16 @@
   font-size: 12px;
   line-height: 1;
   flex-shrink: 0;
+  margin-left: auto;
+}
+
+.search-comp:hover .search-comp__shortcut {
+  display: flex;
+}
+
+.search-comp--has-value .search-comp__shortcut,
+.search-comp--has-value:hover .search-comp__shortcut {
+  display: none;
 }
 
 .search-comp__shortcut-key {
@@ -103,7 +99,7 @@
 .search-comp__clear {
   width: 16px;
   height: 16px;
-  display: flex;
+  display: none;
   align-items: center;
   justify-content: center;
   background: transparent;
@@ -114,6 +110,7 @@
   opacity: 0;
   pointer-events: none;
   flex-shrink: 0;
+  transition: opacity 0.18s ease;
 }
 
 .search-comp__clear .material-symbols-outlined {
@@ -122,6 +119,7 @@
 }
 
 .search-comp--has-value .search-comp__clear {
+  display: flex;
   opacity: 1;
   pointer-events: auto;
 }
@@ -159,18 +157,17 @@
 /* States */
 
 .search-comp:hover {
-  background: var(--search-bg-hover, var(--common-common-bright-10, rgba(255, 255, 255, 0.2)));
-  border-color: var(--search-border-hover, var(--common-common-bright-10, rgba(255, 255, 255, 0.2)));
+  background: var(--Primary-primary-15, rgba(46, 51, 185, 0.60));
+  border: none;
+  padding-left: 12px;
 }
 
 .search-comp:focus-within {
-  background: var(--search-bg-active, var(--common-common-bright-10, rgba(255, 255, 255, 0.2)));
-  border-color: var(--search-border-active, var(--primary-primary-25, #2e33b9));
+  background: var(--Primary-primary-15, rgba(46, 51, 185, 0.60));
+  border: 1px solid var(--Primary-primary-25, #2E33B9);
+  padding-left: 13px;
 }
 
-.search-comp:focus-within .search-comp__icon {
-  color: var(--search-text, var(--common-common-bright-25, rgba(255, 255, 255, 0.9)));
-}
 
 /* Disabled */
 .search-comp--disabled,
