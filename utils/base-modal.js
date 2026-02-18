@@ -8,7 +8,8 @@ class BaseModal {
     this.fields = config.fields || [];
     this.customContent = config.customContent || ''; // Support custom HTML content
     this.confirmText = config.confirmText || 'Save'; // Customizable confirm button text
-    this.cancelText = config.cancelText || 'Cancel'; // Customizable cancel button text
+    this.cancelText = config.cancelText === undefined ? 'Cancel' : config.cancelText; // Customizable cancel button text
+    this.confirmVariant = config.confirmVariant || 'primary';
     this.onSubmit = config.onSubmit || (() => {});
     this.onCancel = config.onCancel || (() => {});
     this.resolver = null;
@@ -119,12 +120,20 @@ class BaseModal {
    * Render action buttons
    */
   renderActions() {
-    return `
-      <div class="bm-modal-actions flex gap-3 mt-6" role="group" aria-label="Modal actions">
+    const confirmBtnClass = this.confirmVariant === 'destructive'
+      ? 'bm-btn-submit flex-1 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 font-medium transition-colors'
+      : 'bm-btn-submit flex-1 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 font-medium transition-colors';
+
+    const cancelButtonHtml = this.cancelText === null ? '' : `
         <button id="bm-modal-cancel" type="button" aria-label="Cancel and close modal" class="bm-btn-cancel flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 font-medium transition-colors">
           ${this.escapeHtml(this.cancelText)}
         </button>
-        <button id="bm-modal-submit" type="submit" aria-label="Save changes" class="bm-btn-submit flex-1 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 font-medium transition-colors">
+      `;
+
+    return `
+      <div class="bm-modal-actions flex gap-3 mt-6" role="group" aria-label="Modal actions">
+        ${cancelButtonHtml}
+        <button id="bm-modal-submit" type="submit" aria-label="Save changes" class="${confirmBtnClass}">
           ${this.escapeHtml(this.confirmText)}
         </button>
       </div>
@@ -272,14 +281,24 @@ class BaseModal {
   validateFormData(data) {
     for (const field of this.fields) {
       if (field.required && !data[field.id]) {
-        alert(`${field.label} is required`);
+        if (typeof Modal !== 'undefined' && typeof Modal.openError === 'function') {
+          Modal.openError({
+            title: 'Missing Field',
+            message: `${field.label} is required`
+          });
+        }
         return false;
       }
 
       // URL validation
       if (field.type === 'url' && data[field.id]) {
         if (!this.isValidUrl(data[field.id])) {
-          alert(`${field.label} appears invalid`);
+          if (typeof Modal !== 'undefined' && typeof Modal.openError === 'function') {
+            Modal.openError({
+              title: 'Invalid URL',
+              message: `${field.label} appears invalid`
+            });
+          }
           return false;
         }
       }

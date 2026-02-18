@@ -325,49 +325,52 @@ const Modal = (() => {
       let selectedEmoji = currentEmoji;
       let selectedColor = currentColor;
 
+      const safeTitle = defaults.title !== undefined ? 'Edit Folder' : 'Create Folder';
+      const colorOptions = typeof FolderCustomizationService !== 'undefined' && typeof FolderCustomizationService.getColors === 'function'
+        ? FolderCustomizationService.getColors()
+        : [];
+
       // Create overlay
       const overlay = document.createElement('div');
-      overlay.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
-      overlay.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 9999;';
+      overlay.className = 'modal-overlay folder-form-modal-overlay';
 
       // Create modal
       const modal = document.createElement('div');
-      modal.style.cssText = 'background: white; border-radius: 12px; padding: 24px; width: 90%; max-width: 480px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);';
+      modal.className = 'modal modal--form folder-form-modal';
 
       modal.innerHTML = `
-        <h2 style="margin: 0 0 20px 0; font-size: 20px; font-weight: bold; color: #111827;">${defaults.title !== undefined ? 'Edit Folder' : 'Create Folder'}</h2>
-        
-        <div style="margin-bottom: 16px;">
-          <label style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500; color: #374151;">Folder Name <span style="color: #ef4444;">*</span></label>
-          <input id="folder-title-input" type="text" value="${defaults.title || ''}" required 
-                 style="width: 100%; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px;" 
-                 placeholder="Enter folder name" />
-        </div>
+        <div class="modal__content folder-form-modal__content">
+          <h2 class="modal__title folder-form-modal__title">${safeTitle}</h2>
 
-        <div style="margin-bottom: 16px;">
-          <label style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500; color: #374151;">Folder Icon (optional)</label>
-          <button id="select-emoji-btn" type="button" style="width: 100%; padding: 12px; border: 2px dashed #d1d5db; background: #f9fafb; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 24px;">
-            <span id="selected-emoji-display">${selectedEmoji || '📁'}</span>
-            <span style="font-size: 13px; color: #6b7280;">Click to ${selectedEmoji ? 'change' : 'select'}</span>
-          </button>
-        </div>
-
-        <div style="margin-bottom: 24px;">
-          <label style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500; color: #374151;">Folder Color (optional)</label>
-          <div id="color-picker-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;">
-            ${FolderCustomizationService.getColors().map(color => `
-              <button type="button" class="color-option" data-color="${color.value}" 
-                      style="height: 48px; border: 3px solid ${selectedColor === color.value ? '#111827' : 'transparent'}; background: ${color.value}; border-radius: 8px; cursor: pointer; transition: all 0.2s; position: relative;">
-                ${selectedColor === color.value ? '<span style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 20px;">✓</span>' : ''}
-              </button>
-            `).join('')}
+          <div class="folder-form-modal__field">
+            <label class="folder-form-modal__label" for="folder-title-input">Folder Name <span class="folder-form-modal__required">*</span></label>
+            <input id="folder-title-input" type="text" required class="bm-input folder-form-modal__input" placeholder="Enter folder name" />
           </div>
-          ${selectedColor ? `<button id="clear-color-btn" type="button" style="margin-top: 8px; padding: 6px 12px; background: #f3f4f6; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; color: #6b7280; width: 100%;">Clear Color</button>` : ''}
+
+          <div class="folder-form-modal__field">
+            <label class="folder-form-modal__label" for="select-emoji-btn">Folder Icon (optional)</label>
+            <button id="select-emoji-btn" type="button" class="folder-form-modal__emoji-btn">
+              <span id="selected-emoji-display" class="folder-form-modal__emoji">${selectedEmoji || '📁'}</span>
+              <span class="folder-form-modal__emoji-copy">Click to ${selectedEmoji ? 'change' : 'select'}</span>
+            </button>
+          </div>
+
+          <div class="folder-form-modal__field folder-form-modal__field--colors">
+            <label class="folder-form-modal__label">Folder Color (optional)</label>
+            <div id="color-picker-grid" class="folder-form-modal__color-grid">
+              ${colorOptions.map(color => `
+                <button type="button" class="color-option folder-form-modal__color-option" data-color="${color.value}" style="background:${color.value}; border-color:${selectedColor === color.value ? 'var(--theme-text, #1a1a1a)' : 'transparent'};">
+                  ${selectedColor === color.value ? '<span class="folder-form-modal__color-check">✓</span>' : ''}
+                </button>
+              `).join('')}
+            </div>
+            ${selectedColor ? '<button id="clear-color-btn" type="button" class="button-common button-common--low folder-form-modal__clear-btn">Clear Color</button>' : ''}
+          </div>
         </div>
 
-        <div style="display: flex; gap: 12px; justify-content: flex-end;">
-          <button id="folder-cancel-btn" type="button" style="padding: 10px 20px; background: #f3f4f6; color: #374151; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 500;">Cancel</button>
-          <button id="folder-save-btn" type="button" style="padding: 10px 20px; background: #3b82f6; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 500;">Save</button>
+        <div class="modal__actions folder-form-modal__actions" role="group" aria-label="Folder modal actions">
+          <button id="folder-cancel-btn" type="button" class="button-common button-common--low">Cancel</button>
+          <button id="folder-save-btn" type="button" class="button-primary button-primary--high">Save</button>
         </div>
       `;
 
@@ -380,6 +383,7 @@ const Modal = (() => {
       const colorGrid = modal.querySelector('#color-picker-grid');
       const saveBtn = modal.querySelector('#folder-save-btn');
       const cancelBtn = modal.querySelector('#folder-cancel-btn');
+      titleInput.value = defaults.title || '';
 
       // Focus title input
       setTimeout(() => titleInput.focus(), 50);
@@ -387,14 +391,20 @@ const Modal = (() => {
       // Emoji picker
       emojiBtn.addEventListener('click', async () => {
         if (typeof EmojiPicker === 'undefined') {
-          alert('Emoji picker not available');
+          await openError({
+            title: 'Picker Unavailable',
+            message: 'Emoji picker not available.'
+          });
           return;
         }
         const emoji = await EmojiPicker.show(selectedEmoji);
         if (emoji !== null) {
           selectedEmoji = emoji || null;
           emojiDisplay.textContent = selectedEmoji || '📁';
-          emojiBtn.querySelector('span:last-child').textContent = `Click to ${selectedEmoji ? 'change' : 'select'}`;
+          const emojiCopy = emojiBtn.querySelector('.folder-form-modal__emoji-copy');
+          if (emojiCopy) {
+            emojiCopy.textContent = `Click to ${selectedEmoji ? 'change' : 'select'}`;
+          }
         }
       });
 
@@ -409,8 +419,8 @@ const Modal = (() => {
         // Update UI
         modal.querySelectorAll('.color-option').forEach(btn => {
           const btnColor = btn.dataset.color;
-          btn.style.border = `3px solid ${selectedColor === btnColor ? '#111827' : 'transparent'}`;
-          btn.innerHTML = selectedColor === btnColor ? '<span style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 20px;">✓</span>' : '';
+          btn.style.borderColor = selectedColor === btnColor ? 'var(--theme-text, #1a1a1a)' : 'transparent';
+          btn.innerHTML = selectedColor === btnColor ? '<span class="folder-form-modal__color-check">✓</span>' : '';
         });
 
         // Update clear button
@@ -420,11 +430,11 @@ const Modal = (() => {
           btn.id = 'clear-color-btn';
           btn.type = 'button';
           btn.textContent = 'Clear Color';
-          btn.style.cssText = 'margin-top: 8px; padding: 6px 12px; background: #f3f4f6; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; color: #6b7280; width: 100%;';
+          btn.className = 'button-common button-common--low folder-form-modal__clear-btn';
           btn.addEventListener('click', () => {
             selectedColor = null;
             modal.querySelectorAll('.color-option').forEach(btn => {
-              btn.style.border = '3px solid transparent';
+              btn.style.borderColor = 'transparent';
               btn.innerHTML = '';
             });
             btn.remove();
@@ -441,7 +451,7 @@ const Modal = (() => {
         clearColorBtn.addEventListener('click', () => {
           selectedColor = null;
           modal.querySelectorAll('.color-option').forEach(btn => {
-            btn.style.border = '3px solid transparent';
+            btn.style.borderColor = 'transparent';
             btn.innerHTML = '';
           });
           clearColorBtn.remove();
@@ -452,7 +462,10 @@ const Modal = (() => {
       saveBtn.addEventListener('click', () => {
         const title = titleInput.value.trim();
         if (!title) {
-          alert('Folder name is required');
+          openError({
+            title: 'Missing Folder Name',
+            message: 'Folder name is required.'
+          });
           return;
         }
         
@@ -714,7 +727,8 @@ const Modal = (() => {
       title = 'Confirm', 
       message = 'Are you sure?', 
       confirmText = 'Confirm', 
-      cancelText = 'Cancel' 
+      cancelText = 'Cancel',
+      destructive = false
     } = options;
 
     // Escape HTML to prevent XSS
@@ -727,9 +741,12 @@ const Modal = (() => {
 
     const modal = new BaseModal({
       title: title,
-      customContent: `<p style="margin: 1rem 0; line-height: 1.5;">${escapeHtml(message)}</p>`,
+      customContent: `
+        <p style="margin: 1rem 0; line-height: 1.5; color: var(--theme-text, #1a1a1a); word-break: break-word;">${escapeHtml(message)}</p>
+      `,
       confirmText: confirmText,
-      cancelText: cancelText
+      cancelText: cancelText,
+      confirmVariant: destructive ? 'destructive' : 'primary'
     });
 
     return modal.show().then(data => {
@@ -789,6 +806,96 @@ const Modal = (() => {
     return modal.show();
   }
 
+  /**
+   * Notice modal - non-destructive message with acknowledgement button
+   */
+  function openNotice(options = {}) {
+    const {
+      title = 'Notice',
+      message = '',
+      buttonText = 'OK'
+    } = options;
+
+    const escapeHtml = (str) => String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+
+    const modal = new BaseModal({
+      title,
+      customContent: `<p style="margin: 1rem 0; line-height: 1.5; color: var(--theme-text, #1a1a1a); word-break: break-word;">${escapeHtml(message)}</p>`,
+      confirmText: buttonText,
+      cancelText: null
+    });
+
+    return modal.show();
+  }
+
+  /**
+   * Prompt modal - collect a single text value
+   */
+  async function openPrompt(options = {}) {
+    const {
+      title = 'Enter Value',
+      label = 'Value',
+      message = '',
+      placeholder = '',
+      defaultValue = '',
+      confirmText = 'Save',
+      cancelText = 'Cancel',
+      validator = null
+    } = options;
+
+    const escapeHtml = (str) => String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+
+    const messageHtml = message
+      ? `<p style="margin: 0 0 0.75rem 0; line-height: 1.5; color: var(--theme-text, #1a1a1a);">${escapeHtml(message)}</p>`
+      : '';
+
+    const modal = new BaseModal({
+      title,
+      customContent: messageHtml,
+      fields: [
+        {
+          id: 'modal_prompt_value',
+          label,
+          type: 'text',
+          value: defaultValue,
+          placeholder,
+          required: true
+        }
+      ],
+      confirmText,
+      cancelText
+    });
+
+    while (true) {
+      const data = await modal.show();
+      if (!data) return null;
+
+      const value = (data.modal_prompt_value || '').trim();
+      if (typeof validator === 'function') {
+        const validationResult = validator(value);
+        if (validationResult !== true) {
+          await openError({
+            title: 'Invalid Value',
+            message: typeof validationResult === 'string' ? validationResult : 'Please enter a valid value.'
+          });
+          continue;
+        }
+      }
+
+      return value;
+    }
+  }
+
   return { 
     openBookmarkForm, 
     openFolderForm, 
@@ -796,6 +903,8 @@ const Modal = (() => {
     openWidgetPicker, 
     openConfirmation,
     openError,
+    openNotice,
+    openPrompt,
     initializeTagify 
   };
 })();

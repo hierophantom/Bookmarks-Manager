@@ -260,9 +260,24 @@ async function loadRightPanelData(panel) {
             return;
           }
 
-          if (typeof SaveTabsModal !== 'undefined') {
-            await SaveTabsModal.show(windowTabs);
+          const saveTabsModalApi = (typeof SaveTabsModal !== 'undefined' && SaveTabsModal)
+            || (typeof window !== 'undefined' ? window.SaveTabsModal : null);
+
+          if (!saveTabsModalApi || typeof saveTabsModalApi.show !== 'function') {
+            if (typeof Modal !== 'undefined' && typeof Modal.openError === 'function') {
+              await Modal.openError({
+                title: 'Modal Unavailable',
+                message: 'Save tabs modal is not available right now.'
+              });
+            }
+            return;
+          }
+
+          try {
+            await saveTabsModalApi.show(windowTabs);
             await loadRightPanelData(panel);
+          } catch (error) {
+            console.error('Failed to open save session modal from active panel', error);
           }
         },
         onExportSession: async (windowTabs) => {
@@ -307,7 +322,7 @@ async function loadRightPanelData(panel) {
   }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   // Wait for bookmarks page to be ready
   setTimeout(async () => {
     const bookmarksPage = document.querySelector('.page.bookmarks-page');

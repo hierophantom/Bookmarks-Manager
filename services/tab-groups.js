@@ -217,8 +217,22 @@ const TabGroupsService = (()=>{
         btn.addEventListener('click', async (e) => {
           e.stopPropagation();
           const groupId = parseInt(btn.closest('.tab-group-item').dataset.groupId);
-          // Prompt for URL
-          const url = prompt('Enter URL to open in this tab group:');
+          const url = await Modal.openPrompt({
+            title: 'Add Tab to Group',
+            label: 'Tab URL',
+            message: 'Enter URL to open in this tab group.',
+            placeholder: 'https://example.com',
+            confirmText: 'Add tab',
+            validator: (value) => {
+              if (!value) return 'URL is required.';
+              try {
+                new URL(value);
+                return true;
+              } catch (_) {
+                return 'Please enter a valid URL.';
+              }
+            }
+          });
           if (url) {
             try {
               console.log('Creating tab with URL:', url, 'and adding to group:', groupId);
@@ -232,7 +246,10 @@ const TabGroupsService = (()=>{
               }, 500);
             } catch (e) {
               console.error('Failed to add tab to group', e);
-              alert('Failed to add tab: ' + e.message);
+              await Modal.openError({
+                title: 'Add Tab Failed',
+                message: 'Failed to add tab: ' + e.message
+              });
             }
           }
         });
@@ -371,7 +388,10 @@ const TabGroupsService = (()=>{
           modal.querySelector('#save-btn').addEventListener('click', async () => {
             const newName = modal.querySelector('#group-name').value.trim();
             if (!newName) {
-              alert('Please enter a group name');
+              await Modal.openError({
+                title: 'Missing Name',
+                message: 'Please enter a group name.'
+              });
               return;
             }
             try {
@@ -383,7 +403,10 @@ const TabGroupsService = (()=>{
               await render(containerId);
             } catch (e) {
               console.error('Failed to update group', e);
-              alert('Failed to update group: ' + e.message);
+              await Modal.openError({
+                title: 'Update Failed',
+                message: 'Failed to update group: ' + e.message
+              });
             }
           });
         });
@@ -394,13 +417,22 @@ const TabGroupsService = (()=>{
         btn.addEventListener('click', async (e) => {
           e.stopPropagation();
           const groupId = parseInt(btn.closest('.tab-group-item').dataset.groupId);
-          if (confirm('Close all tabs in this group?')) {
+          const confirmed = await Modal.openConfirmation({
+            title: 'Close tab group?',
+            message: 'Close all tabs in this group?',
+            confirmText: 'Close',
+            destructive: true
+          });
+          if (confirmed) {
             try {
               await closeTabGroup(groupId);
               await render(containerId);
             } catch (e) {
               console.error('Failed to close tab group', e);
-              alert('Failed to close group: ' + e.message);
+              await Modal.openError({
+                title: 'Close Failed',
+                message: 'Failed to close group: ' + e.message
+              });
             }
           }
         });
@@ -411,13 +443,22 @@ const TabGroupsService = (()=>{
         btn.addEventListener('click', async (e) => {
           e.stopPropagation();
           const groupId = parseInt(btn.closest('.tab-group-item').dataset.groupId);
-          if (confirm('Ungroup all tabs? (tabs will remain open but no longer grouped)')) {
+          const confirmed = await Modal.openConfirmation({
+            title: 'Ungroup tabs?',
+            message: 'Ungroup all tabs? Tabs will remain open but no longer grouped.',
+            confirmText: 'Ungroup',
+            destructive: true
+          });
+          if (confirmed) {
             try {
               await removeTabGroup(groupId);
               await render(containerId);
             } catch (e) {
               console.error('Failed to remove tab group', e);
-              alert('Failed to ungroup: ' + e.message);
+              await Modal.openError({
+                title: 'Ungroup Failed',
+                message: 'Failed to ungroup: ' + e.message
+              });
             }
           }
         });

@@ -256,20 +256,29 @@ class MainOverlay {
         }));
 
       if (!tabs.length) {
-        alert('No tabs to save in this window');
+        await Modal.openNotice({
+          title: 'No Tabs to Save',
+          message: 'No tabs to save in this window.'
+        });
         return;
       }
 
       if (typeof SaveTabsModal === 'undefined') {
         console.error('SaveTabsModal not available');
-        alert('Save modal not available');
+        await Modal.openError({
+          title: 'Modal Unavailable',
+          message: 'Save modal not available.'
+        });
         return;
       }
 
       await SaveTabsModal.show(tabs);
     } catch (error) {
       console.error('[MainOverlay] handleSaveSession failed:', error);
-      alert('Failed to save session');
+      await Modal.openError({
+        title: 'Save Failed',
+        message: 'Failed to save session.'
+      });
     }
   }
 

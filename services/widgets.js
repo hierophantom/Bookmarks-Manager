@@ -69,6 +69,13 @@ const WidgetsService = (()=>{
           colorScheme: 'destructive',
           onClick: async (e) => {
             e.stopPropagation();
+            const confirmed = await Modal.openConfirmation({
+              title: 'Remove widget?',
+              message: 'This widget will be removed from the slot.',
+              confirmText: 'Remove',
+              destructive: true
+            });
+            if (!confirmed) return;
             await SlotSystem.clearSlot(STORAGE_KEY, idx);
             await render(containerId);
           }

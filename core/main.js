@@ -975,7 +975,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             (async () => {
               const info = await BookmarksService.getBookmark(child.id);
               if (!info) return;
-              if (!confirm('Delete this bookmark?')) return;
+              const confirmed = await Modal.openConfirmation({
+                title: 'Delete bookmark?',
+                message: 'Delete this bookmark?',
+                confirmText: 'Delete',
+                destructive: true
+              });
+              if (!confirmed) return;
               await BookmarksService.deleteWithUndo(child.id);
               await render(true);
             })();
@@ -1140,7 +1146,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         onClick: (event) => {
           event.stopPropagation();
           (async () => {
-            if (!confirm('Delete this bookmark?')) return;
+            const confirmed = await Modal.openConfirmation({
+              title: 'Delete bookmark?',
+              message: 'Delete this bookmark?',
+              confirmText: 'Delete',
+              destructive: true
+            });
+            if (!confirmed) return;
             await BookmarksService.deleteWithUndo(child.id);
             await render(true);
           })();
@@ -1232,7 +1244,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         onClick: (event) => {
           event.stopPropagation();
           (async () => {
-            if (!confirm('Delete this folder and all its contents?')) return;
+            const confirmed = await Modal.openConfirmation({
+              title: 'Delete folder?',
+              message: 'Delete this folder and all its contents?',
+              confirmText: 'Delete',
+              destructive: true
+            });
+            if (!confirmed) return;
             await BookmarksService.deleteWithUndo(child.id);
             await render(true);
           })();
@@ -1355,8 +1373,13 @@ document.addEventListener('DOMContentLoaded', async () => {
           }
           collectBookmarks(folder);
           if (bookmarksToOpen.length > 0) {
-            if (bookmarksToOpen.length > 10 && !confirm(`Open ${bookmarksToOpen.length} bookmarks?`)) {
-              return;
+            if (bookmarksToOpen.length > 10) {
+              const confirmed = await Modal.openConfirmation({
+                title: 'Open all bookmarks?',
+                message: `Open ${bookmarksToOpen.length} bookmarks?`,
+                confirmText: 'Open'
+              });
+              if (!confirmed) return;
             }
             bookmarksToOpen.forEach(url => chrome.tabs.create({ url, active: false }));
           }
@@ -1397,7 +1420,13 @@ document.addEventListener('DOMContentLoaded', async () => {
           colorScheme: 'destructive',
           onClick: async (event) => {
             event.stopPropagation();
-            if (!confirm(`Delete folder "${folder.title}" and all its contents?`)) return;
+            const confirmed = await Modal.openConfirmation({
+              title: 'Delete folder?',
+              message: `Delete folder "${folder.title}" and all its contents?`,
+              confirmText: 'Delete',
+              destructive: true
+            });
+            if (!confirmed) return;
             await BookmarksService.deleteWithUndo(folder.id);
             await render(true);
           }

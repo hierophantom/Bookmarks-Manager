@@ -131,7 +131,10 @@ const RightPanelUI = (() => {
       const targetWindow = windowsWithTabs.find(w => w.id === windowId);
       
       if (!targetWindow || targetWindow.tabs.length === 0) {
-        alert('No tabs to save in this window');
+        await Modal.openNotice({
+          title: 'No Tabs to Save',
+          message: 'No tabs to save in this window.'
+        });
         return;
       }
 
@@ -141,11 +144,17 @@ const RightPanelUI = (() => {
         await renderTabs(); // Refresh after save
       } else {
         console.error('SaveTabsModal not loaded');
-        alert('Save tabs modal not available');
+        await Modal.openError({
+          title: 'Modal Unavailable',
+          message: 'Save tabs modal not available.'
+        });
       }
     } catch (e) {
       console.error('Error saving window session:', e);
-      alert('Failed to save window session');
+      await Modal.openError({
+        title: 'Save Failed',
+        message: 'Failed to save window session.'
+      });
     }
   }
 

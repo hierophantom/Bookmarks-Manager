@@ -63,65 +63,39 @@ const SaveTabsModal = (() => {
 
         const overlay = document.createElement('div');
         overlay.id = overlayId;
-        overlay.style.position = 'fixed';
-        overlay.style.inset = '0';
-        overlay.style.background = 'rgba(0,0,0,0.5)';
-        overlay.style.display = 'flex';
-        overlay.style.alignItems = 'center';
-        overlay.style.justifyContent = 'center';
-        overlay.style.zIndex = '1000';
+        overlay.className = 'modal-overlay save-tabs-modal-overlay';
 
         const modal = document.createElement('div');
-        modal.style.background = '#fff';
-        modal.style.borderRadius = '8px';
-        modal.style.boxShadow = '0 10px 30px rgba(0,0,0,0.2)';
-        modal.style.width = '420px';
-        modal.style.maxHeight = '80vh';
-        modal.style.overflow = 'hidden';
-        modal.style.display = 'flex';
-        modal.style.flexDirection = 'column';
+        modal.className = 'modal modal--form save-tabs-modal';
 
         // Header
         const header = document.createElement('div');
-        header.style.padding = '16px';
-        header.style.borderBottom = '1px solid #e5e7eb';
-        header.innerHTML = '<h2 style="margin:0;font-size:16px;font-weight:700;color:#111827;">Save Tabs as Bookmarks</h2>';
+        header.className = 'save-tabs-modal__header';
+        header.innerHTML = '<h2 class="save-tabs-modal__title">Save Tabs as Bookmarks</h2>';
         modal.appendChild(header);
 
         // Content
         const content = document.createElement('div');
-        content.style.padding = '16px';
-        content.style.overflowY = 'auto';
-        content.style.flex = '1';
+        content.className = 'save-tabs-modal__content';
 
         // Tabs list
         const tabsLabel = document.createElement('div');
-        tabsLabel.style.marginBottom = '8px';
-        tabsLabel.style.fontWeight = '600';
-        tabsLabel.style.fontSize = '13px';
+        tabsLabel.className = 'save-tabs-modal__label';
         tabsLabel.textContent = 'Select tabs to save:';
         content.appendChild(tabsLabel);
 
         const tabsList = document.createElement('div');
-        tabsList.style.border = '1px solid #e5e7eb';
-        tabsList.style.borderRadius = '6px';
-        tabsList.style.padding = '8px';
-        tabsList.style.maxHeight = '220px';
-        tabsList.style.overflowY = 'auto';
+        tabsList.className = 'save-tabs-modal__tabs-list';
 
         tabCheckboxes.forEach(opt => {
           const row = document.createElement('label');
-          row.style.display = 'flex';
-          row.style.alignItems = 'center';
-          row.style.gap = '8px';
-          row.style.padding = '6px 4px';
-          row.style.borderBottom = '1px solid #f3f4f6';
+          row.className = 'save-tabs-modal__tab-row';
 
           const checkbox = document.createElement('input');
           checkbox.type = 'checkbox';
           checkbox.checked = opt.checked;
           checkbox.dataset.tabId = opt.value;
-          checkbox.style.cursor = 'pointer';
+          checkbox.className = 'save-tabs-modal__checkbox';
 
           row.appendChild(checkbox);
 
@@ -129,17 +103,14 @@ const SaveTabsModal = (() => {
           if (typeof FaviconService !== 'undefined' && opt.data && opt.data.url) {
             const favicon = FaviconService.createFaviconElement(opt.data.url, {
               size: 16,
-              className: 'tab-favicon',
+              className: 'tab-favicon save-tabs-modal__favicon',
               alt: 'Favicon'
             });
-            favicon.style.marginLeft = '4px';
             row.appendChild(favicon);
           }
 
           const label = document.createElement('span');
-          label.style.fontSize = '13px';
-          label.style.color = '#111827';
-          label.style.flex = '1';
+          label.className = 'save-tabs-modal__tab-title';
           label.setAttribute('dir', 'auto');
           label.textContent = opt.label;
 
@@ -151,22 +122,15 @@ const SaveTabsModal = (() => {
 
         // Destination select
         const destWrapper = document.createElement('div');
-        destWrapper.style.marginTop = '14px';
-        destWrapper.style.display = 'flex';
-        destWrapper.style.flexDirection = 'column';
-        destWrapper.style.gap = '6px';
+        destWrapper.className = 'save-tabs-modal__destination';
 
         const destLabel = document.createElement('label');
-        destLabel.style.fontWeight = '600';
-        destLabel.style.fontSize = '13px';
+        destLabel.className = 'save-tabs-modal__label';
         destLabel.textContent = 'Save to:';
         destWrapper.appendChild(destLabel);
 
         const select = document.createElement('select');
-        select.style.padding = '8px';
-        select.style.border = '1px solid #d1d5db';
-        select.style.borderRadius = '6px';
-        select.style.fontSize = '13px';
+        select.className = 'save-tabs-modal__select';
 
         folderOptions.forEach(opt => {
           const option = document.createElement('option');
@@ -181,17 +145,38 @@ const SaveTabsModal = (() => {
         newFolderInput.type = 'text';
         newFolderInput.placeholder = 'New folder name';
         newFolderInput.value = defaultFolderName;
-        newFolderInput.style.padding = '8px';
-        newFolderInput.style.border = '1px solid #d1d5db';
-        newFolderInput.style.borderRadius = '6px';
-        newFolderInput.style.fontSize = '13px';
+        newFolderInput.className = 'save-tabs-modal__input';
         newFolderInput.style.display = 'none';
         destWrapper.appendChild(newFolderInput);
+
+        const saveInfo = document.createElement('div');
+        saveInfo.className = 'bmg-save-info';
+        saveInfo.innerHTML = `
+          <p id="bmg-save-message">Tabs will be saved in a new folder named: <strong id="bmg-folder-name-preview"></strong></p>
+        `;
+        content.insertBefore(saveInfo, tabsLabel);
+
+        const folderNamePreview = saveInfo.querySelector('#bmg-folder-name-preview');
+
+        const updateSaveInfo = () => {
+          const creatingNewFolder = select.value === '__new__';
+          const previewName = (newFolderInput.value || '').trim() || defaultFolderName;
+
+          if (folderNamePreview) {
+            folderNamePreview.textContent = previewName;
+          }
+
+          saveInfo.style.display = creatingNewFolder ? '' : 'none';
+        };
 
         select.addEventListener('change', () => {
           const show = select.value === '__new__';
           newFolderInput.style.display = show ? 'block' : 'none';
+          updateSaveInfo();
         });
+
+        newFolderInput.addEventListener('input', updateSaveInfo);
+        updateSaveInfo();
 
         content.appendChild(destWrapper);
 
@@ -199,30 +184,17 @@ const SaveTabsModal = (() => {
 
         // Actions
         const actions = document.createElement('div');
-        actions.style.display = 'flex';
-        actions.style.gap = '8px';
-        actions.style.borderTop = '1px solid #e5e7eb';
-        actions.style.padding = '12px 16px';
-        actions.style.justifyContent = 'flex-end';
+        actions.className = 'modal__actions save-tabs-modal__actions';
 
         const cancelBtn = document.createElement('button');
         cancelBtn.type = 'button';
         cancelBtn.textContent = 'Cancel';
-        cancelBtn.style.padding = '8px 12px';
-        cancelBtn.style.background = '#e5e7eb';
-        cancelBtn.style.border = 'none';
-        cancelBtn.style.borderRadius = '6px';
-        cancelBtn.style.cursor = 'pointer';
+        cancelBtn.className = 'button-common button-common--low';
 
         const saveBtn = document.createElement('button');
         saveBtn.type = 'button';
         saveBtn.textContent = 'Save';
-        saveBtn.style.padding = '8px 12px';
-        saveBtn.style.background = '#4f46e5';
-        saveBtn.style.color = '#fff';
-        saveBtn.style.border = 'none';
-        saveBtn.style.borderRadius = '6px';
-        saveBtn.style.cursor = 'pointer';
+        saveBtn.className = 'button-primary button-primary--high';
 
         actions.appendChild(cancelBtn);
         actions.appendChild(saveBtn);
@@ -256,7 +228,10 @@ const SaveTabsModal = (() => {
             .map(cb => parseInt(cb.dataset.tabId, 10));
 
           if (selectedTabIds.length === 0) {
-            alert('Please select at least one tab to save');
+            await Modal.openError({
+              title: 'No Tabs Selected',
+              message: 'Please select at least one tab to save.'
+            });
             return;
           }
 
@@ -276,19 +251,27 @@ const SaveTabsModal = (() => {
             });
           }
 
-          alert(`Successfully saved ${selectedTabs.length} ${selectedTabs.length === 1 ? 'tab' : 'tabs'}!`);
           cleanup();
           resolve({ savedCount: selectedTabs.length, destinationFolderId });
         });
       } catch (error) {
         console.error('Error in SaveTabsModal:', error);
-        alert('Failed to save tabs: ' + error.message);
+        await Modal.openError({
+          title: 'Save Failed',
+          message: 'Failed to save tabs: ' + error.message
+        });
         reject(error);
       }
     });
   }
 
-  return {
+  const api = {
     show
   };
+
+  if (typeof window !== 'undefined') {
+    window.SaveTabsModal = api;
+  }
+
+  return api;
 })();

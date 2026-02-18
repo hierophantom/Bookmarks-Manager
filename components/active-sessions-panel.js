@@ -197,7 +197,7 @@ function createActiveSessionsPanel(options = {}) {
           icon,
           contrast: 'high',
           onClick: async (event) => {
-            event.preventDefault();
+            event?.preventDefault?.();
             if (typeof onSaveSession === 'function') {
               await onSaveSession(normalizedTabs.slice());
             }
@@ -208,7 +208,7 @@ function createActiveSessionsPanel(options = {}) {
         saveButton.type = 'button';
         saveButton.textContent = 'Save session';
         saveButton.addEventListener('click', async (event) => {
-          event.preventDefault();
+          event?.preventDefault?.();
           if (typeof onSaveSession === 'function') {
             await onSaveSession(normalizedTabs.slice());
           }
@@ -229,7 +229,7 @@ function createActiveSessionsPanel(options = {}) {
           icon,
           contrast: 'low',
           onClick: async (event) => {
-            event.preventDefault();
+            event?.preventDefault?.();
             let exported = false;
             if (typeof onExportSession === 'function') {
               exported = await onExportSession(normalizedTabs.slice());
@@ -257,7 +257,7 @@ function createActiveSessionsPanel(options = {}) {
         exportButton.type = 'button';
         exportButton.textContent = 'Export session';
         exportButton.addEventListener('click', async (event) => {
-          event.preventDefault();
+          event?.preventDefault?.();
           let exported = false;
           if (typeof onExportSession === 'function') {
             exported = await onExportSession(normalizedTabs.slice());
