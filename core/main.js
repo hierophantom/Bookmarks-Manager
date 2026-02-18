@@ -966,7 +966,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           }
         });
         const deleteAction = createCubeActionButton({
-          icon: 'close',
+          icon: 'delete',
           label: 'Remove',
           tooltip: 'Remove',
           colorScheme: 'destructive',
@@ -1133,7 +1133,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
       });
       const deleteAction = createCubeActionButton({
-        icon: 'close',
+        icon: 'delete',
         label: 'Remove',
         tooltip: 'Remove',
         colorScheme: 'destructive',
@@ -1225,7 +1225,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
       });
       const deleteAction = createCubeActionButton({
-        icon: 'close',
+        icon: 'delete',
         label: 'Remove',
         tooltip: 'Remove',
         colorScheme: 'destructive',
@@ -1392,7 +1392,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       // Delete (only for root folders)
       if (isRootFolder) {
         const deleteBtn = createCubeActionButton({
-          icon: 'close',
+          icon: 'delete',
           label: 'Remove',
           colorScheme: 'destructive',
           onClick: async (event) => {

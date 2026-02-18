@@ -159,7 +159,7 @@ function getDefaultFolderSectionActions() {
       colorScheme: 'primary'
     }),
     createCubeActionButton({
-      icon: 'close',
+      icon: 'delete',
       label: 'Remove',
       tooltip: 'Remove',
       colorScheme: 'destructive'

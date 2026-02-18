@@ -185,7 +185,7 @@ function getDefaultBookmarksGalleryViewActions(type, state) {
     tooltip: 'Edit'
   });
   const closeAction = createCubeActionButton({
-    icon: 'close',
+    icon: 'delete',
     label: 'Remove',
     tooltip: 'Remove',
     colorScheme: 'destructive'
