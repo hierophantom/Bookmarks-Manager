@@ -208,46 +208,99 @@ async function loadRightPanelData(panel) {
   if (!panel) return;
   
   try {
-    const tabs = await new Promise((resolve) => {
-      chrome.tabs.query({ currentWindow: true }, (tabs) => {
-        resolve(tabs || []);
+    const windows = await new Promise((resolve) => {
+      chrome.windows.getAll({ populate: true }, (allWindows) => {
+        resolve(allWindows || []);
       });
     });
-    
-    if (!tabs || tabs.length === 0) return;
-    
-    panel.clearSessions?.();
-    
-    // Group tabs by window
-    const tabsByWindow = {};
-    for (const tab of tabs) {
-      const windowId = tab.windowId;
-      if (!tabsByWindow[windowId]) {
-        tabsByWindow[windowId] = [];
-      }
-      tabsByWindow[windowId].push(tab);
+
+    const currentUrl = chrome.runtime.getURL('core/main.html');
+
+    const windowsWithTabs = windows
+      .map((windowInfo) => {
+        const tabs = Array.isArray(windowInfo.tabs)
+          ? windowInfo.tabs.filter((tab) => tab && tab.url && !tab.url.includes(currentUrl))
+          : [];
+
+        return {
+          id: windowInfo.id,
+          tabs
+        };
+      })
+      .filter((windowInfo) => windowInfo.tabs.length > 0);
+
+    if (typeof panel.clearWindowGroups === 'function') {
+      panel.clearWindowGroups();
+    } else {
+      panel.clearSessions?.();
     }
-    
-    // Add sessions for each window
-    for (const [windowId, windowTabs] of Object.entries(tabsByWindow)) {
-      for (const tab of windowTabs.slice(0, 5)) {
-        panel.addSession?.({
-          id: tab.id.toString(),
-          label: tab.title || tab.url || 'Untitled',
-          onView: () => {
-            chrome.tabs.update(tab.id, { active: true });
-            chrome.windows.update(parseInt(windowId), { focused: true });
+
+    if (windowsWithTabs.length === 0) return;
+
+    for (let index = 0; index < windowsWithTabs.length; index += 1) {
+      const windowInfo = windowsWithTabs[index];
+      const tabs = windowInfo.tabs.map((tab) => ({
+        id: tab.id,
+        title: tab.title || tab.url || 'Untitled',
+        url: tab.url,
+        windowId: tab.windowId
+      }));
+
+      panel.addWindowGroup?.({
+        id: windowInfo.id,
+        label: `Window ${index + 1}`,
+        tabs,
+        onOpenTab: (tab) => {
+          if (!tab || !tab.id) return;
+          chrome.tabs.update(tab.id, { active: true });
+          chrome.windows.update(windowInfo.id, { focused: true });
+        },
+        onSaveSession: async (windowTabs) => {
+          if (!Array.isArray(windowTabs) || windowTabs.length === 0) {
+            return;
           }
-        });
-      }
-      
-      if (windowTabs.length > 5) {
-        panel.addSession?.({
-          id: `more-${windowId}`,
-          label: `+${windowTabs.length - 5} more tabs`,
-          onView: null
-        });
-      }
+
+          if (typeof SaveTabsModal !== 'undefined') {
+            await SaveTabsModal.show(windowTabs);
+            await loadRightPanelData(panel);
+          }
+        },
+        onExportSession: async (windowTabs) => {
+          if (!Array.isArray(windowTabs) || windowTabs.length === 0) {
+            return false;
+          }
+
+          const urls = windowTabs
+            .map((tab) => tab?.url)
+            .filter((url) => typeof url === 'string' && url.length > 0);
+
+          if (urls.length === 0) {
+            return false;
+          }
+
+          const payload = urls.join('\n');
+
+          try {
+            await navigator.clipboard.writeText(payload);
+            return true;
+          } catch (error) {
+            try {
+              const fallbackTextArea = document.createElement('textarea');
+              fallbackTextArea.value = payload;
+              fallbackTextArea.setAttribute('readonly', '');
+              fallbackTextArea.style.position = 'absolute';
+              fallbackTextArea.style.left = '-9999px';
+              document.body.appendChild(fallbackTextArea);
+              fallbackTextArea.select();
+              const copied = document.execCommand('copy');
+              document.body.removeChild(fallbackTextArea);
+              return copied;
+            } catch (fallbackError) {
+              return false;
+            }
+          }
+        }
+      });
     }
   } catch (e) {
     console.error('Error loading tabs data:', e);
@@ -256,7 +309,7 @@ async function loadRightPanelData(panel) {
 
 document.addEventListener('DOMContentLoaded', () => {
   // Wait for bookmarks page to be ready
-  setTimeout(() => {
+  setTimeout(async () => {
     const bookmarksPage = document.querySelector('.page.bookmarks-page');
     
     // Initialize left panel (Folder Tree View)
@@ -273,12 +326,64 @@ document.addEventListener('DOMContentLoaded', () => {
       
       window.folderTreeViewPanel = leftPanel;
       
-      // Load folder tree data when panel shows
+      // Load folder tree data and persist visibility state when panel shows/hides
       const originalLeftShow = leftPanel.show.bind(leftPanel);
-      leftPanel.show = function() {
+      const originalLeftHide = leftPanel.hide.bind(leftPanel);
+
+      leftPanel.show = async function(options = {}) {
+        const { persist = true } = options;
         originalLeftShow();
         loadLeftPanelData(leftPanel);
+        if (window.folderTreeViewTriggerButton) {
+          window.folderTreeViewTriggerButton.style.display = 'none';
+        }
+        if (persist && typeof LeftPanelService !== 'undefined') {
+          try {
+            await LeftPanelService.openPanel();
+          } catch (e) {
+            console.warn('Failed to persist left panel open state', e);
+          }
+        }
       };
+
+      leftPanel.hide = async function(options = {}) {
+        const {
+          persist = true,
+          clearFilter = true
+        } = options;
+
+        if (clearFilter && typeof window.clearFolderFilter === 'function') {
+          window.clearFolderFilter();
+        }
+
+        originalLeftHide();
+
+        if (window.folderTreeViewTriggerButton) {
+          window.folderTreeViewTriggerButton.style.display = '';
+        }
+
+        if (persist && typeof LeftPanelService !== 'undefined') {
+          try {
+            await LeftPanelService.closePanel();
+          } catch (e) {
+            console.warn('Failed to persist left panel closed state', e);
+          }
+        }
+      };
+
+      // Restore persisted visibility state
+      try {
+        if (typeof LeftPanelService !== 'undefined') {
+          const leftPanelState = await LeftPanelService.getState();
+          if (leftPanelState?.isOpen) {
+            await leftPanel.show({ persist: false });
+          } else {
+            await leftPanel.hide({ persist: false, clearFilter: false });
+          }
+        }
+      } catch (e) {
+        console.warn('Failed to restore left panel state', e);
+      }
       
       // Initial load
       loadLeftPanelData(leftPanel);
@@ -287,31 +392,17 @@ document.addEventListener('DOMContentLoaded', () => {
       const leftCloseBtn = leftPanel.element.querySelector('.side-panel__btn');
       if (leftCloseBtn) {
         leftCloseBtn.id = 'bmg-left-panel-close-btn';
-        leftCloseBtn.addEventListener('click', () => {
-          // Clear folder filter when closing panel
-          if (typeof window.clearFolderFilter === 'function') {
-            window.clearFolderFilter();
-          }
-          leftPanel.hide();
-          if (window.folderTreeViewTriggerButton) {
-            window.folderTreeViewTriggerButton.style.display = '';
-          }
-        });
       }
       
       // Add main toggle button handler
       const toggleBtn = document.createElement('button');
       toggleBtn.id = 'bmg-left-panel-toggle';
       toggleBtn.style.display = 'none';
-      toggleBtn.addEventListener('click', () => {
+      toggleBtn.addEventListener('click', async () => {
         if (leftPanel.isVisible()) {
-          // Clear folder filter when closing panel
-          if (typeof window.clearFolderFilter === 'function') {
-            window.clearFolderFilter();
-          }
-          leftPanel.hide();
+          await leftPanel.hide();
         } else {
-          leftPanel.show();
+          await leftPanel.show();
         }
       });
       leftPanel.element.appendChild(toggleBtn);
@@ -330,34 +421,97 @@ document.addEventListener('DOMContentLoaded', () => {
       rightPanelContainer.appendChild(rightPanel.element);
       
       window.activeSessionsPanel = rightPanel;
+
+      let rightPanelRefreshInterval = null;
+      const REFRESH_INTERVAL_MS = 2000;
+
+      const stopRightPanelAutoRefresh = () => {
+        if (rightPanelRefreshInterval) {
+          clearInterval(rightPanelRefreshInterval);
+          rightPanelRefreshInterval = null;
+        }
+      };
+
+      const startRightPanelAutoRefresh = () => {
+        stopRightPanelAutoRefresh();
+        rightPanelRefreshInterval = setInterval(() => {
+          if (rightPanel.isVisible()) {
+            loadRightPanelData(rightPanel);
+          }
+        }, REFRESH_INTERVAL_MS);
+      };
       
       // Load tabs data when panel shows
       const originalRightShow = rightPanel.show.bind(rightPanel);
-      rightPanel.show = function() {
+      const originalRightHide = rightPanel.hide.bind(rightPanel);
+
+      rightPanel.show = async function(options = {}) {
+        const { persist = true } = options;
         originalRightShow();
-        loadRightPanelData(rightPanel);
+        await loadRightPanelData(rightPanel);
+        startRightPanelAutoRefresh();
+        if (window.activeSessionsTriggerButton) {
+          window.activeSessionsTriggerButton.style.display = 'none';
+        }
+        if (persist && typeof RightPanelService !== 'undefined') {
+          try {
+            await RightPanelService.openPanel();
+          } catch (e) {
+            console.warn('Failed to persist right panel open state', e);
+          }
+        }
       };
+
+      rightPanel.hide = async function(options = {}) {
+        const { persist = true } = options;
+        originalRightHide();
+        stopRightPanelAutoRefresh();
+        if (window.activeSessionsTriggerButton) {
+          window.activeSessionsTriggerButton.style.display = '';
+        }
+        if (persist && typeof RightPanelService !== 'undefined') {
+          try {
+            await RightPanelService.closePanel();
+          } catch (e) {
+            console.warn('Failed to persist right panel closed state', e);
+          }
+        }
+      };
+
+      // Restore persisted visibility state
+      try {
+        if (typeof RightPanelService !== 'undefined') {
+          const rightPanelState = await RightPanelService.getState();
+          if (rightPanelState?.isOpen) {
+            await rightPanel.show({ persist: false });
+          } else {
+            await rightPanel.hide({ persist: false });
+          }
+        }
+      } catch (e) {
+        console.warn('Failed to restore right panel state', e);
+      }
       
       // Initial load
       loadRightPanelData(rightPanel);
+
+      // Refresh immediately when returning to this page with panel visible
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible' && rightPanel.isVisible()) {
+          loadRightPanelData(rightPanel);
+        }
+      });
       
       // Add expected button IDs for old code compatibility
-      const rightButtons = rightPanel.element.querySelectorAll('.side-panel__btn');
-      const rightModeToggle = rightButtons[0];
-      const rightCloseBtn = rightButtons[1];
+      const rightModeToggle = rightPanel.element.querySelector('.side-panel__btn--toggle');
+      const rightCloseBtn = rightPanel.element.querySelector('.side-panel__btn--close');
+      if (rightCloseBtn) {
+        rightCloseBtn.id = 'bmg-right-panel-close-btn';
+      }
       if (rightModeToggle) {
         rightModeToggle.id = 'bmg-right-panel-mode-toggle';
         rightModeToggle.addEventListener('click', () => {
           rightPanel.isDocked() ? (rightPanel.setFloat(), rightPanel.show()) : rightPanel.setDocked();
-        });
-      }
-      if (rightCloseBtn) {
-        rightCloseBtn.id = 'bmg-right-panel-close-btn';
-        rightCloseBtn.addEventListener('click', () => {
-          rightPanel.hide();
-          if (window.activeSessionsTriggerButton) {
-            window.activeSessionsTriggerButton.style.display = '';
-          }
         });
       }
       
@@ -365,8 +519,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const toggleBtn = document.createElement('button');
       toggleBtn.id = 'bmg-right-panel-toggle';
       toggleBtn.style.display = 'none';
-      toggleBtn.addEventListener('click', () => {
-        rightPanel.isVisible() ? rightPanel.hide() : rightPanel.show();
+      toggleBtn.addEventListener('click', async () => {
+        rightPanel.isVisible() ? await rightPanel.hide() : await rightPanel.show();
       });
       rightPanel.element.appendChild(toggleBtn);
     }

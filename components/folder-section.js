@@ -39,11 +39,7 @@ function createFolderSection(options = {}) {
 
   const content = document.createElement('div');
   content.className = 'folder-section__content';
-  items.forEach((item) => {
-    if (item instanceof HTMLElement) {
-      content.appendChild(item);
-    }
-  });
+  renderFolderSectionContent(content, items);
   section.appendChild(content);
 
   const actionsToRender = Array.isArray(actions) ? actions : getDefaultFolderSectionActions();
@@ -80,12 +76,7 @@ function applyFolderSectionState(section, state) {
 function updateFolderSectionItems(section, items = []) {
   const content = section.querySelector('.folder-section__content');
   if (!content) return;
-  content.innerHTML = '';
-  items.forEach((item) => {
-    if (item instanceof HTMLElement) {
-      content.appendChild(item);
-    }
-  });
+  renderFolderSectionContent(content, items);
 }
 
 /**
@@ -174,6 +165,32 @@ function getDefaultFolderSectionActions() {
       colorScheme: 'destructive'
     })
   ].filter(Boolean);
+}
+
+function renderFolderSectionContent(content, items = []) {
+  if (!content) return;
+
+  content.innerHTML = '';
+
+  const validItems = Array.isArray(items)
+    ? items.filter((item) => item instanceof HTMLElement)
+    : [];
+
+  if (validItems.length === 0) {
+    content.classList.add('folder-section__content--empty');
+
+    const emptyStateEl = document.createElement('div');
+    emptyStateEl.className = 'folder-section__empty-state';
+    emptyStateEl.textContent = 'No bookmarks';
+    content.appendChild(emptyStateEl);
+    return;
+  }
+
+  content.classList.remove('folder-section__content--empty');
+
+  validItems.forEach((item) => {
+    content.appendChild(item);
+  });
 }
 
 // Export for module usage

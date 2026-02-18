@@ -60,6 +60,7 @@
   <h1>Folder Section</h1>
   <h2>Design System Component - BMG-111</h2>
 
+  <div class="demo-section" id="empty-section"></div>
   <div class="demo-section" id="idle-section"></div>
   <div class="demo-section" id="hover-section"></div>
 
@@ -93,6 +94,13 @@
       breadcrumbItems
     });
     document.getElementById('idle-section').appendChild(idleSection);
+
+    const emptySection = createFolderSection({
+      state: 'idle',
+      items: [],
+      breadcrumbItems
+    });
+    document.getElementById('empty-section').appendChild(emptySection);
 
     const hoverSection = createFolderSection({
       state: 'hover',

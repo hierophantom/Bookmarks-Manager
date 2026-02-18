@@ -69,6 +69,23 @@
   width: 100%;
 }
 
+.folder-section__content--empty {
+  justify-content: center;
+  align-items: center;
+  align-content: center;
+  min-height: 88px;
+}
+
+.folder-section__empty-state {
+  color: var(--Common-common-bright-15, var(--common-common-bright-15, rgba(255, 255, 255, 0.6)));
+  text-align: center;
+  font-family: var(--Font-family-Sans-serif, var(--font-family-sans-serif, Lato));
+  font-size: var(--Size-Large, var(--size-large, 16px));
+  font-style: normal;
+  font-weight: 700;
+  line-height: normal;
+}
+
 .folder-section__actions {
   position: absolute;
   top: 7px;
