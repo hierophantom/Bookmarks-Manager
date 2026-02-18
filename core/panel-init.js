@@ -325,6 +325,41 @@ document.addEventListener('DOMContentLoaded', () => {
       leftPanelContainer.appendChild(leftPanel.element);
       
       window.folderTreeViewPanel = leftPanel;
+
+      let leftPanelRefreshTimer = null;
+      const scheduleLeftPanelRefresh = () => {
+        if (!leftPanel.isVisible()) return;
+
+        if (leftPanelRefreshTimer) {
+          clearTimeout(leftPanelRefreshTimer);
+        }
+
+        leftPanelRefreshTimer = setTimeout(() => {
+          leftPanelRefreshTimer = null;
+          loadLeftPanelData(leftPanel);
+        }, 120);
+      };
+
+      const subscribeLeftPanelBookmarkEvents = () => {
+        if (!chrome?.bookmarks) return;
+
+        const listeners = [
+          chrome.bookmarks.onCreated,
+          chrome.bookmarks.onRemoved,
+          chrome.bookmarks.onChanged,
+          chrome.bookmarks.onMoved,
+          chrome.bookmarks.onChildrenReordered,
+          chrome.bookmarks.onImportEnded
+        ].filter(Boolean);
+
+        listeners.forEach((eventObj) => {
+          if (!eventObj.hasListener(scheduleLeftPanelRefresh)) {
+            eventObj.addListener(scheduleLeftPanelRefresh);
+          }
+        });
+      };
+
+      subscribeLeftPanelBookmarkEvents();
       
       // Load folder tree data and persist visibility state when panel shows/hides
       const originalLeftShow = leftPanel.show.bind(leftPanel);
@@ -333,7 +368,7 @@ document.addEventListener('DOMContentLoaded', () => {
       leftPanel.show = async function(options = {}) {
         const { persist = true } = options;
         originalLeftShow();
-        loadLeftPanelData(leftPanel);
+        scheduleLeftPanelRefresh();
         if (window.folderTreeViewTriggerButton) {
           window.folderTreeViewTriggerButton.style.display = 'none';
         }
@@ -357,6 +392,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         originalLeftHide();
+
+        if (leftPanelRefreshTimer) {
+          clearTimeout(leftPanelRefreshTimer);
+          leftPanelRefreshTimer = null;
+        }
 
         if (window.folderTreeViewTriggerButton) {
           window.folderTreeViewTriggerButton.style.display = '';
@@ -387,6 +427,13 @@ document.addEventListener('DOMContentLoaded', () => {
       
       // Initial load
       loadLeftPanelData(leftPanel);
+
+      // Refresh immediately when returning to this page with panel visible
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+          scheduleLeftPanelRefresh();
+        }
+      });
       
       // Add expected close button ID for old code compatibility
       const leftCloseBtn = leftPanel.element.querySelector('.side-panel__btn');
