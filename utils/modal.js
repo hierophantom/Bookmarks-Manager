@@ -66,16 +66,100 @@ const Modal = (() => {
       });
     }
 
-    const modal = new BaseModal({
-      title: defaults.id ? 'Edit Bookmark' : 'Add Bookmark',
-      fields: fields
-    });
-
     // Store tabs for suggestions
     let openTabs = [];
     if (showTabsSuggestions) {
       openTabs = await new Promise(res => chrome.tabs.query({}, tabs => res(tabs)));
     }
+
+    if (typeof createModal === 'function' && typeof showModal === 'function') {
+      return new Promise((resolve) => {
+        let submitResult = null;
+
+        const cleanup = () => {
+          const tagsInput = document.getElementById('bm_tags');
+          if (tagsInput && tagsInput.tagify) {
+            tagsInput.tagify.destroy();
+          }
+          const dropdown = document.getElementById('bm-tabs-suggestions');
+          if (dropdown) dropdown.remove();
+        };
+
+        const modal = createModal({
+          type: 'form',
+          title: defaults.id ? 'Edit Bookmark' : 'Add Bookmark',
+          fields,
+          buttons: [
+            { label: 'Cancel', type: 'common', role: 'cancel', shortcut: 'ESC' },
+            { label: 'Save', type: 'primary', role: 'confirm', shortcut: '↵' }
+          ],
+          onSubmit: async () => {
+            const titleInput = document.getElementById('bm_title');
+            const urlInput = document.getElementById('bm_url');
+            const folderInput = document.getElementById('bm_folder');
+            const tagsInput = document.getElementById('bm_tags');
+
+            const title = (titleInput?.value || '').trim();
+            const rawUrl = (urlInput?.value || '').trim();
+
+            if (!title) {
+              await openError({
+                title: 'Missing Title',
+                message: 'Title is required.'
+              });
+              return false;
+            }
+
+            if (rawUrl) {
+              try {
+                new URL(rawUrl);
+              } catch (error) {
+                await openError({
+                  title: 'Invalid URL',
+                  message: 'URL appears invalid.'
+                });
+                return false;
+              }
+            }
+
+            const tags = tagsInput && tagsInput.tagify
+              ? tagsInput.tagify.value.map(item => (typeof item === 'string' ? item : item.value))
+              : [];
+
+            submitResult = {
+              title,
+              url: rawUrl || null,
+              tags,
+              folderId: folderInput ? folderInput.value : null
+            };
+
+            return true;
+          },
+          onClose: (confirmed) => {
+            cleanup();
+            if (!confirmed) {
+              resolve(null);
+              return;
+            }
+            resolve(submitResult);
+          }
+        });
+
+        showModal(modal);
+
+        setTimeout(() => {
+          initializeTagify();
+          if (showTabsSuggestions && openTabs.length > 0) {
+            setupTabsSuggestions(openTabs);
+          }
+        }, 60);
+      });
+    }
+
+    const modal = new BaseModal({
+      title: defaults.id ? 'Edit Bookmark' : 'Add Bookmark',
+      fields: fields
+    });
 
     const modalPromise = modal.show().then(async (data) => {
       console.log('[Modal] openBookmarkForm - received data from modal:', data);
@@ -147,7 +231,7 @@ const Modal = (() => {
     `;
 
     // Find the URL field wrapper
-    const urlField = urlInput.closest('.bm-field');
+    const urlField = urlInput.closest('.bm-field, .modal__field');
     if (!urlField) return;
     
     urlField.style.position = 'relative';
@@ -510,6 +594,69 @@ const Modal = (() => {
    */
   function openTabsPicker(tabs = []) {
     return new Promise((resolve) => {
+      if (typeof createModal === 'function' && typeof showModal === 'function') {
+        const listWrap = document.createElement('div');
+        listWrap.className = 'bm-modal-form';
+
+        const selectAllLabel = document.createElement('label');
+        selectAllLabel.className = 'bm-select-all-container';
+        selectAllLabel.innerHTML = '<input type="checkbox" id="bm_select_all" aria-label="Select all tabs" /> Select all';
+        listWrap.appendChild(selectAllLabel);
+
+        const list = document.createElement('div');
+        list.id = 'bm_tabs_list';
+        list.setAttribute('role', 'listbox');
+        list.setAttribute('aria-label', 'Tab selection list');
+
+        tabs.forEach((tab, index) => {
+          const row = document.createElement('label');
+          row.className = 'save-tabs-modal__tab-row';
+          row.innerHTML = `
+            <input type="checkbox" class="bm-tab-checkbox" data-index="${index}" aria-label="Select ${escapeHtml(tab.title || tab.url)}" />
+            <span class="save-tabs-modal__tab-title" dir="auto">${escapeHtml(tab.title || tab.url)}</span>
+          `;
+          list.appendChild(row);
+        });
+
+        listWrap.appendChild(list);
+
+        let selectedTabs = [];
+        const modal = createModal({
+          type: 'form',
+          title: 'Add Tabs to Folder',
+          content: listWrap,
+          buttons: [
+            { label: 'Cancel', type: 'common', role: 'cancel', shortcut: 'ESC' },
+            { label: 'Add Selected', type: 'primary', role: 'confirm', shortcut: '↵' }
+          ],
+          onSubmit: () => {
+            selectedTabs = Array.from(list.querySelectorAll('.bm-tab-checkbox'))
+              .filter(cb => cb.checked)
+              .map(cb => tabs[parseInt(cb.dataset.index, 10)]);
+            return true;
+          },
+          onClose: (confirmed) => {
+            resolve(confirmed ? selectedTabs : []);
+          }
+        });
+
+        showModal(modal);
+
+        const selectAll = listWrap.querySelector('#bm_select_all');
+        const checkboxes = listWrap.querySelectorAll('.bm-tab-checkbox');
+        selectAll.addEventListener('change', () => {
+          checkboxes.forEach((cb) => (cb.checked = selectAll.checked));
+        });
+        checkboxes.forEach((cb) => {
+          cb.addEventListener('change', () => {
+            const allChecked = Array.from(checkboxes).every((c) => c.checked);
+            selectAll.checked = allChecked;
+          });
+        });
+
+        return;
+      }
+
       // Create custom modal for tabs picker (special case)
       const overlay = document.createElement('div');
       overlay.id = 'bm-modal-overlay';
@@ -621,6 +768,57 @@ const Modal = (() => {
    */
   function openWidgetPicker(defaults = {}) {
     return new Promise((resolve) => {
+      if (typeof createModal === 'function' && typeof showModal === 'function') {
+        const widgets = [
+          { id: 'clock', title: 'Clock', icon: '🕐' },
+          { id: 'quicklinks', title: 'Quick Links', icon: '⚡' },
+          { id: 'notes', title: 'Notes', icon: '📝' }
+        ];
+
+        let selectedWidget = null;
+        const list = document.createElement('div');
+        list.className = 'bm-widget-list';
+
+        widgets.forEach((widget) => {
+          const optionBtn = document.createElement('button');
+          optionBtn.type = 'button';
+          optionBtn.className = 'bm-widget-item-btn';
+          optionBtn.textContent = `${widget.icon} ${widget.title}`;
+          optionBtn.addEventListener('click', () => {
+            selectedWidget = widget;
+            list.querySelectorAll('.bm-widget-item-btn').forEach((btn) => btn.classList.remove('bm-widget-item-btn--selected'));
+            optionBtn.classList.add('bm-widget-item-btn--selected');
+          });
+          list.appendChild(optionBtn);
+        });
+
+        const modal = createModal({
+          type: 'form',
+          title: 'Add Widget',
+          content: list,
+          buttons: [
+            { label: 'Cancel', type: 'common', role: 'cancel', shortcut: 'ESC' },
+            { label: 'Add', type: 'primary', role: 'confirm', shortcut: '↵' }
+          ],
+          onSubmit: async () => {
+            if (!selectedWidget) {
+              await openError({
+                title: 'No Widget Selected',
+                message: 'Please select a widget.'
+              });
+              return false;
+            }
+            return true;
+          },
+          onClose: (confirmed) => {
+            resolve(confirmed ? selectedWidget : null);
+          }
+        });
+
+        showModal(modal);
+        return;
+      }
+
       const overlay = document.createElement('div');
       overlay.id = 'bm-modal-overlay';
       overlay.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
@@ -739,20 +937,37 @@ const Modal = (() => {
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#39;');
 
+    if (typeof createModal === 'function' && typeof showModal === 'function') {
+      return new Promise((resolve) => {
+        const messageEl = document.createElement('p');
+        messageEl.className = 'modal__subtitle';
+        messageEl.style.whiteSpace = 'normal';
+        messageEl.textContent = message;
+
+        const modal = createModal({
+          type: 'dialog',
+          title,
+          content: messageEl,
+          buttons: [
+            { label: cancelText, type: 'common', role: 'cancel', shortcut: 'ESC' },
+            { label: confirmText, type: destructive ? 'primary' : 'primary', role: 'confirm', shortcut: '↵' }
+          ],
+          onClose: (confirmed) => resolve(Boolean(confirmed))
+        });
+
+        showModal(modal);
+      });
+    }
+
     const modal = new BaseModal({
-      title: title,
-      customContent: `
-        <p style="margin: 1rem 0; line-height: 1.5; color: var(--theme-text, #1a1a1a); word-break: break-word;">${escapeHtml(message)}</p>
-      `,
-      confirmText: confirmText,
-      cancelText: cancelText,
+      title,
+      customContent: `<p style="margin: 1rem 0; line-height: 1.5; color: var(--theme-text, #1a1a1a); word-break: break-word;">${escapeHtml(message)}</p>`,
+      confirmText,
+      cancelText,
       confirmVariant: destructive ? 'destructive' : 'primary'
     });
 
-    return modal.show().then(data => {
-      // Return true if confirmed, false if cancelled
-      return data !== null;
-    });
+    return modal.show().then(data => data !== null);
   }
 
   /**

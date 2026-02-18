@@ -35,7 +35,7 @@
   gap: var(--padding-and-gap-x-large, 16px);
   
   /* Sizing */
-  min-width: 500px;
+  min-width: min(500px, 100%);
   max-width: 90vw;
   max-height: 90vh;
   
@@ -68,15 +68,24 @@
 
 /* Modal variants */
 .modal--dialog {
-  width: 532px;
+  width: min(100%, 500px);
+  max-width: 500px;
 }
 
 .modal--form {
-  width: auto;
+  width: min(100%, 640px);
+  max-width: 640px;
 }
 
 /* Modal content section */
 .modal__content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--padding-and-gap-large, 8px);
+  width: 100%;
+}
+
+.modal__body {
   display: flex;
   flex-direction: column;
   gap: var(--padding-and-gap-large, 8px);
@@ -123,10 +132,70 @@
   width: 100%;
 }
 
+.modal__fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--padding-and-gap-large, 8px);
+  width: 100%;
+}
+
+.modal__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--padding-and-gap-medium, 4px);
+  width: 100%;
+}
+
+.modal__field-label {
+  color: var(--common-common-bright-15, rgba(255, 255, 255, 0.6));
+  font-family: var(--font-family-sans-serif, 'Lato', sans-serif);
+  font-size: var(--size-medium, 12px);
+  font-weight: var(--weight-regular, 400);
+}
+
+.modal__field .text-field {
+  width: 100%;
+}
+
+.modal__native-input {
+  width: 100%;
+  min-height: 36px;
+  box-sizing: border-box;
+  border-radius: var(--corner-radius-medium, 8px);
+  border: 1px solid var(--common-common-bright-10, rgba(255, 255, 255, 0.2));
+  background: var(--common-common-bright-05, rgba(255, 255, 255, 0.1));
+  color: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
+  font-family: var(--font-family-sans-serif, 'Lato', sans-serif);
+  font-size: var(--size-medium, 12px);
+  padding: 8px 12px;
+}
+
+.modal__native-input:focus {
+  outline: 1px solid var(--primary-primary-25, #2e33b9);
+}
+
 /* Modal actions section */
 .modal__actions {
   display: flex;
-  gap: var(--padding-and-gap-large, 8px);
+  justify-content: center;
+  gap: 16px;
+  width: 100%;
+  margin-top: 40px;
+}
+
+.modal__action-btn {
+  flex: 1 1 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  height: 56px;
+  font-size: 1.5rem;
+}
+
+.modal__actions > * {
   width: 100%;
 }
 
@@ -159,7 +228,7 @@
   text-overflow: ellipsis;
   
   /* Transition */
-  transition: all 0.2s ease;
+  transition: all 0.5s ease;
 }
 
 /* Common button (secondary) */
@@ -260,22 +329,22 @@
 
 @keyframes slideUp {
   from {
-    transform: translateY(20px);
+    transform: translateY(20px) scale(0.98);
     opacity: 0;
   }
   to {
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
     opacity: 1;
   }
 }
 
 @keyframes slideDown {
   from {
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
     opacity: 1;
   }
   to {
-    transform: translateY(20px);
+    transform: translateY(20px) scale(0.98);
     opacity: 0;
   }
 }

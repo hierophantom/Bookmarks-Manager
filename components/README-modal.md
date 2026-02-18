@@ -21,7 +21,7 @@ Modal dialogs for user interactions. Two types: dialog box for yes/no questions,
 ## Anatomy
 
 ### Dialog Box
-- **Width**: 532px fixed
+- **Max width**: 500px
 - **Min-height**: Auto
 - **Padding**: 16px
 - **Background**: Layered gradient with blur
@@ -29,7 +29,7 @@ Modal dialogs for user interactions. Two types: dialog box for yes/no questions,
 - **Shadow**: Multi-layer drop shadow
 
 ### Form Modal
-- **Width**: Auto (min 500px)
+- **Width**: Up to 640px
 - **Min-height**: 200px
 - **Padding**: 16px
 - **Layout**: Title, Subtitle, Form content, Action buttons
@@ -38,6 +38,8 @@ Modal dialogs for user interactions. Two types: dialog box for yes/no questions,
 - **Title**: 24px regular weight
 - **Subtitle**: 12px light weight
 - **Buttons**: 36px height, flex layout
+- **Buttons**: Uses `button-common` / `button-primary` components
+- **Fields**: Uses `text-field` component when `fields` config is provided
 - **Content gap**: 16px between sections
 
 ## Usage
@@ -116,6 +118,7 @@ Creates a modal dialog.
 - `options.title` (string) - Modal title
 - `options.subtitle` (string, optional) - Optional subtitle
 - `options.content` (HTMLElement|string, optional) - Content element or HTML string
+- `options.fields` (Array, optional) - Field configs rendered with DS field components
 - `options.buttons` (Array) - Button configurations
 - `options.onClose` (function, optional) - Callback when modal closes
 - `options.onSubmit` (function, optional) - Callback when form is submitted

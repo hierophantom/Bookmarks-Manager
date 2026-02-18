@@ -1,43 +1,18 @@
 /**
  * Modal Component
- * 
+ *
  * Design System Component - BMG-93
- * 
- * @example
- * // Create dialog modal
- * const modal = createModal({
- *   type: 'dialog',
- *   title: 'Delete bookmark?',
- *   subtitle: 'This action cannot be undone',
- *   buttons: [
- *     { label: 'Cancel', type: 'common', shortcut: 'ESC' },
- *     { label: 'Delete', type: 'primary', shortcut: '↵' }
- *   ],
- *   onClose: (result) => console.log(result)
- * });
- * 
- * @example
- * // Create form modal
- * const modal = createModal({
- *   type: 'form',
- *   title: 'Add bookmark',
- *   subtitle: 'Enter bookmark details',
- *   content: formElement,
- *   buttons: [
- *     { label: 'Cancel', type: 'common', shortcut: 'ESC' },
- *     { label: 'Save', type: 'primary', shortcut: '↵' }
- *   ]
- * });
  */
 
 /**
  * Creates a modal dialog
  * @param {Object} options - Modal configuration
- * @param {string} options.type - Modal type: 'dialog' or 'form'
- * @param {string} options.title - Modal title
- * @param {string} [options.subtitle] - Optional subtitle
+ * @param {string} [options.type='dialog'] - Modal type: 'dialog' or 'form'
+ * @param {string} [options.title=''] - Modal title
+ * @param {string} [options.subtitle=''] - Optional subtitle
  * @param {HTMLElement|string} [options.content] - Content element or HTML string
- * @param {Array} options.buttons - Button configurations
+ * @param {Array<Object>} [options.fields=[]] - Optional form fields config
+ * @param {Array<Object>} [options.buttons=[]] - Button configurations
  * @param {Function} [options.onClose] - Callback when modal closes
  * @param {Function} [options.onSubmit] - Callback when form is submitted
  * @param {boolean} [options.closeOnEscape=true] - Close on ESC key
@@ -50,6 +25,7 @@ function createModal(options = {}) {
     title = '',
     subtitle = '',
     content = null,
+    fields = [],
     buttons = [],
     onClose = null,
     onSubmit = null,
@@ -57,22 +33,18 @@ function createModal(options = {}) {
     closeOnBackdrop = true
   } = options;
 
-  // Create overlay
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay modal-overlay--entering';
   overlay.setAttribute('role', 'dialog');
   overlay.setAttribute('aria-modal', 'true');
   overlay.setAttribute('aria-labelledby', 'modal-title');
 
-  // Create modal
   const modal = document.createElement('div');
   modal.className = `modal modal--${type} modal--entering`;
-  
-  // Create content section
+
   const contentSection = document.createElement('div');
   contentSection.className = 'modal__content';
-  
-  // Add title
+
   if (title) {
     const titleEl = document.createElement('h2');
     titleEl.id = 'modal-title';
@@ -80,143 +52,349 @@ function createModal(options = {}) {
     titleEl.textContent = title;
     contentSection.appendChild(titleEl);
   }
-  
-  // Add subtitle
+
   if (subtitle) {
     const subtitleEl = document.createElement('p');
     subtitleEl.className = 'modal__subtitle';
     subtitleEl.textContent = subtitle;
     contentSection.appendChild(subtitleEl);
   }
-  
-  // Add content
+
+  const body = document.createElement('div');
+  body.className = 'modal__body';
+
   if (content) {
     if (typeof content === 'string') {
       const contentDiv = document.createElement('div');
       contentDiv.className = 'modal__form';
       contentDiv.innerHTML = content;
-      contentSection.appendChild(contentDiv);
+      body.appendChild(contentDiv);
     } else if (content instanceof HTMLElement) {
-      contentSection.appendChild(content);
+      body.appendChild(content);
     }
   }
-  
+
+  if (Array.isArray(fields) && fields.length > 0) {
+    const fieldsWrap = document.createElement('div');
+    fieldsWrap.className = 'modal__fields';
+
+    fields.forEach((field) => {
+      const fieldEl = createModalField(field);
+      if (fieldEl) {
+        fieldsWrap.appendChild(fieldEl);
+      }
+    });
+
+    body.appendChild(fieldsWrap);
+  }
+
+  if (body.childNodes.length > 0) {
+    contentSection.appendChild(body);
+  }
+
   modal.appendChild(contentSection);
-  
-  // Create actions section
+
   if (buttons.length > 0) {
     const actionsSection = document.createElement('div');
     actionsSection.className = 'modal__actions';
-    
+
     buttons.forEach((btn, index) => {
-      const button = document.createElement('button');
-      button.className = `modal__button modal__button--${btn.type || 'common'}`;
-      button.textContent = btn.label || 'Button';
-      
-      if (btn.disabled) {
-        button.disabled = true;
-      }
-      
-      // Add keyboard shortcut hint if provided
-      if (btn.shortcut) {
-        const kbd = document.createElement('span');
-        kbd.className = 'kbd-hint';
-        kbd.textContent = btn.shortcut;
-        kbd.style.cssText = `
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          height: 20px;
-          min-width: 20px;
-          padding: 0 4px;
-          background: var(--common-common-bright-05, rgba(255, 255, 255, 0.1));
-          border-radius: var(--corner-radius-pill, 999px);
-          font-size: 10px;
-          margin-left: 4px;
-        `;
-        button.appendChild(kbd);
-      }
-      
-      // Handle button click
-      button.addEventListener('click', () => {
-        if (btn.onClick) {
-          btn.onClick();
-        }
-        
-        if (index === 0) {
-          // First button (usually cancel)
-          closeModal(false);
-        } else {
-          // Other buttons (usually submit)
-          if (onSubmit) {
-            const result = onSubmit();
-            if (result !== false) {
-              closeModal(true);
-            }
-          } else {
-            closeModal(true);
+      const button = createModalActionButton(btn, index);
+
+      button.addEventListener('click', async (event) => {
+        if (typeof btn.onClick === 'function') {
+          const clickResult = btn.onClick(event);
+          if (clickResult instanceof Promise) {
+            await clickResult;
           }
         }
+
+        if (shouldTreatAsCancel(btn, index, buttons.length)) {
+          closeModal(false);
+          return;
+        }
+
+        if (typeof onSubmit === 'function') {
+          const result = await onSubmit();
+          if (result !== false) {
+            closeModal(true);
+          }
+        } else {
+          closeModal(true);
+        }
       });
-      
+
       actionsSection.appendChild(button);
     });
-    
+
     modal.appendChild(actionsSection);
   }
-  
+
   overlay.appendChild(modal);
-  
-  // Close modal function
+
   function closeModal(confirmed = false) {
     overlay.classList.add('modal-overlay--exiting');
     modal.classList.add('modal--exiting');
-    
+
     setTimeout(() => {
       if (overlay.parentNode) {
         overlay.parentNode.removeChild(overlay);
       }
-      
-      if (onClose) {
+
+      document.removeEventListener('keydown', handleKeyDown);
+
+      if (typeof onClose === 'function') {
         onClose(confirmed);
       }
     }, 200);
   }
-  
-  // Keyboard handling
+
   function handleKeyDown(e) {
     if (closeOnEscape && e.key === 'Escape') {
       e.preventDefault();
       closeModal(false);
-    } else if (e.key === 'Enter' && type === 'form') {
-      // Only submit on Enter for form modals
+      return;
+    }
+
+    if (e.key === 'Enter' && type === 'form') {
+      const targetTag = e.target && e.target.tagName;
+      if (targetTag === 'TEXTAREA') return;
       e.preventDefault();
-      if (onSubmit) {
-        const result = onSubmit();
-        if (result !== false) {
-          closeModal(true);
-        }
+      if (typeof onSubmit === 'function') {
+        Promise.resolve(onSubmit()).then((result) => {
+          if (result !== false) closeModal(true);
+        });
       } else {
         closeModal(true);
       }
     }
   }
-  
+
   document.addEventListener('keydown', handleKeyDown);
-  
-  // Backdrop click
+
   overlay.addEventListener('click', (e) => {
     if (closeOnBackdrop && e.target === overlay) {
       closeModal(false);
     }
   });
-  
-  // Cleanup on remove
-  overlay._cleanup = () => {
-    document.removeEventListener('keydown', handleKeyDown);
-  };
-  
+
   return overlay;
+}
+
+function createModalField(field = {}) {
+  const {
+    id = '',
+    label = '',
+    type = 'text',
+    placeholder = '',
+    value = '',
+    required = false,
+    contrast = 'low',
+    options = []
+  } = field;
+
+  if (!id) return null;
+
+  const wrapper = document.createElement('div');
+  wrapper.className = 'modal__field';
+
+  if (label) {
+    const labelEl = document.createElement('label');
+    labelEl.className = 'modal__field-label';
+    labelEl.setAttribute('for', id);
+    labelEl.textContent = required ? `${label} *` : label;
+    wrapper.appendChild(labelEl);
+  }
+
+  if (['text', 'url', 'email', 'password', 'search'].includes(type) && typeof createTextField === 'function') {
+    const textField = createTextField({
+      placeholder,
+      value,
+      type,
+      contrast,
+      ariaLabel: label || id
+    });
+
+    const input = textField.querySelector('.text-field__input');
+    if (input) {
+      input.id = id;
+      input.dataset.modalField = id;
+      if (required) input.required = true;
+    }
+
+    wrapper.appendChild(textField);
+    return wrapper;
+  }
+
+  if (type === 'select') {
+    if (typeof createSelectionField === 'function' && typeof createSelectionMenu === 'function') {
+      const normalizedOptions = Array.isArray(options) ? options : [];
+      const selectedIndex = Math.max(0, normalizedOptions.findIndex((opt) => String(opt.value) === String(value)));
+      const activeOption = normalizedOptions[selectedIndex] || normalizedOptions[0] || { value: '', label: '' };
+
+      const hiddenInput = document.createElement('input');
+      hiddenInput.type = 'hidden';
+      hiddenInput.id = id;
+      hiddenInput.dataset.modalField = id;
+      hiddenInput.value = activeOption.value || '';
+
+      const menuItems = normalizedOptions.map((opt) => opt.label);
+      let fieldEl = null;
+      let menuEl = null;
+
+      const closeMenu = () => {
+        if (!fieldEl || !menuEl) return;
+        menuEl.style.display = 'none';
+        applySelectionFieldState(fieldEl, hiddenInput.value ? 'selection' : 'idle');
+      };
+
+      const openMenu = () => {
+        if (!fieldEl || !menuEl) return;
+        menuEl.style.display = 'block';
+        applySelectionFieldState(fieldEl, 'active');
+      };
+
+      menuEl = createSelectionMenu({
+        type: 'sort',
+        contrast,
+        items: menuItems,
+        selectedIndex,
+        onSelect: (index) => {
+          const selected = normalizedOptions[index];
+          if (!selected) return;
+
+          hiddenInput.value = selected.value;
+          updateSelectionFieldLabel(fieldEl, selected.label);
+          updateSelectionFieldSelectionState(fieldEl, true);
+          closeMenu();
+        }
+      });
+
+      fieldEl = createSelectionField({
+        label: activeOption.label || label,
+        contrast,
+        state: hiddenInput.value ? 'selection' : 'idle',
+        menu: menuEl,
+        onToggle: () => {
+          if (!menuEl) return;
+          if (menuEl.style.display === 'block') {
+            closeMenu();
+          } else {
+            openMenu();
+          }
+        }
+      });
+
+      fieldEl.classList.add('modal__selection-field');
+      fieldEl.dataset.modalSelect = id;
+
+      const outsideHandler = (event) => {
+        if (!fieldEl.contains(event.target)) {
+          closeMenu();
+        }
+      };
+      document.addEventListener('click', outsideHandler);
+
+      const originalRemove = fieldEl.remove.bind(fieldEl);
+      fieldEl.remove = function removeWithCleanup() {
+        document.removeEventListener('click', outsideHandler);
+        return originalRemove();
+      };
+
+      wrapper.appendChild(fieldEl);
+      wrapper.appendChild(hiddenInput);
+      return wrapper;
+    }
+
+    const select = document.createElement('select');
+    select.className = 'modal__native-input';
+    select.id = id;
+    select.dataset.modalField = id;
+    if (required) select.required = true;
+
+    (options || []).forEach((opt) => {
+      const option = document.createElement('option');
+      option.value = opt.value;
+      option.textContent = opt.label;
+      if (String(opt.value) === String(value)) option.selected = true;
+      select.appendChild(option);
+    });
+
+    wrapper.appendChild(select);
+    return wrapper;
+  }
+
+  const input = document.createElement('input');
+  input.className = 'modal__native-input';
+  input.type = type;
+  input.id = id;
+  input.value = value;
+  input.placeholder = placeholder;
+  input.dataset.modalField = id;
+  if (required) input.required = true;
+
+  wrapper.appendChild(input);
+  return wrapper;
+}
+
+function createModalActionButton(btn = {}, index = 0) {
+  const type = btn.type || (index === 0 ? 'common' : 'primary');
+  const label = btn.label || 'Button';
+  const disabled = Boolean(btn.disabled);
+  const shortcutKeys = normalizeShortcutKeys(btn.shortcut);
+
+  if (type === 'primary' && typeof createPrimaryButton === 'function') {
+    const button = createPrimaryButton({
+      label,
+      contrast: 'high',
+      shortcutKeys,
+      shortcutText: true,
+      disabled
+    });
+    button.classList.add('modal__action-btn', 'modal__action-btn--primary');
+    return button;
+  }
+
+  if (typeof createCommonButton === 'function') {
+    const button = createCommonButton({
+      label,
+      contrast: 'low',
+      shortcutKeys,
+      shortcutText: true,
+      disabled
+    });
+    button.classList.add('modal__action-btn', 'modal__action-btn--common');
+    return button;
+  }
+
+  const fallback = document.createElement('button');
+  fallback.type = 'button';
+  fallback.className = `modal__button modal__button--${type}`;
+  fallback.textContent = label;
+  fallback.disabled = disabled;
+  return fallback;
+}
+
+function normalizeShortcutKeys(shortcut) {
+  if (!shortcut) return null;
+  const normalized = String(shortcut).trim();
+  if (!normalized) return null;
+
+  if (normalized === 'ESC' || normalized.toLowerCase() === 'esc') {
+    return ['Esc'];
+  }
+
+  if (normalized === '↵' || normalized.toLowerCase() === 'enter' || normalized.toLowerCase() === 'return') {
+    return ['↵'];
+  }
+
+  return [normalized];
+}
+
+function shouldTreatAsCancel(btn, index, totalButtons) {
+  if (btn && btn.role === 'cancel') return true;
+  if (btn && btn.action === 'cancel') return true;
+  return totalButtons > 1 && index === 0;
 }
 
 /**
@@ -225,14 +403,13 @@ function createModal(options = {}) {
  */
 function showModal(modal) {
   document.body.appendChild(modal);
-  
-  // Focus first input if available
+
   setTimeout(() => {
-    const firstInput = modal.querySelector('input, textarea, select');
+    const firstInput = modal.querySelector('.text-field__input, input, textarea, select, button');
     if (firstInput) {
       firstInput.focus();
     }
-  }, 100);
+  }, 80);
 }
 
 /**
@@ -250,72 +427,25 @@ function confirmDialog(options = {}) {
         {
           label: options.cancelLabel || 'Cancel',
           type: 'common',
-          shortcut: 'ESC'
+          shortcut: 'ESC',
+          role: 'cancel'
         },
         {
           label: options.confirmLabel || 'Confirm',
           type: 'primary',
-          shortcut: '↵'
+          shortcut: '↵',
+          role: 'confirm'
         }
       ],
-      /**
-       * Shows a modal for search engine selection
-       * @param {string} currentEngine - Current engine key
-       * @param {Function} onSave - Callback with selected engine
-       */
-      function showSearchEngineSelector(currentEngine, onSave) {
-        const engines = [
-          { key: 'google', name: 'Google', url: 'https://www.google.com/search?q=%s' },
-          { key: 'duckduckgo', name: 'DuckDuckGo', url: 'https://duckduckgo.com/?q=%s' },
-          { key: 'bing', name: 'Bing', url: 'https://www.bing.com/search?q=%s' },
-          { key: 'yahoo', name: 'Yahoo', url: 'https://search.yahoo.com/search?p=%s' },
-          { key: 'custom', name: 'Custom', url: '' }
-        ];
-        const form = document.createElement('form');
-        form.innerHTML = `
-          <label style="margin-bottom:8px;display:block;font-weight:500;">Search Engine</label>
-          <select id="search-engine-select" style="width:100%;margin-bottom:12px;">
-            ${engines.map(e => `<option value="${e.key}" ${e.key===currentEngine?'selected':''}>${e.name}</option>`).join('')}
-          </select>
-          <input id="custom-engine-url" type="text" placeholder="Custom search URL (use %s for query)" style="width:100%;margin-bottom:8px;display:none;" />
-        `;
-        form.querySelector('#search-engine-select').addEventListener('change', e => {
-          const val = e.target.value;
-          form.querySelector('#custom-engine-url').style.display = val==='custom' ? 'block' : 'none';
-        });
-        form.querySelector('#search-engine-select').dispatchEvent(new Event('change'));
-        const modal = createModal({
-          type: 'form',
-          title: 'Select Search Engine',
-          content: form,
-          buttons: [
-            { label: 'Cancel', type: 'common', shortcut: 'ESC' },
-            { label: 'Save', type: 'primary', shortcut: '↵' }
-          ],
-          onSubmit: () => {
-            const key = form.querySelector('#search-engine-select').value;
-            let url = engines.find(e => e.key===key)?.url || '';
-            if (key==='custom') url = form.querySelector('#custom-engine-url').value.trim();
-            if (!url || !url.includes('%s')) {
-              alert('Search URL must include %s for query');
-              return false;
-            }
-            onSave({ key, url });
-            return true;
-          }
-        });
-        showModal(modal);
-      }
       onClose: (confirmed) => {
         resolve(confirmed);
       }
     });
-    
+
     showModal(modal);
   });
 }
 
-// Export for module usage
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
     createModal,
