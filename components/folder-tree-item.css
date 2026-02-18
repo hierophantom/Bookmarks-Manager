@@ -37,7 +37,7 @@
 
 /* Active state - primary blue background with rounded right edge */
 .folder-tree-item--active {
-  background-color: #2e33b9;
+  background-color: var(--primary-primary-25, #2e33b9);
   border-radius: 0 999px 999px 0;
 }
 

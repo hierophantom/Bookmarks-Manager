@@ -156,8 +156,13 @@
   --common-common-dark-05: var(--role-common-dark-05);
   --common-common-dark-10: var(--role-common-dark-10);
   --primary-primary-05: var(--role-primary-05);
+  --primary-primary-10: var(--role-primary-10);
+  --primary-primary-15: var(--role-primary-15);
   --primary-primary-20: var(--role-primary-20);
   --primary-primary-25: var(--role-primary-25);
+  --Primary-primary-10: var(--role-primary-10);
+  --Primary-primary-15: var(--role-primary-15);
+  --Primary-primary-25: var(--role-primary-25);
   --corner-radius-small: var(--radius-small);
   --corner-radius-medium: var(--radius-medium);
   --corner-radius-pill: var(--radius-pill);
