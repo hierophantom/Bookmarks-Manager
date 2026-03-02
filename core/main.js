@@ -828,27 +828,31 @@ document.addEventListener('DOMContentLoaded', async () => {
     const hiddenFolderIds = new Set(hiddenFolders);
     const hideNestedFolders = await Storage.get('hideNestedFolders') || false;
 
-    // Add hidden folders indicator if any
+    // Add or update hidden folders button in bookmarks actions
+    const existingHiddenBtn = bookmarksActionsSettings.querySelector('[data-hidden-folders-btn]');
+    if (existingHiddenBtn) {
+      existingHiddenBtn.remove();
+    }
+    
     if (hiddenFolderIds.size > 0) {
-      const hiddenIndicator = document.createElement('div');
-      hiddenIndicator.className = 'bookmarks-hidden-indicator';
-
-      const indicatorText = document.createElement('div');
-      indicatorText.className = 'bookmarks-hidden-indicator__text';
-      indicatorText.textContent = `Hidden Folders (${hiddenFolderIds.size})`;
-
-      const showAllBtn = createCommonButton({
-        label: 'Show All',
+      const folderWord = hiddenFolderIds.size === 1 ? 'folder' : 'folders';
+      const showHiddenBtn = createCommonButton({
+        label: `${hiddenFolderIds.size} hidden ${folderWord}`,
+        icon: createMaterialIcon('visibility'),
         contrast: 'low',
         onClick: async () => {
           await Storage.set({ hiddenFolders: [] });
           await render(true);
         }
       });
-
-      hiddenIndicator.appendChild(indicatorText);
-      hiddenIndicator.appendChild(showAllBtn);
-      root.appendChild(hiddenIndicator);
+      showHiddenBtn.setAttribute('data-hidden-folders-btn', 'true');
+      showHiddenBtn.style.marginRight = '8px';
+      const settingsButtonEl = bookmarksActionsSettings.querySelector('.action-button');
+      if (settingsButtonEl) {
+        bookmarksActionsSettings.insertBefore(showHiddenBtn, settingsButtonEl);
+      } else {
+        bookmarksActionsSettings.appendChild(showHiddenBtn);
+      }
     }
 
     // Get filter values

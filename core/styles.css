@@ -659,29 +659,6 @@ body {
   -webkit-overflow-scrolling: touch;
 }
 
-.bookmarks-hidden-indicator {
-  width: 100%;
-  max-width: 1180px;
-  margin: 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 10px 12px;
-  border-radius: var(--corner-radius-medium, 8px);
-  border: 1px solid var(--common-common-bright-10, rgba(255, 255, 255, 0.4));
-  background: var(--common-common-bright-05, rgba(255, 255, 255, 0.1));
-  color: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
-  font-size: var(--size-medium, 12px);
-  font-weight: var(--weight-regular, 400);
-}
-
-.bookmarks-hidden-indicator__text {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
 .folder-section__content.dragover {
   outline: 2px dashed var(--primary-primary-25, #2e33b9);
   outline-offset: 6px;
