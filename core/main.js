@@ -1756,12 +1756,18 @@ document.addEventListener('DOMContentLoaded', async () => {
   const helpBtn = document.getElementById('help-btn');
   if (helpBtn) {
     helpBtn.addEventListener('click', () => {
-      if (typeof Modal !== 'undefined' && Modal.openNotice) {
-        Modal.openNotice({
-          title: 'About Bookmark Manager',
-          message: 'This chrome extension was made by Lior Matza with ❤️ & 🤖\nLinkedIn: https://linear.app/liors-projects/issue/BMG-159/populate-about-modal',
-          buttonText: 'Close'
-        });
+      try {
+        if (typeof Modal !== 'undefined' && Modal.openNotice) {
+          Modal.openNotice({
+            title: 'About Bookmark Manager',
+            message: 'This chrome extension was made by Lior Matza with ❤️ & 🤖\nLinkedIn: https://linear.app/liors-projects/issue/BMG-159/populate-about-modal',
+            buttonText: 'Close'
+          });
+        } else {
+          console.error('Modal object not available');
+        }
+      } catch (e) {
+        console.error('Error opening about modal:', e);
       }
     });
   }
