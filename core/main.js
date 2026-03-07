@@ -1757,10 +1757,18 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (helpBtn) {
     helpBtn.addEventListener('click', () => {
       try {
-        if (typeof Modal !== 'undefined' && Modal.openNotice) {
+        if (typeof BaseModal !== 'undefined') {
+          const modal = new BaseModal({
+            title: 'About Bookmark Manager',
+            customContent: '<p style="margin: 1rem 0; line-height: 1.5;">This chrome extension was made by Lior Matza with ❤️ & 🤖<br><a href="https://www.linkedin.com/in/lior-matza-6334223a/" target="_blank" rel="noopener noreferrer">LinkedIn</a></p>',
+            confirmText: 'Close',
+            cancelText: null
+          });
+          modal.show();
+        } else if (typeof Modal !== 'undefined' && Modal.openNotice) {
           Modal.openNotice({
             title: 'About Bookmark Manager',
-            message: 'This chrome extension was made by Lior Matza with ❤️ & 🤖\nhttps://www.linkedin.com/in/lior-matza-6334223a/',
+            message: 'This chrome extension was made by Lior Matza with ❤️ & 🤖\nLinkedIn: https://www.linkedin.com/in/lior-matza-6334223a/',
             buttonText: 'Close'
           });
         } else {
