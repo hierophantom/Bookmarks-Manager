@@ -765,6 +765,29 @@ document.addEventListener('DOMContentLoaded', async () => {
     return sorted;
   }
 
+  function sortFolderSectionChildren(children) {
+    if (!Array.isArray(children)) return [];
+    if (currentSort === 'none') return [...children];
+
+    const sorted = [...children];
+    const sortByTitleAsc = (a, b) => (a.title || '').localeCompare(b.title || '');
+    const sortByTitleDesc = (a, b) => (b.title || '').localeCompare(a.title || '');
+    const sortByNewest = (a, b) => (b.dateAdded || 0) - (a.dateAdded || 0);
+    const sortByOldest = (a, b) => (a.dateAdded || 0) - (b.dateAdded || 0);
+
+    if (currentSort.endsWith('-az')) {
+      sorted.sort(sortByTitleAsc);
+    } else if (currentSort.endsWith('-za')) {
+      sorted.sort(sortByTitleDesc);
+    } else if (currentSort.endsWith('-newest')) {
+      sorted.sort(sortByNewest);
+    } else if (currentSort.endsWith('-oldest')) {
+      sorted.sort(sortByOldest);
+    }
+
+    return sorted;
+  }
+
   // Tag filtering state handled by selection field menu
 
   // Render version to avoid stale async writes
@@ -1461,9 +1484,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         const sectionItems = [];
 
         if (folder.children && folder.children.length) {
-          const childFolders = folder.children.filter(c => !c.url);
-          const childBookmarks = folder.children.filter(c => c.url);
-
           if ((currentFilterTags && currentFilterTags.length > 0) || filterText) {
             async function folderHasMatch(node) {
               if (!node || !node.children) return false;
@@ -1494,9 +1514,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (!hasMatchingBookmarks) return;
           }
 
-          const sortedFolders = sortFolders(childFolders);
-          const sortedBookmarks = sortBookmarks(childBookmarks);
-          const sortedChildren = [...sortedFolders, ...sortedBookmarks];
+          const sortedChildren = sortFolderSectionChildren(folder.children);
           const seenChildFolderIds = new Set();
 
           for (const child of sortedChildren) {
