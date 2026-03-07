@@ -1752,6 +1752,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
+  // Help/About button handler
+  const helpBtn = document.getElementById('help-btn');
+  if (helpBtn) {
+    helpBtn.addEventListener('click', () => {
+      if (typeof Modal !== 'undefined' && Modal.openNotice) {
+        Modal.openNotice({
+          title: 'About Bookmark Manager',
+          message: 'This chrome extension was made by Lior Matza with ❤️ & 🤖\nLinkedIn: https://linear.app/liors-projects/issue/BMG-159/populate-about-modal',
+          buttonText: 'Close'
+        });
+      }
+    });
+  }
+
   // Unsplash Attribution Modal - Initialize button and handler
   try {
     if (typeof UnsplashAttributionModal !== 'undefined') {
