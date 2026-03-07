@@ -1287,15 +1287,18 @@ document.addEventListener('DOMContentLoaded', async () => {
       const breadcrumbItems = buildBreadcrumbItems(folder.id);
       const items = [];
 
-      // Check if this is a root-level folder (direct child of Bookmarks Bar or Other Bookmarks)
+      // Root-level folders are direct children of Bookmarks Bar or Other Bookmarks
       const isRootFolder = folder.parentId === '1' || folder.parentId === '2';
+      // Allow hiding top-level system sections as well (Other Bookmarks and Mobile Bookmarks)
+      const isHideableTopLevelSection = folder.parentId === '0' && (folder.id === '2' || folder.id === '3');
+      const canHideFolderSection = isRootFolder || isHideableTopLevelSection;
 
       // Create folder section actions
       const folderActions = [];
       const tooltipData = []; // Store tooltip info separately
 
-      // Hide (only for root folders)
-      if (isRootFolder) {
+      // Hide (root folders + top-level Other/Mobile sections)
+      if (canHideFolderSection) {
         const hideBtn = createCubeActionButton({
           icon: 'visibility_off',
           label: 'Hide',
