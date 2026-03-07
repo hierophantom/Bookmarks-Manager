@@ -33,6 +33,52 @@ function init() {
   });
 }
 
+async function sendTabMessage(tabId, message) {
+  return new Promise((resolve, reject) => {
+    chrome.tabs.sendMessage(tabId, message, (response) => {
+      if (chrome.runtime.lastError) {
+        reject(new Error(chrome.runtime.lastError.message));
+        return;
+      }
+      resolve(response);
+    });
+  });
+}
+
+async function ensureOverlayScriptsInjected(tabId) {
+  await chrome.scripting.executeScript({
+    target: { tabId },
+    files: [
+      'service-search-engine/content-overlay/save-session-modal.js',
+      'service-search-engine/content-overlay/overlay.js'
+    ]
+  });
+}
+
+async function toggleOverlayWithRetry(tabId) {
+  try {
+    await sendTabMessage(tabId, { type: 'TOGGLE_OVERLAY' });
+    console.log('[Bridge] Toggle sent successfully');
+  } catch (error) {
+    const message = error && error.message ? error.message : String(error);
+    const needsInjection = message.includes('Receiving end does not exist');
+    if (!needsInjection) {
+      console.error('[Bridge] Toggle failed:', message);
+      return;
+    }
+
+    try {
+      console.log('[Bridge] Overlay receiver missing; injecting scripts and retrying');
+      await ensureOverlayScriptsInjected(tabId);
+      await sendTabMessage(tabId, { type: 'TOGGLE_OVERLAY' });
+      console.log('[Bridge] Toggle sent successfully after injection');
+    } catch (retryError) {
+      const retryMessage = retryError && retryError.message ? retryError.message : String(retryError);
+      console.error('[Bridge] Toggle failed after injection:', retryMessage);
+    }
+  }
+}
+
 /**
  * Handle keyboard shortcut
  */
@@ -84,15 +130,9 @@ async function handleToggleCommand() {
     return;
   }
 
-  // Send toggle to content script
+  // Send toggle to content script (with first-press fallback injection)
   console.log('[Bridge] Sending TOGGLE_OVERLAY to tab:', tab.id);
-  chrome.tabs.sendMessage(tab.id, { type: 'TOGGLE_OVERLAY' }, () => {
-    if (chrome.runtime.lastError) {
-      console.error('[Bridge] Toggle failed:', chrome.runtime.lastError.message);
-    } else {
-      console.log('[Bridge] Toggle sent successfully');
-    }
-  });
+  await toggleOverlayWithRetry(tab.id);
 }
 
 /**
