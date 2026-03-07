@@ -1760,7 +1760,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (typeof Modal !== 'undefined' && Modal.openNotice) {
           Modal.openNotice({
             title: 'About Bookmark Manager',
-            message: 'This chrome extension was made by Lior Matza with ❤️ & 🤖\nLinkedIn: https://linear.app/liors-projects/issue/BMG-159/populate-about-modal',
+            message: 'This chrome extension was made by Lior Matza with ❤️ & 🤖\nhttps://www.linkedin.com/in/lior-matza-6334223a/',
             buttonText: 'Close'
           });
         } else {
