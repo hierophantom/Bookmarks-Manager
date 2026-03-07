@@ -1734,8 +1734,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const tabGroupsSection = document.getElementById('tab-groups-section');
       if (tabGroupsSection) {
         if (tabGroups && tabGroups.length > 0) {
-          tabGroupsSection.style.display = '';
-          await TabGroupsService.render('tab-groups-container');
+          tabGroupsSection.style.display = 'none';
         } else {
           tabGroupsSection.style.display = 'none';
         }
