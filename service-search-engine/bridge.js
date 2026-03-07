@@ -128,6 +128,11 @@ function handleMessage(request, sender, sendResponse) {
       sendResponse({ success: true });
       break;
 
+    case 'TOGGLE_OVERLAY_FROM_UI':
+      handleToggleCommand();
+      sendResponse({ success: true });
+      break;
+
     default:
       console.warn('[Bridge] Unknown message type:', request.type);
       sendResponse({ error: 'Unknown message type' });
