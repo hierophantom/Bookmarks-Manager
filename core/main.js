@@ -307,6 +307,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       state: 'idle'
     });
     viewField.style.width = '136px';
+    viewField.style.display = 'none';
 
     bookmarksActionsLeft.appendChild(tagField);
     bookmarksActionsLeft.appendChild(sortField);
