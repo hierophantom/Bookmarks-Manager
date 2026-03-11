@@ -63,6 +63,18 @@
   min-width: 0;
 }
 
+.modal__fields {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.modal__field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
 .modal__title {
   margin: 0;
   font-family: var(--font-family-sans-serif, 'Lato', sans-serif);
@@ -76,6 +88,33 @@
   display: flex;
   gap: var(--padding-and-gap-large, 8px);
   width: 100%;
+}
+
+/* Tagify suggestion dropdown above modal overlay */
+.tagify__dropdown {
+  z-index: 100000 !important;
+}
+
+/* Selection field width stretch inside modal */
+.modal__field .selection-field,
+.modal__selection-field {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.modal__field .selection-menu,
+.modal__selection-field .selection-menu {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.modal__field .selection-field__menu,
+.modal__selection-field .selection-field__menu {
+  left: -1px;
+  right: -1px;
+  width: auto;
+  max-height: 240px;
+  overflow-y: auto;
 }
 
 /* Modal Card Base */

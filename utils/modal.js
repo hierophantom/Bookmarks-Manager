@@ -7,22 +7,22 @@ const Modal = (() => {
   async function openBookmarkForm(defaults = {}, options = {}) {
     const tagArr = Array.isArray(defaults.tags) ? defaults.tags : [];
     const showFolderSelector = options.showFolderSelector || false;
-    const showTabsSuggestions = options.showTabsSuggestions !== false; // Default true
+    const showTabsSuggestions = options.showTabsSuggestions || false;
 
     const fields = [
-      {
-        id: 'bm_title',
-        label: 'Title',
-        type: 'text',
-        value: defaults.title || '',
-        required: true
-      },
       {
         id: 'bm_url',
         label: 'URL',
         type: 'url',
         value: defaults.url || '',
         placeholder: 'https://example.com'
+      },
+      {
+        id: 'bm_title',
+        label: 'Title',
+        type: 'text',
+        value: defaults.title || '',
+        required: true
       },
       {
         id: 'bm_tags',
@@ -66,150 +66,162 @@ const Modal = (() => {
       });
     }
 
-    // Store tabs for suggestions
-    let openTabs = [];
-    if (showTabsSuggestions) {
-      openTabs = await new Promise(res => chrome.tabs.query({}, tabs => res(tabs)));
-    }
-
-    if (typeof createModal === 'function' && typeof showModal === 'function') {
-      return new Promise((resolve) => {
-        let submitResult = null;
-
-        const cleanup = () => {
-          const tagsInput = document.getElementById('bm_tags');
-          if (tagsInput && tagsInput.tagify) {
-            tagsInput.tagify.destroy();
-          }
-          const dropdown = document.getElementById('bm-tabs-suggestions');
-          if (dropdown) dropdown.remove();
-        };
-
-        const modal = createModal({
-          type: 'form',
-          title: defaults.id ? 'Edit Bookmark' : 'Add Bookmark',
-          fields,
-          buttons: [
-            { label: 'Cancel', type: 'common', role: 'cancel', shortcut: 'ESC' },
-            { label: 'Save', type: 'primary', role: 'confirm', shortcut: '↵' }
-          ],
-          onSubmit: async () => {
-            const titleInput = document.getElementById('bm_title');
-            const urlInput = document.getElementById('bm_url');
-            const folderInput = document.getElementById('bm_folder');
-            const tagsInput = document.getElementById('bm_tags');
-
-            const title = (titleInput?.value || '').trim();
-            const rawUrl = (urlInput?.value || '').trim();
-
-            if (!title) {
-              await openError({
-                title: 'Missing Title',
-                message: 'Title is required.'
-              });
-              return false;
-            }
-
-            if (rawUrl) {
-              try {
-                new URL(rawUrl);
-              } catch (error) {
-                await openError({
-                  title: 'Invalid URL',
-                  message: 'URL appears invalid.'
-                });
-                return false;
-              }
-            }
-
-            const tags = tagsInput && tagsInput.tagify
-              ? tagsInput.tagify.value.map(item => (typeof item === 'string' ? item : item.value))
-              : [];
-
-            submitResult = {
-              title,
-              url: rawUrl || null,
-              tags,
-              folderId: folderInput ? folderInput.value : null
-            };
-
-            return true;
-          },
-          onClose: (confirmed) => {
-            cleanup();
-            if (!confirmed) {
-              resolve(null);
-              return;
-            }
-            resolve(submitResult);
-          }
-        });
-
-        showModal(modal);
-
-        setTimeout(() => {
-          initializeTagify();
-          if (showTabsSuggestions && openTabs.length > 0) {
-            setupTabsSuggestions(openTabs);
-          }
-        }, 60);
+    if (typeof createModal !== 'function' || typeof showModal !== 'function') {
+      console.error('[Modal] openBookmarkForm - design-system modal component not available');
+      await openError({
+        title: 'Modal unavailable',
+        message: 'Bookmark modal component is unavailable. Please reload and try again.'
       });
+      return null;
     }
 
-    const modal = new BaseModal({
-      title: defaults.id ? 'Edit Bookmark' : 'Add Bookmark',
-      fields: fields
-    });
+    return new Promise((resolve) => {
+      let submitResult = null;
 
-    const modalPromise = modal.show().then(async (data) => {
-      console.log('[Modal] openBookmarkForm - received data from modal:', data);
-      
-      // Clean up Tagify instance
-      const tagsInput = document.getElementById('bm_tags');
-      if (tagsInput && tagsInput.tagify) {
-        console.log('[Modal] openBookmarkForm - destroying Tagify instance');
-        tagsInput.tagify.destroy();
-      }
-      
-      if (!data) {
-        console.log('[Modal] openBookmarkForm - modal was cancelled');
-        // Clean up tabs suggestions dropdown if exists
-        const dropdown = document.getElementById('bm-tabs-suggestions');
-        if (dropdown) dropdown.remove();
-        return null;
-      }
-
-      const result = {
-        title: data.bm_title,
-        url: data.bm_url || null,
-        tags: data.bm_tags || [],
-        folderId: data.bm_folder || null
+      const cleanup = () => {
+        if (typeof cleanupTabsSuggestions === 'function') {
+          cleanupTabsSuggestions();
+        }
       };
-      
-      // Clean up tabs suggestions dropdown
-      const dropdown = document.getElementById('bm-tabs-suggestions');
-      if (dropdown) dropdown.remove();
-      
-      console.log('[Modal] openBookmarkForm - returning result:', result);
-      return result;
-    });
 
-    // After modal is shown, add tabs suggestions dropdown
-    if (showTabsSuggestions && openTabs.length > 0) {
-      // Wait for modal to be rendered
-      setTimeout(() => {
-        setupTabsSuggestions(openTabs);
-      }, 100);
+      let cleanupTabsSuggestions = null;
+
+      const modal = createModal({
+        type: 'form',
+        title: defaults.id ? 'Edit Bookmark' : 'Add Bookmark',
+        fields,
+        buttons: [
+          { label: 'Cancel', type: 'common', role: 'cancel', shortcut: 'ESC' },
+          { label: 'Save', type: 'primary', role: 'confirm', shortcut: '↵' }
+        ],
+        onSubmit: async () => {
+          const titleInput = document.getElementById('bm_title');
+          const urlInput = document.getElementById('bm_url');
+          const folderInput = document.getElementById('bm_folder');
+          const tagsInput = document.getElementById('bm_tags');
+
+          const title = (titleInput?.value || '').trim();
+          const rawUrl = (urlInput?.value || '').trim();
+
+          clearModalInlineError(modal);
+
+          if (!title) {
+            showModalInlineError(modal, titleInput, 'Title is required.');
+            return false;
+          }
+
+          if (!rawUrl) {
+            showModalInlineError(modal, urlInput, 'URL is required.');
+            return false;
+          }
+
+          // Normalize: prepend https:// if no protocol is present so Chrome accepts it
+          const normalizedUrl = /^[a-zA-Z][a-zA-Z\d+\-.]*:\/\//.test(rawUrl)
+            ? rawUrl
+            : 'https://' + rawUrl;
+
+          const tags = (tagsInput?.value || '')
+            .split(',')
+            .map((tag) => tag.trim())
+            .filter(Boolean);
+
+          submitResult = {
+            title,
+            url: normalizedUrl,
+            tags,
+            folderId: folderInput ? folderInput.value : null
+          };
+
+          return true;
+        },
+        onClose: (confirmed) => {
+          cleanup();
+          if (!confirmed) {
+            resolve(null);
+            return;
+          }
+          resolve(submitResult);
+        }
+      });
+
+      showModal(modal);
+
+      // Initialize Tagify on the tags input once the modal is in the DOM
+      setTimeout(() => initializeTagify(), 0);
+
+      if (showTabsSuggestions && typeof chrome !== 'undefined' && chrome.tabs && typeof chrome.tabs.query === 'function') {
+        chrome.tabs.query({ currentWindow: true }, (tabs) => {
+          if (chrome.runtime && chrome.runtime.lastError) {
+            return;
+          }
+          cleanupTabsSuggestions = setupTabsSuggestions(Array.isArray(tabs) ? tabs : []);
+        });
+      }
+    });
+  }
+
+  // Show an inline error message inside an already-open modal
+  function showModalInlineError(modalOverlay, fieldInput, message) {
+    const modalEl = modalOverlay.querySelector('.modal');
+    if (!modalEl) return;
+
+    // Remove any previous error
+    clearModalInlineError(modalOverlay);
+
+    const banner = document.createElement('div');
+    banner.className = 'modal__inline-error';
+    banner.setAttribute('role', 'alert');
+    banner.textContent = message;
+
+    // Insert before the actions bar so it sits at the bottom of the form
+    const actions = modalEl.querySelector('.modal__actions');
+    if (actions) {
+      modalEl.insertBefore(banner, actions);
+    } else {
+      modalEl.appendChild(banner);
     }
 
-    return modalPromise;
+    // Highlight the offending field
+    if (fieldInput) {
+      fieldInput.classList.add('modal__text-field-input--error');
+      fieldInput.focus();
+      // Clear highlight as soon as the user edits the field
+      const clearOnInput = () => {
+        fieldInput.classList.remove('modal__text-field-input--error');
+        clearModalInlineError(modalOverlay);
+        fieldInput.removeEventListener('input', clearOnInput);
+      };
+      fieldInput.addEventListener('input', clearOnInput);
+    }
+  }
+
+  function clearModalInlineError(modalOverlay) {
+    const existing = modalOverlay.querySelector('.modal__inline-error');
+    if (existing) existing.remove();
+    const highlighted = modalOverlay.querySelectorAll('.modal__text-field-input--error');
+    highlighted.forEach((el) => el.classList.remove('modal__text-field-input--error'));
   }
 
   // Setup tabs suggestions dropdown
   function setupTabsSuggestions(tabs) {
     const urlInput = document.getElementById('bm_url');
     const titleInput = document.getElementById('bm_title');
-    if (!urlInput || !titleInput) return;
+    if (!urlInput || !titleInput || !Array.isArray(tabs) || tabs.length === 0) return null;
+
+    const userEdited = {
+      url: false,
+      title: false
+    };
+
+    const markUrlEdited = () => {
+      userEdited.url = true;
+    };
+    const markTitleEdited = () => {
+      userEdited.title = true;
+    };
+
+    urlInput.addEventListener('input', markUrlEdited);
+    titleInput.addEventListener('input', markTitleEdited);
 
     // Create suggestions dropdown
     const dropdown = document.createElement('div');
@@ -232,7 +244,11 @@ const Modal = (() => {
 
     // Find the URL field wrapper
     const urlField = urlInput.closest('.bm-field, .modal__field');
-    if (!urlField) return;
+    if (!urlField) {
+      urlInput.removeEventListener('input', markUrlEdited);
+      titleInput.removeEventListener('input', markTitleEdited);
+      return null;
+    }
     
     urlField.style.position = 'relative';
     urlField.appendChild(dropdown);
@@ -299,7 +315,7 @@ const Modal = (() => {
         });
         item.addEventListener('click', () => {
           urlInput.value = tab.url;
-          if (!titleInput.value) {
+          if (!titleInput.value || !userEdited.title) {
             titleInput.value = tab.title || tab.url;
           }
           dropdown.style.display = 'none';
@@ -313,29 +329,45 @@ const Modal = (() => {
     }
 
     // Show suggestions when URL field is focused
-    urlInput.addEventListener('focus', () => {
+    const onUrlFocus = () => {
       updateSuggestions(urlInput.value);
-    });
+    };
+    urlInput.addEventListener('focus', onUrlFocus);
 
     // Update suggestions as user types
-    urlInput.addEventListener('input', () => {
+    const onUrlInput = () => {
       updateSuggestions(urlInput.value);
-    });
+    };
+    urlInput.addEventListener('input', onUrlInput);
 
     // Hide suggestions when clicking outside
-    document.addEventListener('click', (e) => {
+    const onDocumentClick = (e) => {
       if (!urlField.contains(e.target)) {
         dropdown.style.display = 'none';
       }
-    });
+    };
+    document.addEventListener('click', onDocumentClick);
 
     // Hide dropdown on Escape
-    urlInput.addEventListener('keydown', (e) => {
+    const onUrlKeydown = (e) => {
       if (e.key === 'Escape' && dropdown.style.display === 'block') {
         e.stopPropagation();
         dropdown.style.display = 'none';
       }
-    });
+    };
+    urlInput.addEventListener('keydown', onUrlKeydown);
+
+    return () => {
+      urlInput.removeEventListener('focus', onUrlFocus);
+      urlInput.removeEventListener('input', onUrlInput);
+      urlInput.removeEventListener('input', markUrlEdited);
+      urlInput.removeEventListener('keydown', onUrlKeydown);
+      titleInput.removeEventListener('input', markTitleEdited);
+      document.removeEventListener('click', onDocumentClick);
+      if (dropdown.parentNode) {
+        dropdown.parentNode.removeChild(dropdown);
+      }
+    };
   }
 
   // Initialize Tagify on the tags input after modal is shown
@@ -363,7 +395,8 @@ const Modal = (() => {
         dropdown: {
           maxItems: 10,
           enabled: 0,
-          closeOnSelect: false
+          closeOnSelect: false,
+          appendTarget: document.body
         },
         editTags: false,
         duplicates: false,
@@ -375,15 +408,21 @@ const Modal = (() => {
       console.log('[Modal] initializeTagify - Tagify instance created, attaching to input');
       tagsInput.tagify = tagify;
 
-      // Style the Tagify container to match modal styling
+      // Style the Tagify container to match design-system modal text inputs
       const tagifyWrapper = tagsInput.nextElementSibling;
       if (tagifyWrapper && tagifyWrapper.classList.contains('tagify')) {
-        console.log('[Modal] initializeTagify - styling Tagify wrapper');
         tagifyWrapper.style.cssText = `
-          border: 1px solid #d1d5db;
-          border-radius: 0.375rem;
-          padding: 0.5rem;
-          min-height: 42px;
+          width: 100%;
+          box-sizing: border-box;
+          min-height: 36px;
+          border-radius: 4px;
+          border: 1px solid transparent;
+          background: rgba(46, 51, 185, 0.4);
+          color: rgba(255, 255, 255, 0.8);
+          font-family: 'Lato', sans-serif;
+          font-size: 16px;
+          padding: 4px 8px;
+          cursor: text;
         `;
       }
       

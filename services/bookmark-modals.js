@@ -1,7 +1,7 @@
 const BookmarkModals = (()=>{
   async function addBookmark(folderId){
     console.log('[BookmarkModals] addBookmark - opening form for folderId:', folderId);
-    const data = await Modal.openBookmarkForm({});
+    const data = await Modal.openBookmarkForm({}, { showTabsSuggestions: true });
     console.log('[BookmarkModals] addBookmark - form returned:', data);
     if (!data) {
       console.log('[BookmarkModals] addBookmark - cancelled');
@@ -51,7 +51,7 @@ const BookmarkModals = (()=>{
     console.log('[BookmarkModals] editBookmark - bookmark info:', info);
     console.log('[BookmarkModals] editBookmark - current tags:', tags);
     
-    const data = await Modal.openBookmarkForm({ id, title: info.title, url: info.url, tags });
+    const data = await Modal.openBookmarkForm({ id, title: info.title, url: info.url, tags }, { showTabsSuggestions: false });
     console.log('[BookmarkModals] editBookmark - form returned:', data);
     if (!data) {
       console.log('[BookmarkModals] editBookmark - cancelled');

@@ -206,7 +206,10 @@ function createModalField(field = {}) {
     wrapper.appendChild(labelEl);
   }
 
-  if (['text', 'url', 'email', 'password', 'search'].includes(type) && typeof createTextField === 'function') {
+  if (['text', 'url', 'email', 'password', 'search'].includes(type)) {
+    if (typeof createTextField !== 'function') {
+      throw new Error('Design-system text-field component is not available');
+    }
     const textField = createTextField({
       placeholder,
       value,
@@ -216,125 +219,108 @@ function createModalField(field = {}) {
     });
 
     const input = textField.querySelector('.text-field__input');
-    if (input) {
-      input.id = id;
-      input.dataset.modalField = id;
-      if (required) input.required = true;
+    if (!input) {
+      throw new Error('Design-system text-field input is not available');
     }
 
-    wrapper.appendChild(textField);
+    input.id = id;
+    input.dataset.modalField = id;
+    input.classList.add('modal__text-field-input');
+    if (required) input.required = true;
+
+    wrapper.appendChild(input);
     return wrapper;
   }
 
   if (type === 'select') {
-    if (typeof createSelectionField === 'function' && typeof createSelectionMenu === 'function') {
-      const normalizedOptions = Array.isArray(options) ? options : [];
-      const selectedIndex = Math.max(0, normalizedOptions.findIndex((opt) => String(opt.value) === String(value)));
-      const activeOption = normalizedOptions[selectedIndex] || normalizedOptions[0] || { value: '', label: '' };
-
-      const hiddenInput = document.createElement('input');
-      hiddenInput.type = 'hidden';
-      hiddenInput.id = id;
-      hiddenInput.dataset.modalField = id;
-      hiddenInput.value = activeOption.value || '';
-
-      const menuItems = normalizedOptions.map((opt) => opt.label);
-      let fieldEl = null;
-      let menuEl = null;
-
-      const closeMenu = () => {
-        if (!fieldEl || !menuEl) return;
-        menuEl.style.display = 'none';
-        applySelectionFieldState(fieldEl, hiddenInput.value ? 'selection' : 'idle');
-      };
-
-      const openMenu = () => {
-        if (!fieldEl || !menuEl) return;
-        menuEl.style.display = 'block';
-        applySelectionFieldState(fieldEl, 'active');
-      };
-
-      menuEl = createSelectionMenu({
-        type: 'sort',
-        contrast,
-        items: menuItems,
-        selectedIndex,
-        onSelect: (index) => {
-          const selected = normalizedOptions[index];
-          if (!selected) return;
-
-          hiddenInput.value = selected.value;
-          updateSelectionFieldLabel(fieldEl, selected.label);
-          updateSelectionFieldSelectionState(fieldEl, true);
-          closeMenu();
-        }
-      });
-
-      fieldEl = createSelectionField({
-        label: activeOption.label || label,
-        contrast,
-        state: hiddenInput.value ? 'selection' : 'idle',
-        menu: menuEl,
-        onToggle: () => {
-          if (!menuEl) return;
-          if (menuEl.style.display === 'block') {
-            closeMenu();
-          } else {
-            openMenu();
-          }
-        }
-      });
-
-      fieldEl.classList.add('modal__selection-field');
-      fieldEl.dataset.modalSelect = id;
-
-      const outsideHandler = (event) => {
-        if (!fieldEl.contains(event.target)) {
-          closeMenu();
-        }
-      };
-      document.addEventListener('click', outsideHandler);
-
-      const originalRemove = fieldEl.remove.bind(fieldEl);
-      fieldEl.remove = function removeWithCleanup() {
-        document.removeEventListener('click', outsideHandler);
-        return originalRemove();
-      };
-
-      wrapper.appendChild(fieldEl);
-      wrapper.appendChild(hiddenInput);
-      return wrapper;
+    if (typeof createSelectionField !== 'function' || typeof createSelectionMenu !== 'function') {
+      throw new Error('Design-system selection components are not available');
     }
+    const normalizedOptions = Array.isArray(options) ? options : [];
+    const selectedIndex = Math.max(0, normalizedOptions.findIndex((opt) => String(opt.value) === String(value)));
+    const activeOption = normalizedOptions[selectedIndex] || normalizedOptions[0] || { value: '', label: '' };
 
-    const select = document.createElement('select');
-    select.className = 'modal__native-input';
-    select.id = id;
-    select.dataset.modalField = id;
-    if (required) select.required = true;
+    const hiddenInput = document.createElement('input');
+    hiddenInput.type = 'hidden';
+    hiddenInput.id = id;
+    hiddenInput.dataset.modalField = id;
+    hiddenInput.value = activeOption.value || '';
 
-    (options || []).forEach((opt) => {
-      const option = document.createElement('option');
-      option.value = opt.value;
-      option.textContent = opt.label;
-      if (String(opt.value) === String(value)) option.selected = true;
-      select.appendChild(option);
+    const menuItems = normalizedOptions.map((opt) => opt.label);
+    let fieldEl = null;
+    let menuEl = null;
+
+    const getMenuWrapper = () => fieldEl ? fieldEl.querySelector('.selection-field__menu') : null;
+
+    const closeMenu = () => {
+      if (!fieldEl) return;
+      const wrapper = getMenuWrapper();
+      if (wrapper) wrapper.style.display = 'none';
+      applySelectionFieldState(fieldEl, hiddenInput.value ? 'selection' : 'idle');
+    };
+
+    const openMenu = () => {
+      if (!fieldEl) return;
+      const wrapper = getMenuWrapper();
+      if (wrapper) wrapper.style.display = 'block';
+      applySelectionFieldState(fieldEl, 'active');
+    };
+
+    menuEl = createSelectionMenu({
+      type: 'sort',
+      contrast,
+      items: menuItems,
+      selectedIndex,
+      onSelect: (index) => {
+        const selected = normalizedOptions[index];
+        if (!selected) return;
+
+        hiddenInput.value = selected.value;
+        updateSelectionFieldLabel(fieldEl, selected.label);
+        updateSelectionFieldSelectionState(fieldEl, true);
+        closeMenu();
+      }
     });
 
-    wrapper.appendChild(select);
+    fieldEl = createSelectionField({
+      label: activeOption.label || label,
+      selectionText: activeOption.label || label,
+      contrast,
+      state: hiddenInput.value ? 'selection' : 'idle',
+      menu: menuEl,
+      onToggle: () => {
+        const wrapper = getMenuWrapper();
+        if (!wrapper) return;
+        if (wrapper.style.display === 'block') {
+          closeMenu();
+        } else {
+          openMenu();
+        }
+      }
+    });
+
+    fieldEl.classList.add('modal__selection-field');
+    fieldEl.dataset.modalSelect = id;
+
+    const outsideHandler = (event) => {
+      if (!fieldEl.contains(event.target)) {
+        closeMenu();
+      }
+    };
+    document.addEventListener('click', outsideHandler);
+
+    const originalRemove = fieldEl.remove.bind(fieldEl);
+    fieldEl.remove = function removeWithCleanup() {
+      document.removeEventListener('click', outsideHandler);
+      return originalRemove();
+    };
+
+    wrapper.appendChild(fieldEl);
+    wrapper.appendChild(hiddenInput);
     return wrapper;
   }
 
-  const input = document.createElement('input');
-  input.className = 'modal__native-input';
-  input.type = type;
-  input.id = id;
-  input.value = value;
-  input.placeholder = placeholder;
-  input.dataset.modalField = id;
-  if (required) input.required = true;
-
-  wrapper.appendChild(input);
-  return wrapper;
+  throw new Error(`Unsupported modal field type: ${type}`);
 }
 
 function createModalActionButton(btn = {}, index = 0) {
