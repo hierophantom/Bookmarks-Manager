@@ -14,7 +14,7 @@ const WidgetsService = (()=>{
   }
 
   async function renderBookmarkWidgets(container, containerId) {
-    const slots = await normalizeBookmarkSlots();
+    const slots = await normalizeBookmarkSlots({ compact: true });
 
     const bookmarkItems = slots.map((item, idx) => {
       if (!item) {
@@ -152,7 +152,7 @@ const WidgetsService = (()=>{
       action: addBookmarkAction
     });
 
-    container.appendChild(createWidgetSection('Bookmarks Widget Section', bookmarkSection));
+    container.appendChild(createWidgetSection('Quick links', bookmarkSection));
   }
 
   async function renderStandardWidgets(container, containerId) {
@@ -328,7 +328,8 @@ const WidgetsService = (()=>{
     }
   }
 
-  async function normalizeBookmarkSlots() {
+  async function normalizeBookmarkSlots(options = {}) {
+    const { compact = false } = options;
     let slots = await SlotSystem.getSlots(BOOKMARK_WIDGETS_KEY);
     if (!Array.isArray(slots) || slots.length === 0) {
       slots = new Array(BOOKMARK_ROW_SIZE).fill(null);
@@ -348,6 +349,19 @@ const WidgetsService = (()=>{
       await SlotSystem.save(BOOKMARK_WIDGETS_KEY, slots);
     }
 
+    if (compact) {
+      const lastFilledIndex = slots.reduce((lastIndex, slot, index) => (slot ? index : lastIndex), -1);
+      const targetLength = Math.max(
+        BOOKMARK_ROW_SIZE,
+        lastFilledIndex < 0 ? BOOKMARK_ROW_SIZE : Math.ceil((lastFilledIndex + 1) / BOOKMARK_ROW_SIZE) * BOOKMARK_ROW_SIZE
+      );
+
+      if (slots.length !== targetLength) {
+        slots = slots.slice(0, targetLength);
+        await SlotSystem.save(BOOKMARK_WIDGETS_KEY, slots);
+      }
+    }
+
     return slots;
   }
 
@@ -360,6 +374,7 @@ const WidgetsService = (()=>{
     }
     slots[index] = item;
     await SlotSystem.save(BOOKMARK_WIDGETS_KEY, slots);
+    await normalizeBookmarkSlots({ compact: true });
   }
 
   async function swapBookmarkSlots(a, b) {
@@ -371,6 +386,7 @@ const WidgetsService = (()=>{
     slots[a] = slots[b];
     slots[b] = tmp;
     await SlotSystem.save(BOOKMARK_WIDGETS_KEY, slots);
+    await normalizeBookmarkSlots({ compact: true });
   }
 
   async function addBookmarkToWidgetSection(bookmark) {
