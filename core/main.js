@@ -2110,6 +2110,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     el.addEventListener('drop', async (e) => {
       e.preventDefault();
+      e.stopPropagation();
       if (!dragState.srcId) return;
       try {
         const intentSnapshot = dragState.intent;
@@ -2158,6 +2159,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     container.addEventListener('drop', async (e) => {
       e.preventDefault();
+      e.stopPropagation();
       if (!dragState.srcId || folderId === 'results') return;
       try {
         const intentSnapshot = dragState.intent;
