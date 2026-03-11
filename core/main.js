@@ -1894,8 +1894,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       
       sectionsContainer.scrollTop = clampedScroll;
 
-      // Continue scrolling if not at limit and still need to scroll
-      if ((clampedScroll > 0 || !scrollUp) && (clampedScroll < maxScroll || !(!scrollUp))) {
+      // Continue scrolling if not at limit in current direction
+      const canScroll = (scrollUp && clampedScroll > 0) || (!scrollUp && clampedScroll < maxScroll);
+      if (canScroll) {
         dragState.autoScrollRAF = requestAnimationFrame(doScroll);
       }
     };
