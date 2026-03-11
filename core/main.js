@@ -1790,11 +1790,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (dstId) {
           const dstInfo = await BookmarksService.getBookmark(dstId);
           if (!dstInfo) return;
-          const parentId = dstInfo.parentId;
-          const index = (typeof dstInfo.index === 'number') ? dstInfo.index + 1 : undefined;
-          await new Promise((res,reject)=>{
-            chrome.bookmarks.move(srcId, { parentId, index }, moved=>{ if (chrome.runtime.lastError) reject(chrome.runtime.lastError); else res(moved); });
-          });
+          if (!dstInfo.url) {
+            // Dropping on a folder tile should append into that folder.
+            const subtree = await BookmarksService.getSubTree(dstInfo.id);
+            const count = (subtree.children && subtree.children.length) || 0;
+            await new Promise((res,reject)=>{
+              chrome.bookmarks.move(srcId, { parentId: dstInfo.id, index: count }, moved=>{ if (chrome.runtime.lastError) reject(chrome.runtime.lastError); else res(moved); });
+            });
+          } else {
+            const parentId = dstInfo.parentId;
+            const index = (typeof dstInfo.index === 'number') ? dstInfo.index + 1 : undefined;
+            await new Promise((res,reject)=>{
+              chrome.bookmarks.move(srcId, { parentId, index }, moved=>{ if (chrome.runtime.lastError) reject(chrome.runtime.lastError); else res(moved); });
+            });
+          }
         } else {
           const folderEl = el.closest('.folder-section');
           const folderId = folderEl && folderEl.dataset && folderEl.dataset.folderId;
