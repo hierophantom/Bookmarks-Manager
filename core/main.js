@@ -1652,13 +1652,14 @@ document.addEventListener('DOMContentLoaded', async () => {
           event.stopPropagation();
           const data = await Modal.openBookmarkForm({ folderId: folder.id }, { showTabsSuggestions: true });
           if (data) {
-            await BookmarksService.create(data.title, data.url, folder.id);
-            if (data.tags && data.tags.length) {
-              const newBookmarks = await chrome.bookmarks.getChildren(folder.id);
-              const lastBookmark = newBookmarks[newBookmarks.length - 1];
-              if (lastBookmark) {
-                await TagsService.setTags(lastBookmark.id, data.tags);
-              }
+            const newNode = await new Promise((res, reject) => {
+              chrome.bookmarks.create({ parentId: folder.id, title: data.title, url: data.url }, node => {
+                if (chrome.runtime.lastError) reject(chrome.runtime.lastError);
+                else res(node);
+              });
+            });
+            if (data.tags && data.tags.length && newNode) {
+              await TagsService.setTags(newNode.id, data.tags);
             }
             await render(true);
           }
