@@ -2263,6 +2263,47 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     });
   }
+
+  function setupScrollZoneHandlers() {
+    const topZone = document.getElementById('bookmarks-scroll-zone-top');
+    const bottomZone = document.getElementById('bookmarks-scroll-zone-bottom');
+    
+    const setupZoneHandlers = (zone, scrollDirection) => {
+      if (!zone) return;
+
+      zone.addEventListener('dragover', (e) => {
+        if (!dragState.srcId) return;
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        
+        zone.classList.add('active');
+        
+        // Trigger scroll in the appropriate direction
+        const clientY = scrollDirection === 'up' 
+          ? zone.getBoundingClientRect().top + 20 
+          : zone.getBoundingClientRect().bottom - 20;
+        
+        handleAutoScroll(clientY);
+      });
+
+      zone.addEventListener('dragleave', (e) => {
+        if (e.relatedTarget && zone.contains(e.relatedTarget)) return;
+        zone.classList.remove('active');
+        // Stop auto-scroll when leaving zone
+        setDragIntent(null);
+      });
+
+      zone.addEventListener('drop', async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        zone.classList.remove('active');
+        // Don't drop into the zone itself, just let scroll happen
+      });
+    };
+
+    setupZoneHandlers(topZone, 'up');
+    setupZoneHandlers(bottomZone, 'down');
+  }
   
   if (openSearch) {
     openSearch.addEventListener('click', () => {
@@ -2293,6 +2334,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   try{ if (typeof UndoPersist !== 'undefined' && UndoPersist.processPending) { UndoPersist.processPending(); } }catch(e){ console.warn('UndoPersist.processPending() failed', e); }
 
   render();
+
+  // Setup scroll zone handlers for auto-scroll regions
+  setupScrollZoneHandlers();
 
   // Setup keyboard navigation for bookmark lists
   function setupKeyboardNavigation() {
