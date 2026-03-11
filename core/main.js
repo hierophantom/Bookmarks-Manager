@@ -1155,6 +1155,166 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
     }
 
+    function collectDescendantFolderIds(node, set) {
+      if (!node || !node.children || !node.children.length) return;
+      for (const child of node.children) {
+        if (child && !child.url) {
+          set.add(child.id);
+          collectDescendantFolderIds(child, set);
+        }
+      }
+    }
+
+    function buildMoveDestinationOptions(excludedIds) {
+      const options = [];
+
+      function visit(node, depth = 0) {
+        if (!node || node.url) return;
+        if (node.id !== '0' && !excludedIds.has(node.id)) {
+          options.push({
+            value: node.id,
+            label: `${'  '.repeat(depth)}${node.title || '(Untitled)'}`
+          });
+        }
+        if (node.children && node.children.length) {
+          node.children.forEach((child) => visit(child, depth + 1));
+        }
+      }
+
+      const rootNode = tree && tree[0] ? tree[0] : null;
+      if (rootNode && rootNode.children) {
+        rootNode.children.forEach((child) => visit(child, 0));
+      }
+
+      return options;
+    }
+
+    function countFolderContents(node) {
+      const counts = { bookmarks: 0, folders: 0 };
+
+      function walk(current) {
+        if (!current || !current.children || !current.children.length) return;
+        for (const child of current.children) {
+          if (child.url) {
+            counts.bookmarks += 1;
+          } else {
+            counts.folders += 1;
+            walk(child);
+          }
+        }
+      }
+
+      walk(node);
+      return counts;
+    }
+
+    async function selectDeleteDestination(folderNode) {
+      const excludedIds = new Set([folderNode.id]);
+      collectDescendantFolderIds(folderNode, excludedIds);
+
+      const destinationOptions = buildMoveDestinationOptions(excludedIds);
+      const parentId = folderNode.parentId;
+      const defaultDestination = destinationOptions.some((opt) => opt.value === parentId)
+        ? parentId
+        : (destinationOptions[0] ? destinationOptions[0].value : '');
+      const canMoveContents = destinationOptions.length > 0;
+      const defaultAction = 'delete';
+
+      const counts = countFolderContents(folderNode);
+      const bookmarkWord = counts.bookmarks === 1 ? 'bookmark' : 'bookmarks';
+      const folderWord = counts.folders === 1 ? 'subfolder' : 'subfolders';
+
+      const picker = new BaseModal({
+        title: `Delete folder \"${folderNode.title || 'Folder'}\"?`,
+        customContent: `
+          <p style="margin-bottom: 0.75rem; line-height: 1.5;">This folder contains <strong>${counts.bookmarks}</strong> ${bookmarkWord} and <strong>${counts.folders}</strong> ${folderWord}.</p>
+          <div style="display:flex;flex-direction:column;gap:0.5rem;margin-bottom:0.75rem;">
+            <label style="display:flex;align-items:flex-start;gap:0.5rem;cursor:pointer;line-height:1.4;">
+              <input id="delete-action-delete" type="radio" name="delete-action-choice" value="delete" ${defaultAction === 'delete' ? 'checked' : ''}>
+              <span>Do not keep items (delete everything)</span>
+            </label>
+            <label style="display:flex;align-items:flex-start;gap:0.5rem;cursor:pointer;line-height:1.4;">
+              <input id="delete-action-move" type="radio" name="delete-action-choice" value="move" ${defaultAction === 'move' ? 'checked' : ''} ${canMoveContents ? '' : 'disabled'}>
+              <span>Keep items (move them to another folder)</span>
+            </label>
+            <input id="delete_action" type="hidden" value="${defaultAction}">
+          </div>
+        `,
+        fields: [
+          {
+            id: 'move_destination',
+            label: 'Move items to',
+            type: 'select',
+            value: defaultDestination,
+            required: false,
+            options: destinationOptions.length ? destinationOptions : [{ value: '', label: 'No destination available' }]
+          }
+        ],
+        confirmText: 'Delete',
+        cancelText: 'Cancel',
+        confirmVariant: 'destructive'
+      });
+
+      const pickerPromise = picker.show();
+
+      setTimeout(() => {
+        const hiddenActionInput = document.getElementById('delete_action');
+        const moveActionRadio = document.getElementById('delete-action-move');
+        const deleteActionRadio = document.getElementById('delete-action-delete');
+        const destinationSelect = document.getElementById('move_destination');
+        const destinationField = destinationSelect ? destinationSelect.closest('.bm-field') : null;
+        const submitBtn = document.getElementById('bm-modal-submit');
+
+        if (!hiddenActionInput || !moveActionRadio || !deleteActionRadio) return;
+
+        if (submitBtn) {
+          submitBtn.innerHTML = '<span class="material-symbols-outlined" aria-hidden="true" style="font-size:16px;line-height:1;">delete</span><span>Delete</span>';
+          submitBtn.style.display = 'inline-flex';
+          submitBtn.style.alignItems = 'center';
+          submitBtn.style.justifyContent = 'center';
+          submitBtn.style.gap = '6px';
+        }
+
+        const syncActionState = () => {
+          const action = deleteActionRadio.checked ? 'delete' : 'move';
+          hiddenActionInput.value = action;
+          if (destinationField) {
+            destinationField.style.display = action === 'move' ? '' : 'none';
+          }
+        };
+
+        moveActionRadio.addEventListener('change', syncActionState);
+        deleteActionRadio.addEventListener('change', syncActionState);
+        syncActionState();
+      }, 0);
+
+      const data = await pickerPromise;
+      return data || null;
+    }
+
+    async function deleteFolderWithDestination(folderNode) {
+      const selection = await selectDeleteDestination(folderNode);
+      if (!selection) return;
+
+      if (selection.delete_action === 'delete') {
+        await BookmarksService.deleteWithUndo(folderNode.id);
+        await render(true);
+        return;
+      }
+
+      const destinationFolderId = selection.move_destination;
+      if (!destinationFolderId) {
+        await Modal.openError({
+          title: 'Destination required',
+          message: 'Please choose a destination folder to keep the contents.'
+        });
+        return;
+      }
+
+      await BookmarksService.moveFolderContentsAndDelete(folderNode.id, destinationFolderId);
+      await render(true);
+    }
+
     function createBookmarkTile(child) {
       perf.tilesRendered += 1;
       const editAction = createCubeActionButton({
@@ -1271,17 +1431,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         colorScheme: 'destructive',
         onClick: (event) => {
           event.stopPropagation();
-          (async () => {
-            const confirmed = await Modal.openConfirmation({
-              title: 'Delete folder?',
-              message: 'Delete this folder and all its contents?',
-              confirmText: 'Delete',
-              destructive: true
-            });
-            if (!confirmed) return;
-            await BookmarksService.deleteWithUndo(child.id);
-            await render(true);
-          })();
+          deleteFolderWithDestination(child).catch((error) => {
+            console.error('Delete folder with destination failed', error);
+          });
         }
       });
 
@@ -1451,15 +1603,11 @@ document.addEventListener('DOMContentLoaded', async () => {
           colorScheme: 'destructive',
           onClick: async (event) => {
             event.stopPropagation();
-            const confirmed = await Modal.openConfirmation({
-              title: 'Delete folder?',
-              message: `Delete folder "${folder.title}" and all its contents?`,
-              confirmText: 'Delete',
-              destructive: true
-            });
-            if (!confirmed) return;
-            await BookmarksService.deleteWithUndo(folder.id);
-            await render(true);
+            try {
+              await deleteFolderWithDestination(folder);
+            } catch (error) {
+              console.error('Delete folder with destination failed', error);
+            }
           }
         });
         folderActions.push(deleteBtn);

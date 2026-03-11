@@ -64,6 +64,44 @@ const BookmarksService = (()=>{
       });
     });
   }
+
+  async function moveFolderContentsAndDelete(folderId, destinationFolderId){
+    if (!folderId || !destinationFolderId) {
+      throw new Error('Source and destination folders are required');
+    }
+    if (folderId === destinationFolderId) {
+      throw new Error('Destination folder must be different from source folder');
+    }
+
+    const children = await new Promise((res,reject)=>{
+      chrome.bookmarks.getChildren(folderId, items=>{
+        if (chrome.runtime.lastError) return reject(chrome.runtime.lastError);
+        res(items || []);
+      });
+    });
+
+    const destinationChildren = await new Promise((res,reject)=>{
+      chrome.bookmarks.getChildren(destinationFolderId, items=>{
+        if (chrome.runtime.lastError) return reject(chrome.runtime.lastError);
+        res(items || []);
+      });
+    });
+
+    let insertIndex = destinationChildren.length;
+    const orderedChildren = [...children].sort((a, b) => (a.index || 0) - (b.index || 0));
+
+    for (const child of orderedChildren) {
+      await new Promise((res,reject)=>{
+        chrome.bookmarks.move(child.id, { parentId: destinationFolderId, index: insertIndex }, moved=>{
+          if (chrome.runtime.lastError) return reject(chrome.runtime.lastError);
+          insertIndex += 1;
+          res(moved);
+        });
+      });
+    }
+
+    await removeFolder(folderId);
+  }
   async function moveBookmark(srcId, dstId){
     // move src to be after dst in same parent
     const dst = await getBookmark(dstId);
@@ -150,7 +188,7 @@ const BookmarksService = (()=>{
       }, 5000);
     }catch(e){ console.warn('Undo UI failed', e); }
   }
-  const api = { getTree, getAllBookmarkIds, reconcileTags, editBookmarkPrompt, createBookmarkPrompt, removeBookmark, createFolder, removeFolder, moveBookmark, getBookmark, getSubTree, restoreSnapshot, deleteWithUndo };
+  const api = { getTree, getAllBookmarkIds, reconcileTags, editBookmarkPrompt, createBookmarkPrompt, removeBookmark, createFolder, removeFolder, moveBookmark, moveFolderContentsAndDelete, getBookmark, getSubTree, restoreSnapshot, deleteWithUndo };
   if (typeof window !== 'undefined') window.BookmarksService = api;
   return api;
 })();
