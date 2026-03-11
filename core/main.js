@@ -1845,8 +1845,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     ghostEl: null,
     insideTargetEl: null,
     autoScrollRAF: null,
-    activeScrollDirection: null,
-    activeScrollSpeed: null
+    activeScrollDirection: null
   };
 
   function stopAutoScroll() {
@@ -1864,8 +1863,42 @@ document.addEventListener('DOMContentLoaded', async () => {
     return Math.round(minSpeed + (maxSpeed - minSpeed) * ratio * ratio);
   }
 
+  function startAutoScroll(scrollUp) {
+    if (dragState.activeScrollDirection === (scrollUp ? 'up' : 'down') && dragState.autoScrollRAF) {
+      return; // already scrolling this direction
+    }
+
+    stopAutoScroll();
+    dragState.activeScrollDirection = scrollUp ? 'up' : 'down';
+
+    const doScroll = () => {
+      const container = document.querySelector('.bookmarks-sections');
+      if (!container) {
+        dragState.autoScrollRAF = null;
+        return;
+      }
+
+      const speed = 12;
+      const dir = dragState.activeScrollDirection === 'up' ? -1 : 1;
+      const maxScroll = container.scrollHeight - container.clientHeight;
+      const newTop = container.scrollTop + (speed * dir);
+      const clamped = Math.max(0, Math.min(newTop, maxScroll));
+
+      container.scrollTop = clamped;
+
+      const canScroll = (dir === -1 && clamped > 0) || (dir === 1 && clamped < maxScroll);
+      if (canScroll) {
+        dragState.autoScrollRAF = requestAnimationFrame(doScroll);
+      } else {
+        dragState.autoScrollRAF = null;
+      }
+    };
+
+    dragState.autoScrollRAF = requestAnimationFrame(doScroll);
+  }
+
   function handleAutoScroll(clientY) {
-    const scrollContainer = document.querySelector('.bookmarks-page__content');
+    const scrollContainer = document.querySelector('.bookmarks-sections');
     if (!scrollContainer) return;
 
     const containerRect = scrollContainer.getBoundingClientRect();
@@ -1882,47 +1915,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
-    const scrollUp = isNearTop;
-    const speed = scrollUp ? getAutoScrollSpeed(distFromTop, edgeThreshold) : getAutoScrollSpeed(distFromBottom, edgeThreshold);
-
-    // Only restart RAF if direction changed or no scroll is active
-    if (dragState.activeScrollDirection === (scrollUp ? 'up' : 'down') && dragState.autoScrollRAF) {
-      // Already scrolling in the right direction, just update speed
-      dragState.activeScrollSpeed = speed;
-      return;
-    }
-
-    // Direction changed or first time, start new scroll
-    stopAutoScroll();
-    dragState.activeScrollDirection = scrollUp ? 'up' : 'down';
-    dragState.activeScrollSpeed = speed;
-
-    const doScroll = () => {
-      const container = document.querySelector('.bookmarks-page__content');
-      if (!container) {
-        dragState.autoScrollRAF = null;
-        return;
-      }
-
-      const maxScroll = container.scrollHeight - container.clientHeight;
-      const dir = dragState.activeScrollDirection === 'up' ? -1 : 1;
-      const vel = dragState.activeScrollSpeed || speed;
-      
-      const newTop = container.scrollTop + (vel * dir);
-      const clamped = Math.max(0, Math.min(newTop, maxScroll));
-      
-      container.scrollTop = clamped;
-
-      // Check if we can continue scrolling in this direction
-      const canScroll = (dir === -1 && clamped > 0) || (dir === 1 && clamped < maxScroll);
-      if (canScroll) {
-        dragState.autoScrollRAF = requestAnimationFrame(doScroll);
-      } else {
-        dragState.autoScrollRAF = null;
-      }
-    };
-
-    dragState.autoScrollRAF = requestAnimationFrame(doScroll);
+    startAutoScroll(isNearTop);
   }
 
   function ensureDragCaret() {
@@ -2006,7 +1999,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     dragState.intent = null;
     dragState.ghostEl = null;
     dragState.activeScrollDirection = null;
-    dragState.activeScrollSpeed = null;
   }
 
   function createDragGhost(sourceEl) {
@@ -2265,44 +2257,48 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   function setupScrollZoneHandlers() {
-    const topZone = document.getElementById('bookmarks-scroll-zone-top');
-    const bottomZone = document.getElementById('bookmarks-scroll-zone-bottom');
-    
-    const setupZoneHandlers = (zone, scrollDirection) => {
-      if (!zone) return;
+    // Create fixed overlay zones that are only visible/active during drag
+    const topZone = document.createElement('div');
+    topZone.className = 'bookmarks-drag-scroll-zone bookmarks-drag-scroll-zone--top';
+    document.body.appendChild(topZone);
 
+    const bottomZone = document.createElement('div');
+    bottomZone.className = 'bookmarks-drag-scroll-zone bookmarks-drag-scroll-zone--bottom';
+    document.body.appendChild(bottomZone);
+
+    const attach = (zone, scrollUp) => {
       zone.addEventListener('dragover', (e) => {
         if (!dragState.srcId) return;
         e.preventDefault();
-        e.dataTransfer.dropEffect = 'move';
-        
-        zone.classList.add('active');
-        
-        // Trigger scroll in the appropriate direction
-        const clientY = scrollDirection === 'up' 
-          ? zone.getBoundingClientRect().top + 20 
-          : zone.getBoundingClientRect().bottom - 20;
-        
-        handleAutoScroll(clientY);
+        startAutoScroll(scrollUp);
       });
 
-      zone.addEventListener('dragleave', (e) => {
-        if (e.relatedTarget && zone.contains(e.relatedTarget)) return;
-        zone.classList.remove('active');
-        // Stop auto-scroll when leaving zone
-        setDragIntent(null);
+      zone.addEventListener('dragleave', () => {
+        stopAutoScroll();
+        dragState.activeScrollDirection = null;
       });
 
-      zone.addEventListener('drop', async (e) => {
+      zone.addEventListener('drop', (e) => {
         e.preventDefault();
         e.stopPropagation();
-        zone.classList.remove('active');
-        // Don't drop into the zone itself, just let scroll happen
+        // dropping on zone does nothing, just let them release here
       });
     };
 
-    setupZoneHandlers(topZone, 'up');
-    setupZoneHandlers(bottomZone, 'down');
+    attach(topZone, true);
+    attach(bottomZone, false);
+
+    // Show zones during drag, hide when done
+    document.addEventListener('dragstart', () => {
+      topZone.classList.add('drag-active');
+      bottomZone.classList.add('drag-active');
+    });
+    document.addEventListener('dragend', () => {
+      topZone.classList.remove('drag-active');
+      bottomZone.classList.remove('drag-active');
+      stopAutoScroll();
+      dragState.activeScrollDirection = null;
+    });
   }
   
   if (openSearch) {
