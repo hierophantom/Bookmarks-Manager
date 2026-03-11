@@ -47,13 +47,6 @@ function createTextField(options = {}) {
   input.value = value;
   input.setAttribute('aria-label', ariaLabel);
 
-  // Clear button
-  const clearButton = document.createElement('button');
-  clearButton.className = 'text-field__clear';
-  clearButton.type = 'button';
-  clearButton.setAttribute('aria-label', 'Clear input');
-  clearButton.innerHTML = "<span class='material-symbols-outlined' aria-hidden='true'>close</span>";
-
   const setHasValue = (hasValue) => {
     container.classList.toggle('text-field--has-value', hasValue);
   };
@@ -64,7 +57,7 @@ function createTextField(options = {}) {
   }
 
   container.appendChild(input);
-  container.appendChild(clearButton);
+  
 
   setHasValue(Boolean(input.value));
 
@@ -82,15 +75,6 @@ function createTextField(options = {}) {
       }
     });
   }
-
-  clearButton.addEventListener('click', (event) => {
-    event.stopPropagation();
-    if (!input.value) return;
-    input.value = '';
-    setHasValue(false);
-    input.dispatchEvent(new Event('input', { bubbles: true }));
-    input.focus();
-  });
 
   return container;
 }

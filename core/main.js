@@ -1578,7 +1578,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         colorScheme: 'primary',
         onClick: async (event) => {
           event.stopPropagation();
-          const data = await Modal.openBookmarkForm({ folderId: folder.id });
+          const data = await Modal.openBookmarkForm({ folderId: folder.id }, { showTabsSuggestions: true });
           if (data) {
             await BookmarksService.create(data.title, data.url, folder.id);
             if (data.tags && data.tags.length) {

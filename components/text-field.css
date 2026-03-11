@@ -13,7 +13,7 @@
   /* Layout */
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
   
   /* Sizing */
   height: 36px;
@@ -21,8 +21,8 @@
   
   /* Appearance */
   background: var(--text-field-bg, var(--common-common-bright-05, rgba(255, 255, 255, 0.1)));
-  border: 1px solid var(--text-field-border, transparent);
-  border-radius: var(--corner-radius-medium, 8px);
+  border: 1px solid transparent;
+  border-radius: var(--corner-radius-small, 4px);
   
   /* Typography */
   font-family: var(--font-family-sans-serif, 'Lato', sans-serif);
@@ -37,6 +37,7 @@
 /* Input */
 .text-field__input {
   flex: 1;
+  width: 100%;
   min-width: 0;
   background: transparent;
   border: none;
@@ -51,55 +52,30 @@
   color: var(--text-field-placeholder, var(--common-common-bright-15, rgba(255, 255, 255, 0.6)));
 }
 
-/* Clear button */
-.text-field__clear {
-  width: 16px;
-  height: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: transparent;
-  border: none;
-  padding: 0;
-  color: var(--text-field-placeholder, var(--common-common-bright-15, rgba(255, 255, 255, 0.6)));
-  cursor: pointer;
-  opacity: 0;
-  pointer-events: none;
-  flex-shrink: 0;
-}
-
-.text-field__clear .material-symbols-outlined {
-  font-size: 16px;
-  line-height: 1;
-}
-
-.text-field--has-value .text-field__clear {
-  opacity: 1;
-  pointer-events: auto;
-}
-
 /* Low contrast variant */
 .text-field--low {
-  --text-field-bg: var(--common-common-bright-05, rgba(255, 255, 255, 0.1));
+  --text-field-bg: var(--primary-primary-10, rgba(46, 51, 185, 0.4));
   --text-field-border: transparent;
-  --text-field-text: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
-  --text-field-placeholder: var(--common-common-bright-15, rgba(255, 255, 255, 0.6));
-  --text-field-bg-hover: var(--common-common-bright-10, rgba(255, 255, 255, 0.2));
-  --text-field-border-hover: var(--common-common-bright-10, rgba(255, 255, 255, 0.2));
-  --text-field-bg-active: var(--common-common-bright-10, rgba(255, 255, 255, 0.2));
+  --text-field-text: var(--common-common-bright-20, rgba(255, 255, 255, 0.8));
+  --text-field-placeholder: var(--common-common-bright-20, rgba(255, 255, 255, 0.8));
+  --text-field-bg-hover: var(--primary-primary-15, rgba(46, 51, 185, 0.6));
+  --text-field-border-hover: transparent;
+  --text-field-bg-active: var(--primary-primary-15, rgba(46, 51, 185, 0.6));
   --text-field-border-active: var(--primary-primary-25, #2e33b9);
+  --text-field-text-active: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
 }
 
 /* High contrast variant */
 .text-field--high {
-  --text-field-bg: var(--common-common-bright-10, rgba(255, 255, 255, 0.2));
-  --text-field-border: var(--common-common-bright-20, rgba(255, 255, 255, 0.8));
+  --text-field-bg: var(--primary-primary-10, rgba(46, 51, 185, 0.4));
+  --text-field-border: transparent;
   --text-field-text: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
-  --text-field-placeholder: var(--common-common-bright-20, rgba(255, 255, 255, 0.8));
-  --text-field-bg-hover: var(--common-common-bright-10, rgba(255, 255, 255, 0.2));
-  --text-field-border-hover: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
-  --text-field-bg-active: var(--common-common-bright-10, rgba(255, 255, 255, 0.2));
+  --text-field-placeholder: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
+  --text-field-bg-hover: var(--primary-primary-15, rgba(46, 51, 185, 0.6));
+  --text-field-border-hover: transparent;
+  --text-field-bg-active: var(--primary-primary-15, rgba(46, 51, 185, 0.6));
   --text-field-border-active: var(--primary-primary-25, #2e33b9);
+  --text-field-text-active: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
 }
 
 /* States */
@@ -112,6 +88,10 @@
 .text-field:focus-within {
   background: var(--text-field-bg-active, var(--common-common-bright-10, rgba(255, 255, 255, 0.2)));
   border-color: var(--text-field-border-active, var(--primary-primary-25, #2e33b9));
+}
+
+.text-field:focus-within .text-field__input {
+  color: var(--text-field-text-active, var(--common-common-bright-25, rgba(255, 255, 255, 0.9)));
 }
 
 /* Disabled */
