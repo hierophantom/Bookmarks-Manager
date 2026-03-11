@@ -808,7 +808,83 @@ document.addEventListener('DOMContentLoaded', async () => {
       tilesRendered: 0,
       sectionsRendered: 0
     };
-    const savedScrollY = preserveScroll ? window.scrollY : 0;
+    const sectionsContainer = document.querySelector('.bookmarks-sections');
+    let scrollAnchor = null;
+
+    if (preserveScroll && sectionsContainer) {
+      const containerRect = sectionsContainer.getBoundingClientRect();
+      const candidates = sectionsContainer.querySelectorAll('.bookmarks-gallery-view[data-id], .folder-section[data-folder-id]');
+      for (const candidate of candidates) {
+        const rect = candidate.getBoundingClientRect();
+        if (rect.bottom <= containerRect.top || rect.top >= containerRect.bottom) {
+          continue;
+        }
+
+        if (candidate.classList.contains('bookmarks-gallery-view')) {
+          scrollAnchor = {
+            kind: 'tile',
+            id: candidate.dataset.id,
+            offset: rect.top - containerRect.top
+          };
+        } else if (candidate.classList.contains('folder-section')) {
+          scrollAnchor = {
+            kind: 'section',
+            id: candidate.dataset.folderId,
+            offset: rect.top - containerRect.top
+          };
+        }
+        break;
+      }
+    }
+
+    const savedScroll = preserveScroll
+      ? {
+        sectionsTop: sectionsContainer ? sectionsContainer.scrollTop : 0
+      }
+      : null;
+
+    function restoreScrollPosition() {
+      if (!savedScroll) return;
+      const maxAttempts = 10;
+      let attempts = 0;
+
+      const apply = () => {
+        attempts += 1;
+        const liveSections = document.querySelector('.bookmarks-sections');
+        if (!liveSections) {
+          if (attempts < maxAttempts) {
+            requestAnimationFrame(apply);
+          }
+          return;
+        }
+
+        const maxTop = Math.max(0, liveSections.scrollHeight - liveSections.clientHeight);
+
+        if (scrollAnchor && scrollAnchor.id) {
+          const selector = scrollAnchor.kind === 'tile'
+            ? `.bookmarks-gallery-view[data-id="${scrollAnchor.id}"]`
+            : `.folder-section[data-folder-id="${scrollAnchor.id}"]`;
+          const anchorEl = liveSections.querySelector(selector);
+          if (anchorEl) {
+            const containerRect = liveSections.getBoundingClientRect();
+            const anchorRect = anchorEl.getBoundingClientRect();
+            const delta = (anchorRect.top - containerRect.top) - scrollAnchor.offset;
+            liveSections.scrollTop = Math.min(maxTop, Math.max(0, liveSections.scrollTop + delta));
+          } else {
+            liveSections.scrollTop = Math.min(savedScroll.sectionsTop, maxTop);
+          }
+        } else {
+          liveSections.scrollTop = Math.min(savedScroll.sectionsTop, maxTop);
+        }
+
+        // Content can continue to change for a few frames while sections/lazy items settle.
+        if (attempts < maxAttempts) {
+          requestAnimationFrame(apply);
+        }
+      };
+
+      requestAnimationFrame(apply);
+    }
     const renderedFolderIds = new Set();
 
     if (root && root._lazyObserver) {
@@ -1066,9 +1142,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           sectionsRendered: perf.sectionsRendered
         });
       }
-      if (preserveScroll) {
-        requestAnimationFrame(() => { window.scrollTo(0, savedScrollY); });
-      }
+      restoreScrollPosition();
       return;
     }
 
@@ -1098,9 +1172,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             sectionsRendered: perf.sectionsRendered
           });
         }
-        if (preserveScroll) {
-          requestAnimationFrame(() => { window.scrollTo(0, savedScrollY); });
-        }
+        restoreScrollPosition();
         return;
       }
     }
@@ -1762,85 +1834,343 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
     }
 
-    if (preserveScroll) {
-      requestAnimationFrame(() => {
-        window.scrollTo(0, savedScrollY);
+    restoreScrollPosition();
+  }
+
+  const dragState = {
+    srcId: null,
+    srcEl: null,
+    intent: null,
+    caretEl: null,
+    ghostEl: null,
+    insideTargetEl: null
+  };
+
+  function ensureDragCaret() {
+    if (dragState.caretEl) return dragState.caretEl;
+    const caret = document.createElement('div');
+    caret.className = 'bookmark-drag-caret';
+    caret.style.display = 'none';
+    document.body.appendChild(caret);
+    dragState.caretEl = caret;
+    return caret;
+  }
+
+  function hideDragCaret() {
+    if (dragState.caretEl) {
+      dragState.caretEl.style.display = 'none';
+    }
+  }
+
+  function clearInsideTarget() {
+    if (dragState.insideTargetEl) {
+      dragState.insideTargetEl.classList.remove('bookmarks-gallery-view--drop-inside');
+      dragState.insideTargetEl = null;
+    }
+  }
+
+  function setDragIntent(intent) {
+    dragState.intent = intent;
+    clearInsideTarget();
+
+    if (!intent) {
+      hideDragCaret();
+      return;
+    }
+
+    if (intent.mode === 'inside' && intent.targetEl) {
+      hideDragCaret();
+      intent.targetEl.classList.add('bookmarks-gallery-view--drop-inside');
+      dragState.insideTargetEl = intent.targetEl;
+      return;
+    }
+
+    const caret = ensureDragCaret();
+    if (intent.mode === 'append' && intent.containerEl) {
+      const contentRect = intent.containerEl.getBoundingClientRect();
+      const tiles = intent.containerEl.querySelectorAll('.bookmarks-gallery-view');
+      const lastTile = tiles.length ? tiles[tiles.length - 1] : null;
+      const top = lastTile ? lastTile.getBoundingClientRect().top + 6 : contentRect.top + 6;
+      const left = lastTile ? lastTile.getBoundingClientRect().right - 2 : contentRect.left + 8;
+      caret.style.left = `${Math.round(left)}px`;
+      caret.style.top = `${Math.round(top)}px`;
+      caret.style.height = `${Math.max(22, Math.round((lastTile ? lastTile.getBoundingClientRect().height : 50) - 12))}px`;
+      caret.style.display = 'block';
+      return;
+    }
+
+    if (!intent.targetEl) {
+      hideDragCaret();
+      return;
+    }
+
+    const rect = intent.targetEl.getBoundingClientRect();
+    const left = intent.mode === 'before' ? rect.left - 2 : rect.right - 2;
+    caret.style.left = `${Math.round(left)}px`;
+    caret.style.top = `${Math.round(rect.top + 6)}px`;
+    caret.style.height = `${Math.max(22, Math.round(rect.height - 12))}px`;
+    caret.style.display = 'block';
+  }
+
+  function cleanupDragState() {
+    hideDragCaret();
+    clearInsideTarget();
+    if (dragState.srcEl) {
+      dragState.srcEl.classList.remove('bookmarks-gallery-view--drag-source');
+    }
+    if (dragState.ghostEl && dragState.ghostEl.parentNode) {
+      dragState.ghostEl.parentNode.removeChild(dragState.ghostEl);
+    }
+    dragState.srcId = null;
+    dragState.srcEl = null;
+    dragState.intent = null;
+    dragState.ghostEl = null;
+  }
+
+  function createDragGhost(sourceEl) {
+    const ghost = sourceEl.cloneNode(true);
+    ghost.classList.add('bookmarks-gallery-view--drag-ghost');
+    ghost.classList.remove('bookmarks-gallery-view--drag-source', 'bookmarks-gallery-view--drop-inside');
+    document.body.appendChild(ghost);
+    return ghost;
+  }
+
+  function getTileDropMode(tile, event) {
+    const tileType = tile.classList.contains('bookmarks-gallery-view--folder') ? 'folder' : 'bookmark';
+    const rect = tile.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const beforeZone = rect.width * 0.33;
+    const afterZone = rect.width * 0.67;
+
+    if (tileType === 'folder' && x > beforeZone && x < afterZone) {
+      return 'inside';
+    }
+    return x <= beforeZone ? 'before' : 'after';
+  }
+
+  async function canMoveFolderInto(folderId, destinationFolderId) {
+    if (!folderId || !destinationFolderId) return false;
+    if (folderId === destinationFolderId) return false;
+    const subtree = await BookmarksService.getSubTree(folderId);
+    let blocked = false;
+
+    (function walk(node) {
+      if (!node || blocked) return;
+      if (node.id === destinationFolderId) {
+        blocked = true;
+        return;
+      }
+      if (node.children && node.children.length) {
+        node.children.forEach(walk);
+      }
+    })(subtree);
+
+    return !blocked;
+  }
+
+  async function moveBookmarkNode(srcId, parentId, index) {
+    return new Promise((res, reject) => {
+      chrome.bookmarks.move(srcId, { parentId, index }, (moved) => {
+        if (chrome.runtime.lastError) reject(chrome.runtime.lastError);
+        else res(moved);
       });
+    });
+  }
+
+  async function applyDropIntent() {
+    const intent = dragState.intent;
+    const srcId = dragState.srcId;
+    if (!intent || !srcId) return false;
+
+    const srcInfo = await BookmarksService.getBookmark(srcId);
+    if (!srcInfo) return false;
+
+    const undoPayload = {
+      id: srcInfo.id,
+      title: srcInfo.title,
+      parentId: srcInfo.parentId,
+      index: srcInfo.index
+    };
+
+    let destinationParentId = null;
+    let destinationIndex = null;
+
+    if (intent.mode === 'inside') {
+      const folderId = intent.targetId;
+      if (!folderId || folderId === 'results') return false;
+      if (!srcInfo.url) {
+        const allowed = await canMoveFolderInto(srcInfo.id, folderId);
+        if (!allowed) return false;
+      }
+      const subtree = await BookmarksService.getSubTree(folderId);
+      const children = subtree && subtree.children ? subtree.children : [];
+      destinationParentId = folderId;
+      destinationIndex = children.length;
+      if (srcInfo.parentId === destinationParentId) {
+        destinationIndex = Math.max(0, destinationIndex - 1);
+      }
+    } else if (intent.mode === 'append') {
+      if (!intent.folderId || intent.folderId === 'results') return false;
+      if (!srcInfo.url) {
+        const allowed = await canMoveFolderInto(srcInfo.id, intent.folderId);
+        if (!allowed) return false;
+      }
+      const subtree = await BookmarksService.getSubTree(intent.folderId);
+      const children = subtree && subtree.children ? subtree.children : [];
+      destinationParentId = intent.folderId;
+      destinationIndex = children.length;
+      if (srcInfo.parentId === destinationParentId) {
+        destinationIndex = Math.max(0, destinationIndex - 1);
+      }
+    } else if (intent.mode === 'before' || intent.mode === 'after') {
+      const targetId = intent.targetId;
+      if (!targetId || targetId === srcId) return false;
+      const dstInfo = await BookmarksService.getBookmark(targetId);
+      if (!dstInfo) return false;
+      destinationParentId = dstInfo.parentId;
+      destinationIndex = intent.mode === 'before' ? dstInfo.index : dstInfo.index + 1;
+      if (srcInfo.parentId === destinationParentId && typeof srcInfo.index === 'number' && srcInfo.index < destinationIndex) {
+        destinationIndex -= 1;
+      }
+    }
+
+    if (!destinationParentId || typeof destinationIndex !== 'number') return false;
+
+    await moveBookmarkNode(srcId, destinationParentId, destinationIndex);
+
+    UndoService.show(
+      `Moved "${undoPayload.title || 'item'}"`,
+      async () => {
+        try {
+          await moveBookmarkNode(undoPayload.id, undoPayload.parentId, undoPayload.index);
+          await render(true);
+        } catch (err) {
+          console.error('Undo move failed', err);
+        }
+      },
+      6000
+    );
+
+    return true;
+  }
+
+  function applyDropIntentToDom(intent, sourceEl) {
+    if (!intent || !sourceEl || !sourceEl.parentNode) return;
+
+    if ((intent.mode === 'before' || intent.mode === 'after') && intent.targetEl && intent.targetEl.parentNode) {
+      const parent = intent.targetEl.parentNode;
+      if (intent.mode === 'before') {
+        parent.insertBefore(sourceEl, intent.targetEl);
+      } else if (intent.targetEl.nextSibling) {
+        parent.insertBefore(sourceEl, intent.targetEl.nextSibling);
+      } else {
+        parent.appendChild(sourceEl);
+      }
+      return;
+    }
+
+    if (intent.mode === 'append' && intent.containerEl) {
+      intent.containerEl.appendChild(sourceEl);
+      return;
+    }
+
+    if (intent.mode === 'inside') {
+      sourceEl.remove();
     }
   }
 
   function addDragHandlers(el) {
-    // Improved handlers: support cross-folder moves and append-to-folder
     el.addEventListener('dragstart', (e) => {
-      if (!el.dataset.id) return; // only draggable for real items
+      if (!el.dataset.id) return;
+      dragState.srcId = el.dataset.id;
+      dragState.srcEl = el;
+      el.classList.add('bookmarks-gallery-view--drag-source');
+
       e.dataTransfer.setData('text/bookmark-id', el.dataset.id);
       e.dataTransfer.effectAllowed = 'move';
+
+      const ghost = createDragGhost(el);
+      dragState.ghostEl = ghost;
+      e.dataTransfer.setDragImage(ghost, 55, 55);
     });
 
-    el.addEventListener('dragover', (e) => { e.preventDefault(); el.classList.add('dragover'); });
-    el.addEventListener('dragleave', () => { el.classList.remove('dragover'); });
+    el.addEventListener('dragover', (e) => {
+      if (!dragState.srcId) return;
+      if (!el.dataset.id) return;
+      if (el.dataset.id === dragState.srcId) return;
+
+      e.preventDefault();
+      const mode = getTileDropMode(el, e);
+      setDragIntent({
+        mode,
+        targetId: el.dataset.id,
+        targetEl: el
+      });
+    });
 
     el.addEventListener('drop', async (e) => {
-      e.preventDefault(); el.classList.remove('dragover');
-      const srcId = e.dataTransfer.getData('text/bookmark-id');
-      if (!srcId) return;
-      // If dropping on an item, insert after that item; if dropping on add-button (no data-id), append to folder
-      const dstId = el.dataset.id;
+      e.preventDefault();
+      if (!dragState.srcId) return;
       try {
-        if (dstId) {
-          const dstInfo = await BookmarksService.getBookmark(dstId);
-          if (!dstInfo) return;
-          if (!dstInfo.url) {
-            // Dropping on a folder tile should append into that folder.
-            const subtree = await BookmarksService.getSubTree(dstInfo.id);
-            const count = (subtree.children && subtree.children.length) || 0;
-            await new Promise((res,reject)=>{
-              chrome.bookmarks.move(srcId, { parentId: dstInfo.id, index: count }, moved=>{ if (chrome.runtime.lastError) reject(chrome.runtime.lastError); else res(moved); });
-            });
-          } else {
-            const parentId = dstInfo.parentId;
-            const index = (typeof dstInfo.index === 'number') ? dstInfo.index + 1 : undefined;
-            await new Promise((res,reject)=>{
-              chrome.bookmarks.move(srcId, { parentId, index }, moved=>{ if (chrome.runtime.lastError) reject(chrome.runtime.lastError); else res(moved); });
-            });
-          }
-        } else {
-          const folderEl = el.closest('.folder-section');
-          const folderId = folderEl && folderEl.dataset && folderEl.dataset.folderId;
-          if (!folderId || folderId === 'results') return;
-          const subtree = await BookmarksService.getSubTree(folderId);
-          const count = (subtree.children && subtree.children.length) || 0;
-          await new Promise((res,reject)=>{
-            chrome.bookmarks.move(srcId, { parentId: folderId, index: count }, moved=>{ if (chrome.runtime.lastError) reject(chrome.runtime.lastError); else res(moved); });
-          });
+        const intentSnapshot = dragState.intent;
+        const sourceSnapshot = dragState.srcEl;
+        const moved = await applyDropIntent();
+        if (moved) {
+          applyDropIntentToDom(intentSnapshot, sourceSnapshot);
         }
-        await render(true);
-      } catch (err) { console.error('drop move failed', err); }
+        cleanupDragState();
+      } catch (err) {
+        console.error('drop move failed', err);
+        cleanupDragState();
+      }
+    });
+
+    el.addEventListener('dragend', () => {
+      cleanupDragState();
     });
   }
 
   function addFolderDropHandlers(container, folderId) {
     if (!container) return;
+
     container.addEventListener('dragover', (e) => {
+      if (!dragState.srcId) return;
       e.preventDefault();
-      container.classList.add('dragover');
+
+      const tile = e.target.closest('.bookmarks-gallery-view');
+      if (tile && container.contains(tile)) {
+        return;
+      }
+
+      setDragIntent({
+        mode: 'append',
+        folderId,
+        containerEl: container
+      });
     });
-    container.addEventListener('dragleave', () => {
-      container.classList.remove('dragover');
+
+    container.addEventListener('dragleave', (e) => {
+      if (e.relatedTarget && container.contains(e.relatedTarget)) return;
+      if (dragState.intent && dragState.intent.mode === 'append' && dragState.intent.containerEl === container) {
+        setDragIntent(null);
+      }
     });
+
     container.addEventListener('drop', async (e) => {
       e.preventDefault();
-      container.classList.remove('dragover');
-      const srcId = e.dataTransfer.getData('text/bookmark-id');
-      if (!srcId || folderId === 'results') return;
+      if (!dragState.srcId || folderId === 'results') return;
       try {
-        const subtree = await BookmarksService.getSubTree(folderId);
-        const count = (subtree.children && subtree.children.length) || 0;
-        await new Promise((res,reject)=>{
-          chrome.bookmarks.move(srcId, { parentId: folderId, index: count }, moved=>{ if (chrome.runtime.lastError) reject(chrome.runtime.lastError); else res(moved); });
-        });
-        await render(true);
-      } catch (err) { console.error('drop append failed', err); }
+        const intentSnapshot = dragState.intent;
+        const sourceSnapshot = dragState.srcEl;
+        const moved = await applyDropIntent();
+        if (moved) {
+          applyDropIntentToDom(intentSnapshot, sourceSnapshot);
+        }
+        cleanupDragState();
+      } catch (err) {
+        console.error('drop append failed', err);
+        cleanupDragState();
+      }
     });
   }
   

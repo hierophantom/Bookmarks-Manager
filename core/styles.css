@@ -676,6 +676,15 @@ body {
   outline-offset: 4px;
 }
 
+.bookmark-drag-caret {
+  position: fixed;
+  width: 4px;
+  background: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
+  border-radius: 4px;
+  pointer-events: none;
+  z-index: 100001;
+}
+
 .bookmarks-page .tab-groups-section {
   width: 100%;
   max-width: 1180px;
