@@ -1844,7 +1844,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     caretEl: null,
     ghostEl: null,
     insideTargetEl: null,
-    autoScrollRAF: null
+    autoScrollRAF: null,
+    activeScrollDirection: null,
+    activeScrollSpeed: null
   };
 
   function stopAutoScroll() {
@@ -1876,30 +1878,50 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (!isNearTop && !isNearBottom) {
       stopAutoScroll();
+      dragState.activeScrollDirection = null;
       return;
     }
 
     const scrollUp = isNearTop;
     const speed = scrollUp ? getAutoScrollSpeed(distFromTop, edgeThreshold) : getAutoScrollSpeed(distFromBottom, edgeThreshold);
 
+    // Only restart RAF if direction changed or no scroll is active
+    if (dragState.activeScrollDirection === (scrollUp ? 'up' : 'down') && dragState.autoScrollRAF) {
+      // Already scrolling in the right direction, just update speed
+      dragState.activeScrollSpeed = speed;
+      return;
+    }
+
+    // Direction changed or first time, start new scroll
     stopAutoScroll();
+    dragState.activeScrollDirection = scrollUp ? 'up' : 'down';
+    dragState.activeScrollSpeed = speed;
+
     const doScroll = () => {
       const container = document.querySelector('.bookmarks-sections');
-      if (!container) return;
+      if (!container) {
+        dragState.autoScrollRAF = null;
+        return;
+      }
 
       const maxScroll = container.scrollHeight - container.clientHeight;
-      const delta = scrollUp ? -speed : speed;
-      const newTop = container.scrollTop + delta;
+      const dir = dragState.activeScrollDirection === 'up' ? -1 : 1;
+      const vel = dragState.activeScrollSpeed || speed;
+      
+      const newTop = container.scrollTop + (vel * dir);
       const clamped = Math.max(0, Math.min(newTop, maxScroll));
       
       container.scrollTop = clamped;
 
       // Check if we can continue scrolling in this direction
-      const canContinue = (scrollUp && clamped > 0) || (!scrollUp && clamped < maxScroll);
-      if (canContinue) {
+      const canScroll = (dir === -1 && clamped > 0) || (dir === 1 && clamped < maxScroll);
+      if (canScroll) {
         dragState.autoScrollRAF = requestAnimationFrame(doScroll);
+      } else {
+        dragState.autoScrollRAF = null;
       }
     };
+
     dragState.autoScrollRAF = requestAnimationFrame(doScroll);
   }
 
@@ -1983,6 +2005,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     dragState.srcEl = null;
     dragState.intent = null;
     dragState.ghostEl = null;
+    dragState.activeScrollDirection = null;
+    dragState.activeScrollSpeed = null;
   }
 
   function createDragGhost(sourceEl) {
