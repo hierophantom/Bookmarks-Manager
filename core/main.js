@@ -1843,8 +1843,65 @@ document.addEventListener('DOMContentLoaded', async () => {
     intent: null,
     caretEl: null,
     ghostEl: null,
-    insideTargetEl: null
+    insideTargetEl: null,
+    autoScrollRAF: null,
+    lastClientY: null
   };
+
+  function stopAutoScroll() {
+    if (dragState.autoScrollRAF) {
+      cancelAnimationFrame(dragState.autoScrollRAF);
+      dragState.autoScrollRAF = null;
+    }
+  }
+
+  function getAutoScrollSpeed(distanceFromEdge, edgeThreshold = 40) {
+    // Closer to edge = faster scroll
+    const ratio = 1 - (distanceFromEdge / edgeThreshold);
+    const minSpeed = 5;
+    const maxSpeed = 20;
+    return Math.round(minSpeed + (maxSpeed - minSpeed) * ratio * ratio);
+  }
+
+  function handleAutoScroll(clientY) {
+    const sectionsContainer = document.querySelector('.bookmarks-sections');
+    if (!sectionsContainer) return;
+
+    const containerRect = sectionsContainer.getBoundingClientRect();
+    const edgeThreshold = 40;
+    const distFromTop = clientY - containerRect.top;
+    const distFromBottom = containerRect.bottom - clientY;
+
+    const isNearTop = distFromTop >= 0 && distFromTop < edgeThreshold;
+    const isNearBottom = distFromBottom >= 0 && distFromBottom < edgeThreshold;
+
+    if (!isNearTop && !isNearBottom) {
+      stopAutoScroll();
+      return;
+    }
+
+    const scrollUp = isNearTop;
+    const speed = scrollUp ? getAutoScrollSpeed(distFromTop, edgeThreshold) : getAutoScrollSpeed(distFromBottom, edgeThreshold);
+
+    stopAutoScroll();
+    const doScroll = () => {
+      const scrollDelta = scrollUp ? -speed : speed;
+      const newScrollTop = sectionsContainer.scrollTop + scrollDelta;
+      
+      // Clamp to valid scroll range
+      const maxScroll = sectionsContainer.scrollHeight - sectionsContainer.clientHeight;
+      const clampedScroll = Math.max(0, Math.min(newScrollTop, maxScroll));
+      
+      sectionsContainer.scrollTop = clampedScroll;
+
+      // Continue scrolling if not at limit and still need to scroll
+      if ((clampedScroll > 0 || !scrollUp) && (clampedScroll < maxScroll || !(!scrollUp))) {
+        dragState.autoScrollRAF = requestAnimationFrame(doScroll);
+      }
+    };
+
+    dragState.autoScrollRAF = requestAnimationFrame(doScroll);
+  }
 
   function ensureDragCaret() {
     if (dragState.caretEl) return dragState.caretEl;
@@ -1913,6 +1970,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   function cleanupDragState() {
+    stopAutoScroll();
     hideDragCaret();
     clearInsideTarget();
     if (dragState.srcEl) {
@@ -2106,6 +2164,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         targetId: el.dataset.id,
         targetEl: el
       });
+      
+      // Handle auto-scroll at edges
+      handleAutoScroll(e.clientY);
     });
 
     el.addEventListener('drop', async (e) => {
@@ -2148,6 +2209,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         folderId,
         containerEl: container
       });
+      
+      // Handle auto-scroll at edges
+      handleAutoScroll(e.clientY);
     });
 
     container.addEventListener('dragleave', (e) => {
