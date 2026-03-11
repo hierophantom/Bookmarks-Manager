@@ -14,6 +14,14 @@ const readyTabs = new Set();
 function init() {
   console.log('[Bridge] Service worker initialized');
 
+  chrome.action.onClicked.addListener(async (tab) => {
+    try {
+      await openOrFocusMainPage({ preferCurrentTabId: tab?.id });
+    } catch (error) {
+      console.error('[Bridge] Failed to open main page from action click:', error);
+    }
+  });
+
   // Listen for commands (keyboard shortcuts)
   chrome.commands.onCommand.addListener((command) => {
     if (command === 'toggle-search') {
@@ -43,6 +51,44 @@ async function sendTabMessage(tabId, message) {
       resolve(response);
     });
   });
+}
+
+async function openOrFocusMainPage(options = {}) {
+  const { preferCurrentTabId = null } = options;
+  const mainUrl = chrome.runtime.getURL('core/main.html');
+
+  if (preferCurrentTabId) {
+    try {
+      const preferredTab = await chrome.tabs.get(preferCurrentTabId);
+      if (preferredTab?.url && preferredTab.url.startsWith('chrome://newtab/')) {
+        return await chrome.tabs.update(preferCurrentTabId, { url: mainUrl, active: true });
+      }
+    } catch (error) {
+      console.warn('[Bridge] Preferred tab lookup failed:', error);
+    }
+  }
+
+  const existingTabs = await chrome.tabs.query({});
+  const existingTab = existingTabs.find((tab) => tab.url && tab.url.startsWith(mainUrl));
+
+  if (existingTab) {
+    await chrome.tabs.update(existingTab.id, { active: true });
+    if (existingTab.windowId) {
+      await chrome.windows.update(existingTab.windowId, { focused: true });
+    }
+    return existingTab;
+  }
+
+  const createdTab = await chrome.tabs.create({
+    url: mainUrl,
+    active: true
+  });
+
+  if (createdTab?.windowId) {
+    await chrome.windows.update(createdTab.windowId, { focused: true });
+  }
+
+  return createdTab;
 }
 
 async function ensureOverlayScriptsInjected(tabId) {
@@ -308,35 +354,7 @@ async function handleOpenSaveSessionModal(request, sender, sendResponse) {
       'pendingSaveSessionTabs': tabs
     });
 
-    // Find or open main.html window
-    const mainWindows = await chrome.windows.getAll();
-    let mainWindow = null;
-    let mainTab = null;
-
-    // Look for existing main.html tab
-    for (const w of mainWindows) {
-      const tabs = await chrome.tabs.query({ windowId: w.id });
-      const found = tabs.find(t => t.url && t.url.includes('core/main.html'));
-      if (found) {
-        mainWindow = w;
-        mainTab = found;
-        break;
-      }
-    }
-
-    // If no main.html tab found, open it
-    if (!mainTab) {
-      mainTab = await chrome.tabs.create({
-        url: chrome.runtime.getURL('core/main.html'),
-        active: true
-      });
-    } else {
-      // Activate existing tab
-      await chrome.tabs.update(mainTab.id, { active: true });
-      if (mainWindow) {
-        await chrome.windows.update(mainWindow.id, { focused: true });
-      }
-    }
+    const mainTab = await openOrFocusMainPage();
 
     // Send message to main.html to open the modal
     chrome.tabs.sendMessage(mainTab.id, {

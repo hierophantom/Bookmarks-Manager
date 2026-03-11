@@ -16,7 +16,7 @@
     "type": "module"
   },
   "chrome_url_overrides": {
-    "newtab": "core/main.html"
+    "newtab": "core/newtab.html"
   },
   "commands": {
     "toggle-search": {
