@@ -71,6 +71,13 @@
   line-height: 1;
 }
 
+.widget-small__favicon {
+  width: 30px;
+  height: 30px;
+  object-fit: cover;
+  border-radius: 6px;
+}
+
 .widget-small__icon--text {
   font-size: 16px;
   line-height: 1;

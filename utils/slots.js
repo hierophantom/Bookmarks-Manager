@@ -23,7 +23,10 @@ const SlotSystem = (()=>{
     return arr;
   }
   async function setSlot(key, index, item){
-    const arr = await ensureSlots(key, index+1);
+    const arr = (await load(key)) || [];
+    if (index >= arr.length) {
+      arr.push(...new Array(index - arr.length + 1).fill(null));
+    }
     arr[index] = item;
     await save(key, arr);
   }

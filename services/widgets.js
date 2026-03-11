@@ -1,11 +1,161 @@
 const WidgetsService = (()=>{
   const STORAGE_KEY = 'slotWidgets';
   const DEFAULT_SLOTS = 7;
+  const BOOKMARK_WIDGETS_KEY = 'bookmarkWidgetSlots';
+  const BOOKMARK_ROW_SIZE = 5;
 
   async function render(containerId){
     const container = document.getElementById(containerId);
     if (!container) return;
     container.innerHTML = '';
+
+    await renderBookmarkWidgets(container, containerId);
+    await renderStandardWidgets(container, containerId);
+  }
+
+  async function renderBookmarkWidgets(container, containerId) {
+    const slots = await normalizeBookmarkSlots();
+
+    const bookmarkItems = slots.map((item, idx) => {
+      if (!item) {
+        const emptyWidget = createWidgetSmall({
+          type: 'empty',
+          state: 'idle'
+        });
+
+        emptyWidget.addEventListener('click', async () => {
+          const data = await Modal.openBookmarkForm({}, { showTabsSuggestions: true, showTags: false });
+          if (!data) return;
+          await setBookmarkSlot(idx, createBookmarkWidgetRecord(data));
+          await render(containerId);
+        });
+
+        emptyWidget.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          emptyWidget.classList.add('widget-small--dragged');
+        });
+        emptyWidget.addEventListener('dragleave', () => {
+          emptyWidget.classList.remove('widget-small--dragged');
+        });
+        emptyWidget.addEventListener('drop', async (e) => {
+          e.preventDefault();
+          emptyWidget.classList.remove('widget-small--dragged');
+          const srcIndex = parseInt(e.dataTransfer.getData('text/bookmark-widget-index'), 10);
+          if (isNaN(srcIndex)) return;
+          await swapBookmarkSlots(srcIndex, idx);
+          await render(containerId);
+        });
+
+        return emptyWidget;
+      }
+
+      const editBtn = createCubeActionButton({
+        icon: 'edit',
+        label: 'Edit bookmark',
+        tooltip: 'Edit bookmark',
+        colorScheme: 'default',
+        onClick: async (e) => {
+          e.stopPropagation();
+          const updated = await Modal.openBookmarkForm(
+            { title: item.title || '', url: item.url || '' },
+            { showTabsSuggestions: false, showTags: false }
+          );
+          if (!updated) return;
+          await setBookmarkSlot(idx, createBookmarkWidgetRecord(updated));
+          await render(containerId);
+        }
+      });
+
+      const removeBtn = createCubeActionButton({
+        icon: 'close',
+        label: 'Remove bookmark',
+        tooltip: 'Remove bookmark',
+        colorScheme: 'destructive',
+        onClick: async (e) => {
+          e.stopPropagation();
+          const confirmed = await Modal.openConfirmation({
+            title: 'Remove bookmark?',
+            message: 'This bookmark will be removed from this widget section.',
+            confirmText: 'Remove',
+            destructive: true
+          });
+          if (!confirmed) return;
+          await setBookmarkSlot(idx, null);
+          await render(containerId);
+        }
+      });
+
+      const faviconIcon = (typeof FaviconService !== 'undefined' && item.url)
+        ? FaviconService.createFaviconElement(item.url, {
+          size: 24,
+          className: 'widget-small__favicon',
+          alt: item.title || 'Bookmark favicon'
+        })
+        : 'book';
+
+      const widget = createWidgetSmall({
+        type: 'widget',
+        state: 'idle',
+        label: item.title || 'Bookmark',
+        subtext: getBookmarkSubtext(item.url),
+        icon: faviconIcon,
+        actions: [editBtn, removeBtn]
+      });
+
+      widget.setAttribute('draggable', 'true');
+      widget.addEventListener('click', () => {
+        if (!item.url) return;
+        chrome.tabs.create({ url: item.url });
+      });
+      widget.addEventListener('dragstart', (e) => {
+        e.dataTransfer.setData('text/bookmark-widget-index', String(idx));
+        e.dataTransfer.effectAllowed = 'move';
+      });
+      widget.addEventListener('dragover', (e) => {
+        e.preventDefault();
+      });
+      widget.addEventListener('drop', async (e) => {
+        e.preventDefault();
+        const srcIndex = parseInt(e.dataTransfer.getData('text/bookmark-widget-index'), 10);
+        if (isNaN(srcIndex)) return;
+        await swapBookmarkSlots(srcIndex, idx);
+          await render(containerId);
+      });
+      widget.addEventListener('mouseenter', () => {
+        widget.classList.remove('widget-small--idle');
+        widget.classList.add('widget-small--hover');
+      });
+      widget.addEventListener('mouseleave', () => {
+        widget.classList.remove('widget-small--hover');
+        widget.classList.add('widget-small--idle');
+      });
+
+      return widget;
+    });
+
+    const addBookmarkAction = createCubeActionButtonWithLabel({
+      icon: 'add',
+      label: 'Add bookmark',
+      colorScheme: 'primary',
+      onClick: async () => {
+        const data = await Modal.openBookmarkForm({}, { showTabsSuggestions: true, showTags: false });
+        if (!data) return;
+        await addBookmarkToWidgetSection(createBookmarkWidgetRecord(data));
+        await render(containerId);
+      }
+    });
+
+    const bookmarkSection = createCubeSection({
+      items: bookmarkItems,
+      state: 'idle',
+      wrap: 'none',
+      action: addBookmarkAction
+    });
+
+    container.appendChild(createWidgetSection('Bookmarks Widget Section', bookmarkSection));
+  }
+
+  async function renderStandardWidgets(container, containerId) {
     
     const slots = await SlotSystem.ensureSlots(STORAGE_KEY, DEFAULT_SLOTS);
     
@@ -145,8 +295,95 @@ const WidgetsService = (()=>{
       wrap: 'none',
       action: addWidgetAction
     });
-    
-    container.appendChild(cubeSection);
+
+    container.appendChild(createWidgetSection('Widgets', cubeSection));
+  }
+
+  function createWidgetSection(title, sectionElement) {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'widget-stack-section';
+
+    const heading = document.createElement('h3');
+    heading.className = 'subheading widget-stack-section__title';
+    heading.textContent = title;
+
+    wrapper.appendChild(heading);
+    wrapper.appendChild(sectionElement);
+    return wrapper;
+  }
+
+  function createBookmarkWidgetRecord(data) {
+    return {
+      title: data.title || 'Bookmark',
+      url: data.url || ''
+    };
+  }
+
+  function getBookmarkSubtext(url) {
+    try {
+      if (!url) return 'No URL';
+      return new URL(url).hostname.replace(/^www\./, '');
+    } catch (e) {
+      return 'Invalid URL';
+    }
+  }
+
+  async function normalizeBookmarkSlots() {
+    let slots = await SlotSystem.getSlots(BOOKMARK_WIDGETS_KEY);
+    if (!Array.isArray(slots) || slots.length === 0) {
+      slots = new Array(BOOKMARK_ROW_SIZE).fill(null);
+      await SlotSystem.save(BOOKMARK_WIDGETS_KEY, slots);
+      return slots;
+    }
+
+    if (slots.length < BOOKMARK_ROW_SIZE) {
+      slots = slots.concat(new Array(BOOKMARK_ROW_SIZE - slots.length).fill(null));
+      await SlotSystem.save(BOOKMARK_WIDGETS_KEY, slots);
+      return slots;
+    }
+
+    const remainder = slots.length % BOOKMARK_ROW_SIZE;
+    if (remainder !== 0) {
+      slots = slots.concat(new Array(BOOKMARK_ROW_SIZE - remainder).fill(null));
+      await SlotSystem.save(BOOKMARK_WIDGETS_KEY, slots);
+    }
+
+    return slots;
+  }
+
+  async function setBookmarkSlot(index, item) {
+    const slots = await normalizeBookmarkSlots();
+    if (index < 0) return;
+    if (index >= slots.length) {
+      const needed = index - slots.length + 1;
+      slots.push(...new Array(needed).fill(null));
+    }
+    slots[index] = item;
+    await SlotSystem.save(BOOKMARK_WIDGETS_KEY, slots);
+  }
+
+  async function swapBookmarkSlots(a, b) {
+    if (a === b) return;
+    const slots = await normalizeBookmarkSlots();
+    const max = Math.max(a, b);
+    if (max >= slots.length) return;
+    const tmp = slots[a];
+    slots[a] = slots[b];
+    slots[b] = tmp;
+    await SlotSystem.save(BOOKMARK_WIDGETS_KEY, slots);
+  }
+
+  async function addBookmarkToWidgetSection(bookmark) {
+    const slots = await normalizeBookmarkSlots();
+    let index = slots.findIndex((slot) => !slot);
+
+    if (index < 0) {
+      const expanded = slots.concat(new Array(BOOKMARK_ROW_SIZE).fill(null));
+      await SlotSystem.save(BOOKMARK_WIDGETS_KEY, expanded);
+      index = slots.length;
+    }
+
+    await setBookmarkSlot(index, bookmark);
   }
 
   async function swapSlots(a,b){

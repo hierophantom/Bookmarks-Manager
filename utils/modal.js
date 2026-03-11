@@ -8,6 +8,7 @@ const Modal = (() => {
     const tagArr = Array.isArray(defaults.tags) ? defaults.tags : [];
     const showFolderSelector = options.showFolderSelector || false;
     const showTabsSuggestions = options.showTabsSuggestions || false;
+    const showTags = options.showTags !== false;
 
     const fields = [
       {
@@ -23,15 +24,18 @@ const Modal = (() => {
         type: 'text',
         value: defaults.title || '',
         required: true
-      },
-      {
+      }
+    ];
+
+    if (showTags) {
+      fields.push({
         id: 'bm_tags',
         label: 'Tags',
         type: 'text',
         value: tagArr.join(','),
         placeholder: 'Add tags...'
-      }
-    ];
+      });
+    }
 
     // Add folder selector if requested
     if (showFolderSelector) {
@@ -147,7 +151,9 @@ const Modal = (() => {
       showModal(modal);
 
       // Initialize Tagify on the tags input once the modal is in the DOM
-      setTimeout(() => initializeTagify(), 0);
+      if (showTags) {
+        setTimeout(() => initializeTagify(), 0);
+      }
 
       if (showTabsSuggestions && typeof chrome !== 'undefined' && chrome.tabs && typeof chrome.tabs.query === 'function') {
         chrome.tabs.query({ currentWindow: true }, (tabs) => {
@@ -227,10 +233,10 @@ const Modal = (() => {
     const dropdown = document.createElement('div');
     dropdown.id = 'bm-tabs-suggestions';
     dropdown.style.cssText = `
-      position: absolute;
-      top: 100%;
+      position: fixed;
+      top: 0;
       left: 0;
-      right: 0;
+      width: 320px;
       max-height: 200px;
       overflow-y: auto;
       background: white;
@@ -238,7 +244,7 @@ const Modal = (() => {
       border-top: none;
       border-radius: 0 0 0.375rem 0.375rem;
       box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-      z-index: 1000;
+      z-index: 100000;
       display: none;
     `;
 
@@ -250,8 +256,31 @@ const Modal = (() => {
       return null;
     }
     
-    urlField.style.position = 'relative';
-    urlField.appendChild(dropdown);
+    document.body.appendChild(dropdown);
+
+    function positionDropdown() {
+      const rect = urlInput.getBoundingClientRect();
+      const desiredTop = rect.bottom;
+      const maxHeight = 200;
+      const viewportPadding = 8;
+      const availableBelow = window.innerHeight - desiredTop - viewportPadding;
+      const showAbove = availableBelow < 120 && rect.top > maxHeight;
+
+      dropdown.style.left = `${Math.round(rect.left)}px`;
+      dropdown.style.width = `${Math.round(rect.width)}px`;
+
+      if (showAbove) {
+        dropdown.style.top = `${Math.round(rect.top - maxHeight)}px`;
+        dropdown.style.borderTop = '1px solid #d1d5db';
+        dropdown.style.borderBottom = 'none';
+        dropdown.style.borderRadius = '0.375rem 0.375rem 0 0';
+      } else {
+        dropdown.style.top = `${Math.round(desiredTop)}px`;
+        dropdown.style.borderTop = 'none';
+        dropdown.style.borderBottom = '1px solid #d1d5db';
+        dropdown.style.borderRadius = '0 0 0.375rem 0.375rem';
+      }
+    }
 
     // Populate dropdown with tabs
     function updateSuggestions(filter = '') {
@@ -325,6 +354,7 @@ const Modal = (() => {
         dropdown.appendChild(item);
       });
 
+      positionDropdown();
       dropdown.style.display = 'block';
     }
 
@@ -340,9 +370,23 @@ const Modal = (() => {
     };
     urlInput.addEventListener('input', onUrlInput);
 
+    const onWindowResize = () => {
+      if (dropdown.style.display === 'block') {
+        positionDropdown();
+      }
+    };
+    window.addEventListener('resize', onWindowResize);
+
+    const onDocumentScroll = () => {
+      if (dropdown.style.display === 'block') {
+        positionDropdown();
+      }
+    };
+    document.addEventListener('scroll', onDocumentScroll, true);
+
     // Hide suggestions when clicking outside
     const onDocumentClick = (e) => {
-      if (!urlField.contains(e.target)) {
+      if (!urlField.contains(e.target) && !dropdown.contains(e.target)) {
         dropdown.style.display = 'none';
       }
     };
@@ -364,6 +408,8 @@ const Modal = (() => {
       urlInput.removeEventListener('keydown', onUrlKeydown);
       titleInput.removeEventListener('input', markTitleEdited);
       document.removeEventListener('click', onDocumentClick);
+      window.removeEventListener('resize', onWindowResize);
+      document.removeEventListener('scroll', onDocumentScroll, true);
       if (dropdown.parentNode) {
         dropdown.parentNode.removeChild(dropdown);
       }
