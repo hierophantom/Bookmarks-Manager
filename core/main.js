@@ -1865,10 +1865,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   function handleAutoScroll(clientY) {
-    const sectionsContainer = document.querySelector('.bookmarks-sections');
-    if (!sectionsContainer) return;
+    const scrollContainer = document.querySelector('.bookmarks-page__content');
+    if (!scrollContainer) return;
 
-    const containerRect = sectionsContainer.getBoundingClientRect();
+    const containerRect = scrollContainer.getBoundingClientRect();
     const edgeThreshold = 40;
     const distFromTop = clientY - containerRect.top;
     const distFromBottom = containerRect.bottom - clientY;
@@ -1898,7 +1898,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     dragState.activeScrollSpeed = speed;
 
     const doScroll = () => {
-      const container = document.querySelector('.bookmarks-sections');
+      const container = document.querySelector('.bookmarks-page__content');
       if (!container) {
         dragState.autoScrollRAF = null;
         return;
