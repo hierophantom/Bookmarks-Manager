@@ -1845,7 +1845,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     ghostEl: null,
     insideTargetEl: null,
     autoScrollRAF: null,
-    lastClientY: null
+    lastClientY: null,
+    lastAutoScrollDirection: null,
+    lastAutoScrollSpeed: null
   };
 
   function stopAutoScroll() {
@@ -1877,31 +1879,51 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (!isNearTop && !isNearBottom) {
       stopAutoScroll();
+      dragState.lastAutoScrollDirection = null;
       return;
     }
 
     const scrollUp = isNearTop;
     const speed = scrollUp ? getAutoScrollSpeed(distFromTop, edgeThreshold) : getAutoScrollSpeed(distFromBottom, edgeThreshold);
 
-    stopAutoScroll();
-    const doScroll = () => {
-      const scrollDelta = scrollUp ? -speed : speed;
-      const newScrollTop = sectionsContainer.scrollTop + scrollDelta;
-      
-      // Clamp to valid scroll range
-      const maxScroll = sectionsContainer.scrollHeight - sectionsContainer.clientHeight;
-      const clampedScroll = Math.max(0, Math.min(newScrollTop, maxScroll));
-      
-      sectionsContainer.scrollTop = clampedScroll;
+    dragState.lastAutoScrollDirection = scrollUp ? 'up' : 'down';
+    dragState.lastAutoScrollSpeed = speed;
 
-      // Continue scrolling if not at limit in current direction
-      const canScroll = (scrollUp && clampedScroll > 0) || (!scrollUp && clampedScroll < maxScroll);
-      if (canScroll) {
-        dragState.autoScrollRAF = requestAnimationFrame(doScroll);
-      }
-    };
+    // Only start RAF if not already running
+    if (!dragState.autoScrollRAF) {
+      const doScroll = () => {
+        const sectionsContainer = document.querySelector('.bookmarks-sections');
+        if (!sectionsContainer) return;
 
-    dragState.autoScrollRAF = requestAnimationFrame(doScroll);
+        const direction = dragState.lastAutoScrollDirection;
+        const speed = dragState.lastAutoScrollSpeed;
+        
+        if (!direction || !speed) {
+          dragState.autoScrollRAF = null;
+          return;
+        }
+
+        const scrollUp = direction === 'up';
+        const scrollDelta = scrollUp ? -speed : speed;
+        const newScrollTop = sectionsContainer.scrollTop + scrollDelta;
+        
+        // Clamp to valid scroll range
+        const maxScroll = sectionsContainer.scrollHeight - sectionsContainer.clientHeight;
+        const clampedScroll = Math.max(0, Math.min(newScrollTop, maxScroll));
+        
+        sectionsContainer.scrollTop = clampedScroll;
+
+        // Continue scrolling if not at limit in current direction
+        const canScroll = (scrollUp && clampedScroll > 0) || (!scrollUp && clampedScroll < maxScroll);
+        if (canScroll) {
+          dragState.autoScrollRAF = requestAnimationFrame(doScroll);
+        } else {
+          dragState.autoScrollRAF = null;
+        }
+      };
+
+      dragState.autoScrollRAF = requestAnimationFrame(doScroll);
+    }
   }
 
   function ensureDragCaret() {
