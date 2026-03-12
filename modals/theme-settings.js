@@ -429,7 +429,24 @@ New Tab Override Section -->
         </div>
 
         <!-- Buttons -->
-        <div style="display: flex; gap: 8px; justify-content: flex-end; padding-top: 16px; border-top: 1px solid var(--theme-border);">
+        <div style="display: flex; gap: 8px; justify-content: space-between; padding-top: 16px; border-top: 1px solid var(--theme-border);">
+          <button id="privacy-policy-btn" style="
+            padding: 10px 16px;
+            background: transparent;
+            border: 1px solid var(--theme-border);
+            color: var(--theme-primary);
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+          ">
+            <span class="material-symbols-outlined" aria-hidden="true" style="font-size: 18px;">policy</span>
+            Privacy Policy
+          </button>
+          <div style="display: flex; gap: 8px; justify-content: flex-end;">
           <button id="cancel-settings-btn" style="
             padding: 10px 20px;
             background: white;
@@ -454,6 +471,7 @@ New Tab Override Section -->
           ">
             Save
           </button>
+          </div>
         </div>
       </div>
     `;
@@ -632,6 +650,15 @@ New Tab Override Section -->
     modal.querySelector('#cancel-settings-btn').addEventListener('click', () => {
       overlay.remove();
     });
+
+    // Privacy policy button
+    const privacyPolicyBtn = modal.querySelector('#privacy-policy-btn');
+    if (privacyPolicyBtn) {
+      privacyPolicyBtn.addEventListener('click', () => {
+        const policyUrl = chrome.runtime.getURL('core/privacy-policy.html');
+        window.open(policyUrl, '_blank', 'noopener,noreferrer');
+      });
+    }
 
     // Keyboard accessibility for theme settings
     const handleSave = async () => {
