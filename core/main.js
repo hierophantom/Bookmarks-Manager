@@ -2313,7 +2313,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  // Cmd/Ctrl+Shift+E to toggle overlay on main.html
+  // Cmd/Ctrl+Shift+E to toggle overlay on Bookmark Manager page only
   document.addEventListener('keydown', (e) => {
     const isCtrlOrCmd = e.ctrlKey || e.metaKey;
     if (!isCtrlOrCmd || !e.shiftKey || e.code !== 'KeyE') return;
@@ -2321,8 +2321,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     e.stopPropagation();
     if (window.__bmMainOverlay && typeof window.__bmMainOverlay.toggle === 'function') {
       window.__bmMainOverlay.toggle();
-    } else {
-      console.warn('[Main] Search overlay is unavailable on this page');
     }
   }, true);
 

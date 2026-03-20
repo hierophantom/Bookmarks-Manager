@@ -11,6 +11,53 @@ export class SearchEngine {
       tabs: { name: 'Tabs', icon: '📑', weight: 3 },
       actions: { name: 'Actions', icon: '⚡', weight: 2 }
     };
+
+    this.chromeSettingsEntries = [
+      { id: 'chrome-settings-main', title: 'Chrome Settings', description: 'Open Chrome settings', url: 'chrome://settings', icon: '⚙️' },
+      { id: 'chrome-settings-extensions', title: 'Extensions', description: 'Manage installed extensions', url: 'chrome://extensions', icon: '🧩' },
+      { id: 'chrome-settings-password-manager', title: 'Passwords', description: 'Open password manager', url: 'chrome://password-manager/passwords', icon: '🔐' },
+      { id: 'chrome-settings-performance', title: 'Performance', description: 'Performance and memory settings', url: 'chrome://settings/performance', icon: '⚡' },
+      { id: 'chrome-settings-downloads', title: 'Downloads', description: 'View downloaded files', url: 'chrome://downloads', icon: '⬇️' },
+      { id: 'chrome-settings-history', title: 'History', description: 'Browse history', url: 'chrome://history', icon: '🕘' },
+      { id: 'chrome-settings-clear-browsing-data', title: 'Clear Browsing Data', description: 'Clear cache, cookies, and history', url: 'chrome://settings/clearBrowserData', icon: '🧹' }
+    ];
+  }
+
+  isSearchableUrl(url) {
+    if (!url || typeof url !== 'string') {
+      return false;
+    }
+
+    const blockedPrefixes = [
+      'chrome://',
+      'chrome-extension://',
+      'devtools://',
+      'edge://',
+      'about:'
+    ];
+
+    return !blockedPrefixes.some(prefix => url.startsWith(prefix));
+  }
+
+  async searchChromeSettings(query) {
+    const normalizedQuery = (query || '').toLowerCase().trim();
+
+    if (!normalizedQuery) {
+      return this.chromeSettingsEntries.slice(0, 4).map(entry => ({
+        ...entry,
+        type: 'chrome-settings'
+      }));
+    }
+
+    return this.chromeSettingsEntries
+      .filter(entry => {
+        const haystack = `${entry.title} ${entry.description} ${entry.url}`.toLowerCase();
+        return haystack.includes(normalizedQuery);
+      })
+      .map(entry => ({
+        ...entry,
+        type: 'chrome-settings'
+      }));
   }
 
   async getTagsApi() {
@@ -61,17 +108,19 @@ export class SearchEngine {
     const normalizedQuery = query.toLowerCase().trim();
 
     // Search each source
-    const [bookmarks, history, tabs, tags] = await Promise.all([
+    const [bookmarks, history, tabs, tags, chromeSettings] = await Promise.all([
       this.searchBookmarks(normalizedQuery),
       this.searchHistory(normalizedQuery),
       this.searchTabs(normalizedQuery),
-      this.searchTags(normalizedQuery)
+      this.searchTags(normalizedQuery),
+      this.searchChromeSettings(normalizedQuery)
     ]);
 
     if (bookmarks.length > 0) results.Bookmarks = bookmarks;
     if (tags.length > 0) results.Tags = tags;
     if (history.length > 0) results.History = history;
     if (tabs.length > 0) results.Tabs = tabs;
+    if (chromeSettings.length > 0) results['Chrome Settings'] = chromeSettings;
 
     // Always include relevant actions
     results.Actions = await this.getActions(query, context);
@@ -83,15 +132,17 @@ export class SearchEngine {
    * Get default results when query is empty
    */
   async getDefaultResults(context) {
-    const [tabs, history] = await Promise.all([
+    const [tabs, history, chromeSettings] = await Promise.all([
       this.searchTabs(''),
-      this.searchHistory('')
+      this.searchHistory(''),
+      this.searchChromeSettings('')
     ]);
 
     return {
       Actions: await this.getActions('', context),
       Tabs: tabs,
-      History: history.slice(0, 5) // Limit to 5 recent
+      History: history.slice(0, 5), // Limit to 5 recent
+      'Chrome Settings': chromeSettings
     };
   }
 
@@ -105,7 +156,7 @@ export class SearchEngine {
 
       // Filter to only bookmarks with URLs, limit to 10
       for (const bm of bookmarks.slice(0, 10)) {
-        if (!bm.url) continue;
+        if (!bm.url || !this.isSearchableUrl(bm.url)) continue;
         results.push({
           id: `bookmark-${bm.id}`,
           type: 'bookmark',
@@ -151,7 +202,7 @@ export class SearchEngine {
         try {
           const bms = await chrome.bookmarks.get(id);
           const bm = Array.isArray(bms) ? bms[0] : null;
-          if (!bm || !bm.url) continue;
+          if (!bm || !bm.url || !this.isSearchableUrl(bm.url)) continue;
           const bmTags = await tagsApi.getTags(id);
           results.push({
             id: `bookmark-${bm.id}`,
@@ -187,6 +238,7 @@ export class SearchEngine {
       });
 
       for (const item of history) {
+        if (!this.isSearchableUrl(item.url)) continue;
         results.push({
           id: `history-${item.id}`,
           type: 'history',
@@ -213,8 +265,10 @@ export class SearchEngine {
 
       // Filter tabs by title or URL
       const filtered = tabs.filter(tab =>
-        (tab.title && tab.title.toLowerCase().includes(query)) ||
-        (tab.url && tab.url.toLowerCase().includes(query))
+        this.isSearchableUrl(tab.url) && (
+          (tab.title && tab.title.toLowerCase().includes(query)) ||
+          (tab.url && tab.url.toLowerCase().includes(query))
+        )
       ).slice(0, 5);
 
       for (const tab of filtered) {

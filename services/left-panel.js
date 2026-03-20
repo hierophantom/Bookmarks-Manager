@@ -4,19 +4,48 @@ const LeftPanelService = (() => {
   const STORAGE_KEY_SELECTED = 'leftPanel_selectedFolderId';
   const STORAGE_KEY_EXPANDED = 'leftPanel_expandedFolders'; // array of folder IDs
 
+  function getDefaultState() {
+    return {
+      isOpen: false,
+      mode: 'floating',
+      selectedFolderId: null,
+      expandedFolders: []
+    };
+  }
+
+  function hasExtensionContext() {
+    return typeof chrome !== 'undefined' && !!chrome.runtime?.id && !!chrome.storage?.sync;
+  }
+
   /**
    * Get left panel state from storage
    */
   async function getState() {
     return new Promise((resolve) => {
-      chrome.storage.sync.get([STORAGE_KEY_OPEN, STORAGE_KEY_MODE, STORAGE_KEY_SELECTED, STORAGE_KEY_EXPANDED], (result) => {
-        resolve({
-          isOpen: result[STORAGE_KEY_OPEN] ?? false,
-          mode: result[STORAGE_KEY_MODE] ?? 'floating',
-          selectedFolderId: result[STORAGE_KEY_SELECTED] ?? null,
-          expandedFolders: result[STORAGE_KEY_EXPANDED] ?? []
+      if (!hasExtensionContext()) {
+        resolve(getDefaultState());
+        return;
+      }
+
+      try {
+        chrome.storage.sync.get([STORAGE_KEY_OPEN, STORAGE_KEY_MODE, STORAGE_KEY_SELECTED, STORAGE_KEY_EXPANDED], (result) => {
+          if (chrome.runtime.lastError) {
+            console.warn('LeftPanelService.getState failed:', chrome.runtime.lastError.message);
+            resolve(getDefaultState());
+            return;
+          }
+
+          resolve({
+            isOpen: result[STORAGE_KEY_OPEN] ?? false,
+            mode: result[STORAGE_KEY_MODE] ?? 'floating',
+            selectedFolderId: result[STORAGE_KEY_SELECTED] ?? null,
+            expandedFolders: result[STORAGE_KEY_EXPANDED] ?? []
+          });
         });
-      });
+      } catch (error) {
+        console.warn('LeftPanelService.getState failed:', error);
+        resolve(getDefaultState());
+      }
     });
   }
 
@@ -25,12 +54,27 @@ const LeftPanelService = (() => {
    */
   async function setState(state) {
     return new Promise((resolve) => {
-      chrome.storage.sync.set({
-        [STORAGE_KEY_OPEN]: state.isOpen,
-        [STORAGE_KEY_MODE]: state.mode,
-        [STORAGE_KEY_SELECTED]: state.selectedFolderId,
-        [STORAGE_KEY_EXPANDED]: state.expandedFolders
-      }, resolve);
+      if (!hasExtensionContext()) {
+        resolve();
+        return;
+      }
+
+      try {
+        chrome.storage.sync.set({
+          [STORAGE_KEY_OPEN]: state.isOpen,
+          [STORAGE_KEY_MODE]: state.mode,
+          [STORAGE_KEY_SELECTED]: state.selectedFolderId,
+          [STORAGE_KEY_EXPANDED]: state.expandedFolders
+        }, () => {
+          if (chrome.runtime.lastError) {
+            console.warn('LeftPanelService.setState failed:', chrome.runtime.lastError.message);
+          }
+          resolve();
+        });
+      } catch (error) {
+        console.warn('LeftPanelService.setState failed:', error);
+        resolve();
+      }
     });
   }
 

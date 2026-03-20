@@ -2,17 +2,44 @@ const RightPanelService = (() => {
   const STORAGE_KEY_OPEN = 'rightPanel_isOpen';
   const STORAGE_KEY_MODE = 'rightPanel_mode'; // 'floating' or 'docked'
 
+  function getDefaultState() {
+    return {
+      isOpen: false,
+      mode: 'floating'
+    };
+  }
+
+  function hasExtensionContext() {
+    return typeof chrome !== 'undefined' && !!chrome.runtime?.id && !!chrome.storage?.sync;
+  }
+
   /**
    * Get right panel state from storage
    */
   async function getState() {
     return new Promise((resolve) => {
-      chrome.storage.sync.get([STORAGE_KEY_OPEN, STORAGE_KEY_MODE], (result) => {
-        resolve({
-          isOpen: result[STORAGE_KEY_OPEN] ?? false,
-          mode: result[STORAGE_KEY_MODE] ?? 'floating'
+      if (!hasExtensionContext()) {
+        resolve(getDefaultState());
+        return;
+      }
+
+      try {
+        chrome.storage.sync.get([STORAGE_KEY_OPEN, STORAGE_KEY_MODE], (result) => {
+          if (chrome.runtime.lastError) {
+            console.warn('RightPanelService.getState failed:', chrome.runtime.lastError.message);
+            resolve(getDefaultState());
+            return;
+          }
+
+          resolve({
+            isOpen: result[STORAGE_KEY_OPEN] ?? false,
+            mode: result[STORAGE_KEY_MODE] ?? 'floating'
+          });
         });
-      });
+      } catch (error) {
+        console.warn('RightPanelService.getState failed:', error);
+        resolve(getDefaultState());
+      }
     });
   }
 
@@ -21,10 +48,25 @@ const RightPanelService = (() => {
    */
   async function setState(state) {
     return new Promise((resolve) => {
-      chrome.storage.sync.set({
-        [STORAGE_KEY_OPEN]: state.isOpen,
-        [STORAGE_KEY_MODE]: state.mode
-      }, resolve);
+      if (!hasExtensionContext()) {
+        resolve();
+        return;
+      }
+
+      try {
+        chrome.storage.sync.set({
+          [STORAGE_KEY_OPEN]: state.isOpen,
+          [STORAGE_KEY_MODE]: state.mode
+        }, () => {
+          if (chrome.runtime.lastError) {
+            console.warn('RightPanelService.setState failed:', chrome.runtime.lastError.message);
+          }
+          resolve();
+        });
+      } catch (error) {
+        console.warn('RightPanelService.setState failed:', error);
+        resolve();
+      }
     });
   }
 

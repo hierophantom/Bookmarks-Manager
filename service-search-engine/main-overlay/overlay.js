@@ -14,6 +14,10 @@ class MainOverlay {
     this.currentResults = {};
     this.resultItems = [];
     this.lastQuery = '';
+    this.searchDebounceTimer = null;
+    this.searchDebounceMs = 180;
+    this.searchRequestId = 0;
+    this.resultsAnimationFrame = null;
   }
 
   /**
@@ -96,7 +100,7 @@ class MainOverlay {
     // Search input
     this.elements.input.addEventListener('input', (e) => {
       const value = e.target.value || '';
-      this.handleSearch(value);
+      this.scheduleSearch(value);
     });
 
 
@@ -132,18 +136,6 @@ class MainOverlay {
    * Setup keyboard shortcuts
    */
   setupKeyboardListeners() {
-    // Cmd/Ctrl+Shift+K to toggle
-    document.addEventListener('keydown', (e) => {
-      const isCtrlOrCmd = e.ctrlKey || e.metaKey;
-      const isShift = e.shiftKey;
-      const isE = e.code === 'KeyE';
-
-      if (isCtrlOrCmd && isShift && isE) {
-        e.preventDefault();
-        this.toggle();
-      }
-    });
-
     // Escape to close
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && this.isOpen) {
@@ -175,28 +167,47 @@ class MainOverlay {
     console.log('[MainOverlay] Keyboard listeners setup');
   }
 
+  scheduleSearch(query) {
+    this.lastQuery = query;
+
+    if (this.searchDebounceTimer) {
+      clearTimeout(this.searchDebounceTimer);
+    }
+
+    this.searchDebounceTimer = setTimeout(() => {
+      this.searchDebounceTimer = null;
+      this.handleSearch(query);
+    }, this.searchDebounceMs);
+  }
+
   /**
    * Handle search input
    */
   async handleSearch(query) {
     console.log('[MainOverlay] Searching:', query);
-
-    this.lastQuery = query;
-
-    this.showLoading();
+    const requestId = ++this.searchRequestId;
 
     try {
       // Get current tab context
       const currentTab = await chrome.tabs.getCurrent();
 
-      this.currentResults = await this.engine.search(query, {
+      const results = await this.engine.search(query, {
         currentTab,
         isExtensionPage: true
       });
 
+      if (requestId !== this.searchRequestId) {
+        return;
+      }
+
+      this.currentResults = results;
+
       console.log('[MainOverlay] Results:', Object.keys(this.currentResults));
       this.displayResults();
     } catch (error) {
+      if (requestId !== this.searchRequestId) {
+        return;
+      }
       console.error('[MainOverlay] Search error:', error);
       this.showEmpty();
     }
@@ -268,6 +279,7 @@ class MainOverlay {
     this.hideLoading();
 
     const resultsList = this.elements.results;
+    this.prepareResultsAnimation();
     resultsList.innerHTML = '';
     this.resultItems = [];
 
@@ -362,6 +374,29 @@ class MainOverlay {
 
     // Reset selection
     this.selectedIndex = -1;
+    this.playResultsAnimation();
+  }
+
+  prepareResultsAnimation() {
+    const resultsList = this.elements.results;
+
+    if (this.resultsAnimationFrame) {
+      cancelAnimationFrame(this.resultsAnimationFrame);
+      this.resultsAnimationFrame = null;
+    }
+
+    resultsList.classList.remove('bm-results--animate-in');
+    resultsList.classList.add('bm-results--pre-enter');
+  }
+
+  playResultsAnimation() {
+    const resultsList = this.elements.results;
+
+    this.resultsAnimationFrame = requestAnimationFrame(() => {
+      resultsList.classList.add('bm-results--animate-in');
+      resultsList.classList.remove('bm-results--pre-enter');
+      this.resultsAnimationFrame = null;
+    });
   }
 
   /**
@@ -551,12 +586,21 @@ class MainOverlay {
       this.elements.suffix.style.display = 'none';
     }
     // Load default results (actions, tabs, recent history)
-    this.handleSearch('');
+    this.scheduleSearch('');
   }
 
   close() {
     console.log('[MainOverlay] Closing');
     this.isOpen = false;
+    if (this.searchDebounceTimer) {
+      clearTimeout(this.searchDebounceTimer);
+      this.searchDebounceTimer = null;
+    }
+    if (this.resultsAnimationFrame) {
+      cancelAnimationFrame(this.resultsAnimationFrame);
+      this.resultsAnimationFrame = null;
+    }
+    this.searchRequestId += 1;
     this.elements.overlay.style.display = 'none';
   }
 
@@ -691,6 +735,20 @@ class MainOverlay {
 
       .bm-results {
         flex: 1;
+        opacity: 1;
+        transform: translateY(0);
+        transition: opacity 0.18s ease, transform 0.22s ease;
+        will-change: opacity, transform;
+      }
+
+      .bm-results.bm-results--pre-enter {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+
+      .bm-results.bm-results--animate-in {
+        opacity: 1;
+        transform: translateY(0);
       }
 
       .bm-result-category {

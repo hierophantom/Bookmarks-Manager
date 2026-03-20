@@ -6,6 +6,83 @@ import SearchEngine from './shared/search-engine.js';
 
 const engine = new SearchEngine();
 
+function getMainPageUrl() {
+  return chrome.runtime.getURL('core/main.html');
+}
+
+function sendMessageToTab(tabId, message) {
+  return new Promise((resolve, reject) => {
+    chrome.tabs.sendMessage(tabId, message, (response) => {
+      if (chrome.runtime.lastError) {
+        reject(new Error(chrome.runtime.lastError.message));
+        return;
+      }
+
+      resolve(response);
+    });
+  });
+}
+
+function waitForMainPageLoad(tabId) {
+  const mainUrl = getMainPageUrl();
+
+  return new Promise((resolve, reject) => {
+    const listener = (updatedTabId, info, updatedTab) => {
+      if (updatedTabId !== tabId || info.status !== 'complete') {
+        return;
+      }
+
+      if (!updatedTab?.url?.startsWith(mainUrl) && !updatedTab?.url?.startsWith('chrome://newtab/')) {
+        return;
+      }
+
+      cleanup();
+      resolve();
+    };
+
+    const cleanup = () => {
+      chrome.tabs.onUpdated.removeListener(listener);
+      clearTimeout(timeoutId);
+    };
+
+    const timeoutId = setTimeout(() => {
+      cleanup();
+      reject(new Error('Timed out waiting for Bookmark Manager page to load'));
+    }, 5000);
+
+    chrome.tabs.onUpdated.addListener(listener);
+  });
+}
+
+async function toggleMainOverlayInTab(tab) {
+  const mainUrl = getMainPageUrl();
+
+  if (!tab?.id || !tab.url) {
+    return false;
+  }
+
+  const isMainPageTab = tab.url.startsWith(mainUrl);
+  const isOverriddenNewTab = tab.url.startsWith('chrome://newtab/');
+
+  if (!isMainPageTab && !isOverriddenNewTab) {
+    return false;
+  }
+
+  try {
+    await sendMessageToTab(tab.id, { type: 'TOGGLE_MAIN_OVERLAY' });
+    return true;
+  } catch (error) {
+    if (!isOverriddenNewTab) {
+      throw error;
+    }
+
+    console.log('[Bridge] Main page not ready yet, waiting for load before toggling overlay');
+    await waitForMainPageLoad(tab.id);
+    await sendMessageToTab(tab.id, { type: 'TOGGLE_MAIN_OVERLAY' });
+    return true;
+  }
+}
+
 /**
  * Initialize service worker
  */
@@ -14,16 +91,13 @@ function init() {
 
   chrome.action.onClicked.addListener(async (tab) => {
     try {
+      if (await toggleMainOverlayInTab(tab)) {
+        return;
+      }
+
       await openOrFocusMainPage({ preferCurrentTabId: tab?.id });
     } catch (error) {
       console.error('[Bridge] Failed to open main page from action click:', error);
-    }
-  });
-
-  // Listen for commands (keyboard shortcuts)
-  chrome.commands.onCommand.addListener((command) => {
-    if (command === 'toggle-search') {
-      handleToggleCommand();
     }
   });
 
@@ -37,7 +111,7 @@ function init() {
 
 async function openOrFocusMainPage(options = {}) {
   const { preferCurrentTabId = null } = options;
-  const mainUrl = chrome.runtime.getURL('core/main.html');
+  const mainUrl = getMainPageUrl();
 
   if (preferCurrentTabId) {
     try {
@@ -88,38 +162,15 @@ async function handleToggleCommand() {
 
   console.log('[Bridge] Active tab:', tab.id, tab.url);
 
-  // Extension pages (main.html) should toggle via runtime message
-  if (tab.url.startsWith('chrome-extension://')) {
-    console.log('[Bridge] Extension page - sending TOGGLE_MAIN_OVERLAY');
-    chrome.tabs.sendMessage(tab.id, { type: 'TOGGLE_MAIN_OVERLAY' }, () => {
-      if (chrome.runtime.lastError) {
-        console.error('[Bridge] Toggle main overlay failed:', chrome.runtime.lastError.message);
-      }
-    });
+  try {
+    if (await toggleMainOverlayInTab(tab)) {
+      return;
+    }
+  } catch (error) {
+    console.error('[Bridge] Toggle main overlay failed:', error);
     return;
   }
-  if (tab.url.startsWith('chrome://newtab/')) {
-    console.log('[Bridge] Chrome newtab - opening extension main.html');
-    const mainUrl = chrome.runtime.getURL('core/main.html');
-    const listener = (tabId, info) => {
-      if (tabId === tab.id && info.status === 'complete') {
-        chrome.tabs.onUpdated.removeListener(listener);
-        chrome.tabs.sendMessage(tab.id, { type: 'TOGGLE_MAIN_OVERLAY' }, () => {
-          if (chrome.runtime.lastError) {
-            console.error('[Bridge] Toggle main overlay failed:', chrome.runtime.lastError.message);
-          }
-        });
-      }
-    };
-    chrome.tabs.onUpdated.addListener(listener);
-    chrome.tabs.update(tab.id, { url: mainUrl }, () => {
-      if (chrome.runtime.lastError) {
-        chrome.tabs.onUpdated.removeListener(listener);
-        console.error('[Bridge] Failed to open main.html:', chrome.runtime.lastError.message);
-      }
-    });
-    return;
-  }
+
   if (tab.url.startsWith('chrome://')) {
     console.log('[Bridge] Chrome page - skipping toggle');
     return;
