@@ -381,7 +381,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     const settingsButton = createActionButton({
-      icon: createMaterialIcon('settings'),
+      icon: createMaterialIcon('brightness_5'),
       label: 'Settings',
       tooltip: 'View Settings',
       onClick: async () => {

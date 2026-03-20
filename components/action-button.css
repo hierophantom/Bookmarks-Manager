@@ -41,8 +41,18 @@
 .action-button__icon {
   width: 24px;
   height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
   flex-shrink: 0;
   opacity: 0.9;
+}
+
+.action-button__icon .material-symbols-outlined {
+  font-size: 20px;
+  line-height: 1;
+  color: inherit;
 }
 
 /* States */

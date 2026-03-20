@@ -36,7 +36,7 @@ const BackgroundsService = (() => {
       
       const settings = syncResult.backgroundSettings || {
         type: 'color',
-        color: '#FFFFFF',
+        color: '#001194',
         unsplashCategories: [],
         unsplashFrequency: 'never',
         lastUnsplashUpdate: null,
@@ -53,7 +53,7 @@ const BackgroundsService = (() => {
       console.error('Failed to get background settings', e);
       return {
         type: 'color',
-        color: '#FFFFFF',
+        color: '#001194',
         unsplashCategories: [],
         unsplashFrequency: 'never',
         lastUnsplashUpdate: null,

@@ -5,13 +5,13 @@
 
 const DailyQuoteService = (() => {
   const STORAGE_KEY = 'dailyQuote';
-  const QUOTE_API_URL = 'https://zenquotes.io/api/random';
+  const QUOTE_API_URL = 'https://dummyjson.com/quotes/random';
   
   // Fallback quotes in case API fails
   const FALLBACK_QUOTES = [
     { q: 'The only way to do great work is to love what you do.', a: 'Steve Jobs' },
     { q: 'Innovation distinguishes between a leader and a follower.', a: 'Steve Jobs' },
-    { q: 'Simplicity is the ultimate sophisticationbbb.', a: 'Leonardo da Vinci' },
+    { q: 'Simplicity is the ultimate sophistication.', a: 'Leonardo da Vinci' },
     { q: 'Stay hungry, stay foolish.', a: 'Steve Jobs' },
     { q: 'The future belongs to those who believe in the beauty of their dreams.', a: 'Eleanor Roosevelt' },
   ];
@@ -25,7 +25,7 @@ const DailyQuoteService = (() => {
   }
 
   /**
-   * Fetch a random quote from ZenQuotes API
+   * Fetch a random quote from external API
    */
   async function fetchQuoteFromAPI() {
     try {
@@ -33,11 +33,11 @@ const DailyQuoteService = (() => {
       if (!response.ok) throw new Error(`API returned ${response.status}`);
       
       const data = await response.json();
-      // ZenQuotes returns an array with one object: [{q: "quote", a: "author"}]
-      if (data && Array.isArray(data) && data.length > 0 && data[0].q && data[0].a) {
+      // dummyjson returns: { quote: "...", author: "..." }
+      if (data && data.quote && data.author) {
         return {
-          text: data[0].q,
-          author: data[0].a,
+          text: data.quote,
+          author: data.author,
           date: getTodayKey(),
         };
       }
