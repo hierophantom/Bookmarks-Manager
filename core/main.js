@@ -164,11 +164,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   function createFaviconIcon(url) {
-    const img = document.createElement('img');
-    img.className = 'bookmark-favicon bookmarks-gallery-view__favicon';
-    img.src = FaviconService.getFaviconUrl(url, 24);
-    img.alt = '';
-    return img;
+    return FaviconService.createFaviconElement(url, {
+      size: 24,
+      className: 'bookmark-favicon bookmarks-gallery-view__favicon',
+      alt: ''
+    });
   }
 
   function setupSelectionFieldMenu(field, buildMenu, onClose) {

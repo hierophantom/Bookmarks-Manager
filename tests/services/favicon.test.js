@@ -39,17 +39,61 @@ describe('FaviconService', () => {
       expect(faviconUrl).toContain('data:image/svg+xml');
     });
 
-    it('should return Chrome favicon URL for valid URLs', () => {
+    it('should return a safe favicon URL for valid URLs', () => {
       const url = 'https://github.com';
       const faviconUrl = FaviconService.getFaviconUrl(url);
       
       expect(faviconUrl).toBeDefined();
-      // Should be either Chrome API or fallback
+      // Should be a broadly compatible URL or fallback
       expect(
-        faviconUrl.includes('chrome-extension') || 
         faviconUrl.includes('google.com/s2/favicons') ||
+        faviconUrl.includes('/favicon.ico') ||
+        faviconUrl.includes('chrome://favicon2') ||
         faviconUrl.includes('data:image/svg+xml')
       ).toBe(true);
+    });
+  });
+
+  describe('getFaviconCandidates', () => {
+    it('should include ordered source candidates for http/https URLs', () => {
+      const url = 'https://keep.google.com/u/0/';
+      const candidates = FaviconService.getFaviconCandidates(url);
+
+      expect(candidates.length).toBeGreaterThan(1);
+      expect(candidates[0]).toContain('google.com/s2/favicons?domain_url=');
+      expect(candidates[0]).toContain(encodeURIComponent(url));
+      expect(candidates[1]).toContain('google.com/s2/favicons?domain=');
+      expect(candidates[2]).toContain('chrome://favicon2');
+    });
+
+    it('should prioritize domain-level lookup first for non-google hosts', () => {
+      const url = 'https://yts.do/';
+      const candidates = FaviconService.getFaviconCandidates(url);
+
+      expect(candidates[0]).toContain('google.com/s2/favicons?domain=');
+      expect(candidates[1]).toContain('google.com/s2/favicons?domain_url=');
+      expect(candidates.some(candidate => candidate.includes('icons.duckduckgo.com/ip3/yts.do.ico'))).toBe(true);
+    });
+
+    it('should prioritize known domain override for docs.google.com', () => {
+      const url = 'https://docs.google.com/document/d/abc123/edit';
+      const candidates = FaviconService.getFaviconCandidates(url);
+
+      expect(candidates[0]).toBe('https://ssl.gstatic.com/docs/documents/images/kix-favicon7.ico');
+    });
+
+    it('should normalize noisy google.com search URLs for favicon lookups', () => {
+      const url = 'https://www.google.com/search?q=The+1975&sourceid=chrome&ie=UTF-8#ebo=0';
+      const candidates = FaviconService.getFaviconCandidates(url);
+
+      expect(candidates[0]).toContain('google.com/s2/favicons?domain_url=');
+      expect(candidates[0]).toContain(encodeURIComponent('https://www.google.com/search'));
+      expect(candidates[0]).not.toContain(encodeURIComponent('q=The+1975'));
+    });
+
+    it('should return empty candidates for non-http URL', () => {
+      const candidates = FaviconService.getFaviconCandidates('chrome://extensions');
+      expect(candidates).toEqual([]);
     });
   });
 
@@ -107,6 +151,38 @@ describe('FaviconService', () => {
       
       expect(img.onerror).toBeDefined();
       expect(typeof img.onerror).toBe('function');
+    });
+
+    it('should start with page-specific source for accurate icons', () => {
+      const url = 'https://keep.google.com/u/0/';
+      const img = FaviconService.createFaviconElement(url);
+
+      expect(img.src).toContain('google.com/s2/favicons?domain_url=');
+      expect(img.src).toContain(encodeURIComponent(url));
+    });
+
+    it('should start with domain-level source for non-google hosts', () => {
+      const url = 'https://yts.do/';
+      const img = FaviconService.createFaviconElement(url);
+
+      expect(img.src).toContain('google.com/s2/favicons?domain=');
+      expect(img.src).toContain('yts.do');
+    });
+
+    it('should use docs-specific favicon override when applicable', () => {
+      const url = 'https://docs.google.com/document/d/abc123/edit';
+      const img = FaviconService.createFaviconElement(url);
+
+      expect(img.src).toContain('ssl.gstatic.com/docs/documents/images/kix-favicon7.ico');
+    });
+
+    it('should use normalized lookup URL for google search favicon source', () => {
+      const url = 'https://www.google.com/search?q=The+1975&hl=en#ebo=0';
+      const img = FaviconService.createFaviconElement(url);
+
+      expect(img.src).toContain('google.com/s2/favicons?domain_url=');
+      expect(img.src).toContain(encodeURIComponent('https://www.google.com/search'));
+      expect(img.src).not.toContain(encodeURIComponent('q=The+1975'));
     });
   });
 

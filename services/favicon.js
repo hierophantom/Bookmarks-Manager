@@ -15,6 +15,10 @@
 const FaviconService = (() => {
   // Cache for favicon URLs to avoid repeated computation
   const cache = new Map();
+
+  const KNOWN_FAVICON_OVERRIDES = {
+    'docs.google.com': 'https://ssl.gstatic.com/docs/documents/images/kix-favicon7.ico'
+  };
   
   /**
    * Extract domain from URL for fallback generation
@@ -29,6 +33,38 @@ const FaviconService = (() => {
       console.warn('Invalid URL for favicon extraction:', url);
       return '';
     }
+  }
+
+  function extractHostname(url) {
+    try {
+      return new URL(url).hostname.toLowerCase();
+    } catch (e) {
+      return '';
+    }
+  }
+
+  function shouldStripSearchAndHashForLookup(hostname, hrefLength) {
+    const normalizedHost = (hostname || '').replace(/^www\./, '');
+    if (normalizedHost === 'google.com') return true;
+    return hrefLength > 512;
+  }
+
+  function getNormalizedFaviconLookupUrl(url) {
+    try {
+      const parsed = new URL(url);
+      if (shouldStripSearchAndHashForLookup(parsed.hostname, parsed.href.length)) {
+        parsed.search = '';
+        parsed.hash = '';
+      }
+      return parsed.href;
+    } catch (e) {
+      return url;
+    }
+  }
+
+  function isGoogleHost(hostname) {
+    const normalizedHost = (hostname || '').replace(/^www\./, '').toLowerCase();
+    return normalizedHost === 'google.com' || normalizedHost.endsWith('.google.com');
   }
 
   function isHttpUrl(url) {
@@ -111,9 +147,10 @@ const FaviconService = (() => {
     if (!url) return null;
     
     try {
+      const lookupUrl = getNormalizedFaviconLookupUrl(url);
       // Chrome's favicon API using chrome:// protocol
       // Note: This only works in certain Chrome contexts
-      const encodedUrl = encodeURIComponent(url);
+      const encodedUrl = encodeURIComponent(lookupUrl);
       return `chrome://favicon2/?pageUrl=${encodedUrl}&size=${size}&scaleFactor=1x`;
     } catch (e) {
       console.warn('Error generating Chrome favicon URL:', e);
@@ -131,13 +168,111 @@ const FaviconService = (() => {
     if (!url) return null;
     
     try {
+      const normalizedUrl = new URL(getNormalizedFaviconLookupUrl(url));
       const domain = extractDomain(url);
       if (!isHttpsUrl(url) || !isLikelyPublicDomain(domain)) return null;
-      return `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=${size}`;
+      // domain_url preserves sub-product context better than domain-only lookups.
+      return `https://www.google.com/s2/favicons?domain_url=${encodeURIComponent(normalizedUrl.href)}&sz=${size}`;
     } catch (e) {
       console.warn('Error generating Google favicon URL:', e);
       return null;
     }
+  }
+
+  /**
+   * Get Google's S2 favicon using hostname only for broader fallback coverage
+   * @param {string} url - The bookmark URL
+   * @param {number} size - The desired favicon size (default: 16)
+   * @returns {string|null} - Google S2 favicon URL using domain
+   */
+  function getGoogleDomainFaviconUrl(url, size = 16) {
+    if (!url) return null;
+
+    try {
+      const domain = extractDomain(url);
+      if (!isHttpsUrl(url) || !isLikelyPublicDomain(domain)) return null;
+      return `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=${size}`;
+    } catch (e) {
+      console.warn('Error generating Google domain favicon URL:', e);
+      return null;
+    }
+  }
+
+  /**
+   * Get DuckDuckGo icon proxy URL as an additional cross-domain fallback source
+   * @param {string} url - The bookmark URL
+   * @returns {string|null} - DuckDuckGo favicon URL
+   */
+  function getDuckDuckGoFaviconUrl(url) {
+    if (!url) return null;
+
+    try {
+      const hostname = extractHostname(url);
+      if (!hostname) return null;
+      return `https://icons.duckduckgo.com/ip3/${encodeURIComponent(hostname)}.ico`;
+    } catch (e) {
+      console.warn('Error generating DuckDuckGo favicon URL:', e);
+      return null;
+    }
+  }
+
+  /**
+   * Get a hardcoded favicon URL for known domains with unreliable generic lookups
+   * @param {string} url - The bookmark URL
+   * @returns {string|null} - Domain-specific favicon override URL
+   */
+  function getKnownDomainFaviconUrl(url) {
+    if (!url) return null;
+    const hostname = extractHostname(url);
+    return KNOWN_FAVICON_OVERRIDES[hostname] || null;
+  }
+
+  function getOrderedGoogleLookupUrls(url, size = 16) {
+    const hostname = extractHostname(url);
+    const byDomainUrl = getGoogleFaviconUrl(url, size);
+    const byDomain = getGoogleDomainFaviconUrl(url, size);
+
+    if (isGoogleHost(hostname)) {
+      return [byDomainUrl, byDomain].filter(Boolean);
+    }
+
+    return [byDomain, byDomainUrl].filter(Boolean);
+  }
+
+  /**
+   * Get direct /favicon.ico URL for a given page URL as a fallback option
+   * @param {string} url - The bookmark URL
+   * @returns {string|null} - Direct favicon.ico URL
+   */
+  function getDirectFaviconUrl(url) {
+    if (!url) return null;
+
+    try {
+      const parsed = new URL(url);
+      if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return null;
+      return `${parsed.origin}/favicon.ico`;
+    } catch (e) {
+      console.warn('Error generating direct favicon URL:', e);
+      return null;
+    }
+  }
+
+  /**
+   * Build ordered favicon source candidates from most specific to least specific
+   * @param {string} url - The bookmark URL
+   * @param {number} size - Desired favicon size
+   * @returns {string[]} - Ordered favicon source candidates
+   */
+  function getFaviconCandidates(url, size = 16) {
+    if (!url || !isHttpUrl(url)) return [];
+
+    return [
+      getKnownDomainFaviconUrl(url),
+      ...getOrderedGoogleLookupUrls(url, size),
+      getChromeFaviconUrl(url, size),
+      getDuckDuckGoFaviconUrl(url),
+      getDirectFaviconUrl(url)
+    ].filter(Boolean);
   }
 
   /**
@@ -199,12 +334,37 @@ const FaviconService = (() => {
     if (cache.has(cacheKey)) {
       return cache.get(cacheKey);
     }
-    
-    // Use Google S2 as primary (most reliable in extension context)
-    const googleFavicon = getGoogleFaviconUrl(url, size);
-    if (googleFavicon) {
-      cache.set(cacheKey, googleFavicon);
-      return googleFavicon;
+
+    const knownDomainFavicon = getKnownDomainFaviconUrl(url);
+    if (knownDomainFavicon) {
+      cache.set(cacheKey, knownDomainFavicon);
+      return knownDomainFavicon;
+    }
+
+    const orderedGoogleLookups = getOrderedGoogleLookupUrls(url, size);
+    for (const googleUrl of orderedGoogleLookups) {
+      if (googleUrl) {
+        cache.set(cacheKey, googleUrl);
+        return googleUrl;
+      }
+    }
+
+    const duckDuckGoFavicon = getDuckDuckGoFaviconUrl(url);
+    if (duckDuckGoFavicon) {
+      cache.set(cacheKey, duckDuckGoFavicon);
+      return duckDuckGoFavicon;
+    }
+
+    const directFavicon = getDirectFaviconUrl(url);
+    if (directFavicon) {
+      cache.set(cacheKey, directFavicon);
+      return directFavicon;
+    }
+
+    const chromeFavicon = getChromeFaviconUrl(url, size);
+    if (chromeFavicon) {
+      cache.set(cacheKey, chromeFavicon);
+      return chromeFavicon;
     }
     
     // Fallback to generated icon
@@ -248,16 +408,32 @@ const FaviconService = (() => {
     img.width = size;
     img.height = size;
     img.loading = 'lazy'; // Lazy load for better performance
-    
-    // Set primary source
-    img.src = getFaviconUrl(url, size);
-    
-    // Add error handler for automatic fallback
+
+    const candidates = getFaviconCandidates(url, size);
+    const fallbackIcon = getFallbackIcon(url);
+
+    if (candidates.length === 0) {
+      img.src = fallbackIcon;
+      return img;
+    }
+
+    img.dataset.faviconCandidateIndex = '0';
+    img.src = candidates[0];
+
+    // On load failure, advance through known sources before letter/globe fallback.
     img.onerror = () => {
-      // On error, try the letter fallback
+      const currentIndex = Number(img.dataset.faviconCandidateIndex || '0');
+      const nextIndex = currentIndex + 1;
+
+      if (nextIndex < candidates.length) {
+        img.dataset.faviconCandidateIndex = String(nextIndex);
+        img.src = candidates[nextIndex];
+        return;
+      }
+
       if (!img.dataset.fallbackAttempted) {
         img.dataset.fallbackAttempted = 'true';
-        img.src = getFallbackIcon(url);
+        img.src = fallbackIcon;
       }
     };
     
@@ -353,6 +529,11 @@ const FaviconService = (() => {
     getFaviconHtml,
     attachErrorHandlers,
     getChromeFaviconUrl,
-    getGoogleFaviconUrl
+    getGoogleFaviconUrl,
+    getGoogleDomainFaviconUrl,
+    getDuckDuckGoFaviconUrl,
+    getKnownDomainFaviconUrl,
+    getDirectFaviconUrl,
+    getFaviconCandidates
   };
 })();
