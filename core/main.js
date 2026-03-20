@@ -2307,10 +2307,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       // If overlay is loaded on this page (chrome-extension://main.html), toggle directly
       if (window.__bmMainOverlay && typeof window.__bmMainOverlay.toggle === 'function') {
         window.__bmMainOverlay.toggle();
-        return;
+      } else {
+        console.warn('[Main] Search overlay is unavailable on this page');
       }
-      // Otherwise delegate to background to use last eligible http/https tab
-      chrome.runtime.sendMessage({ type: 'TOGGLE_OVERLAY_FROM_UI' }, () => {});
     });
   }
 
@@ -2322,9 +2321,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     e.stopPropagation();
     if (window.__bmMainOverlay && typeof window.__bmMainOverlay.toggle === 'function') {
       window.__bmMainOverlay.toggle();
-      return;
+    } else {
+      console.warn('[Main] Search overlay is unavailable on this page');
     }
-    chrome.runtime.sendMessage({ type: 'TOGGLE_OVERLAY_FROM_UI' }, () => {});
   }, true);
 
   // process any pending persisted undo snapshots after DOM ready

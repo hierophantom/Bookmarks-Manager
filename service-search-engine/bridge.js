@@ -1,12 +1,10 @@
 /**
- * Background Service Worker - Handles searches and actions
- * Simpler than before: just route searches from content scripts
+ * Background Service Worker - Handles extension-page search actions
  */
 
 import SearchEngine from './shared/search-engine.js';
 
 const engine = new SearchEngine();
-const readyTabs = new Set();
 
 /**
  * Initialize service worker
@@ -35,22 +33,6 @@ function init() {
     return true; // Keep channel open for async
   });
 
-  // Track tab readiness
-  chrome.tabs.onRemoved.addListener((tabId) => {
-    readyTabs.delete(tabId);
-  });
-}
-
-async function sendTabMessage(tabId, message) {
-  return new Promise((resolve, reject) => {
-    chrome.tabs.sendMessage(tabId, message, (response) => {
-      if (chrome.runtime.lastError) {
-        reject(new Error(chrome.runtime.lastError.message));
-        return;
-      }
-      resolve(response);
-    });
-  });
 }
 
 async function openOrFocusMainPage(options = {}) {
@@ -91,39 +73,6 @@ async function openOrFocusMainPage(options = {}) {
   return createdTab;
 }
 
-async function ensureOverlayScriptsInjected(tabId) {
-  await chrome.scripting.executeScript({
-    target: { tabId },
-    files: [
-      'service-search-engine/content-overlay/save-session-modal.js',
-      'service-search-engine/content-overlay/overlay.js'
-    ]
-  });
-}
-
-async function toggleOverlayWithRetry(tabId) {
-  try {
-    await sendTabMessage(tabId, { type: 'TOGGLE_OVERLAY' });
-    console.log('[Bridge] Toggle sent successfully');
-  } catch (error) {
-    const message = error && error.message ? error.message : String(error);
-    const needsInjection = message.includes('Receiving end does not exist');
-    if (!needsInjection) {
-      console.error('[Bridge] Toggle failed:', message);
-      return;
-    }
-
-    try {
-      console.log('[Bridge] Overlay receiver missing; injecting scripts and retrying');
-      await ensureOverlayScriptsInjected(tabId);
-      await sendTabMessage(tabId, { type: 'TOGGLE_OVERLAY' });
-      console.log('[Bridge] Toggle sent successfully after injection');
-    } catch (retryError) {
-      const retryMessage = retryError && retryError.message ? retryError.message : String(retryError);
-      console.error('[Bridge] Toggle failed after injection:', retryMessage);
-    }
-  }
-}
 
 /**
  * Handle keyboard shortcut
@@ -176,13 +125,11 @@ async function handleToggleCommand() {
     return;
   }
 
-  // Send toggle to content script (with first-press fallback injection)
-  console.log('[Bridge] Sending TOGGLE_OVERLAY to tab:', tab.id);
-  await toggleOverlayWithRetry(tab.id);
+  console.log('[Bridge] Non-extension page - skipping toggle');
 }
 
 /**
- * Handle messages from content scripts
+ * Handle runtime messages
  */
 function handleMessage(request, sender, sendResponse) {
   console.log('[Bridge] Message:', request.type, 'from:', sender.url);
@@ -194,24 +141,6 @@ function handleMessage(request, sender, sendResponse) {
 
     case 'EXECUTE_RESULT':
       handleExecuteResult(request, sender, sendResponse);
-      break;
-
-    case 'OPEN_SAVE_SESSION_MODAL':
-      handleOpenSaveSessionModal(request, sender, sendResponse);
-      break;
-
-    case 'SAVE_TABS_AS_BOOKMARKS':
-      handleSaveTabsAsBookmarks(request, sender, sendResponse);
-      break;
-
-    case 'GET_CURRENT_WINDOW_TABS':
-      handleGetCurrentWindowTabs(request, sender, sendResponse);
-      break;
-
-    case 'OVERLAY_READY':
-      readyTabs.add(request.tabId);
-      console.log('[Bridge] Tab ready:', request.tabId, 'Total ready:', readyTabs.size);
-      sendResponse({ success: true });
       break;
 
     case 'TOGGLE_OVERLAY_FROM_UI':
@@ -226,7 +155,7 @@ function handleMessage(request, sender, sendResponse) {
 }
 
 /**
- * Handle search request from content script
+ * Handle search request
  */
 async function handleSearch(request, sender, sendResponse) {
   try {
@@ -243,18 +172,10 @@ async function handleSearch(request, sender, sendResponse) {
       }
     }
 
-    const storageData = await new Promise((resolve) => {
-      chrome.storage.local.get('searchEngine', resolve);
-    });
-    const searchEngine = storageData && storageData.searchEngine && storageData.searchEngine.url && storageData.searchEngine.url.includes('%s')
-      ? storageData.searchEngine
-      : { key: 'google', url: 'https://www.google.com/search?q=%s' };
-
-    // Use sender.tab as context (content scripts always provide this)
+    // Use sender.tab as context
     const results = await engine.search(request.query, {
       currentTab: currentTab,
-      isExtensionPage: false,
-      searchEngine
+      isExtensionPage: false
     });
 
     console.log('[Bridge] Results keys:', Object.keys(results));
@@ -274,7 +195,7 @@ async function handleSearch(request, sender, sendResponse) {
 }
 
 /**
- * Handle result execution from content script
+ * Handle result execution request
  */
 async function handleExecuteResult(request, sender, sendResponse) {
   try {
@@ -311,142 +232,6 @@ async function handleExecuteResult(request, sender, sendResponse) {
       success: false,
       error: error.message
     });
-  }
-}
-
-/**
- * Handle open save session modal request
- */
-async function handleOpenSaveSessionModal(request, sender, sendResponse) {
-  try {
-    console.log('[Bridge] Opening save session modal');
-
-    // Get all windows with tabs
-    const windows = await chrome.windows.getAll({ populate: true });
-    const mainExtensionUrl = chrome.runtime.getURL('core/main.html');
-    
-    // Find the focused window
-    const focusedWindow = windows.find(w => w.focused);
-    if (!focusedWindow) {
-      console.error('[Bridge] No focused window found');
-      sendResponse({ success: false, error: 'No focused window' });
-      return;
-    }
-
-    // Filter tabs (exclude extension UI)
-    const tabs = focusedWindow.tabs
-      .filter(tab => tab.url && !tab.url.includes(mainExtensionUrl))
-      .map(tab => ({
-        id: tab.id,
-        title: tab.title || tab.url,
-        url: tab.url
-      }));
-
-    if (!tabs.length) {
-      sendResponse({ success: false, error: 'No tabs to save' });
-      return;
-    }
-
-    console.log('[Bridge] Found', tabs.length, 'tabs to save');
-
-    // Store tabs in chrome.storage for main.html to access
-    await chrome.storage.session.set({
-      'pendingSaveSessionTabs': tabs
-    });
-
-    const mainTab = await openOrFocusMainPage();
-
-    // Send message to main.html to open the modal
-    chrome.tabs.sendMessage(mainTab.id, {
-      type: 'OPEN_SAVE_SESSION_MODAL',
-      tabs: tabs
-    }, (response) => {
-      if (chrome.runtime.lastError) {
-        console.error('[Bridge] Failed to send modal message:', chrome.runtime.lastError.message);
-      } else {
-        console.log('[Bridge] Modal message sent successfully');
-      }
-    });
-
-    sendResponse({ success: true });
-  } catch (error) {
-    console.error('[Bridge] handleOpenSaveSessionModal error:', error);
-    sendResponse({
-      success: false,
-      error: error.message
-    });
-  }
-}
-
-/**
- * Save tabs as bookmarks
- */
-async function handleSaveTabsAsBookmarks(request, sender, sendResponse) {
-  try {
-    console.log('[Bridge] Saving tabs:', request.tabs.length, 'folder name:', request.folderName);
-    
-    // Create session folder in Bookmarks Bar (parentId: '1')
-    const sessionFolder = await chrome.bookmarks.create({
-      title: request.folderName,
-      parentId: '1'
-    });
-
-    console.log('[Bridge] Created session folder:', sessionFolder.id, sessionFolder.title);
-
-    // Save each tab as a bookmark inside the session folder
-    for (const tab of request.tabs) {
-      const bookmark = await chrome.bookmarks.create({
-        title: tab.title,
-        url: tab.url,
-        parentId: sessionFolder.id
-      });
-      console.log('[Bridge] Created bookmark:', bookmark.title);
-    }
-
-    console.log('[Bridge] Successfully saved', request.tabs.length, 'bookmarks');
-    sendResponse({ success: true });
-  } catch (error) {
-    console.error('[Bridge] Save tabs error:', error);
-    sendResponse({ success: false, error: error.message });
-  }
-}
-
-/**
- * Get current window tabs for content script
- */
-async function handleGetCurrentWindowTabs(request, sender, sendResponse) {
-  try {
-    const windows = await chrome.windows.getAll({ populate: true });
-    const mainExtensionUrl = chrome.runtime.getURL('core/main.html');
-    
-    // Find the window containing the sender tab
-    let targetWindow = null;
-    if (sender.tab?.windowId) {
-      targetWindow = windows.find(w => w.id === sender.tab.windowId);
-    }
-    
-    // Fallback to focused window
-    if (!targetWindow) {
-      targetWindow = windows.find(w => w.focused);
-    }
-
-    if (!targetWindow) {
-      sendResponse({ success: false, error: 'No window found' });
-      return;
-    }
-
-    const tabs = targetWindow.tabs
-      .filter(tab => tab.url && !tab.url.includes(mainExtensionUrl))
-      .map(tab => ({
-        id: tab.id,
-        title: tab.title || tab.url,
-        url: tab.url
-      }));
-
-    sendResponse({ success: true, tabs });
-  } catch (error) {
-    console.error('[Bridge] Get current window tabs error:', error);
-    sendResponse({ success: false, error: error.message });
   }
 }
 

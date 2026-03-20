@@ -13,7 +13,6 @@ class MainOverlay {
     this.selectedIndex = -1;
     this.currentResults = {};
     this.resultItems = [];
-    this.searchEngine = { key: 'google', url: 'https://www.google.com/search?q=%s' };
     this.lastQuery = '';
   }
 
@@ -22,18 +21,6 @@ class MainOverlay {
    */
   async init() {
     console.log('[MainOverlay] Initializing');
-
-    // Load search engine from storage
-    try {
-      const data = await new Promise((resolve) => {
-        chrome.storage.local.get('searchEngine', resolve);
-      });
-      if (data && data.searchEngine && data.searchEngine.url && data.searchEngine.url.includes('%s')) {
-        this.searchEngine = data.searchEngine;
-      }
-    } catch (e) {
-      // fallback to default
-    }
 
     // Inject overlay HTML
     this.injectOverlay();
@@ -188,14 +175,6 @@ class MainOverlay {
     console.log('[MainOverlay] Keyboard listeners setup');
   }
 
-  openWebSearch(query) {
-    const trimmed = (query || '').trim();
-    if (!trimmed) return;
-    const template = (this.searchEngine && this.searchEngine.url) ? this.searchEngine.url : 'https://www.google.com/search?q=%s';
-    const url = template.replace('%s', encodeURIComponent(trimmed));
-    chrome.tabs.create({ url });
-  }
-
   /**
    * Handle search input
    */
@@ -210,11 +189,9 @@ class MainOverlay {
       // Get current tab context
       const currentTab = await chrome.tabs.getCurrent();
 
-      // Pass searchEngine to context
       this.currentResults = await this.engine.search(query, {
         currentTab,
-        isExtensionPage: true,
-        searchEngine: this.searchEngine
+        isExtensionPage: true
       });
 
       console.log('[MainOverlay] Results:', Object.keys(this.currentResults));
@@ -294,46 +271,16 @@ class MainOverlay {
     resultsList.innerHTML = '';
     this.resultItems = [];
 
-    const trimmedQuery = (this.lastQuery || '').trim();
-    if (trimmedQuery) {
-      const header = document.createElement('div');
-      header.className = 'bm-result-category';
-      header.textContent = 'Search Online';
-      resultsList.appendChild(header);
-
-      const label = this.getSearchEngineLabel();
-      const item = {
-        id: 'search-online',
-        type: 'search-online',
-        icon: '🔍',
-        title: `${trimmedQuery} - Search with ${label}`,
-        description: '',
-        query: trimmedQuery
-      };
-      const element = this.createResultItem(item);
-      resultsList.appendChild(element);
-      this.resultItems.push({ item, element });
-    }
-
     // Map for "show more" URLs
     const showMoreUrls = {
       'History': 'chrome://history',
-      'Downloads': 'chrome://downloads',
       'Tabs': null, // Can't link to tabs
       'Bookmarks': 'chrome://bookmarks',
-      'Actions': null,
-      'Chrome Settings': 'chrome://settings',
-      'Extensions': 'chrome://extensions',
-      'Calculator': null
+      'Actions': null
     };
 
     // Ensure save-session is part of Actions category
     const desiredOrder = [
-      'action-new-tab',
-      'action-new-window',
-      'action-close-tab',
-      'action-remove-favorite',
-      'action-add-favorite',
       'save-session'
     ];
     const actionMap = {
@@ -501,10 +448,7 @@ class MainOverlay {
     try {
       let success = false;
 
-      if (item.type === 'search-online') {
-        this.openWebSearch(item.query || this.lastQuery);
-        success = true;
-      } else if (item.id === 'save-session') {
+      if (item.id === 'save-session') {
         // Close overlay first to avoid visual collision, then open modal
         this.close();
         await this.handleSaveSession();
@@ -540,18 +484,6 @@ class MainOverlay {
     } catch (error) {
       console.error('[MainOverlay] Execution error:', error);
     }
-  }
-
-  getSearchEngineLabel() {
-    const key = this.searchEngine && this.searchEngine.key ? this.searchEngine.key : 'google';
-    const labels = {
-      google: 'Google',
-      duckduckgo: 'DuckDuckGo',
-      bing: 'Bing',
-      yahoo: 'Yahoo',
-      custom: 'Custom'
-    };
-    return labels[key] || 'Google';
   }
 
   /**

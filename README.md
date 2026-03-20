@@ -1,16 +1,16 @@
 # Bookmark Manager Chrome Extension
 
-A modern, feature-rich bookmark management extension for Chrome with theming, tagging, search overlay, and customizable new tab page.
+A bookmark-focused Chrome new tab extension with theming, tagging, and homepage organization tools.
 
 ## ✨ Features
 
 - **📚 Bookmark Explorer** - Browse, organize, and manage your bookmarks with drag-and-drop
 - **🏷️ Tag System** - Tag bookmarks for better organization and filtering
-- **🔍 Universal Search** - Quick search overlay (Cmd/Ctrl+Shift+E) for bookmarks, tabs, history, and more
+- **🔍 Bookmark Search** - Quick overlay for bookmarks, tabs, history, and saved sessions from your extension page
 - **🎨 8 Vibrant Themes** - Slack-inspired color themes (Electric Blue, Jazzy Yellow, Neon Pink, etc.)
 - **🖼️ Custom Backgrounds** - Solid colors, uploaded images, or Unsplash integration
 - **📊 Tab Groups** - View and manage browser tab groups
-- **🏠 Custom New Tab** - Beautiful homepage with widgets, bookmarks, and daily quotes
+- **🏠 Custom New Tab** - Homepage with widgets, bookmarks, and daily quotes
 - **💾 Undo/Redo** - Easily undo deletions and changes
 
 ## 🚀 Installation
@@ -42,8 +42,8 @@ chrome://extensions -> Load unpacked
 # View background service worker logs
 chrome://extensions -> Service worker (inspect views)
 
-# View content script logs
-Open DevTools on any webpage
+# View extension page logs
+Open DevTools on the extension new tab page
 ```
 
 ## 📂 Project Structure
@@ -53,7 +53,7 @@ bookmark-manager-main/
 ├── core/                      # Main UI (new tab page)
 ├── services/                  # Business logic (bookmarks, tags, themes)
 ├── utils/                     # Reusable utilities (modals, storage)
-├── service-search-engine/     # Search overlay system
+├── service-search-engine/     # Extension-page search overlay system
 ├── modals/                    # Modal components
 └── content/                   # Content scripts
 ```

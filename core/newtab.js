@@ -1,2 +1,2 @@
-const appUrl = chrome.runtime.getURL('core/main.html?source=newtab');
+const appUrl = chrome.runtime.getURL('core/main.html');
 window.location.replace(appUrl);

@@ -362,8 +362,6 @@ class ContentOverlay {
       'action-new-tab',
       'action-new-window',
       'action-close-tab',
-      'action-remove-favorite',
-      'action-add-favorite',
       'save-session'
     ];
     const actionMap = {
