@@ -44,7 +44,7 @@ Results are limited to 5 items per category with "show more" buttons linking to:
 ### Components
 
 #### `shared/search-engine.js`
-Core search engine used by both overlays:
+Core search engine used by the main overlay and service worker:
 - Aggregates results from all sources
 - Executes actions via Chrome APIs
 - Provides context-aware action generation
@@ -57,25 +57,17 @@ Search overlay for the new tab page (`core/main.html`):
 - Keyboard navigation support
 - Mouse hover selection
 
-#### `content-overlay/overlay.js`
-Search overlay for regular HTTP/HTTPS pages:
-- Injected as content script
-- Communicates with background service worker for restricted operations
-- Handles local result execution (opening URLs, switching tabs)
-- Routes actions through background for execution
-
 #### `bridge.js`
 Background service worker:
-- Routes search requests from content scripts
+- Supports extension-page search actions
 - Executes actions (bookmarking, tab management, web search)
-- Enriches tab data from content script requests
 - Manages result execution
 
 ### Data Flow
 
 #### Search Flow
 1. User types in overlay input
-2. Request sent to background (content overlay) or handled locally (main overlay)
+2. Request is handled by the main overlay and search engine
 3. SearchEngine aggregates results from:
    - `searchBookmarks(query)`
    - `searchHistory(query)`
@@ -129,12 +121,9 @@ Action items include metadata context:
 service-search-engine/
 ├── bridge.js                 # Background service worker
 ├── shared/
-│   ├── search-engine.js      # Core search logic
-│   └── math.min.js           # Math.js library (optional)
+│   └── search-engine.js      # Core search logic
 ├── main-overlay/
 │   └── overlay.js            # New tab page overlay
-├── content-overlay/
-│   └── overlay.js            # HTTP page overlay
 └── README.md
 ```
 
@@ -146,16 +135,7 @@ service-search-engine/
 3. Test actions (New Tab, Close Tab, Add to Favorites)
 4. Test math: type `2+2`, `(10*5)/2`
 
-### On HTTP Pages
-1. Navigate to any HTTP/HTTPS website
-2. Press Cmd+Shift+E
-3. Verify overlay appears
-4. Test all search sources
-5. Test "Add to Favorites" action
-6. Verify results execute correctly
-
 ## Future Improvements
-- Advanced math.js functions (when loaded in service worker context)
 - Custom search filters
 - Bookmark folder navigation
 - Search history/suggestions

@@ -10,29 +10,11 @@ This design system provides reusable UI components following the Figma design sp
 
 ### Navigation & Controls
 
-#### [Navigation Bar Button](README-navigation-bar-button.md) (BMG-87)
-Pagination navigation buttons with current/other types and idle/hover/pressed states.
-- **Files**: `navigation-bar-button.css`, `navigation-bar-button.js`, `navigation-bar-button.html`
-- **States**: Current (selected), Other (unselected), Icon-only
-- **Use cases**: Pagination, page navigation
-
-#### [Pagination](README-pagination.md) (BMG-88)
-Pill-shaped pagination control composed of current and icon-only buttons.
-- **Files**: `pagination.css`, `pagination.js`, `pagination.html`
-- **States**: Current, Other (icon-only)
-- **Use cases**: Page navigation, section switching
-
 #### [Breadcrumbs](README-breadcrumbs.md) (BMG-106)
 Breadcrumb navigation with root and current types.
 - **Files**: `breadcrumbs.css`, `breadcrumbs.js`, `breadcrumbs.html`
 - **States**: Root (idle, hover), Current (idle)
 - **Use cases**: Section navigation, path context
-
-#### [Search Bar](README-search-bar.md) (BMG-89)
-Button-styled search trigger with keyboard shortcut hint.
-- **Files**: `search-bar.css`, `search-bar.js`, `search-bar.html`
-- **Features**: Hover state, keyboard shortcut display, disabled state
-- **Use cases**: Global search, command palette trigger
 
 #### [Search Component](README-search-comp.md) (BMG-99)
 Input-style search field with shortcut hint support.
@@ -69,12 +51,6 @@ Primary action button with contrast variants and optional icon/shortcut.
 - **Files**: `button-primary.css`, `button-primary.js`, `button-primary.html`
 - **States**: Idle, Hover
 - **Use cases**: Main actions, confirmations
-
-#### [Button Destructive](README-button-destructive.md) (BMG-105)
-Destructive action button with contrast variants and optional icon/shortcut.
-- **Files**: `button-destructive.css`, `button-destructive.js`, `button-destructive.html`
-- **States**: Idle, Hover
-- **Use cases**: Delete or remove actions
 
 #### [Text Field](README-text-field.md) (BMG-100)
 Standard text input field with contrast variants.
@@ -140,12 +116,6 @@ Pill-shaped tags for categorization and filtering.
 - **Features**: Low/high contrast, removable, clickable, custom colors
 - **Use cases**: Filters, categories, labels
 
-#### [Box Selector](README-box-selector.md) (BMG-107)
-Compact selector button with idle, hover, and active states.
-- **Files**: `box-selector.css`, `box-selector.js`, `box-selector.html`
-- **States**: Idle, Hover, Active
-- **Use cases**: Option selection, quick filters
-
 ### Feedback & Interaction
 
 #### [Tooltip](README-tooltip.md) (BMG-95)
@@ -160,14 +130,6 @@ Dialog boxes and form modals with keyboard shortcuts.
 - **Types**: Dialog box, Form modal
 - **Features**: ESC to close, Enter to submit, backdrop blur
 - **Use cases**: Confirmations, forms, dialogs
-
-### Utilities
-
-#### [Keyboard Shortcut Hint](README-keyboard-shortcut-hint.md) (BMG-92)
-Pill-shaped keyboard shortcut indicators.
-- **Files**: `keyboard-shortcut-hint.css`, `keyboard-shortcut-hint.js`, `keyboard-shortcut-hint.html`
-- **Features**: Symbol or text display, preset shortcuts, size variants
-- **Use cases**: Button shortcuts, command hints
 
 ## Design Tokens
 
