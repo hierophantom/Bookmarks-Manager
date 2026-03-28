@@ -54,7 +54,7 @@ All notable changes to the Bookmark Manager Chrome Extension are documented in t
   - Ensures smooth navigation experience without manual scrolling
 
 ### Changed - Project Cleanup (January 11, 2026)
-- Reorganized documentation to `.github/docs/` directory
+- Reorganized documentation to `docs/` directory
 - Moved TES-13 issues and specs documentation to proper location
 - Cleaned up archived search engine implementation files
 - Removed temporary Tag Manager and test files

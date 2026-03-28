@@ -146,8 +146,8 @@ Bookmark Manager now includes comprehensive accessibility (a11y) features to ens
 ### New Files
 ```
 utils/keyboard-navigation.js        - Reusable keyboard navigation utility
-.github/docs/ACCESSIBILITY_TESTING.md - Comprehensive testing guide
-.github/docs/ACCESSIBILITY.md       - This file
+docs/testing/ACCESSIBILITY_TESTING.md - Comprehensive testing guide
+docs/features/ACCESSIBILITY.md       - This file
 ```
 
 ### Modified Files
@@ -178,7 +178,7 @@ Use browser DevTools and extensions:
 5. **Zoom testing**: Test at 200% browser zoom
 
 ### Comprehensive Testing Guide
-See: `.github/docs/ACCESSIBILITY_TESTING.md`
+See: `../testing/ACCESSIBILITY_TESTING.md`
 
 ---
 
@@ -288,7 +288,7 @@ This implementation addresses:
 ## Feedback & Contributions
 
 To report accessibility issues or suggest improvements:
-1. Test using the guide in `.github/docs/ACCESSIBILITY_TESTING.md`
+1. Test using the guide in `../testing/ACCESSIBILITY_TESTING.md`
 2. Document specific steps to reproduce
 3. Create a Linear issue with `accessibility` label
 4. Reference BMG-61 in the issue

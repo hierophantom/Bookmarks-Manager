@@ -374,7 +374,7 @@ service-search-engine/
 
 manifest.json (MODIFY)                 # Add permissions, commands, content scripts
 background.js (MODIFY)                 # Add message handlers
-ARCHITECTURE.md (NEW)                  # This document
+docs/ARCHITECTURE.md (NEW)             # This document
 ```
 
 ---
