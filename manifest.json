@@ -17,6 +17,12 @@
   "chrome_url_overrides": {
     "newtab": "core/main.html"
   },
+  "commands": {
+    "toggle-search": {
+      "suggested_key": { "default": "Ctrl+Shift+E", "mac": "Command+Shift+E" },
+      "description": "Toggle bookmark search"
+    }
+  },
   "action": {
     "default_title": "Bookmark Manager",
     "default_icon": {
