@@ -22,7 +22,7 @@ A bookmark-focused Chrome new tab extension with theming, tagging, and homepage 
 
 ## 📖 Documentation
 
-- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) - System architecture and design
+- [ARCHITECTURE.md](ARCHITECTURE.md) - System architecture and design
 - [docs/CHANGELOG.md](docs/CHANGELOG.md) - Version history and changes
 - [docs/README.md](docs/README.md) - Technical specs and debug docs
 
