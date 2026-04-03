@@ -55,7 +55,11 @@ function createPrimaryButton(options = {}) {
       if (icon.startsWith('<svg')) {
         iconEl.innerHTML = icon;
       } else {
-        iconEl.textContent = icon;
+        const materialIcon = document.createElement('span');
+        materialIcon.className = 'material-symbols-outlined';
+        materialIcon.setAttribute('aria-hidden', 'true');
+        materialIcon.textContent = icon;
+        iconEl.appendChild(materialIcon);
       }
     } else if (icon instanceof HTMLElement) {
       iconEl.appendChild(icon);

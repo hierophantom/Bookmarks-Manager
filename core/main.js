@@ -1296,6 +1296,123 @@ document.addEventListener('DOMContentLoaded', async () => {
       const bookmarkWord = counts.bookmarks === 1 ? 'bookmark' : 'bookmarks';
       const folderWord = counts.folders === 1 ? 'subfolder' : 'subfolders';
 
+      if (typeof createModal === 'function' && typeof showModal === 'function') {
+        return new Promise((resolve) => {
+          const content = document.createElement('div');
+          content.className = 'delete-folder-modal';
+
+          const summary = document.createElement('p');
+          summary.className = 'delete-folder-modal__summary';
+          summary.innerHTML = `This folder contains <strong>${counts.bookmarks}</strong> ${bookmarkWord} and <strong>${counts.folders}</strong> ${folderWord}. Choose whether to delete everything or move the contents first.`;
+
+          const choices = document.createElement('div');
+          choices.className = 'delete-folder-modal__choices';
+
+          const hiddenActionInput = document.createElement('input');
+          hiddenActionInput.id = 'delete_action';
+          hiddenActionInput.type = 'hidden';
+          hiddenActionInput.value = defaultAction;
+
+          const deleteChoice = document.createElement('label');
+          deleteChoice.className = 'delete-folder-modal__choice delete-folder-modal__choice--delete';
+          deleteChoice.dataset.action = 'delete';
+          deleteChoice.innerHTML = `
+            <input id="delete-action-delete" type="radio" name="delete-action-choice" value="delete" ${defaultAction === 'delete' ? 'checked' : ''}>
+            <span class="delete-folder-modal__choice-copy">
+              <span class="delete-folder-modal__choice-title">Do not keep items</span>
+              <span class="delete-folder-modal__choice-text">Delete everything inside this folder.</span>
+            </span>
+          `;
+
+          const moveChoice = document.createElement('label');
+          moveChoice.className = 'delete-folder-modal__choice delete-folder-modal__choice--move';
+          moveChoice.dataset.action = 'move';
+          if (!canMoveContents) {
+            moveChoice.classList.add('delete-folder-modal__choice--disabled');
+          }
+          moveChoice.innerHTML = `
+            <input id="delete-action-move" type="radio" name="delete-action-choice" value="move" ${defaultAction === 'move' ? 'checked' : ''} ${canMoveContents ? '' : 'disabled'}>
+            <span class="delete-folder-modal__choice-copy">
+              <span class="delete-folder-modal__choice-title">Keep items</span>
+              <span class="delete-folder-modal__choice-text">Move bookmarks and subfolders into another folder before deleting this one.</span>
+            </span>
+          `;
+
+          choices.appendChild(deleteChoice);
+          choices.appendChild(moveChoice);
+          choices.appendChild(hiddenActionInput);
+          content.appendChild(summary);
+          content.appendChild(choices);
+
+          let modal = null;
+          let submitResult = null;
+
+          const updateChoiceState = () => {
+            const deleteActionRadio = content.querySelector('#delete-action-delete');
+            hiddenActionInput.value = deleteActionRadio && deleteActionRadio.checked ? 'delete' : 'move';
+
+            [deleteChoice, moveChoice].forEach((choice) => {
+              const action = choice.dataset.action;
+              choice.classList.toggle('delete-folder-modal__choice--selected', hiddenActionInput.value === action);
+            });
+
+            if (!modal) return;
+            const destinationField = modal.querySelector('[data-modal-select="move_destination"]')?.closest('.modal__field');
+            if (destinationField) {
+              destinationField.style.display = hiddenActionInput.value === 'move' ? '' : 'none';
+            }
+          };
+
+          content.querySelector('#delete-action-delete').addEventListener('change', updateChoiceState);
+          content.querySelector('#delete-action-move').addEventListener('change', updateChoiceState);
+
+          modal = createModal({
+            type: 'form',
+            title: `Delete folder \"${folderNode.title || 'Folder'}\"?`,
+            content,
+            fields: [
+              {
+                id: 'move_destination',
+                label: 'Move items to',
+                type: 'select',
+                value: defaultDestination,
+                required: false,
+                options: destinationOptions.length ? destinationOptions : [{ value: '', label: 'No destination available' }]
+              }
+            ],
+            buttons: [
+              { label: 'Cancel', type: 'common', role: 'cancel', shortcut: 'ESC' },
+              { label: 'Delete', type: 'destructive', role: 'confirm', shortcut: '↵' }
+            ],
+            onSubmit: () => {
+              const action = hiddenActionInput.value;
+              const destinationInput = document.getElementById('move_destination');
+
+              if (action === 'move' && !destinationInput?.value) {
+                Modal.openError({
+                  title: 'Missing destination',
+                  message: 'Choose a destination folder before moving items.'
+                });
+                return false;
+              }
+
+              submitResult = {
+                delete_action: action,
+                move_destination: destinationInput?.value || ''
+              };
+
+              return true;
+            },
+            onClose: (confirmed) => {
+              resolve(confirmed ? submitResult : null);
+            }
+          });
+
+          showModal(modal);
+          setTimeout(updateChoiceState, 0);
+        });
+      }
+
       const picker = new BaseModal({
         title: `Delete folder \"${folderNode.title || 'Folder'}\"?`,
         customContent: `

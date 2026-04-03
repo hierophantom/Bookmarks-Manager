@@ -18,23 +18,13 @@ const ThemeSettingsModal = (() => {
       Storage.get('topbarBackdropEnabled'),
     ]);
 
-    // Create overlay using BaseModal pattern
-    const overlay = document.createElement('div');
-    overlay.id = 'bm-modal-overlay';
-    overlay.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
-
-    const modal = document.createElement('div');
-    modal.className = 'bm-modal-card bg-white rounded-lg shadow-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto';
-
-    // Close on overlay click
-    overlay.addEventListener('click', (e) => {
-      if (e.target === overlay) {
-        overlay.remove();
-      }
-    });
-
-    overlay.appendChild(modal);
-    document.body.appendChild(overlay);
+    if (typeof createModal !== 'function' || typeof showModal !== 'function') {
+      await Modal.openError({
+        title: 'Modal unavailable',
+        message: 'Theme settings modal is unavailable. Please reload and try again.'
+      });
+      return null;
+    }
 
     const unsplashCategories = BackgroundsService.getUnsplashCategories();
     const frequencies = BackgroundsService.FREQUENCIES;
@@ -126,18 +116,11 @@ const ThemeSettingsModal = (() => {
       )
       .join('');
 
-    modal.innerHTML = `
-      <div style="
-        background: var(--theme-background);
-        border: 2px solid var(--theme-border);
-        border-radius: 12px;
-        padding: 24px;
-        max-width: 600px;
-        max-height: 90vh;
-        overflow-y: auto;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-      ">
-        <h2 style="margin-top: 0; margin-bottom: 24px; color: var(--theme-primary);">Personalize Your Experience</h2>
+    const content = document.createElement('div');
+    content.className = 'theme-settings-modal__content';
+
+    content.innerHTML = `
+      <div class="theme-settings-modal__surface">
 
         <!-- Color Themes Section -->
         <div style="margin-bottom: 32px;">
@@ -399,7 +382,7 @@ New Tab Override Section -->
         </div>
 
         <!-- Buttons -->
-        <div style="display: flex; gap: 8px; justify-content: space-between; padding-top: 16px; border-top: 1px solid var(--theme-border);">
+        <div class="theme-settings-modal__utility-actions" style="display: flex; gap: 8px; justify-content: space-between; padding-top: 16px; border-top: 1px solid var(--theme-border);">
           <button id="privacy-policy-btn" style="
             padding: 10px 16px;
             background: transparent;
@@ -416,41 +399,34 @@ New Tab Override Section -->
             <span class="material-symbols-outlined" aria-hidden="true" style="font-size: 18px;">policy</span>
             Privacy Policy
           </button>
-          <div style="display: flex; gap: 8px; justify-content: flex-end;">
-          <button id="cancel-settings-btn" style="
-            padding: 10px 20px;
-            background: white;
-            border: 1px solid var(--theme-border);
-            color: var(--theme-primary);
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: all 0.2s;
-          ">
-            Cancel
-          </button>
-          <button id="save-settings-btn" style="
-            padding: 10px 20px;
-            background: var(--theme-primary);
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: background 0.2s;
-          ">
-            Save
-          </button>
-          </div>
         </div>
       </div>
     `;
 
-    overlay.appendChild(modal);
-    document.body.appendChild(overlay);
+    let shouldReload = false;
+
+    const modalOverlay = createModal({
+      type: 'form',
+      title: 'Personalize your experience',
+      content,
+      buttons: [
+        { label: 'Cancel', type: 'common', role: 'cancel', shortcut: 'ESC' },
+        { label: 'Save', type: 'primary', role: 'confirm', shortcut: '↵' }
+      ],
+      onSubmit: handleSave,
+      onClose: (confirmed) => {
+        if (confirmed && shouldReload) {
+          window.location.reload();
+        }
+      }
+    });
+
+    const modal = modalOverlay.querySelector('.modal');
+    modal.classList.add('theme-settings-modal');
+    showModal(modalOverlay);
 
     // New tab override toggle
-    const newTabToggle = modal.querySelector('#new-tab-override-toggle');
+    const newTabToggle = modalOverlay.querySelector('#new-tab-override-toggle');
     if (newTabToggle) {
       newTabToggle.addEventListener('change', (e) => {
         newTabOverride = e.target.checked;
@@ -458,7 +434,7 @@ New Tab Override Section -->
     }
 
     // Daily quote toggle
-    const quoteToggle = modal.querySelector('#daily-quote-toggle');
+    const quoteToggle = modalOverlay.querySelector('#daily-quote-toggle');
     if (quoteToggle) {
       quoteToggle.addEventListener('change', (e) => {
         dailyQuoteShow = e.target.checked;
@@ -466,7 +442,7 @@ New Tab Override Section -->
     }
 
     // Topbar backdrop toggle
-    const topbarBackdropToggle = modal.querySelector('#topbar-backdrop-toggle');
+    const topbarBackdropToggle = modalOverlay.querySelector('#topbar-backdrop-toggle');
     if (topbarBackdropToggle) {
       topbarBackdropToggle.addEventListener('change', (e) => {
         showTopbarBackdrop = e.target.checked;
@@ -474,9 +450,9 @@ New Tab Override Section -->
     }
 
     // Theme selection
-    modal.querySelectorAll('.theme-preview-item').forEach((item) => {
+    modalOverlay.querySelectorAll('.theme-preview-item').forEach((item) => {
       item.addEventListener('click', () => {
-        modal.querySelectorAll('.theme-preview-item').forEach((el) => {
+        modalOverlay.querySelectorAll('.theme-preview-item').forEach((el) => {
           el.style.border = '2px solid #ddd';
         });
         item.style.border = '3px solid #000';
@@ -485,7 +461,7 @@ New Tab Override Section -->
     });
 
     // Background type radio buttons
-    modal.querySelectorAll('input[name="bg-type"]').forEach((radio) => {
+    modalOverlay.querySelectorAll('input[name="bg-type"]').forEach((radio) => {
       radio.addEventListener('change', (e) => {
         backgroundType = e.target.value;
         document.getElementById('color-bg-section').style.display =
@@ -498,7 +474,7 @@ New Tab Override Section -->
     });
 
     // Color picker
-    const colorPicker = modal.querySelector('#bg-color-picker');
+    const colorPicker = modalOverlay.querySelector('#bg-color-picker');
     if (colorPicker) {
       colorPicker.addEventListener('change', (e) => {
         selectedColor = e.target.value;
@@ -507,7 +483,7 @@ New Tab Override Section -->
     }
 
     // Image upload
-    const imageUpload = modal.querySelector('#image-upload');
+    const imageUpload = modalOverlay.querySelector('#image-upload');
     if (imageUpload) {
       imageUpload.addEventListener('change', async (e) => {
         const file = e.target.files[0];
@@ -522,7 +498,7 @@ New Tab Override Section -->
           statusEl.textContent = 'Image uploaded successfully!';
           statusEl.style.color = '#00b020';
           backgroundType = 'upload';
-          modal.querySelector('input[value="upload"]').checked = true;
+          modalOverlay.querySelector('input[value="upload"]').checked = true;
           document.getElementById('color-bg-section').style.display = 'none';
           document.getElementById('upload-bg-section').style.display = 'block';
           document.getElementById('unsplash-bg-section').style.display = 'none';
@@ -534,7 +510,7 @@ New Tab Override Section -->
     }
 
     // Category checkboxes
-    modal.querySelectorAll('.unsplash-category').forEach((checkbox) => {
+    modalOverlay.querySelectorAll('.unsplash-category').forEach((checkbox) => {
       checkbox.addEventListener('change', (e) => {
         if (e.target.checked) {
           selectedCategories.push(e.target.value);
@@ -545,7 +521,7 @@ New Tab Override Section -->
     });
 
     // Frequency select
-    const frequencySelect = modal.querySelector('#unsplash-frequency');
+    const frequencySelect = modalOverlay.querySelector('#unsplash-frequency');
     if (frequencySelect) {
       frequencySelect.addEventListener('change', (e) => {
         selectedFrequency = e.target.value;
@@ -553,8 +529,8 @@ New Tab Override Section -->
     }
 
     // Dimmer slider
-    const dimmerSlider = modal.querySelector('#dimmer-slider');
-    const dimmerValue = modal.querySelector('#dimmer-value');
+    const dimmerSlider = modalOverlay.querySelector('#dimmer-slider');
+    const dimmerValue = modalOverlay.querySelector('#dimmer-value');
     if (dimmerSlider) {
       dimmerSlider.addEventListener('input', (e) => {
         selectedDimmer = parseInt(e.target.value);
@@ -563,7 +539,7 @@ New Tab Override Section -->
     }
 
     // Fetch Unsplash image
-    const fetchBtn = modal.querySelector('#fetch-unsplash-btn');
+    const fetchBtn = modalOverlay.querySelector('#fetch-unsplash-btn');
     if (fetchBtn) {
       fetchBtn.addEventListener('click', async () => {
         if (selectedCategories.length === 0) {
@@ -586,7 +562,7 @@ New Tab Override Section -->
           statusEl.textContent = 'Image loaded successfully!';
           statusEl.style.color = '#00b020';
           backgroundType = 'unsplash';
-          modal.querySelector('input[value="unsplash"]').checked = true;
+          modalOverlay.querySelector('input[value="unsplash"]').checked = true;
           document.getElementById('color-bg-section').style.display = 'none';
           document.getElementById('upload-bg-section').style.display = 'none';
           document.getElementById('unsplash-bg-section').style.display = 'block';
@@ -599,13 +575,8 @@ New Tab Override Section -->
       });
     }
 
-    // Cancel button
-    modal.querySelector('#cancel-settings-btn').addEventListener('click', () => {
-      overlay.remove();
-    });
-
     // Privacy policy button
-    const privacyPolicyBtn = modal.querySelector('#privacy-policy-btn');
+    const privacyPolicyBtn = modalOverlay.querySelector('#privacy-policy-btn');
     if (privacyPolicyBtn) {
       privacyPolicyBtn.addEventListener('click', () => {
         const policyUrl = chrome.runtime.getURL('core/privacy-policy.html');
@@ -614,7 +585,7 @@ New Tab Override Section -->
     }
 
     // Keyboard accessibility for theme settings
-    const handleSave = async () => {
+    async function handleSave() {
       try {
         // Apply theme
         await ThemesService.setTheme(selectedTheme);
@@ -655,32 +626,19 @@ New Tab Override Section -->
           }
         }
 
-        overlay.remove();
-        
-        // Reload page to apply quote visibility change
-        window.location.reload();
+        shouldReload = true;
+        return true;
       } catch (e) {
         console.error('Failed to save settings', e);
-        alert('Failed to save settings: ' + e.message);
+        await Modal.openError({
+          title: 'Save failed',
+          message: 'Failed to save settings: ' + e.message
+        });
+        return false;
       }
-    };
+    }
 
-    // Keyboard accessibility
-    document.addEventListener('keydown', (e) => {
-      // Only handle if overlay is visible
-      if (!document.body.contains(overlay)) return;
-
-      // Escape to close
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        overlay.remove();
-      }
-    }, true);
-
-    // Save button
-    modal.querySelector('#save-settings-btn').addEventListener('click', handleSave);
-
-    return overlay;
+    return modalOverlay;
   }
 
   const api = { show };

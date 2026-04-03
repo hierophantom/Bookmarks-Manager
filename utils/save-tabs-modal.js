@@ -56,23 +56,9 @@ const SaveTabsModal = (() => {
         const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
         const defaultFolderName = `Session - ${dateStr} ${timeStr}`;
 
-        // Build custom modal DOM (avoids Modal.open dependency)
-        const overlayId = 'save-tabs-modal-overlay';
-        const existingOverlay = document.getElementById(overlayId);
-        if (existingOverlay) existingOverlay.remove();
-
-        const overlay = document.createElement('div');
-        overlay.id = overlayId;
-        overlay.className = 'modal-overlay save-tabs-modal-overlay';
-
-        const modal = document.createElement('div');
-        modal.className = 'modal modal--form save-tabs-modal';
-
-        // Header
-        const header = document.createElement('div');
-        header.className = 'save-tabs-modal__header';
-        header.innerHTML = '<h2 class="save-tabs-modal__title">Save Tabs as Bookmarks</h2>';
-        modal.appendChild(header);
+        if (typeof createModal !== 'function' || typeof showModal !== 'function') {
+          throw new Error('Design-system modal component is not available');
+        }
 
         // Content
         const content = document.createElement('div');
@@ -180,80 +166,56 @@ const SaveTabsModal = (() => {
 
         content.appendChild(destWrapper);
 
-        modal.appendChild(content);
+        let submitResult = null;
 
-        // Actions
-        const actions = document.createElement('div');
-        actions.className = 'modal__actions save-tabs-modal__actions';
+        const modal = createModal({
+          type: 'form',
+          title: 'Save session',
+          content,
+          buttons: [
+            { label: 'Cancel', type: 'common', role: 'cancel', shortcut: 'ESC' },
+            { label: 'Save', type: 'primary', role: 'confirm', shortcut: '↵' }
+          ],
+          onSubmit: async () => {
+            const selectedTabIds = Array.from(tabsList.querySelectorAll('input[type="checkbox"]'))
+              .filter(cb => cb.checked)
+              .map(cb => parseInt(cb.dataset.tabId, 10));
 
-        const cancelBtn = document.createElement('button');
-        cancelBtn.type = 'button';
-        cancelBtn.textContent = 'Cancel';
-        cancelBtn.className = 'button-common button-common--low';
+            if (selectedTabIds.length === 0) {
+              await Modal.openError({
+                title: 'No Tabs Selected',
+                message: 'Please select at least one tab to save.'
+              });
+              return false;
+            }
 
-        const saveBtn = document.createElement('button');
-        saveBtn.type = 'button';
-        saveBtn.textContent = 'Save';
-        saveBtn.className = 'button-primary button-primary--high';
+            let destinationFolderId = select.value;
+            if (destinationFolderId === '__new__') {
+              const folderName = newFolderInput.value.trim() || defaultFolderName;
+              const newFolder = await BookmarksService.createFolder('1', folderName);
+              destinationFolderId = newFolder.id;
+            }
 
-        actions.appendChild(cancelBtn);
-        actions.appendChild(saveBtn);
-        modal.appendChild(actions);
+            const selectedTabs = tabs.filter(tab => selectedTabIds.includes(tab.id));
+            for (const tab of selectedTabs) {
+              await chrome.bookmarks.create({
+                parentId: destinationFolderId,
+                title: tab.title || tab.url,
+                url: tab.url
+              });
+            }
 
-        overlay.appendChild(modal);
-        document.body.appendChild(overlay);
-
-        const cleanup = () => {
-          overlay.remove();
-          document.removeEventListener('keydown', escHandler, true);
-        };
-
-        const escHandler = (e) => {
-          if (e.key === 'Escape') {
-            cleanup();
-            resolve(null);
+            submitResult = { savedCount: selectedTabs.length, destinationFolderId };
+            return true;
+          },
+          onClose: (confirmed) => {
+            resolve(confirmed ? submitResult : null);
           }
-        };
-
-        document.addEventListener('keydown', escHandler, true);
-
-        cancelBtn.addEventListener('click', () => {
-          cleanup();
-          resolve(null);
         });
 
-        saveBtn.addEventListener('click', async () => {
-          const selectedTabIds = Array.from(tabsList.querySelectorAll('input[type="checkbox"]'))
-            .filter(cb => cb.checked)
-            .map(cb => parseInt(cb.dataset.tabId, 10));
+        modal.querySelector('.modal')?.classList.add('save-tabs-modal');
 
-          if (selectedTabIds.length === 0) {
-            await Modal.openError({
-              title: 'No Tabs Selected',
-              message: 'Please select at least one tab to save.'
-            });
-            return;
-          }
-
-          let destinationFolderId = select.value;
-          if (destinationFolderId === '__new__') {
-            const folderName = newFolderInput.value.trim() || defaultFolderName;
-            const newFolder = await BookmarksService.createFolder('1', folderName);
-            destinationFolderId = newFolder.id;
-          }
-
-          const selectedTabs = tabs.filter(tab => selectedTabIds.includes(tab.id));
-          for (const tab of selectedTabs) {
-            await chrome.bookmarks.create({
-              parentId: destinationFolderId,
-              title: tab.title || tab.url,
-              url: tab.url
-            });
-          }
-
-          cleanup();
-          resolve({ savedCount: selectedTabs.length, destinationFolderId });
-        });
+        showModal(modal);
       } catch (error) {
         console.error('Error in SaveTabsModal:', error);
         await Modal.openError({

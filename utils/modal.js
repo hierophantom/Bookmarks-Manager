@@ -92,7 +92,7 @@ const Modal = (() => {
 
       const modal = createModal({
         type: 'form',
-        title: defaults.id ? 'Edit Bookmark' : 'Add Bookmark',
+        title: defaults.id ? 'Edit bookmark' : 'Add bookmark',
         fields,
         buttons: [
           { label: 'Cancel', type: 'common', role: 'cancel', shortcut: 'ESC' },
@@ -189,10 +189,12 @@ const Modal = (() => {
 
     // Highlight the offending field
     if (fieldInput) {
+      fieldInput.closest('.modal__text-field')?.classList.add('modal__text-field--error');
       fieldInput.classList.add('modal__text-field-input--error');
       fieldInput.focus();
       // Clear highlight as soon as the user edits the field
       const clearOnInput = () => {
+        fieldInput.closest('.modal__text-field')?.classList.remove('modal__text-field--error');
         fieldInput.classList.remove('modal__text-field-input--error');
         clearModalInlineError(modalOverlay);
         fieldInput.removeEventListener('input', clearOnInput);
@@ -204,6 +206,8 @@ const Modal = (() => {
   function clearModalInlineError(modalOverlay) {
     const existing = modalOverlay.querySelector('.modal__inline-error');
     if (existing) existing.remove();
+    const highlightedFields = modalOverlay.querySelectorAll('.modal__text-field--error');
+    highlightedFields.forEach((el) => el.classList.remove('modal__text-field--error'));
     const highlighted = modalOverlay.querySelectorAll('.modal__text-field-input--error');
     highlighted.forEach((el) => el.classList.remove('modal__text-field-input--error'));
   }
@@ -482,6 +486,15 @@ const Modal = (() => {
    * FolderForm Modal with emoji and color customization
    */
   async function openFolderForm(defaults = {}) {
+    if (typeof createModal !== 'function' || typeof showModal !== 'function') {
+      console.error('[Modal] openFolderForm - design-system modal component not available');
+      await openError({
+        title: 'Modal unavailable',
+        message: 'Folder modal component is unavailable. Please reload and try again.'
+      });
+      return null;
+    }
+
     return new Promise(async (resolve) => {
       // Get folder customization if editing existing folder
       let customization = null;
@@ -494,65 +507,160 @@ const Modal = (() => {
       let selectedEmoji = currentEmoji;
       let selectedColor = currentColor;
 
-      const safeTitle = defaults.title !== undefined ? 'Edit Folder' : 'Create Folder';
+      const modalTitle = defaults.folderId ? 'Edit folder' : 'Add folder';
       const colorOptions = typeof FolderCustomizationService !== 'undefined' && typeof FolderCustomizationService.getColors === 'function'
         ? FolderCustomizationService.getColors()
         : [];
 
-      // Create overlay
-      const overlay = document.createElement('div');
-      overlay.className = 'modal-overlay folder-form-modal-overlay';
+      const content = document.createElement('div');
+      content.className = 'folder-form-modal__content';
 
-      // Create modal
-      const modal = document.createElement('div');
-      modal.className = 'modal modal--form folder-form-modal';
+      const titleField = document.createElement('div');
+      titleField.className = 'folder-form-modal__field';
 
-      modal.innerHTML = `
-        <div class="modal__content folder-form-modal__content">
-          <h2 class="modal__title folder-form-modal__title">${safeTitle}</h2>
+      const titleLabel = document.createElement('label');
+      titleLabel.className = 'folder-form-modal__label';
+      titleLabel.setAttribute('for', 'folder-title-input');
+      titleLabel.textContent = 'Folder name';
 
-          <div class="folder-form-modal__field">
-            <label class="folder-form-modal__label" for="folder-title-input">Folder Name <span class="folder-form-modal__required">*</span></label>
-            <input id="folder-title-input" type="text" required class="bm-input folder-form-modal__input" placeholder="Enter folder name" />
-          </div>
+      const requiredMark = document.createElement('span');
+      requiredMark.className = 'folder-form-modal__required';
+      requiredMark.textContent = ' *';
+      titleLabel.appendChild(requiredMark);
 
-          <div class="folder-form-modal__field">
-            <label class="folder-form-modal__label" for="select-emoji-btn">Folder Icon (optional)</label>
-            <button id="select-emoji-btn" type="button" class="folder-form-modal__emoji-btn">
-              <span id="selected-emoji-display" class="folder-form-modal__emoji">${selectedEmoji || '📁'}</span>
-              <span class="folder-form-modal__emoji-copy">Click to ${selectedEmoji ? 'change' : 'select'}</span>
-            </button>
-          </div>
+      const titleFieldControl = typeof createTextField === 'function'
+        ? createTextField({
+          placeholder: 'Enter folder name',
+          value: defaults.title || '',
+          contrast: 'low',
+          ariaLabel: 'Folder name'
+        })
+        : document.createElement('div');
 
-          <div class="folder-form-modal__field folder-form-modal__field--colors">
-            <label class="folder-form-modal__label">Folder Color (optional)</label>
-            <div id="color-picker-grid" class="folder-form-modal__color-grid">
-              ${colorOptions.map(color => `
-                <button type="button" class="color-option folder-form-modal__color-option" data-color="${color.value}" style="background:${color.value}; border-color:${selectedColor === color.value ? 'var(--theme-text, #1a1a1a)' : 'transparent'};">
-                  ${selectedColor === color.value ? '<span class="folder-form-modal__color-check">✓</span>' : ''}
-                </button>
-              `).join('')}
-            </div>
-            ${selectedColor ? '<button id="clear-color-btn" type="button" class="button-common button-common--low folder-form-modal__clear-btn">Clear Color</button>' : ''}
-          </div>
-        </div>
+      let titleInput = titleFieldControl.querySelector ? titleFieldControl.querySelector('.text-field__input') : null;
+      if (!titleInput) {
+        titleInput = document.createElement('input');
+        titleInput.type = 'text';
+        titleInput.className = 'folder-form-modal__input';
+        titleInput.placeholder = 'Enter folder name';
+        titleInput.value = defaults.title || '';
+        titleFieldControl.appendChild(titleInput);
+      }
+      titleFieldControl.classList.add('folder-form-modal__input');
+      titleInput.id = 'folder-title-input';
+      titleInput.required = true;
 
-        <div class="modal__actions folder-form-modal__actions" role="group" aria-label="Folder modal actions">
-          <button id="folder-cancel-btn" type="button" class="button-common button-common--low">Cancel</button>
-          <button id="folder-save-btn" type="button" class="button-primary button-primary--high">Save</button>
-        </div>
-      `;
+      titleField.appendChild(titleLabel);
+      titleField.appendChild(titleFieldControl);
+      content.appendChild(titleField);
 
-      overlay.appendChild(modal);
-      document.body.appendChild(overlay);
+      const emojiField = document.createElement('div');
+      emojiField.className = 'folder-form-modal__field';
 
-      const titleInput = modal.querySelector('#folder-title-input');
-      const emojiBtn = modal.querySelector('#select-emoji-btn');
-      const emojiDisplay = modal.querySelector('#selected-emoji-display');
-      const colorGrid = modal.querySelector('#color-picker-grid');
-      const saveBtn = modal.querySelector('#folder-save-btn');
-      const cancelBtn = modal.querySelector('#folder-cancel-btn');
-      titleInput.value = defaults.title || '';
+      const emojiLabel = document.createElement('label');
+      emojiLabel.className = 'folder-form-modal__label';
+      emojiLabel.setAttribute('for', 'select-emoji-btn');
+      emojiLabel.textContent = 'Folder icon (optional)';
+
+      const emojiBtn = document.createElement('button');
+      emojiBtn.id = 'select-emoji-btn';
+      emojiBtn.type = 'button';
+      emojiBtn.className = 'folder-form-modal__emoji-btn';
+
+      const emojiDisplay = document.createElement('span');
+      emojiDisplay.id = 'selected-emoji-display';
+      emojiDisplay.className = 'folder-form-modal__emoji';
+      emojiDisplay.textContent = selectedEmoji || '📁';
+
+      const emojiCopy = document.createElement('span');
+      emojiCopy.className = 'folder-form-modal__emoji-copy';
+      emojiCopy.textContent = `Click to ${selectedEmoji ? 'change' : 'select'}`;
+
+      emojiBtn.appendChild(emojiDisplay);
+      emojiBtn.appendChild(emojiCopy);
+      emojiField.appendChild(emojiLabel);
+      emojiField.appendChild(emojiBtn);
+      content.appendChild(emojiField);
+
+      const colorField = document.createElement('div');
+      colorField.className = 'folder-form-modal__field folder-form-modal__field--colors';
+
+      const colorLabel = document.createElement('label');
+      colorLabel.className = 'folder-form-modal__label';
+      colorLabel.textContent = 'Folder color (optional)';
+
+      const colorGrid = document.createElement('div');
+      colorGrid.id = 'color-picker-grid';
+      colorGrid.className = 'folder-form-modal__color-grid';
+
+      const clearColorWrap = document.createElement('div');
+      clearColorWrap.className = 'folder-form-modal__clear-wrap';
+
+      colorField.appendChild(colorLabel);
+      colorField.appendChild(colorGrid);
+      colorField.appendChild(clearColorWrap);
+      content.appendChild(colorField);
+
+      let modal = null;
+      let submitResult = null;
+
+      const renderColorOptions = () => {
+        colorGrid.innerHTML = '';
+
+        colorOptions.forEach((color) => {
+          const colorBtn = document.createElement('button');
+          colorBtn.type = 'button';
+          colorBtn.className = 'color-option folder-form-modal__color-option';
+          colorBtn.dataset.color = color.value;
+          colorBtn.style.background = color.value;
+          colorBtn.style.borderColor = selectedColor === color.value
+            ? 'var(--theme-text, #1a1a1a)'
+            : 'transparent';
+
+          if (selectedColor === color.value) {
+            const check = document.createElement('span');
+            check.className = 'folder-form-modal__color-check';
+            check.textContent = '✓';
+            colorBtn.appendChild(check);
+          }
+
+          colorBtn.addEventListener('click', () => {
+            selectedColor = selectedColor === color.value ? null : color.value;
+            renderColorOptions();
+            renderClearColorButton();
+          });
+
+          colorGrid.appendChild(colorBtn);
+        });
+      };
+
+      const renderClearColorButton = () => {
+        clearColorWrap.innerHTML = '';
+        if (!selectedColor) return;
+
+        const clearBtn = typeof createCommonButton === 'function'
+          ? createCommonButton({ label: 'Clear color', contrast: 'low' })
+          : document.createElement('button');
+
+        if (!clearBtn.classList.contains('button-common')) {
+          clearBtn.type = 'button';
+          clearBtn.textContent = 'Clear color';
+          clearBtn.className = 'button-common button-common--low';
+        }
+
+        clearBtn.id = 'clear-color-btn';
+        clearBtn.classList.add('folder-form-modal__clear-btn');
+        clearBtn.addEventListener('click', () => {
+          selectedColor = null;
+          renderColorOptions();
+          renderClearColorButton();
+        });
+
+        clearColorWrap.appendChild(clearBtn);
+      };
+
+      renderColorOptions();
+      renderClearColorButton();
 
       // Focus title input
       setTimeout(() => titleInput.focus(), 50);
@@ -570,107 +678,43 @@ const Modal = (() => {
         if (emoji !== null) {
           selectedEmoji = emoji || null;
           emojiDisplay.textContent = selectedEmoji || '📁';
-          const emojiCopy = emojiBtn.querySelector('.folder-form-modal__emoji-copy');
-          if (emojiCopy) {
-            emojiCopy.textContent = `Click to ${selectedEmoji ? 'change' : 'select'}`;
-          }
+          emojiCopy.textContent = `Click to ${selectedEmoji ? 'change' : 'select'}`;
         }
       });
 
-      // Color picker
-      colorGrid.addEventListener('click', (e) => {
-        const colorBtn = e.target.closest('.color-option');
-        if (!colorBtn) return;
-        
-        const color = colorBtn.dataset.color;
-        selectedColor = selectedColor === color ? null : color;
-        
-        // Update UI
-        modal.querySelectorAll('.color-option').forEach(btn => {
-          const btnColor = btn.dataset.color;
-          btn.style.borderColor = selectedColor === btnColor ? 'var(--theme-text, #1a1a1a)' : 'transparent';
-          btn.innerHTML = selectedColor === btnColor ? '<span class="folder-form-modal__color-check">✓</span>' : '';
-        });
-
-        // Update clear button
-        const clearBtn = modal.querySelector('#clear-color-btn');
-        if (selectedColor && !clearBtn) {
-          const btn = document.createElement('button');
-          btn.id = 'clear-color-btn';
-          btn.type = 'button';
-          btn.textContent = 'Clear Color';
-          btn.className = 'button-common button-common--low folder-form-modal__clear-btn';
-          btn.addEventListener('click', () => {
-            selectedColor = null;
-            modal.querySelectorAll('.color-option').forEach(btn => {
-              btn.style.borderColor = 'transparent';
-              btn.innerHTML = '';
-            });
-            btn.remove();
-          });
-          colorGrid.parentElement.appendChild(btn);
-        } else if (!selectedColor && clearBtn) {
-          clearBtn.remove();
-        }
-      });
-
-      // Clear color button (if color already selected)
-      const clearColorBtn = modal.querySelector('#clear-color-btn');
-      if (clearColorBtn) {
-        clearColorBtn.addEventListener('click', () => {
-          selectedColor = null;
-          modal.querySelectorAll('.color-option').forEach(btn => {
-            btn.style.borderColor = 'transparent';
-            btn.innerHTML = '';
-          });
-          clearColorBtn.remove();
-        });
-      }
-
-      // Save
-      saveBtn.addEventListener('click', () => {
+      modal = createModal({
+        type: 'form',
+        title: modalTitle,
+        content,
+        buttons: [
+          { label: 'Cancel', type: 'common', role: 'cancel', shortcut: 'ESC' },
+          { label: 'Save', type: 'primary', role: 'confirm', shortcut: '↵' }
+        ],
+        onSubmit: () => {
         const title = titleInput.value.trim();
+          clearModalInlineError(modal);
+
         if (!title) {
-          openError({
-            title: 'Missing Folder Name',
-            message: 'Folder name is required.'
-          });
-          return;
+            showModalInlineError(modal, titleInput, 'Folder name is required.');
+            return false;
         }
-        
-        overlay.remove();
-        resolve({
+
+          submitResult = {
           title,
           customization: (selectedEmoji || selectedColor) ? {
             emoji: selectedEmoji,
             color: selectedColor
           } : null
-        });
-      });
+          };
 
-      // Cancel
-      cancelBtn.addEventListener('click', () => {
-        overlay.remove();
-        resolve(null);
-      });
-
-      // Click outside to close
-      overlay.addEventListener('click', (e) => {
-        if (e.target === overlay) {
-          overlay.remove();
-          resolve(null);
+          return true;
+        },
+        onClose: (confirmed) => {
+          resolve(confirmed ? submitResult : null);
         }
       });
 
-      // ESC key
-      const escHandler = (e) => {
-        if (e.key === 'Escape') {
-          overlay.remove();
-          resolve(null);
-          document.removeEventListener('keydown', escHandler);
-        }
-      };
-      document.addEventListener('keydown', escHandler);
+      showModal(modal);
     });
   }
 
@@ -855,12 +899,12 @@ const Modal = (() => {
     return new Promise((resolve) => {
       if (typeof createModal === 'function' && typeof showModal === 'function') {
         const widgets = [
-          { id: 'clock', title: 'Clock', icon: '🕐' },
-          { id: 'quicklinks', title: 'Quick Links', icon: '⚡' },
-          { id: 'notes', title: 'Notes', icon: '📝' }
+          { id: 'clock', title: 'Clock', subtitle: 'Time', icon: 'schedule' },
+          { id: 'quicklinks', title: 'Quick Links', subtitle: 'Shortcuts', icon: 'bolt' },
+          { id: 'notes', title: 'Notes', subtitle: 'Scratchpad', icon: 'sticky_note_2' }
         ];
 
-        let selectedWidget = null;
+        let selectedWidget = widgets.find((widget) => widget.id === defaults.id) || null;
         const list = document.createElement('div');
         list.className = 'bm-widget-list';
 
@@ -868,18 +912,45 @@ const Modal = (() => {
           const optionBtn = document.createElement('button');
           optionBtn.type = 'button';
           optionBtn.className = 'bm-widget-item-btn';
-          optionBtn.textContent = `${widget.icon} ${widget.title}`;
+
+          const preview = typeof createWidgetSmall === 'function'
+            ? createWidgetSmall({
+              type: 'widget',
+              state: 'idle',
+              label: widget.title,
+              subtext: widget.subtitle,
+              icon: widget.icon
+            })
+            : null;
+
+          if (preview) {
+            optionBtn.appendChild(preview);
+          } else {
+            optionBtn.textContent = widget.title;
+          }
+
+          optionBtn.setAttribute('aria-label', `Select ${widget.title} widget`);
+          optionBtn.setAttribute('aria-pressed', selectedWidget?.id === widget.id ? 'true' : 'false');
           optionBtn.addEventListener('click', () => {
             selectedWidget = widget;
-            list.querySelectorAll('.bm-widget-item-btn').forEach((btn) => btn.classList.remove('bm-widget-item-btn--selected'));
+            list.querySelectorAll('.bm-widget-item-btn').forEach((btn) => {
+              btn.classList.remove('bm-widget-item-btn--selected');
+              btn.setAttribute('aria-pressed', 'false');
+            });
             optionBtn.classList.add('bm-widget-item-btn--selected');
+            optionBtn.setAttribute('aria-pressed', 'true');
           });
+
+          if (selectedWidget?.id === widget.id) {
+            optionBtn.classList.add('bm-widget-item-btn--selected');
+          }
+
           list.appendChild(optionBtn);
         });
 
         const modal = createModal({
           type: 'form',
-          title: 'Add Widget',
+          title: 'Add widget',
           content: list,
           buttons: [
             { label: 'Cancel', type: 'common', role: 'cancel', shortcut: 'ESC' },
@@ -938,7 +1009,7 @@ const Modal = (() => {
         .join('');
 
       card.innerHTML = `
-        <h2 id="bm-widget-title" class="text-xl font-bold text-gray-900 mb-4">Add Widget</h2>
+        <h2 id="bm-widget-title" class="text-xl font-bold text-gray-900 mb-4">Add widget</h2>
         <div class="bm-widget-list mb-4" role="group" aria-label="Widget options">
           ${widgetsHtml}
         </div>
@@ -1035,7 +1106,7 @@ const Modal = (() => {
           content: messageEl,
           buttons: [
             { label: cancelText, type: 'common', role: 'cancel', shortcut: 'ESC' },
-            { label: confirmText, type: destructive ? 'primary' : 'primary', role: 'confirm', shortcut: '↵' }
+            { label: confirmText, type: destructive ? 'destructive' : 'primary', role: 'confirm', shortcut: '↵' }
           ],
           onClose: (confirmed) => resolve(Boolean(confirmed))
         });

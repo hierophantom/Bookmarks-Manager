@@ -223,12 +223,13 @@ function createModalField(field = {}) {
       throw new Error('Design-system text-field input is not available');
     }
 
+    textField.classList.add('modal__text-field');
     input.id = id;
     input.dataset.modalField = id;
     input.classList.add('modal__text-field-input');
     if (required) input.required = true;
 
-    wrapper.appendChild(input);
+    wrapper.appendChild(textField);
     return wrapper;
   }
 
@@ -324,20 +325,26 @@ function createModalField(field = {}) {
 }
 
 function createModalActionButton(btn = {}, index = 0) {
-  const type = btn.type || (index === 0 ? 'common' : 'primary');
-  const label = btn.label || 'Button';
+  const requestedRole = btn.role || btn.action || null;
+  const inferredType = requestedRole === 'cancel'
+    ? 'common'
+    : (requestedRole === 'submit' || requestedRole === 'confirm')
+      ? 'primary'
+      : (index === 0 ? 'common' : 'primary');
+  const type = btn.type || inferredType;
+  const label = btn.label || getModalActionLabel(requestedRole || (type === 'primary' ? 'submit' : 'cancel'), type);
   const disabled = Boolean(btn.disabled);
-  const shortcutKeys = normalizeShortcutKeys(btn.shortcut);
 
-  if (type === 'primary' && typeof createPrimaryButton === 'function') {
+  if ((type === 'primary' || type === 'destructive') && typeof createPrimaryButton === 'function') {
     const button = createPrimaryButton({
       label,
       contrast: 'high',
-      shortcutKeys,
-      shortcutText: true,
       disabled
     });
-    button.classList.add('modal__action-btn', 'modal__action-btn--primary');
+    button.classList.add(
+      'modal__action-btn',
+      type === 'destructive' ? 'modal__action-btn--destructive' : 'modal__action-btn--primary'
+    );
     return button;
   }
 
@@ -345,8 +352,6 @@ function createModalActionButton(btn = {}, index = 0) {
     const button = createCommonButton({
       label,
       contrast: 'low',
-      shortcutKeys,
-      shortcutText: true,
       disabled
     });
     button.classList.add('modal__action-btn', 'modal__action-btn--common');
@@ -355,26 +360,21 @@ function createModalActionButton(btn = {}, index = 0) {
 
   const fallback = document.createElement('button');
   fallback.type = 'button';
-  fallback.className = `modal__button modal__button--${type}`;
-  fallback.textContent = label;
+  fallback.className = `modal__button modal__button--${type} modal__action-btn modal__action-btn--${type}`;
   fallback.disabled = disabled;
+
+  const labelEl = document.createElement('span');
+  labelEl.className = 'modal__button-label';
+  labelEl.textContent = label;
+  fallback.appendChild(labelEl);
+
   return fallback;
 }
 
-function normalizeShortcutKeys(shortcut) {
-  if (!shortcut) return null;
-  const normalized = String(shortcut).trim();
-  if (!normalized) return null;
-
-  if (normalized === 'ESC' || normalized.toLowerCase() === 'esc') {
-    return ['Esc'];
-  }
-
-  if (normalized === '↵' || normalized.toLowerCase() === 'enter' || normalized.toLowerCase() === 'return') {
-    return ['↵'];
-  }
-
-  return [normalized];
+function getModalActionLabel(role, type) {
+  if (role === 'cancel') return 'Close';
+  if (role === 'submit' || role === 'confirm') return 'Save';
+  return type === 'primary' || type === 'destructive' ? 'Save' : 'Close';
 }
 
 function shouldTreatAsCancel(btn, index, totalButtons) {
@@ -411,15 +411,13 @@ function confirmDialog(options = {}) {
       subtitle: options.subtitle || '',
       buttons: [
         {
-          label: options.cancelLabel || 'Cancel',
+          label: options.cancelLabel || 'Close',
           type: 'common',
-          shortcut: 'ESC',
           role: 'cancel'
         },
         {
-          label: options.confirmLabel || 'Confirm',
+          label: options.confirmLabel || 'Save',
           type: 'primary',
-          shortcut: '↵',
           role: 'confirm'
         }
       ],

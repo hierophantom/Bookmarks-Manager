@@ -12,13 +12,13 @@
 .button-common {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  height: 32px;
+  gap: 4px;
+  height: 36px;
   padding: 0 12px;
   border-radius: var(--corner-radius-small, 4px);
-  border: 1px solid transparent;
+  border: 1px solid var(--button-common-border, var(--common-common-bright-05, rgba(255, 255, 255, 0.1)));
   background: var(--button-common-bg, var(--common-common-bright-05, rgba(255, 255, 255, 0.1)));
-  color: var(--button-common-text, var(--common-common-bright-25, rgba(255, 255, 255, 0.9)));
+  color: var(--button-common-text, var(--common-common-bright-15, rgba(255, 255, 255, 0.6)));
   font-family: var(--font-family-sans-serif, 'Lato', sans-serif);
   font-size: var(--size-medium, 12px);
   font-weight: var(--weight-regular, 400);
@@ -29,24 +29,42 @@
 }
 
 .button-common__icon {
-  width: 16px;
-  height: 16px;
+  width: 20px;
+  height: 20px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
   color: currentColor;
+  font-size: 20px;
+}
+
+.button-common__icon > svg,
+.button-common__icon > img,
+.button-common__icon > * {
+  width: 20px;
+  height: 20px;
+}
+
+.button-common__icon .material-symbols-outlined {
+  font-family: 'Material Symbols Outlined';
+  font-size: 20px;
+  line-height: 1;
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
 }
 
 .button-common__label {
+  font-family: var(--font-family-sans-serif, 'Lato', sans-serif);
+  font-size: inherit;
+  font-weight: inherit;
   line-height: 1;
   white-space: nowrap;
 }
 
 .button-common__hint {
-  margin-left: auto;
   display: inline-flex;
   align-items: center;
+  flex-shrink: 0;
 }
 
 .button-common__hint--fallback {
@@ -65,20 +83,27 @@
 
 .button-common--hover,
 .button-common:hover {
-  background: var(--button-common-bg-hover, var(--common-common-bright-10, rgba(255, 255, 255, 0.2)));
-  border-color: var(--button-common-border-hover, transparent);
+  background: var(--button-common-bg-hover, var(--common-common-bright-10, rgba(255, 255, 255, 0.4)));
+  border-color: var(--button-common-border-hover, var(--common-common-bright-25, rgba(255, 255, 255, 0.9)));
+  color: var(--button-common-text-hover, var(--common-common-bright-25, rgba(255, 255, 255, 0.9)));
 }
 
 .button-common--low {
   --button-common-bg: var(--common-common-bright-05, rgba(255, 255, 255, 0.1));
-  --button-common-bg-hover: var(--common-common-bright-10, rgba(255, 255, 255, 0.2));
-  --button-common-text: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
+  --button-common-border: var(--common-common-bright-05, rgba(255, 255, 255, 0.1));
+  --button-common-bg-hover: var(--common-common-bright-10, rgba(255, 255, 255, 0.4));
+  --button-common-border-hover: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
+  --button-common-text: var(--common-common-bright-15, rgba(255, 255, 255, 0.6));
+  --button-common-text-hover: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
 }
 
 .button-common--high {
-  --button-common-bg: var(--common-common-dark-10, rgba(0, 0, 0, 0.4));
-  --button-common-bg-hover: var(--common-common-dark-15, rgba(0, 0, 0, 0.6));
-  --button-common-text: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
+  --button-common-bg: var(--common-common-dark-05, rgba(0, 0, 0, 0.1));
+  --button-common-border: var(--common-common-dark-05, rgba(0, 0, 0, 0.1));
+  --button-common-bg-hover: var(--common-common-dark-10, rgba(0, 0, 0, 0.2));
+  --button-common-border-hover: var(--color-black-90, rgba(0, 0, 0, 0.9));
+  --button-common-text: var(--role-common-dark-20, rgba(0, 0, 0, 0.6));
+  --button-common-text-hover: var(--color-black-90, rgba(0, 0, 0, 0.9));
 }
 
 .button-common:active {
