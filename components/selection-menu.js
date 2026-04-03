@@ -3,7 +3,7 @@
  * 
  * Design System Component - BMG-102
  * 
- * Variants: multi-select (tags), single-select (sort)
+ * Variants: multi-select (tags), multi-select (checkbox), single-select (sort)
  * 
  * @example
  * const menu = createSelectionMenu({
@@ -16,7 +16,7 @@
 /**
  * Creates a selection menu element
  * @param {Object} options - Menu configuration
- * @param {string} [options.type='tag'] - 'tag' or 'sort'
+ * @param {string} [options.type='tag'] - 'tag', 'checkbox', or 'sort'
  * @param {string} [options.contrast='low'] - 'low' or 'high'
  * @param {string} [options.title] - Header title
  * @param {Array<string>} [options.items] - Item labels
@@ -48,6 +48,7 @@ function createSelectionMenu(options = {}) {
 
   const menu = document.createElement('div');
   menu.className = `selection-menu selection-menu--${contrast}`;
+  const isMultiSelect = type === 'tag' || type === 'checkbox';
 
   const updateSortSelection = (selectedItem, selectedLabel) => {
     const sortItems = menu.querySelectorAll('.selection-menu__item[data-selection-sort-item="true"]');
@@ -72,10 +73,10 @@ function createSelectionMenu(options = {}) {
 
   const headerTitle = document.createElement('div');
   headerTitle.className = 'selection-menu__title';
-  headerTitle.textContent = title || (type === 'sort' ? 'Sort view' : 'Select tags:');
+  headerTitle.textContent = title || (type === 'sort' ? 'Sort view' : 'Select options');
   header.appendChild(headerTitle);
 
-  if (type === 'tag' && showClear) {
+  if (isMultiSelect && showClear) {
     const clearBtn = document.createElement('button');
     clearBtn.className = 'selection-menu__clear';
     clearBtn.type = 'button';
@@ -146,6 +147,35 @@ function createSelectionMenu(options = {}) {
     menu.appendChild(item);
   };
 
+  const addCheckboxItem = (label, index) => {
+    const item = document.createElement('div');
+    item.className = 'selection-menu__item';
+    if (selectedIndices.includes(index)) {
+      item.classList.add('selection-menu__item--selected');
+    }
+
+    const checkbox = document.createElement('span');
+    checkbox.className = 'selection-menu__checkbox';
+    if (selectedIndices.includes(index)) {
+      checkbox.classList.add('selection-menu__checkbox--checked');
+    }
+
+    const labelEl = document.createElement('span');
+    labelEl.className = 'selection-menu__label';
+    labelEl.textContent = label;
+
+    item.appendChild(checkbox);
+    item.appendChild(labelEl);
+
+    item.addEventListener('click', () => {
+      if (typeof onSelect === 'function') {
+        onSelect(index, label);
+      }
+    });
+
+    menu.appendChild(item);
+  };
+
   if (type === 'tag') {
     items.forEach((label, index) => addTagItem(label, index));
 
@@ -162,6 +192,26 @@ function createSelectionMenu(options = {}) {
         }
       });
 
+      selectAll.appendChild(selectAllBtn);
+      menu.appendChild(selectAll);
+    }
+  }
+
+  if (type === 'checkbox') {
+    items.forEach((label, index) => addCheckboxItem(label, index));
+
+    if (showSelectAll) {
+      const selectAll = document.createElement('div');
+      selectAll.className = 'selection-menu__select-all';
+
+      const selectAllBtn = document.createElement('button');
+      selectAllBtn.type = 'button';
+      selectAllBtn.textContent = 'Select all';
+      selectAllBtn.addEventListener('click', () => {
+        if (typeof onSelectAll === 'function') {
+          onSelectAll();
+        }
+      });
       selectAll.appendChild(selectAllBtn);
       menu.appendChild(selectAll);
     }
