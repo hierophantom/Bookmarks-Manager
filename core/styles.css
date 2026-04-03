@@ -242,10 +242,10 @@ body {
 .topbar {
   position: relative;
   z-index: 2000;
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  gap: 16px;
   padding: 12px 16px;
   margin-bottom: 16px;
   min-height: 60px;
@@ -265,7 +265,9 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
-  flex: 1;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .topbar__action-btn,
@@ -306,30 +308,32 @@ body {
   display: flex;
   align-items: center;
   gap: 4px;
+  flex: 1 1 auto;
   font-size: var(--body--reg);
   font-weight: 400;
   color: var(--ui-bright-25);
   min-height: 20px;
   min-width: 0;
+  overflow: hidden;
 }
 
 
 .topbar__quote-text {
   color: var(--ui-bright-25);
   font-size: var(--body--bold, 16px);
-  flex: 1;
+  flex: 1 1 auto;
   min-width: 0;
-  max-width: 320px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  display: inline-block;
+  display: block;
   position: relative;
 }
 
 .topbar__quote-sep {
   color: var(--ui-bright-25);
   font-size: var(--body--reg);
+  flex-shrink: 0;
 }
 
 .topbar__quote-author {
@@ -338,6 +342,7 @@ body {
   line-height: 1.2;
   font-size: var(--body--reg);
   flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .topbar__quote-author:hover {
@@ -350,6 +355,8 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 4px;
+  flex: 0 0 auto;
+  justify-self: center;
   min-width: 250px;
   height: 36px;
   padding: 4px 12px;
@@ -426,8 +433,9 @@ body {
   display: flex;
   align-items: center;
   justify-content: flex-end;
+  justify-self: end;
   gap: 12px;
-  flex: 1;
+  flex: 0 0 auto;
 }
 
 .topbar__icon-btn {
