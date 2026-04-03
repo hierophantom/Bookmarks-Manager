@@ -43,9 +43,7 @@ function createSelectionField(options = {}) {
 
   const iconEl = document.createElement('span');
   iconEl.className = 'selection-field__icon';
-  iconEl.innerHTML = state === 'active'
-    ? "<svg viewBox='0 0 12 12' aria-hidden='true'><path d='M6 4L2 8h8z'/></svg>"
-    : "<svg viewBox='0 0 12 12' aria-hidden='true'><path d='M2 4h8L6 8z'/></svg>";
+  iconEl.innerHTML = "<span class='material-symbols-outlined' aria-hidden='true'></span>";
 
   let clearButton = null;
   if (typeof onClear === 'function') {
@@ -94,6 +92,13 @@ function createSelectionField(options = {}) {
 function applySelectionFieldState(field, state) {
   field.classList.remove('selection-field--idle', 'selection-field--hover', 'selection-field--active', 'selection-field--selection');
   field.classList.add(`selection-field--${state}`);
+  updateSelectionFieldChevron(field, state);
+}
+
+function updateSelectionFieldChevron(field, state) {
+  const iconEl = field.querySelector('.selection-field__icon .material-symbols-outlined');
+  if (!iconEl) return;
+  iconEl.textContent = state === 'active' ? 'keyboard_arrow_up' : 'keyboard_arrow_down';
 }
 
 /**

@@ -14,7 +14,7 @@
   gap: 6px;
   font-family: var(--font-family-sans-serif, 'Lato', sans-serif);
   font-size: 16px;
-  font-weight: var(--weight-regular, 400);
+  font-weight: var(--weight-bold, 700);
   color: var(--common-common-bright-15, rgba(255, 255, 255, 0.6));
   user-select: none;
 }
@@ -43,12 +43,12 @@
   align-items: center;
   font-family: var(--font-family-sans-serif, 'Lato', sans-serif);
   font-size: 16px;
-  font-weight: var(--weight-regular, 400);
-  padding: 2px 6px;
+  font-weight: var(--weight-bold, 700);
+  padding: 0;
   border-radius: var(--corner-radius-small, 4px);
   border: 1px solid transparent;
   background: transparent;
-  color: var(--common-common-bright-15, rgba(255, 255, 255, 0.6));
+  color: var(--common-common-bright-10, rgba(255, 255, 255, 0.4));
   cursor: pointer;
   text-decoration: none;
   user-select: none;
@@ -57,8 +57,9 @@
 
 .breadcrumbs__link--root:hover,
 .breadcrumbs__link--hover {
-  background: var(--common-common-bright-05, rgba(255, 255, 255, 0.1));
-  color: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
+  background: transparent;
+  color: var(--primary-primary-25, #2e33b9);
+  text-decoration: underline;
 }
 
 .breadcrumbs__link--current {
@@ -68,4 +69,5 @@
 
 .breadcrumbs__link--current:hover {
   background: transparent;
+  text-decoration: none;
 }

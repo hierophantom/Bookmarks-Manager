@@ -14,7 +14,9 @@
   gap: 4px;
   width: 200px;
   height: 36px;
+  min-height: 36px;
   padding: 8px 12px;
+  box-sizing: border-box;
   border-radius: var(--corner-radius-small, 4px);
   border: 1px solid transparent;
   background: var(--selection-field-bg, var(--primary-primary-10, rgba(46, 51, 185, 0.4)));
@@ -37,8 +39,8 @@
 }
 
 .selection-field__icon {
-  width: 16px;
-  height: 16px;
+  width: 20px;
+  height: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -53,9 +55,15 @@
   fill: currentColor;
 }
 
+.selection-field__icon .material-symbols-outlined {
+  font-size: 20px;
+  line-height: 1;
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+}
+
 .selection-field__clear {
-  width: 16px;
-  height: 16px;
+  width: 20px;
+  height: 20px;
   display: none;
   align-items: center;
   justify-content: center;
@@ -68,7 +76,7 @@
 }
 
 .selection-field__clear .material-symbols-outlined {
-  font-size: 16px;
+  font-size: 20px;
   line-height: 1;
 }
 
@@ -91,6 +99,10 @@
   background: var(--selection-field-bg-selection, var(--primary-primary-10, rgba(46, 51, 185, 0.4)));
 }
 
+.selection-field--selection .selection-field__label {
+  font-size: var(--size-medium, 12px);
+}
+
 /* Contrast variants */
 .selection-field--low {
   --selection-field-bg: var(--primary-primary-10, rgba(46, 51, 185, 0.4));
@@ -104,12 +116,12 @@
 
 .selection-field--high {
   --selection-field-bg: var(--primary-primary-10, rgba(46, 51, 185, 0.8));
-  --selection-field-bg-hover: var(--primary-primary-15, rgba(46, 51, 185, 0.8));
-  --selection-field-bg-active: var(--primary-primary-15, rgba(46, 51, 185, 0.8));
+  --selection-field-bg-hover: var(--primary-primary-15, rgba(46, 51, 185, 0.6));
+  --selection-field-bg-active: var(--primary-primary-15, rgba(46, 51, 185, 0.6));
   --selection-field-bg-selection: var(--primary-primary-10, rgba(46, 51, 185, 0.8));
-  --selection-field-border-active: var(--primary-primary-25, rgba(46, 51, 185, 0.2));
-  --selection-field-text: var(--common-common-dark-10, rgba(0, 0, 0, 0.8));
-  --selection-field-text-active: var(--common-common-dark-10, rgba(0, 0, 0, 0.9));
+  --selection-field-border-active: var(--primary-primary-10, rgba(46, 51, 185, 0.2));
+  --selection-field-text: var(--common-common-dark-20, rgba(0, 0, 0, 0.8));
+  --selection-field-text-active: var(--common-common-dark-25, rgba(0, 0, 0, 0.9));
 }
 
 /* Menu positioning */

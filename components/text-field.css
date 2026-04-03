@@ -17,7 +17,9 @@
   
   /* Sizing */
   height: 36px;
+  min-height: 36px;
   padding: 8px 12px;
+  box-sizing: border-box;
   
   /* Appearance */
   background: var(--text-field-bg, var(--common-common-bright-05, rgba(255, 255, 255, 0.1)));
@@ -67,15 +69,15 @@
 
 /* High contrast variant */
 .text-field--high {
-  --text-field-bg: var(--primary-primary-10, rgba(46, 51, 185, 0.4));
+  --text-field-bg: var(--primary-primary-10, rgba(46, 51, 185, 0.8));
   --text-field-border: transparent;
-  --text-field-text: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
-  --text-field-placeholder: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
+  --text-field-text: var(--common-common-dark-20, rgba(0, 0, 0, 0.8));
+  --text-field-placeholder: var(--common-common-dark-20, rgba(0, 0, 0, 0.8));
   --text-field-bg-hover: var(--primary-primary-15, rgba(46, 51, 185, 0.6));
   --text-field-border-hover: transparent;
   --text-field-bg-active: var(--primary-primary-15, rgba(46, 51, 185, 0.6));
-  --text-field-border-active: var(--primary-primary-25, #2e33b9);
-  --text-field-text-active: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
+  --text-field-border-active: var(--primary-primary-10, rgba(46, 51, 185, 0.2));
+  --text-field-text-active: var(--common-common-dark-25, rgba(0, 0, 0, 0.9));
 }
 
 /* States */

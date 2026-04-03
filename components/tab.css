@@ -44,7 +44,7 @@
 /* Tab label */
 .tab__label {
   font-family: var(--font-family-sans-serif, 'Lato', sans-serif);
-  font-size: var(--size-medium, 12px);
+  font-size: var(--size-large, 16px);
   font-weight: var(--weight-regular, 400);
   color: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
   overflow: hidden;

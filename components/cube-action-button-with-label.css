@@ -15,11 +15,15 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
   
   /* Sizing */
-  height: 20px;
-  min-width: 20px;
-  padding: 0 12px;
+  height: 24px;
+  min-height: 24px;
+  min-width: 24px;
+  padding: 4px 8px;
   
   /* Appearance */
   background: transparent;
@@ -36,7 +40,23 @@
   cursor: pointer;
   user-select: none;
   white-space: nowrap;
-  transition: all 0.2s ease;
+  transition: border-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+.cube-action-button-with-label::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: inherit;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.cube-action-button-with-label > * {
+  position: relative;
+  z-index: 1;
 }
 
 /* Icon */
@@ -73,7 +93,7 @@
 }
 
 .cube-action-button-with-label--primary:hover {
-  background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), var(--primary-primary-20, rgba(46, 51, 185, 0.6));
+  background: var(--primary-primary-20, rgba(46, 51, 185, 0.8));
   border-color: var(--primary-primary-25, #2e33b9);
   color: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
 }
@@ -86,7 +106,7 @@
 }
 
 .cube-action-button-with-label--default:hover {
-  background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
+  background: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
   color: var(--common-common-dark-25, rgba(0, 0, 0, 0.8));
 }
 
@@ -98,8 +118,12 @@
 }
 
 .cube-action-button-with-label--destructive:hover {
-  background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), var(--destructive-destructive-25, #de3033);
+  background: var(--destructive-destructive-25, #de3033);
   color: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
+}
+
+.cube-action-button-with-label:not(:disabled):hover::before {
+  opacity: 1;
 }
 
 /* States */
@@ -120,6 +144,10 @@
   transform: none;
 }
 
+.cube-action-button-with-label:disabled::before {
+  opacity: 0;
+}
+
 /* Focus (keyboard navigation) */
 .cube-action-button-with-label:focus {
   outline: none;
@@ -129,20 +157,20 @@
   outline: 2px solid var(--primary-primary-25, #2e33b9);
   outline-offset: 2px;
 }
-}
 
 /* Icon-only variant (no label) */
 .cube-action-button-with-label--icon-only {
-  padding: var(--spacing-small, 2px);
-  width: 20px;
-  height: 20px;
+  padding: 4px;
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
 }
 
 /* Size variants */
 
 /* Small (default) */
 .cube-action-button-with-label--small {
-  height: 20px;
+  height: 24px;
   font-size: 12px;
 }
 
@@ -159,9 +187,9 @@
 
 /* Medium */
 .cube-action-button-with-label--medium {
-  height: 20px;
+  height: 28px;
   font-size: 14px;
-  padding: 4px 12px;
+  padding: 6px 10px;
 }
 
 .cube-action-button-with-label--medium .cube-action-button-with-label__icon {
