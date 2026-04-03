@@ -154,6 +154,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   let currentSort = 'none';
   let availableTags = [];
   let currentFolderFilter = null; // Track which folder is being viewed
+  const BOOKMARKS_SORT_STORAGE_KEY = 'bookmarksSortChoice';
 
   function createMaterialIcon(name) {
     const icon = document.createElement('span');
@@ -233,7 +234,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  function initBookmarksActions() {
+  async function initBookmarksActions() {
     if (!bookmarksActionsLeft || !bookmarksActionsRight || !bookmarksActionsSettings) return;
 
     const searchComp = createSearchComp({
@@ -276,6 +277,21 @@ document.addEventListener('DOMContentLoaded', async () => {
       { label: 'Bookmarks: First Added', value: 'bookmarks-oldest' }
     ];
 
+    function normalizeSortChoice(value) {
+      return sortValues.some((option) => option.value === value) ? value : 'none';
+    }
+
+    async function persistSortChoice(value) {
+      await Storage.set({ [BOOKMARKS_SORT_STORAGE_KEY]: normalizeSortChoice(value) });
+    }
+
+    try {
+      currentSort = normalizeSortChoice(await Storage.get(BOOKMARKS_SORT_STORAGE_KEY));
+    } catch (e) {
+      console.warn('Failed to restore bookmarks sort choice, defaulting to none', e);
+      currentSort = 'none';
+    }
+
     function getSortIndex() {
       const index = sortValues.findIndex(option => option.value === currentSort);
       return index === -1 ? 0 : index;
@@ -293,8 +309,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       label: 'Sort by: Default',
       contrast: 'low',
       state: 'idle',
-      onClear: () => {
+      onClear: async () => {
         currentSort = 'none';
+        await persistSortChoice(currentSort);
         updateSortFieldLabel();
         render(true);
       }
@@ -369,9 +386,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         contrast: 'low',
         sections: sortSections,
         selectedIndex: getSortIndex(),
-        onSelect: (index) => {
+        onSelect: async (index) => {
           const selection = sortValues[index];
-          currentSort = selection ? selection.value : 'none';
+          currentSort = normalizeSortChoice(selection ? selection.value : 'none');
+          await persistSortChoice(currentSort);
           updateSortFieldLabel();
           render(true);
         }
@@ -656,7 +674,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   });
 
-  initBookmarksActions();
+  await initBookmarksActions();
 
   // Add keyboard shortcut tooltips to navigation buttons
   const shortcuts = ['H', 'B', 'J'];

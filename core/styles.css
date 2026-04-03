@@ -206,7 +206,7 @@ body {
   background: transparent;
   color: var(--theme-text);
   font-size: var(--body--reg);
-  min-width: 1200px;
+  min-width: 1400px;
 }
 
 :where(*, *::before, *::after) {
@@ -1048,7 +1048,7 @@ body {
 
 /* ===== HOMEPAGE / WIDGETS ===== */
 .homepage-page {
-  min-width: 1200px;
+  min-width: 1400px;
   width: 100%;
   display: flex !important;
   justify-content: center;
