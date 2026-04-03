@@ -16,7 +16,7 @@
   padding: var(--padding-and-gap-large, 8px) 0;
   border-radius: var(--corner-radius-small, 4px);
   border: 1px solid var(--selection-menu-border, var(--primary-primary-25, #2e33b9));
-  background: var(--selection-menu-bg, var(--primary-primary-20, rgba(46, 51, 185, 0.8)));
+  background: var(--selection-menu-bg, var(--primary-primary-25, #2e33b9));
   box-shadow: 0px 2px 4px 0px rgba(0, 0, 0, 0.1),
               0px 7px 7px 0px rgba(0, 0, 0, 0.09),
               0px 15px 9px 0px rgba(0, 0, 0, 0.05),
@@ -154,7 +154,7 @@
 
 /* Contrast variants */
 .selection-menu--low {
-  --selection-menu-bg: var(--primary-primary-20, rgba(46, 51, 185, 0.8));
+  --selection-menu-bg: var(--primary-primary-25, #2e33b9);
   --selection-menu-border: var(--primary-primary-25, #2e33b9);
   --selection-menu-text: var(--common-common-bright-20, rgba(255, 255, 255, 0.8));
   --selection-menu-muted: var(--common-common-bright-15, rgba(255, 255, 255, 0.6));
@@ -164,8 +164,8 @@
 }
 
 .selection-menu--high {
-  --selection-menu-bg: var(--primary-primary-20, rgba(46, 51, 185, 0.4));
-  --selection-menu-border: var(--primary-primary-25, rgba(46, 51, 185, 0.2));
+  --selection-menu-bg: var(--primary-primary-25, #2e33b9);
+  --selection-menu-border: var(--primary-primary-25, #2e33b9);
   --selection-menu-text: var(--common-common-dark-10, rgba(0, 0, 0, 0.8));
   --selection-menu-muted: var(--common-common-dark-10, rgba(0, 0, 0, 0.6));
   --selection-menu-tag-bg: var(--common-common-bright-05, rgba(0, 0, 0, 0.1));
