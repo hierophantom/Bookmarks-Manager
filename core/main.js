@@ -1281,6 +1281,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     async function selectDeleteDestination(folderNode) {
+      const counts = countFolderContents(folderNode);
+      const isEmptyFolder = counts.bookmarks === 0 && counts.folders === 0;
+
+      if (isEmptyFolder) {
+        const confirmed = await Modal.openConfirmation({
+          title: `Delete folder \"${folderNode.title || 'Folder'}\"?`,
+          message: 'This folder is empty. Delete it?',
+          confirmText: 'Delete',
+          destructive: true
+        });
+
+        return confirmed
+          ? { delete_action: 'delete', move_destination: '' }
+          : null;
+      }
+
       const excludedIds = new Set([folderNode.id]);
       collectDescendantFolderIds(folderNode, excludedIds);
 
@@ -1291,8 +1307,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         : (destinationOptions[0] ? destinationOptions[0].value : '');
       const canMoveContents = destinationOptions.length > 0;
       const defaultAction = 'delete';
-
-      const counts = countFolderContents(folderNode);
       const bookmarkWord = counts.bookmarks === 1 ? 'bookmark' : 'bookmarks';
       const folderWord = counts.folders === 1 ? 'subfolder' : 'subfolders';
 
