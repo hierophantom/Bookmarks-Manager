@@ -77,6 +77,7 @@
 .modal--form {
   width: min(100%, 532px);
   max-width: 532px;
+  overflow: visible;
 }
 
 /* Modal content section */
@@ -130,6 +131,13 @@
 .modal--form .modal__field {
   flex: 0 0 auto;
   min-height: auto;
+  overflow: visible;
+}
+
+.modal--form .modal__content,
+.modal--form .modal__body,
+.modal--form .modal__fields {
+  overflow: visible;
 }
 
 /* Modal title */
@@ -212,6 +220,7 @@
 .modal__field .selection-field__menu,
 .modal__selection-field .selection-field__menu {
   right: -1px;
+  z-index: 30;
 }
 
 /* Inline validation error inside modal */

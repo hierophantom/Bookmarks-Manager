@@ -49,6 +49,24 @@ function createSelectionMenu(options = {}) {
   const menu = document.createElement('div');
   menu.className = `selection-menu selection-menu--${contrast}`;
 
+  const updateSortSelection = (selectedItem, selectedLabel) => {
+    const sortItems = menu.querySelectorAll('.selection-menu__item[data-selection-sort-item="true"]');
+    sortItems.forEach((itemEl) => {
+      const checkEl = itemEl.querySelector('.selection-menu__checkmark');
+      const isSelected = itemEl === selectedItem;
+      itemEl.classList.toggle('selection-menu__item--selected', isSelected);
+      if (checkEl) {
+        checkEl.innerHTML = isSelected
+          ? "<svg viewBox='0 0 12 12' aria-hidden='true'><path d='M4.5 8.5L2 6l1-1 1.5 1.5L9 2l1 1z'/></svg>"
+          : '';
+      }
+    });
+
+    if (typeof selectedLabel === 'string') {
+      menu.dataset.selectedLabel = selectedLabel;
+    }
+  };
+
   const header = document.createElement('div');
   header.className = 'selection-menu__header';
 
@@ -101,6 +119,7 @@ function createSelectionMenu(options = {}) {
   const addSortItem = (label, index, isSelected) => {
     const item = document.createElement('div');
     item.className = 'selection-menu__item';
+    item.dataset.selectionSortItem = 'true';
     if (isSelected) {
       item.classList.add('selection-menu__item--selected');
     }
@@ -118,6 +137,7 @@ function createSelectionMenu(options = {}) {
     item.appendChild(labelEl);
 
     item.addEventListener('click', () => {
+      updateSortSelection(item, label);
       if (typeof onSelect === 'function') {
         onSelect(index, label);
       }
