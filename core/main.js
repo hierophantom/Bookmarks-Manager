@@ -1280,14 +1280,28 @@ document.addEventListener('DOMContentLoaded', async () => {
       return counts;
     }
 
+    function buildDeleteFolderSummary(counts) {
+      const parts = [];
+      if (counts.bookmarks > 0) {
+        parts.push(`<strong>${counts.bookmarks}</strong> ${counts.bookmarks === 1 ? 'bookmark' : 'bookmarks'}`);
+      }
+      if (counts.folders > 0) {
+        parts.push(`<strong>${counts.folders}</strong> ${counts.folders === 1 ? 'subfolder' : 'subfolders'}`);
+      }
+      if (!parts.length) {
+        return 'Are you sure you want to delete this folder?';
+      }
+      return `Are you sure you want to delete this folder?<br><br>This folder contains ${parts.join(' and ')}.`;
+    }
+
     async function selectDeleteDestination(folderNode) {
       const counts = countFolderContents(folderNode);
       const isEmptyFolder = counts.bookmarks === 0 && counts.folders === 0;
 
       if (isEmptyFolder) {
         const confirmed = await Modal.openConfirmation({
-          title: `Delete folder \"${folderNode.title || 'Folder'}\"?`,
-          message: 'This folder is empty. Delete it?',
+          title: 'Delete folder',
+          message: 'Are you sure you want to delete this folder?',
           confirmText: 'Delete',
           destructive: true
         });
@@ -1307,8 +1321,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         : (destinationOptions[0] ? destinationOptions[0].value : '');
       const canMoveContents = destinationOptions.length > 0;
       const defaultAction = 'delete';
-      const bookmarkWord = counts.bookmarks === 1 ? 'bookmark' : 'bookmarks';
-      const folderWord = counts.folders === 1 ? 'subfolder' : 'subfolders';
+      const deleteFolderSummary = buildDeleteFolderSummary(counts);
 
       if (typeof createModal === 'function' && typeof showModal === 'function') {
         return new Promise((resolve) => {
@@ -1317,7 +1330,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
           const summary = document.createElement('p');
           summary.className = 'delete-folder-modal__summary';
-          summary.innerHTML = `This folder contains <strong>${counts.bookmarks}</strong> ${bookmarkWord} and <strong>${counts.folders}</strong> ${folderWord}. Choose whether to delete everything or move the contents first.`;
+          summary.innerHTML = deleteFolderSummary;
 
           const choices = document.createElement('div');
           choices.className = 'delete-folder-modal__choices';
@@ -1382,7 +1395,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
           modal = createModal({
             type: 'form',
-            title: `Delete folder \"${folderNode.title || 'Folder'}\"?`,
+            title: 'Delete folder',
             content,
             fields: [
               {
@@ -1428,9 +1441,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
 
       const picker = new BaseModal({
-        title: `Delete folder \"${folderNode.title || 'Folder'}\"?`,
+        title: 'Delete folder',
         customContent: `
-          <p style="margin-bottom: 0.75rem; line-height: 1.5;">This folder contains <strong>${counts.bookmarks}</strong> ${bookmarkWord} and <strong>${counts.folders}</strong> ${folderWord}.</p>
+          <p style="margin-bottom: 0.75rem; line-height: 1.5;">${deleteFolderSummary}</p>
           <div style="display:flex;flex-direction:column;gap:0.5rem;margin-bottom:0.75rem;">
             <label style="display:flex;align-items:flex-start;gap:0.5rem;cursor:pointer;line-height:1.4;">
               <input id="delete-action-delete" type="radio" name="delete-action-choice" value="delete" ${defaultAction === 'delete' ? 'checked' : ''}>
