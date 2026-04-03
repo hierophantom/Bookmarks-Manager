@@ -2202,10 +2202,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   async function applyDropIntent() {
     const intent = dragState.intent;
     const srcId = dragState.srcId;
-    if (!intent || !srcId) return false;
+    if (!intent || !srcId) return { moved: false, refreshContents: false };
 
     const srcInfo = await BookmarksService.getBookmark(srcId);
-    if (!srcInfo) return false;
+    if (!srcInfo) return { moved: false, refreshContents: false };
 
     const undoPayload = {
       id: srcInfo.id,
@@ -2219,10 +2219,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (intent.mode === 'inside') {
       const folderId = intent.targetId;
-      if (!folderId || folderId === 'results') return false;
+      if (!folderId || folderId === 'results') return { moved: false, refreshContents: false };
       if (!srcInfo.url) {
         const allowed = await canMoveFolderInto(srcInfo.id, folderId);
-        if (!allowed) return false;
+        if (!allowed) return { moved: false, refreshContents: false };
       }
       const subtree = await BookmarksService.getSubTree(folderId);
       const children = subtree && subtree.children ? subtree.children : [];
@@ -2232,10 +2232,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         destinationIndex = Math.max(0, destinationIndex - 1);
       }
     } else if (intent.mode === 'append') {
-      if (!intent.folderId || intent.folderId === 'results') return false;
+      if (!intent.folderId || intent.folderId === 'results') return { moved: false, refreshContents: false };
       if (!srcInfo.url) {
         const allowed = await canMoveFolderInto(srcInfo.id, intent.folderId);
-        if (!allowed) return false;
+        if (!allowed) return { moved: false, refreshContents: false };
       }
       const subtree = await BookmarksService.getSubTree(intent.folderId);
       const children = subtree && subtree.children ? subtree.children : [];
@@ -2246,9 +2246,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     } else if (intent.mode === 'before' || intent.mode === 'after') {
       const targetId = intent.targetId;
-      if (!targetId || targetId === srcId) return false;
+      if (!targetId || targetId === srcId) return { moved: false, refreshContents: false };
       const dstInfo = await BookmarksService.getBookmark(targetId);
-      if (!dstInfo) return false;
+      if (!dstInfo) return { moved: false, refreshContents: false };
       destinationParentId = dstInfo.parentId;
       destinationIndex = intent.mode === 'before' ? dstInfo.index : dstInfo.index + 1;
       if (srcInfo.parentId === destinationParentId && typeof srcInfo.index === 'number' && srcInfo.index < destinationIndex) {
@@ -2256,7 +2256,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     }
 
-    if (!destinationParentId || typeof destinationIndex !== 'number') return false;
+    if (!destinationParentId || typeof destinationIndex !== 'number') return { moved: false, refreshContents: false };
 
     await moveBookmarkNode(srcId, destinationParentId, destinationIndex);
 
@@ -2273,7 +2273,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       6000
     );
 
-    return true;
+    return {
+      moved: true,
+      refreshContents: !srcInfo.url
+    };
   }
 
   function applyDropIntentToDom(intent, sourceEl) {
@@ -2340,9 +2343,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       try {
         const intentSnapshot = dragState.intent;
         const sourceSnapshot = dragState.srcEl;
-        const moved = await applyDropIntent();
-        if (moved) {
+        const dropResult = await applyDropIntent();
+        if (dropResult.moved) {
+          if (dropResult.refreshContents) {
+            await render(true);
+          } else {
           applyDropIntentToDom(intentSnapshot, sourceSnapshot);
+          }
         }
         cleanupDragState();
       } catch (err) {
@@ -2392,9 +2399,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       try {
         const intentSnapshot = dragState.intent;
         const sourceSnapshot = dragState.srcEl;
-        const moved = await applyDropIntent();
-        if (moved) {
+        const dropResult = await applyDropIntent();
+        if (dropResult.moved) {
+          if (dropResult.refreshContents) {
+            await render(true);
+          } else {
           applyDropIntentToDom(intentSnapshot, sourceSnapshot);
+          }
         }
         cleanupDragState();
       } catch (err) {
