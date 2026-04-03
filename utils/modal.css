@@ -103,6 +103,40 @@
   z-index: 100000 !important;
 }
 
+.modal__tagify {
+  --tags-focus-border-color: transparent;
+}
+
+.modal__text-field--tagify {
+  height: auto;
+  min-height: 0;
+  padding: 0;
+  background: transparent;
+  border-color: transparent;
+}
+
+.modal__text-field--tagify:hover,
+.modal__text-field--tagify:focus-within {
+  background: transparent;
+  border-color: transparent;
+}
+
+.modal__tagify-input {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+.modal__tagify.tagify--focus,
+.modal__tagify:focus-within {
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
 /* Selection field width stretch inside modal */
 .modal__field .selection-field,
 .modal__selection-field {

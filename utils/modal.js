@@ -460,7 +460,13 @@ const Modal = (() => {
 
       // Style the Tagify container to match design-system modal text inputs
       const tagifyWrapper = tagsInput.nextElementSibling;
+      const tagFieldWrapper = tagsInput.closest('.modal__text-field');
+      if (tagFieldWrapper) {
+        tagFieldWrapper.classList.add('modal__text-field--tagify');
+      }
+      tagsInput.classList.add('modal__tagify-input');
       if (tagifyWrapper && tagifyWrapper.classList.contains('tagify')) {
+        tagifyWrapper.classList.add('modal__tagify');
         tagifyWrapper.style.cssText = `
           width: 100%;
           box-sizing: border-box;
@@ -473,6 +479,7 @@ const Modal = (() => {
           font-size: 16px;
           padding: 4px 8px;
           cursor: text;
+          box-shadow: none;
         `;
       }
       

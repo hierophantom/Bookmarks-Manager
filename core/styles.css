@@ -990,13 +990,13 @@ body {
   background: var(--theme-secondary);
 }
 
-[role="dialog"] input,
+[role="dialog"] input:not(.text-field__input):not(.search-comp__input),
 [role="dialog"] textarea,
 [role="dialog"] select,
-.modal input,
+.modal input:not(.text-field__input):not(.search-comp__input),
 .modal textarea,
 .modal select,
-.modal-content input,
+.modal-content input:not(.text-field__input):not(.search-comp__input),
 .modal-content textarea,
 .modal-content select {
   border: 1px solid var(--theme-border);
@@ -1007,13 +1007,13 @@ body {
   background: white;
 }
 
-[role="dialog"] input:focus,
+[role="dialog"] input:not(.text-field__input):not(.search-comp__input):focus,
 [role="dialog"] textarea:focus,
 [role="dialog"] select:focus,
-.modal input:focus,
+.modal input:not(.text-field__input):not(.search-comp__input):focus,
 .modal textarea:focus,
 .modal select:focus,
-.modal-content input:focus,
+.modal-content input:not(.text-field__input):not(.search-comp__input):focus,
 .modal-content textarea:focus,
 .modal-content select:focus {
   outline: none;
@@ -1350,13 +1350,13 @@ body {
   background: var(--theme-secondary);
 }
 
-[role="dialog"] input,
+[role="dialog"] input:not(.text-field__input):not(.search-comp__input),
 [role="dialog"] textarea,
 [role="dialog"] select,
-.modal input,
+.modal input:not(.text-field__input):not(.search-comp__input),
 .modal textarea,
 .modal select,
-.modal-content input,
+.modal-content input:not(.text-field__input):not(.search-comp__input),
 .modal-content textarea,
 .modal-content select {
   border: 1px solid var(--theme-border);
@@ -1367,13 +1367,13 @@ body {
   background: white;
 }
 
-[role="dialog"] input:focus,
+[role="dialog"] input:not(.text-field__input):not(.search-comp__input):focus,
 [role="dialog"] textarea:focus,
 [role="dialog"] select:focus,
-.modal input:focus,
+.modal input:not(.text-field__input):not(.search-comp__input):focus,
 .modal textarea:focus,
 .modal select:focus,
-.modal-content input:focus,
+.modal-content input:not(.text-field__input):not(.search-comp__input):focus,
 .modal-content textarea:focus,
 .modal-content select:focus {
   outline: none;
