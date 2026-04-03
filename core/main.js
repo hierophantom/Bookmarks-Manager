@@ -558,6 +558,39 @@ document.addEventListener('DOMContentLoaded', async () => {
   let activePageIndex = 0;
   let lastPageIndex = 0;
 
+  function isBookmarksPageActive() {
+    return activePageIndex === 1;
+  }
+
+  function syncBookmarksSidePanelScope() {
+    const inBookmarksPage = isBookmarksPageActive();
+
+    const leftPanel = window.folderTreeViewPanel;
+    if (leftPanel?.element) {
+      leftPanel.element.style.display = inBookmarksPage ? '' : 'none';
+    }
+
+    const rightPanel = window.activeSessionsPanel;
+    if (rightPanel?.element) {
+      rightPanel.element.style.display = inBookmarksPage ? '' : 'none';
+    }
+
+    if (window.folderTreeViewTriggerButton) {
+      window.folderTreeViewTriggerButton.style.display = inBookmarksPage && !leftPanel?.isVisible()
+        ? ''
+        : 'none';
+    }
+
+    if (window.activeSessionsTriggerButton) {
+      window.activeSessionsTriggerButton.style.display = inBookmarksPage && !rightPanel?.isVisible()
+        ? ''
+        : 'none';
+    }
+  }
+
+  window.isBookmarksPageActive = isBookmarksPageActive;
+  window.syncBookmarksSidePanelScope = syncBookmarksSidePanelScope;
+
   function updatePageVisibility() {
     pages.forEach((page, idx) => {
       const isActive = idx === activePageIndex;
@@ -580,6 +613,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         btn.classList.toggle('active', target === activePageIndex);
       }
     });
+    syncBookmarksSidePanelScope();
   }
 
   async function setActivePage(index, { persist = true } = {}) {
@@ -647,6 +681,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       && (e.key === 'f' || e.key === 'F');
     if (isLeftPanelShortcut) {
       e.preventDefault();
+      if (!isBookmarksPageActive()) return;
       if (window.folderTreeViewPanel) {
         if (window.folderTreeViewPanel.isVisible()) {
           // Clear folder filter when closing panel
@@ -668,6 +703,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       && (e.key === 'v' || e.key === 'V');
     if (isRightPanelShortcut) {
       e.preventDefault();
+      if (!isBookmarksPageActive()) return;
       if (window.activeSessionsPanel) {
         if (window.activeSessionsPanel.isVisible()) {
           window.activeSessionsPanel.hide();

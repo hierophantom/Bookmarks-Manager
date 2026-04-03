@@ -468,6 +468,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
       });
       leftPanel.element.appendChild(toggleBtn);
+
+      if (typeof window.syncBookmarksSidePanelScope === 'function') {
+        window.syncBookmarksSidePanelScope();
+      }
     }
 
     // Initialize right panel (Active Sessions)
@@ -585,6 +589,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         rightPanel.isVisible() ? await rightPanel.hide() : await rightPanel.show();
       });
       rightPanel.element.appendChild(toggleBtn);
+
+      if (typeof window.syncBookmarksSidePanelScope === 'function') {
+        window.syncBookmarksSidePanelScope();
+      }
     }
   }, 100); // Wait for page to render
 });
