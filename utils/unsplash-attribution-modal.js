@@ -5,6 +5,8 @@
  */
 
 const UnsplashAttributionModal = (() => {
+  let attributionTooltip = null;
+
   /**
    * Show attribution modal for current Unsplash image
    */
@@ -17,36 +19,42 @@ const UnsplashAttributionModal = (() => {
         return;
       }
 
+      const photographerUrl = settings.photographerUrl || settings.unsplashUrl || '#';
+
       if (typeof createModal === 'function' && typeof showModal === 'function') {
         return new Promise((resolve) => {
           const content = document.createElement('div');
-          content.className = 'modal__form';
-          content.innerHTML = `
-            <div style="display:flex;flex-direction:column;gap:12px;">
-              <div>
-                <p style="font-size:12px;font-weight:600;color:var(--theme-secondary);text-transform:uppercase;margin:0 0 6px 0;">Photographer</p>
-                <a href="${escapeHtmlAttr(settings.photographerUrl)}" target="_blank" rel="noopener noreferrer" style="color:var(--theme-primary);text-decoration:none;font-weight:600;word-break:break-word;">
-                  ${escapeHtml(settings.photographer)}
-                </a>
-              </div>
-              <div style="padding:8px;background:var(--theme-background);border-radius:6px;font-size:12px;">
-                <p style="margin:0;color:var(--theme-secondary);font-weight:600;text-transform:uppercase;margin-bottom:4px;">Attribution</p>
-                <p style="margin:0;color:var(--theme-text);line-height:1.4;">
-                  Photo courtesy of <a href="https://unsplash.com" target="_blank" rel="noopener noreferrer" style="color:var(--theme-primary);text-decoration:none;">Unsplash</a>
-                </p>
-              </div>
-              <a href="${escapeHtmlAttr(settings.unsplashUrl)}" target="_blank" rel="noopener noreferrer" style="display:inline-block;padding:8px 12px;background:var(--theme-primary);color:white;border-radius:6px;text-decoration:none;font-weight:500;text-align:center;margin-top:4px;">
-                View on Unsplash
-              </a>
-            </div>
-          `;
+          content.className = 'unsplash-attribution-modal';
+
+          const photographerLink = document.createElement('a');
+          photographerLink.className = 'unsplash-attribution-modal__link';
+          photographerLink.href = photographerUrl;
+          photographerLink.target = '_blank';
+          photographerLink.rel = 'noopener noreferrer';
+          photographerLink.textContent = settings.photographer;
+
+          const courtesyCopy = document.createElement('p');
+          courtesyCopy.className = 'unsplash-attribution-modal__copy';
+          courtesyCopy.appendChild(document.createTextNode('Photo courtesy of '));
+
+          const unsplashLink = document.createElement('a');
+          unsplashLink.className = 'unsplash-attribution-modal__link';
+          unsplashLink.href = 'https://unsplash.com';
+          unsplashLink.target = '_blank';
+          unsplashLink.rel = 'noopener noreferrer';
+          unsplashLink.textContent = 'Unsplash';
+
+          courtesyCopy.appendChild(unsplashLink);
+
+          content.appendChild(photographerLink);
+          content.appendChild(courtesyCopy);
 
           const modal = createModal({
             type: 'dialog',
-            title: 'Photo Credit',
+            title: 'Background Photo Attribution',
             content,
             buttons: [
-              { label: 'Done', type: 'primary', role: 'confirm', shortcut: '↵' }
+              { label: 'Close', type: 'common', role: 'cancel' }
             ],
             onClose: () => resolve(true)
           });
@@ -56,27 +64,18 @@ const UnsplashAttributionModal = (() => {
       }
 
       const modal = new BaseModal({
-        title: 'Photo Credit',
+        title: 'Background Photo Attribution',
         customContent: `
-          <div style="display: flex; flex-direction: column; gap: 12px;">
-            <div>
-              <p style="font-size: 12px; font-weight: 600; color: var(--theme-secondary); text-transform: uppercase; margin: 0 0 6px 0;">Photographer</p>
-              <a href="${escapeHtmlAttr(settings.photographerUrl)}" target="_blank" rel="noopener noreferrer" style="color: var(--theme-primary); text-decoration: none; font-weight: 600; word-break: break-word;">
-                ${escapeHtml(settings.photographer)}
-              </a>
-            </div>
-            <div style="padding: 8px; background: var(--theme-background); border-radius: 6px; font-size: 12px;">
-              <p style="margin: 0; color: var(--theme-secondary); font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">Attribution</p>
-              <p style="margin: 0; color: var(--theme-text); line-height: 1.4;">
-                Photo courtesy of <a href="https://unsplash.com" target="_blank" rel="noopener noreferrer" style="color: var(--theme-primary); text-decoration: none;">Unsplash</a>
-              </p>
-            </div>
-            <a href="${escapeHtmlAttr(settings.unsplashUrl)}" target="_blank" rel="noopener noreferrer" style="display: inline-block; padding: 8px 12px; background: var(--theme-primary); color: white; border-radius: 6px; text-decoration: none; font-weight: 500; text-align: center; margin-top: 4px;">
-              View on Unsplash
+          <div class="unsplash-attribution-modal">
+            <a class="unsplash-attribution-modal__link" href="${escapeHtmlAttr(photographerUrl)}" target="_blank" rel="noopener noreferrer">
+              ${escapeHtml(settings.photographer)}
             </a>
+            <p class="unsplash-attribution-modal__copy">
+              Photo courtesy of <a class="unsplash-attribution-modal__link" href="https://unsplash.com" target="_blank" rel="noopener noreferrer">Unsplash</a>
+            </p>
           </div>
         `,
-        confirmText: 'Done',
+        confirmText: 'Close',
         cancelText: null
       });
 
@@ -118,6 +117,8 @@ const UnsplashAttributionModal = (() => {
       const btn = document.getElementById('unsplash-attribution-btn');
       if (!btn) return;
 
+      ensureTooltip(btn);
+
       const settings = await BackgroundsService.getBackgroundSettings();
       
       if (settings.type === 'unsplash' && settings.photographer) {
@@ -127,6 +128,24 @@ const UnsplashAttributionModal = (() => {
       }
     } catch (error) {
       console.warn('[UnsplashAttributionModal] Error updating button visibility:', error);
+    }
+  }
+
+  function ensureTooltip(btn) {
+    if (attributionTooltip || typeof createTooltip !== 'function') {
+      return;
+    }
+
+    attributionTooltip = createTooltip({
+      text: 'Background Attribution',
+      target: btn,
+      position: 'bottom',
+      delay: 'fast'
+    });
+
+    const wrapper = btn.parentElement;
+    if (wrapper && wrapper.classList.contains('tooltip-trigger')) {
+      wrapper.classList.add('tooltip-trigger--topbar-attribution');
     }
   }
 
