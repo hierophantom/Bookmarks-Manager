@@ -39,6 +39,15 @@
   width: 100%;
 }
 
+.cube-section--even-slots .cube-section__items {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  align-items: flex-start;
+  justify-items: center;
+  column-gap: 0;
+  row-gap: 20px;
+}
+
 .cube-section__items--wrap-vertical {
   flex-direction: column;
   flex-wrap: wrap;

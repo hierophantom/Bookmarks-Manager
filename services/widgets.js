@@ -151,6 +151,7 @@ const WidgetsService = (()=>{
       wrap: 'none',
       action: addBookmarkAction
     });
+    bookmarkSection.classList.add('cube-section--even-slots');
 
     container.appendChild(createWidgetSection('Quick links', bookmarkSection));
   }
@@ -295,6 +296,7 @@ const WidgetsService = (()=>{
       wrap: 'none',
       action: addWidgetAction
     });
+    cubeSection.classList.add('cube-section--even-slots');
 
     container.appendChild(createWidgetSection('Widgets', cubeSection));
   }
