@@ -1657,6 +1657,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       // Allow hiding top-level system sections as well (Other Bookmarks and Mobile Bookmarks)
       const isHideableTopLevelSection = folder.parentId === '0' && (folder.id === '2' || folder.id === '3');
       const canHideFolderSection = isRootFolder || isHideableTopLevelSection;
+      const canDeleteFolderSection = folder.parentId !== '0';
 
       // Create folder section actions
       const folderActions = [];
@@ -1785,8 +1786,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       folderActions.push(addBookmarkBtn);
       tooltipData.push('Add bookmark to folder');
 
-      // Delete (only for root folders)
-      if (isRootFolder) {
+      // Delete for user folders, but never for top-level system sections
+      if (canDeleteFolderSection) {
         const deleteBtn = createCubeActionButton({
           icon: 'delete',
           label: 'Remove',
