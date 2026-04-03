@@ -7,6 +7,27 @@
 const BackgroundsService = (() => {
   const UNSPLASH_API_KEY = 'Cl3l2uuRTnCiseduo8ZzhKXbLgtOFP9_h0mTiUEwFK8';
   const UNSPLASH_API_URL = 'https://api.unsplash.com/photos/random';
+  const UNSPLASH_CATEGORIES = [
+    { id: '6sMVjTLSkeQ', name: 'Nature' },
+    { id: 'xHxYTMHLgOc', name: 'Urban' },
+    { id: 'qPYsDzvJOYc', name: 'Abstract' },
+    { id: 'Jpg6Kidl-Hk', name: 'Animals' },
+    { id: 'CDwuwXJAbEw', name: 'Technology' },
+    { id: 'Fzo3zuOHN6w', name: 'Travel' },
+  ];
+  const LEGACY_UNSPLASH_CATEGORY_MAP = {
+    '1065976': '6sMVjTLSkeQ',
+    '1088404': 'xHxYTMHLgOc',
+    '1491704': 'qPYsDzvJOYc',
+    '799589': 'Jpg6Kidl-Hk',
+    '1447306': 'pIF7l5_hgxg',
+    '162': 'vFcvoGKLoaw',
+    '2102': 'CDwuwXJAbEw',
+    '3178144': 'tthdwfNPCcw',
+    '4206': 'MXYPPfPdkcw',
+    '6014849': 'Fzo3zuOHN6w',
+  };
+  const VALID_UNSPLASH_CATEGORY_IDS = new Set(UNSPLASH_CATEGORIES.map((category) => category.id));
 
   // Image validation constraints
   const IMAGE_CONSTRAINTS = {
@@ -25,6 +46,16 @@ const BackgroundsService = (() => {
     '1d': { label: 'Every day', value: 86400000 },
   };
 
+  function normalizeUnsplashCategories(categories = []) {
+    if (!Array.isArray(categories)) return [];
+
+    return [...new Set(
+      categories
+        .map((categoryId) => LEGACY_UNSPLASH_CATEGORY_MAP[String(categoryId)] || String(categoryId))
+        .filter((categoryId) => VALID_UNSPLASH_CATEGORY_IDS.has(categoryId))
+    )];
+  }
+
   /**
    * Get current background settings
    */
@@ -42,6 +73,8 @@ const BackgroundsService = (() => {
         lastUnsplashUpdate: null,
         dimmer: 0,
       };
+
+      settings.unsplashCategories = normalizeUnsplashCategories(settings.unsplashCategories);
 
       // Attach image data from local storage if it exists
       if (localResult.backgroundImageData) {
@@ -67,6 +100,10 @@ const BackgroundsService = (() => {
    */
   async function saveBackgroundSettings(settings) {
     try {
+      if (settings && Array.isArray(settings.unsplashCategories)) {
+        settings.unsplashCategories = normalizeUnsplashCategories(settings.unsplashCategories);
+      }
+
       // Separate large image data from settings
       const settingsToSync = { ...settings };
       const imageData = settings.imageFile;
@@ -165,12 +202,13 @@ const BackgroundsService = (() => {
    */
   async function fetchUnsplashImage(categories = []) {
     try {
+      const normalizedCategories = normalizeUnsplashCategories(categories);
       const params = new URLSearchParams({
         client_id: UNSPLASH_API_KEY,
       });
 
-      if (categories.length > 0) {
-        params.append('collections', categories.join(','));
+      if (normalizedCategories.length > 0) {
+        params.append('topics', normalizedCategories.join(','));
       }
 
       const response = await fetch(`${UNSPLASH_API_URL}?${params}`);
@@ -203,18 +241,19 @@ const BackgroundsService = (() => {
    */
   async function setUnsplashBackground(categories, frequency) {
     try {
-      const image = await fetchUnsplashImage(categories);
+      const normalizedCategories = normalizeUnsplashCategories(categories);
+      const image = await fetchUnsplashImage(normalizedCategories);
       const settings = await getBackgroundSettings();
       settings.type = 'unsplash';
       settings.imageUrl = image.url;
-      settings.unsplashCategories = categories;
+      settings.unsplashCategories = normalizedCategories;
       settings.unsplashFrequency = frequency;
       settings.lastUnsplashUpdate = Date.now();
       settings.photographer = image.photographer;
       settings.photographerUrl = image.photographerUrl;
       settings.unsplashUrl = image.unsplashUrl;
       await saveBackgroundSettings(settings);
-      scheduleUnsplashRotation(frequency, categories);
+      scheduleUnsplashRotation(frequency, normalizedCategories);
       return true;
     } catch (e) {
       console.error('Failed to set Unsplash background', e);
@@ -227,11 +266,12 @@ const BackgroundsService = (() => {
    */
   async function updateUnsplashSettings(categories, frequency) {
     try {
+      const normalizedCategories = normalizeUnsplashCategories(categories);
       const settings = await getBackgroundSettings();
-      settings.unsplashCategories = categories;
+      settings.unsplashCategories = normalizedCategories;
       settings.unsplashFrequency = frequency;
       await saveBackgroundSettings(settings);
-      scheduleUnsplashRotation(frequency, categories);
+      scheduleUnsplashRotation(frequency, normalizedCategories);
       return true;
     } catch (e) {
       console.error('Failed to update Unsplash settings', e);
@@ -330,18 +370,7 @@ const BackgroundsService = (() => {
    * Note: In production, you might want to cache this or fetch from a list endpoint
    */
   function getUnsplashCategories() {
-    return [
-      { id: '1065976', name: 'Nature' },
-      { id: '1088404', name: 'Urban' },
-      { id: '1491704', name: 'Abstract' },
-      { id: '799589', name: 'Animals' },
-      { id: '1447306', name: 'Minimalism' },
-      { id: '162', name: 'Business' },
-      { id: '2102', name: 'Technology' },
-      { id: '3178144', name: 'Art' },
-      { id: '4206', name: 'Food' },
-      { id: '6014849', name: 'Travel' },
-    ];
+    return UNSPLASH_CATEGORIES.map((category) => ({ ...category }));
   }
 
   const api = {

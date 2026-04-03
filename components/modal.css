@@ -77,7 +77,6 @@
 .modal--form {
   width: min(100%, 532px);
   max-width: 532px;
-  overflow: visible;
 }
 
 /* Modal content section */
@@ -131,12 +130,13 @@
 .modal--form .modal__field {
   flex: 0 0 auto;
   min-height: auto;
-  overflow: visible;
 }
 
-.modal--form .modal__content,
-.modal--form .modal__body,
-.modal--form .modal__fields {
+.modal--form.delete-folder-modal-shell,
+.modal--form.delete-folder-modal-shell .modal__content,
+.modal--form.delete-folder-modal-shell .modal__body,
+.modal--form.delete-folder-modal-shell .modal__fields,
+.modal--form.delete-folder-modal-shell .modal__field {
   overflow: visible;
 }
 

@@ -1435,6 +1435,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
           });
 
+          modal.querySelector('.modal')?.classList.add('delete-folder-modal-shell');
+
           showModal(modal);
           setTimeout(updateChoiceState, 0);
         });

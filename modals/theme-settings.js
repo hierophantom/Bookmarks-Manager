@@ -100,7 +100,7 @@ const ThemeSettingsModal = (() => {
             ${selectedCategories.includes(cat.id) ? 'checked' : ''}
             style="cursor: pointer;"
           >
-          <span>${cat.name}</span>
+          <span style="color: var(--common-common-dark-20, rgba(0, 0, 0, 0.8));">${cat.name}</span>
         </label>
       `
       )
