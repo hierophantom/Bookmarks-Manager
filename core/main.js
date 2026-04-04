@@ -1038,12 +1038,61 @@ document.addEventListener('DOMContentLoaded', async () => {
       while (parentId) {
         const parent = idToNode.get(parentId);
         if (!parent) break;
-        if (!parent.url) {
+        if (!parent.url && parent.id !== '0' && parent.title !== '0') {
           parts.push(parent.title || parent.id);
         }
         parentId = parent.parentId;
       }
       return parts.reverse().join(' / ');
+    }
+
+    async function clearSearchForFolderNavigation() {
+      if (!textSearchInput) return;
+      if (!textSearchInput.value) return;
+
+      textSearchInput.value = '';
+      textSearchInput.dispatchEvent(new Event('input', { bubbles: true }));
+      await render(false);
+    }
+
+    async function openSearchResultFolder(folderId) {
+      if (!folderId) return;
+      await clearSearchForFolderNavigation();
+      if (typeof window.openFolderTreeToFolder === 'function') {
+        await window.openFolderTreeToFolder(folderId);
+        return;
+      }
+      currentFolderFilter = folderId;
+      if (textSearchInput) {
+        textSearchInput.value = '';
+        textSearchInput.dispatchEvent(new Event('input', { bubbles: true }));
+        return;
+      }
+      await render(false);
+    }
+
+    async function revealSearchResultFolder(folderId) {
+      if (!folderId) return;
+      await clearSearchForFolderNavigation();
+
+      let didRevealInTree = false;
+      if (typeof window.revealFolderInTree === 'function') {
+        await window.revealFolderInTree(folderId);
+        didRevealInTree = true;
+      } else if (typeof window.openFolderTreeToFolder === 'function') {
+        await window.openFolderTreeToFolder(folderId);
+        return;
+      }
+
+      if (typeof window.showBookmarksInFolder === 'function') {
+        await window.showBookmarksInFolder(folderId);
+        return;
+      }
+
+      if (!didRevealInTree) {
+        currentFolderFilter = folderId;
+        await render(false);
+      }
     }
 
     // Flat search results mode: when filtering, render only matching bookmarks without folder sections
@@ -1097,11 +1146,40 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       for (const folder of folderResults) {
         if (thisRender !== renderVersion) return;
-        items.push(createFolderTile(folder));
+        const folderPath = getFolderPath(folder.id);
+        const folderTreeAction = createCubeActionButton({
+          icon: 'folder_open',
+          label: 'Show in folder tree',
+          tooltip: folderPath ? `Show in folder tree: ${folderPath}` : 'Show in folder tree',
+          onClick: (event) => {
+            event.stopPropagation();
+            revealSearchResultFolder(folder.id).catch((error) => {
+              console.error('Failed to reveal folder search result', error);
+            });
+          }
+        });
+        const folderTile = createFolderTile(folder, {
+          searchIdleActions: folderTreeAction ? [folderTreeAction] : [],
+          showSearchIdleActions: Boolean(folderTreeAction)
+        });
+        if (folderPath) {
+          folderTile.setAttribute('title', `Location: ${folderPath}`);
+        }
+        folderTile.addEventListener('click', () => {
+          openSearchResultFolder(folder.id).catch((error) => {
+            console.error('Failed to open folder search result', error);
+          });
+        });
+        items.push(folderTile);
       }
 
       for (const child of bookmarkResults) {
         if (thisRender !== renderVersion) return;
+        const containingFolder = child.parentId ? idToNode.get(child.parentId) : null;
+        const containingFolderTitle = containingFolder && !containingFolder.url
+          ? (containingFolder.title || 'Folder')
+          : '';
+        const locationPath = getFolderPath(child.id);
         const bookmarkTags = getTagsForId(child.id);
         const tagAction = bookmarkTags.length > 0 ? createCubeActionButton({
           icon: 'label',
@@ -1114,6 +1192,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (tagAction && bookmarkTags.length > 0) {
           tagAction.setAttribute('title', bookmarkTags.join(', '));
         }
+        const folderAction = child.parentId ? createCubeActionButton({
+          icon: 'folder_open',
+          label: 'Show in folder tree',
+          tooltip: locationPath ? `Show in folder tree: ${locationPath}` : 'Show in folder tree',
+          onClick: (event) => {
+            event.stopPropagation();
+            revealSearchResultFolder(child.parentId).catch((error) => {
+              console.error('Failed to reveal bookmark result folder', error);
+            });
+          }
+        }) : null;
         const editAction = createCubeActionButton({
           icon: 'edit',
           label: 'Edit',
@@ -1154,11 +1243,14 @@ document.addEventListener('DOMContentLoaded', async () => {
           type: 'bookmark',
           state: 'idle',
           label: child.title || child.url,
-          subtext: urlHost,
+          subtext: containingFolderTitle ? `${urlHost} • ${containingFolderTitle}` : urlHost,
           icon: createFaviconIcon(child.url),
-          actions: tagAction ? [tagAction, editAction, deleteAction] : [editAction, deleteAction],
-          idleActions: tagAction ? [tagAction] : []
+          actions: [tagAction, folderAction, editAction, deleteAction].filter(Boolean),
+          idleActions: [tagAction, folderAction].filter(Boolean)
         });
+        if (locationPath) {
+          tile.setAttribute('title', `Location: ${locationPath}`);
+        }
         tile.dataset.id = child.id;
         tile.draggable = true;
         tile.addEventListener('click', () => {
@@ -1685,7 +1777,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       return tile;
     }
 
-    function createFolderTile(child) {
+    function createFolderTile(child, options = {}) {
+      const {
+        searchIdleActions = null,
+        showSearchIdleActions = false
+      } = options;
       perf.tilesRendered += 1;
       const editAction = createCubeActionButton({
         icon: 'edit',
@@ -1716,9 +1812,34 @@ document.addEventListener('DOMContentLoaded', async () => {
         label: child.title || 'Folder',
         count: `${childCount} items`,
         icon: 'folder',
-        idleActions: [editAction, deleteAction],
-        showIdleActions: false
+        idleActions: Array.isArray(searchIdleActions) && searchIdleActions.length > 0
+          ? searchIdleActions
+          : [editAction, deleteAction],
+        showIdleActions: Array.isArray(searchIdleActions) && searchIdleActions.length > 0
+          ? showSearchIdleActions
+          : false
       });
+
+      const actionsContainer = tile.querySelector('.bookmarks-gallery-view__actions');
+      if (actionsContainer && Array.isArray(searchIdleActions) && searchIdleActions.length > 0) {
+        tile.addEventListener('mouseenter', () => {
+          if (editAction && !actionsContainer.contains(editAction)) {
+            actionsContainer.appendChild(editAction);
+          }
+          if (deleteAction && !actionsContainer.contains(deleteAction)) {
+            actionsContainer.appendChild(deleteAction);
+          }
+        });
+
+        tile.addEventListener('mouseleave', () => {
+          if (editAction && editAction.parentNode === actionsContainer) {
+            actionsContainer.removeChild(editAction);
+          }
+          if (deleteAction && deleteAction.parentNode === actionsContainer) {
+            actionsContainer.removeChild(deleteAction);
+          }
+        });
+      }
 
       tile.dataset.id = child.id;
       tile.draggable = true;

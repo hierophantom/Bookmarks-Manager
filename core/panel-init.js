@@ -375,6 +375,33 @@ document.addEventListener('DOMContentLoaded', async () => {
       };
 
       subscribeLeftPanelBookmarkEvents();
+
+      const revealFolderInTree = async (folderId) => {
+        if (!folderId) return;
+
+        if (leftPanelRefreshTimer) {
+          clearTimeout(leftPanelRefreshTimer);
+          leftPanelRefreshTimer = null;
+        }
+
+        await loadLeftPanelData(leftPanel);
+
+        const targetItem = leftPanel.content?.querySelector(`[data-folder-id="${folderId}"]`);
+        if (!targetItem) return;
+
+        let currentParentId = targetItem.dataset.parentId;
+        while (currentParentId) {
+          const parentItem = leftPanel.content?.querySelector(`[data-folder-id="${currentParentId}"]`);
+          if (!parentItem) break;
+          if (parentItem.dataset.hasChildren === 'true' && parentItem.dataset.expanded !== 'true') {
+            setFolderExpanded(leftPanel, currentParentId, true);
+          }
+          currentParentId = parentItem.dataset.parentId;
+        }
+
+        leftPanel.setActiveFolder?.(folderId);
+        targetItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      };
       
       // Load folder tree data and persist visibility state when panel shows/hides
       const originalLeftShow = leftPanel.show.bind(leftPanel);
@@ -442,6 +469,21 @@ document.addEventListener('DOMContentLoaded', async () => {
       
       // Initial load
       loadLeftPanelData(leftPanel);
+
+      window.revealFolderInTree = async function(folderId) {
+        if (!folderId) return;
+        await leftPanel.show();
+        await revealFolderInTree(folderId);
+      };
+
+      window.openFolderTreeToFolder = async function(folderId) {
+        if (!folderId) return;
+        await leftPanel.show();
+        await revealFolderInTree(folderId);
+        if (typeof window.showBookmarksInFolder === 'function') {
+          await window.showBookmarksInFolder(folderId);
+        }
+      };
 
       // Refresh immediately when returning to this page with panel visible
       document.addEventListener('visibilitychange', () => {
