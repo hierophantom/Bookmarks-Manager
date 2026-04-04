@@ -1,0 +1,103 @@
+/**
+ * Chip Component
+ *
+ * Design System Component - BMG-202
+ * Based on Figma: node-id=202-21768
+ *
+ * States: Idle, Hover
+ * Color scheme: Low/High contrast
+ */
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--padding-and-gap-medium, 4px);
+  min-height: 24px;
+  padding: var(--padding-and-gap-medium, 4px) var(--padding-and-gap-large, 8px);
+  border-radius: var(--corner-radius-medium, 8px);
+  border: 1px solid var(--chip-border, var(--primary-primary-25, #2e33b9));
+  background: var(--chip-bg, var(--primary-primary-20, rgba(46, 51, 185, 0.8)));
+  color: var(--chip-text, var(--common-common-bright-25, rgba(255, 255, 255, 0.9)));
+  font-family: var(--font-family-sans-serif, 'Lato', sans-serif);
+  font-size: var(--size-medium, 12px);
+  font-weight: var(--weight-regular, 400);
+  line-height: 1;
+  user-select: none;
+  transition: background var(--ui-hover-transition, 200ms ease), border-color var(--ui-hover-transition, 200ms ease), color var(--ui-hover-transition, 200ms ease);
+}
+
+.chip--interactive {
+  cursor: pointer;
+}
+
+.chip--interactive:focus-visible {
+  outline: 2px solid var(--chip-focus, var(--common-common-bright-25, rgba(255, 255, 255, 0.9)));
+  outline-offset: 2px;
+}
+
+.chip:hover,
+.chip--hover {
+  background: var(--chip-bg-hover, var(--primary-primary-15, rgba(46, 51, 185, 0.6)));
+  border-color: var(--chip-border-hover, var(--primary-primary-25, #2e33b9));
+}
+
+.chip__text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chip__dismiss {
+  width: 16px;
+  height: 16px;
+  min-width: 16px;
+  min-height: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--chip-icon, var(--common-common-bright-15, rgba(255, 255, 255, 0.6)));
+  cursor: pointer;
+}
+
+.chip__dismiss svg {
+  width: 10px;
+  height: 10px;
+  display: block;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+}
+
+.chip__dismiss:hover,
+.chip--hover .chip__dismiss,
+.chip:hover .chip__dismiss {
+  color: var(--chip-icon-hover, var(--common-common-bright-25, rgba(255, 255, 255, 0.9)));
+}
+
+.chip--low {
+  --chip-bg: var(--primary-primary-20, rgba(46, 51, 185, 0.8));
+  --chip-bg-hover: linear-gradient(0deg, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), var(--primary-primary-15, rgba(46, 51, 185, 0.6));
+  --chip-border: var(--primary-primary-25, #2e33b9);
+  --chip-border-hover: var(--primary-primary-25, #2e33b9);
+  --chip-text: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
+  --chip-icon: var(--common-common-bright-15, rgba(255, 255, 255, 0.6));
+  --chip-icon-hover: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
+  --chip-focus: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
+}
+
+.chip--high {
+  --chip-bg: var(--primary-primary-10, rgba(46, 51, 185, 0.4));
+  --chip-bg-hover: linear-gradient(0deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.4)), var(--primary-primary-15, rgba(46, 51, 185, 0.6));
+  --chip-border: var(--primary-primary-10, rgba(46, 51, 185, 0.2));
+  --chip-border-hover: var(--primary-primary-10, rgba(46, 51, 185, 0.2));
+  --chip-text: var(--common-common-dark-10, rgba(0, 0, 0, 0.9));
+  --chip-icon: var(--common-common-dark-10, rgba(0, 0, 0, 0.6));
+  --chip-icon-hover: var(--common-common-dark-10, rgba(0, 0, 0, 0.9));
+  --chip-focus: var(--common-common-dark-10, rgba(0, 0, 0, 0.9));
+}
