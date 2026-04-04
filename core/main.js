@@ -1134,8 +1134,8 @@ document.addEventListener('DOMContentLoaded', async () => {
               const info = await BookmarksService.getBookmark(child.id);
               if (!info) return;
               const confirmed = await Modal.openConfirmation({
-                title: 'Delete bookmark?',
-                message: 'Delete this bookmark?',
+                title: 'Delete bookmark',
+                message: 'Are you sure you want to delete this bookmark?',
                 confirmText: 'Delete',
                 destructive: true
               });
@@ -1607,8 +1607,8 @@ document.addEventListener('DOMContentLoaded', async () => {
           event.stopPropagation();
           (async () => {
             const confirmed = await Modal.openConfirmation({
-              title: 'Delete bookmark?',
-              message: 'Delete this bookmark?',
+              title: 'Delete bookmark',
+              message: 'Are you sure you want to delete this bookmark?',
               confirmText: 'Delete',
               destructive: true
             });
