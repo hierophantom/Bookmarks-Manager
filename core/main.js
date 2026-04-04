@@ -407,7 +407,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const hideNestedFolders = await Storage.get('hideNestedFolders') || false;
         
         const menu = createSelectionMenu({
-          type: 'checkbox',
+          type: 'simple',
           contrast: 'low',
           title: 'View Settings',
           items: ['Hide nested folders'],

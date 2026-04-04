@@ -2,9 +2,9 @@
  * Selection Menu Component
  * 
  * Design System Component - BMG-102
- * Based on Figma: node-id=95-14656
+ * Based on Figma: node-id=202-22126
  * 
- * Variants: multi-select (tags), single-select (sort)
+ * Variants: multi-select (tags), multi-select (simple selection), single-select (sort)
  * Color scheme: low, high contrast
  */
 
@@ -78,29 +78,40 @@
 }
 
 .selection-menu__checkbox {
-  width: 11px;
-  height: 11px;
-  border-radius: 2px;
-  border: 1px solid var(--selection-menu-muted, rgba(255, 255, 255, 0.6));
-  position: relative;
+  width: 16px;
+  height: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--selection-menu-muted, rgba(255, 255, 255, 0.6));
   flex-shrink: 0;
 }
 
-.selection-menu__checkbox--checked {
-  background: var(--selection-menu-check-bg, var(--common-common-bright-05, rgba(255, 255, 255, 0.1)));
-  border-color: var(--selection-menu-text, rgba(255, 255, 255, 0.8));
+.selection-menu__checkbox svg {
+  width: 16px;
+  height: 16px;
+  display: block;
 }
 
-.selection-menu__checkbox--checked::after {
-  content: '';
-  position: absolute;
-  left: 3px;
-  top: 1px;
-  width: 3px;
-  height: 6px;
-  border-right: 2px solid var(--selection-menu-text, rgba(255, 255, 255, 0.8));
-  border-bottom: 2px solid var(--selection-menu-text, rgba(255, 255, 255, 0.8));
-  transform: rotate(45deg);
+.selection-menu__checkbox rect,
+.selection-menu__checkbox path {
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+}
+
+.selection-menu__checkbox path {
+  opacity: 0;
+}
+
+.selection-menu__checkbox--checked {
+  color: var(--selection-menu-text, rgba(255, 255, 255, 0.8));
+}
+
+.selection-menu__checkbox--checked path {
+  opacity: 1;
 }
 
 .selection-menu__checkmark {
@@ -139,6 +150,10 @@
   font-weight: var(--weight-regular, 400);
   line-height: 1.2;
   color: inherit;
+}
+
+.selection-menu__item--simple {
+  gap: var(--padding-and-gap-medium, 4px);
 }
 
 .selection-menu__select-all {
