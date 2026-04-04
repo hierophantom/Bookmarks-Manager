@@ -2701,6 +2701,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     await render(false);
   };
 
+  window.addEventListener('bmg:bookmarks-mutated', async (event) => {
+    if (!event || !event.detail) return;
+    if (event.detail.source === 'save-session') {
+      await render(true);
+    }
+  });
+
   if (addWidgetBtn){ addWidgetBtn.addEventListener('click', async ()=>{
     const pick = await Modal.openWidgetPicker();
     if (!pick) return;
@@ -2713,8 +2720,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (request.type === 'OPEN_SAVE_SESSION_MODAL' && request.tabs) {
       console.log('[Main] Opening save session modal with', request.tabs.length, 'tabs');
       if (typeof SaveTabsModal !== 'undefined') {
-        SaveTabsModal.show(request.tabs);
-        sendResponse({ success: true });
+        (async () => {
+          try {
+            const result = await SaveTabsModal.show(request.tabs);
+            sendResponse({ success: true, saved: Boolean(result) });
+          } catch (error) {
+            console.error('[Main] SaveTabsModal failed', error);
+            sendResponse({ success: false, error: error && error.message ? error.message : 'Save failed' });
+          }
+        })();
+        return true;
       } else {
         console.error('[Main] SaveTabsModal not available');
         sendResponse({ success: false, error: 'SaveTabsModal not available' });

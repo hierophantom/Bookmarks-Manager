@@ -47,9 +47,6 @@ const SaveTabsModal = (() => {
           label: '  '.repeat(folder.depth) + folder.title
         }));
 
-        // Add "Create new folder" option
-        folderOptions.unshift({ value: '__new__', label: '+ Create New Folder' });
-
         // Generate default folder name
         const now = new Date();
         const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
@@ -127,39 +124,59 @@ const SaveTabsModal = (() => {
 
         destWrapper.appendChild(select);
 
+        const createFolderToggle = document.createElement('label');
+        createFolderToggle.className = 'save-tabs-modal__toggle';
+
+        const createFolderCheckbox = document.createElement('input');
+        createFolderCheckbox.type = 'checkbox';
+        createFolderCheckbox.className = 'save-tabs-modal__toggle-checkbox';
+        createFolderCheckbox.checked = true;
+
+        const createFolderText = document.createElement('span');
+        createFolderText.className = 'save-tabs-modal__toggle-label';
+        createFolderText.textContent = 'Create a new folder for this session';
+
+        createFolderToggle.append(createFolderCheckbox, createFolderText);
+        destWrapper.appendChild(createFolderToggle);
+
         const newFolderInput = document.createElement('input');
         newFolderInput.type = 'text';
         newFolderInput.placeholder = 'New folder name';
         newFolderInput.value = defaultFolderName;
         newFolderInput.className = 'save-tabs-modal__input';
-        newFolderInput.style.display = 'none';
         destWrapper.appendChild(newFolderInput);
 
         const saveInfo = document.createElement('div');
         saveInfo.className = 'bmg-save-info';
-        saveInfo.innerHTML = `
-          <p id="bmg-save-message">Tabs will be saved in a new folder named: <strong id="bmg-folder-name-preview"></strong></p>
-        `;
+        saveInfo.innerHTML = '<p id="bmg-save-message"></p>';
         content.insertBefore(saveInfo, tabsLabel);
 
-        const folderNamePreview = saveInfo.querySelector('#bmg-folder-name-preview');
-
-        const updateSaveInfo = () => {
-          const creatingNewFolder = select.value === '__new__';
-          const previewName = (newFolderInput.value || '').trim() || defaultFolderName;
-
-          if (folderNamePreview) {
-            folderNamePreview.textContent = previewName;
-          }
-
-          saveInfo.style.display = creatingNewFolder ? '' : 'none';
+        const saveMessage = saveInfo.querySelector('#bmg-save-message');
+        const getSelectedFolderLabel = () => {
+          const selectedOption = select.options[select.selectedIndex];
+          return selectedOption ? selectedOption.textContent.trim() : 'the selected folder';
         };
 
-        select.addEventListener('change', () => {
-          const show = select.value === '__new__';
-          newFolderInput.style.display = show ? 'block' : 'none';
-          updateSaveInfo();
-        });
+        const updateSaveInfo = () => {
+          const creatingNewFolder = createFolderCheckbox.checked;
+          const previewName = (newFolderInput.value || '').trim() || defaultFolderName;
+          const folderLabel = getSelectedFolderLabel();
+
+          newFolderInput.style.display = creatingNewFolder ? 'block' : 'none';
+
+          if (!saveMessage) {
+            return;
+          }
+
+          if (creatingNewFolder) {
+            saveMessage.innerHTML = `Tabs will be saved into <strong>${escapeHtml(previewName)}</strong> inside <strong>${escapeHtml(folderLabel)}</strong>.`;
+          } else {
+            saveMessage.innerHTML = `Tabs will be saved directly inside <strong>${escapeHtml(folderLabel)}</strong>.`;
+          }
+        };
+
+        select.addEventListener('change', updateSaveInfo);
+        createFolderCheckbox.addEventListener('change', updateSaveInfo);
 
         newFolderInput.addEventListener('input', updateSaveInfo);
         updateSaveInfo();
@@ -189,10 +206,11 @@ const SaveTabsModal = (() => {
               return false;
             }
 
-            let destinationFolderId = select.value;
-            if (destinationFolderId === '__new__') {
+            const selectedParentFolderId = select.value;
+            let destinationFolderId = selectedParentFolderId;
+            if (createFolderCheckbox.checked) {
               const folderName = newFolderInput.value.trim() || defaultFolderName;
-              const newFolder = await BookmarksService.createFolder('1', folderName);
+              const newFolder = await BookmarksService.createFolder(selectedParentFolderId, folderName);
               destinationFolderId = newFolder.id;
             }
 
@@ -209,6 +227,15 @@ const SaveTabsModal = (() => {
             return true;
           },
           onClose: (confirmed) => {
+            if (confirmed && submitResult && typeof window !== 'undefined') {
+              window.dispatchEvent(new CustomEvent('bmg:bookmarks-mutated', {
+                detail: {
+                  source: 'save-session',
+                  savedCount: submitResult.savedCount,
+                  destinationFolderId: submitResult.destinationFolderId
+                }
+              }));
+            }
             resolve(confirmed ? submitResult : null);
           }
         });
@@ -230,6 +257,15 @@ const SaveTabsModal = (() => {
   const api = {
     show
   };
+
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
 
   if (typeof window !== 'undefined') {
     window.SaveTabsModal = api;
