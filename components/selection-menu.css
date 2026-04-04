@@ -40,12 +40,16 @@
 }
 
 .selection-menu__clear {
+  appearance: none;
+  -webkit-appearance: none;
   font-family: var(--font-family-sans-serif, 'Lato', sans-serif);
   font-size: var(--size-medium, 12px);
   font-weight: var(--weight-bold, 700);
   color: var(--selection-menu-muted, var(--common-common-bright-15, rgba(255, 255, 255, 0.6)));
   background: none;
   border: none;
+  border-radius: 0;
+  box-shadow: none;
   cursor: pointer;
   padding: 0;
 }
@@ -164,6 +168,8 @@
 }
 
 .selection-menu__select-all button {
+  appearance: none;
+  -webkit-appearance: none;
   font-family: var(--font-family-sans-serif, 'Lato', sans-serif);
   font-size: var(--size-medium, 12px);
   font-weight: var(--weight-bold, 700);
@@ -171,8 +177,15 @@
   text-decoration: underline;
   background: none;
   border: none;
+  border-radius: 0;
+  box-shadow: none;
   cursor: pointer;
   padding: 0;
+}
+
+.selection-menu__select-all-button {
+  appearance: none;
+  -webkit-appearance: none;
 }
 
 /* Contrast variants */

@@ -1,0 +1,182 @@
+/**
+ * Chips Field Component
+ *
+ * Design System Component - BMG-198
+ * Based on Figma: node-id=202-21514
+ *
+ * States: Idle, Hover, Active
+ * Color scheme: Low/High contrast
+ */
+
+.chips-field {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--padding-and-gap-medium, 4px);
+  width: 200px;
+  min-height: 36px;
+  padding: var(--padding-and-gap-medium, 4px) 12px;
+  box-sizing: border-box;
+  border: 1px solid transparent;
+  border-radius: var(--corner-radius-small, 4px);
+  background: var(--chips-field-bg, var(--primary-primary-10, rgba(46, 51, 185, 0.4)));
+  color: var(--chips-field-text, var(--common-common-bright-20, rgba(255, 255, 255, 0.8)));
+  transition: background var(--ui-hover-transition, 200ms ease), border-color var(--ui-hover-transition, 200ms ease), color var(--ui-hover-transition, 200ms ease);
+  cursor: text;
+  overflow: visible;
+}
+
+.chips-field:hover,
+.chips-field--hover {
+  background: var(--chips-field-bg-hover, var(--primary-primary-15, rgba(46, 51, 185, 0.6)));
+}
+
+.chips-field--active {
+  background: var(--chips-field-bg-active, var(--primary-primary-15, rgba(46, 51, 185, 0.6)));
+  border-color: var(--chips-field-border-active, var(--primary-primary-25, #2e33b9));
+  color: var(--chips-field-text-active, var(--common-common-bright-25, rgba(255, 255, 255, 0.9)));
+}
+
+.chips-field__content {
+  display: flex;
+  align-items: center;
+  gap: var(--padding-and-gap-medium, 4px);
+  flex: 1;
+  min-width: 0;
+  flex-wrap: wrap;
+  overflow: visible;
+}
+
+.chips-field__chip-list {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--padding-and-gap-medium, 4px);
+  min-width: 0;
+}
+
+.chips-field__input {
+  flex: 1 1 48px;
+  min-width: 24px;
+  width: auto;
+  appearance: none;
+  -webkit-appearance: none;
+  padding: 0;
+  margin: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  outline: none;
+  color: inherit;
+  font: inherit;
+  line-height: 1;
+}
+
+.chips-field__input::placeholder {
+  color: var(--chips-field-placeholder, inherit);
+  opacity: 1;
+}
+
+.chips-field__action {
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  min-height: 20px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--chips-field-icon, var(--common-common-bright-20, rgba(255, 255, 255, 0.8)));
+  cursor: pointer;
+  outline: none;
+}
+
+.chips-field--active.chips-field--has-value .chips-field__action,
+.chips-field--active.chips-field--has-query .chips-field__action {
+  display: inline-flex;
+}
+
+.chips-field__action svg {
+  width: 10px;
+  height: 10px;
+  display: block;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+}
+
+.chips-field__action:hover {
+  color: var(--chips-field-icon-hover, var(--chips-field-text-active, var(--common-common-bright-25, rgba(255, 255, 255, 0.9))));
+}
+
+.chips-field__menu {
+  position: absolute;
+  top: calc(100% + 3px);
+  left: -1px;
+  right: -1px;
+  z-index: 20;
+  display: none;
+}
+
+.chips-field__menu .selection-menu {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.chips-field__menu .selection-menu__item--add {
+  font-weight: var(--weight-bold, 700);
+}
+
+.chips-field__menu .selection-menu__item--add .selection-menu__checkbox {
+  color: var(--chips-field-icon, var(--common-common-bright-20, rgba(255, 255, 255, 0.8)));
+}
+
+.chips-field__menu .selection-menu__item--add .selection-menu__checkbox svg {
+  width: 12px;
+  height: 12px;
+}
+
+.chips-field__menu .selection-menu__item--add .selection-menu__checkbox rect {
+  display: none;
+}
+
+.chips-field__menu .selection-menu__item--add .selection-menu__checkbox path {
+  opacity: 1;
+}
+
+.chips-field__menu--open {
+  display: block;
+}
+
+.chips-field--low {
+  --chips-field-bg: var(--primary-primary-10, rgba(46, 51, 185, 0.4));
+  --chips-field-bg-hover: var(--primary-primary-15, rgba(46, 51, 185, 0.6));
+  --chips-field-bg-active: var(--primary-primary-15, rgba(46, 51, 185, 0.6));
+  --chips-field-border-active: var(--primary-primary-25, #2e33b9);
+  --chips-field-text: var(--common-common-bright-20, rgba(255, 255, 255, 0.8));
+  --chips-field-text-active: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
+  --chips-field-placeholder: var(--common-common-bright-20, rgba(255, 255, 255, 0.8));
+  --chips-field-icon: var(--common-common-bright-20, rgba(255, 255, 255, 0.8));
+  --chips-field-icon-hover: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
+}
+
+.chips-field--high {
+  --chips-field-bg: var(--primary-primary-10, rgba(46, 51, 185, 0.8));
+  --chips-field-bg-hover: var(--primary-primary-15, rgba(46, 51, 185, 0.6));
+  --chips-field-bg-active: var(--primary-primary-15, rgba(46, 51, 185, 0.6));
+  --chips-field-border-active: var(--primary-primary-10, rgba(46, 51, 185, 0.2));
+  --chips-field-text: var(--common-common-dark-20, rgba(0, 0, 0, 0.8));
+  --chips-field-text-active: var(--common-common-dark-25, rgba(0, 0, 0, 0.9));
+  --chips-field-placeholder: var(--common-common-dark-20, rgba(0, 0, 0, 0.8));
+  --chips-field-icon: var(--common-common-dark-20, rgba(0, 0, 0, 0.8));
+  --chips-field-icon-hover: var(--common-common-dark-25, rgba(0, 0, 0, 0.9));
+}

@@ -1,6 +1,6 @@
 const Modal = (() => {
   /**
-   * BookmarkForm Modal with Tagify integration
+   * BookmarkForm Modal with Shelf chips-field integration
    * @param {Object} defaults - Default values { id, title, url, tags, folderId }
    * @param {Object} options - Options { showFolderSelector: boolean, showTabsSuggestions: boolean }
    */
@@ -9,6 +9,9 @@ const Modal = (() => {
     const showFolderSelector = options.showFolderSelector || false;
     const showTabsSuggestions = options.showTabsSuggestions || false;
     const showTags = options.showTags !== false;
+    const allTags = showTags && typeof TagsService !== 'undefined'
+      ? await TagsService.getAllTags().catch(() => [])
+      : [];
 
     const fields = [
       {
@@ -31,9 +34,12 @@ const Modal = (() => {
       fields.push({
         id: 'bm_tags',
         label: 'Tags',
-        type: 'text',
-        value: tagArr.join(','),
-        placeholder: 'Add tags...'
+        type: 'chips-field',
+        value: tagArr,
+        placeholder: 'Add tags...',
+        options: allTags,
+        allowCustom: true,
+        helperText: 'Separate tags with commas or pick from the list.'
       });
     }
 
@@ -149,12 +155,6 @@ const Modal = (() => {
       });
 
       showModal(modal);
-
-      // Initialize Tagify on the tags input once the modal is in the DOM
-      if (showTags) {
-        setTimeout(() => initializeTagify(), 0);
-      }
-
       if (showTabsSuggestions && typeof chrome !== 'undefined' && chrome.tabs && typeof chrome.tabs.query === 'function') {
         chrome.tabs.query({ currentWindow: true }, (tabs) => {
           if (chrome.runtime && chrome.runtime.lastError) {
@@ -418,75 +418,6 @@ const Modal = (() => {
         dropdown.parentNode.removeChild(dropdown);
       }
     };
-  }
-
-  // Initialize Tagify on the tags input after modal is shown
-  // This is called internally by BaseModal after rendering
-  function initializeTagify() {
-    console.log('[Modal] initializeTagify - starting');
-    const tagsInput = document.getElementById('bm_tags');
-    if (!tagsInput) {
-      console.log('[Modal] initializeTagify - no tags input found');
-      return;
-    }
-    
-    if (typeof Tagify === 'undefined') {
-      console.log('[Modal] initializeTagify - Tagify library not available');
-      return;
-    }
-
-    console.log('[Modal] initializeTagify - Tagify found, initializing');
-    // Get all existing tags for autocomplete
-    TagsService.getAllTags().then(allTags => {
-      console.log('[Modal] initializeTagify - all tags from service:', allTags);
-      const tagify = new Tagify(tagsInput, {
-        whitelist: allTags,
-        maxTags: 20,
-        dropdown: {
-          maxItems: 10,
-          enabled: 0,
-          closeOnSelect: false,
-          appendTarget: document.body
-        },
-        editTags: false,
-        duplicates: false,
-        trim: true,
-        placeholder: 'Type to add tags...',
-        originalInputValueFormat: valuesArr => valuesArr.map(item => item.value).join(',')
-      });
-      
-      console.log('[Modal] initializeTagify - Tagify instance created, attaching to input');
-      tagsInput.tagify = tagify;
-
-      // Style the Tagify container to match design-system modal text inputs
-      const tagifyWrapper = tagsInput.nextElementSibling;
-      const tagFieldWrapper = tagsInput.closest('.modal__text-field');
-      if (tagFieldWrapper) {
-        tagFieldWrapper.classList.add('modal__text-field--tagify');
-      }
-      tagsInput.classList.add('modal__tagify-input');
-      if (tagifyWrapper && tagifyWrapper.classList.contains('tagify')) {
-        tagifyWrapper.classList.add('modal__tagify');
-        tagifyWrapper.style.cssText = `
-          width: 100%;
-          box-sizing: border-box;
-          min-height: 36px;
-          border-radius: 4px;
-          border: 1px solid transparent;
-          background: rgba(46, 51, 185, 0.4);
-          color: rgba(255, 255, 255, 0.8);
-          font-family: 'Lato', sans-serif;
-          font-size: 16px;
-          padding: 4px 8px;
-          cursor: text;
-          box-shadow: none;
-        `;
-      }
-      
-      console.log('[Modal] initializeTagify - complete');
-    }).catch(err => {
-      console.error('[Modal] initializeTagify - failed to load tags:', err);
-    });
   }
 
   /**
@@ -1282,7 +1213,6 @@ const Modal = (() => {
     openConfirmation,
     openError,
     openNotice,
-    openPrompt,
-    initializeTagify 
+    openPrompt
   };
 })();

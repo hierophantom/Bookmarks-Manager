@@ -190,7 +190,8 @@ function createModalField(field = {}) {
     value = '',
     required = false,
     contrast = 'low',
-    options = []
+    options = [],
+    helperText = ''
   } = field;
 
   if (!id) return null;
@@ -230,6 +231,54 @@ function createModalField(field = {}) {
     if (required) input.required = true;
 
     wrapper.appendChild(textField);
+    return wrapper;
+  }
+
+  if (type === 'chips-field') {
+    if (typeof createChipsField !== 'function') {
+      throw new Error('Design-system chips-field component is not available');
+    }
+
+    const normalizedOptions = Array.isArray(options)
+      ? options.map((option) => (typeof option === 'string' ? option : option && option.label)).filter(Boolean)
+      : [];
+    const selectedValues = Array.isArray(value)
+      ? value
+      : String(value || '')
+        .split(',')
+        .map((item) => item.trim())
+        .filter(Boolean);
+
+    const hiddenInput = document.createElement('input');
+    hiddenInput.type = 'hidden';
+    hiddenInput.id = id;
+    hiddenInput.dataset.modalField = id;
+    hiddenInput.value = selectedValues.join(',');
+
+    const fieldEl = createChipsField({
+      label,
+      contrast,
+      selectedValues,
+      availableItems: normalizedOptions,
+      menuTitle: `Select ${label.toLowerCase()}:`,
+      inputPlaceholder: placeholder || label,
+      allowCustom: field.allowCustom !== false,
+      onChange: (values) => {
+        hiddenInput.value = values.join(',');
+      }
+    });
+
+    fieldEl.classList.add('modal__chips-field');
+    wrapper.appendChild(fieldEl);
+    wrapper.appendChild(hiddenInput);
+
+    if (helperText) {
+      const helperEl = document.createElement('div');
+      helperEl.className = 'modal__field-helper';
+      helperEl.textContent = helperText;
+      wrapper.appendChild(helperEl);
+    }
+
     return wrapper;
   }
 
@@ -318,6 +367,14 @@ function createModalField(field = {}) {
 
     wrapper.appendChild(fieldEl);
     wrapper.appendChild(hiddenInput);
+
+    if (helperText) {
+      const helperEl = document.createElement('div');
+      helperEl.className = 'modal__field-helper';
+      helperEl.textContent = helperText;
+      wrapper.appendChild(helperEl);
+    }
+
     return wrapper;
   }
 

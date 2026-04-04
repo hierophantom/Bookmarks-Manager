@@ -953,9 +953,9 @@ body {
   margin-bottom: 16px;
 }
 
-[role="dialog"] button,
-.modal button,
-.modal-content button {
+[role="dialog"] button:not(.chips-field__action):not(.chip__dismiss):not(.selection-menu__clear):not(.selection-menu__select-all-button),
+.modal button:not(.chips-field__action):not(.chip__dismiss):not(.selection-menu__clear):not(.selection-menu__select-all-button),
+.modal-content button:not(.chips-field__action):not(.chip__dismiss):not(.selection-menu__clear):not(.selection-menu__select-all-button) {
   border-radius: 4px;
   cursor: pointer;
   padding: 8px 16px;
@@ -963,17 +963,17 @@ body {
   font-weight: 500;
 }
 
-[role="dialog"] button:not(:disabled),
-.modal button:not(:disabled),
-.modal-content button:not(:disabled) {
+[role="dialog"] button:not(:disabled):not(.chips-field__action):not(.chip__dismiss):not(.selection-menu__clear):not(.selection-menu__select-all-button),
+.modal button:not(:disabled):not(.chips-field__action):not(.chip__dismiss):not(.selection-menu__clear):not(.selection-menu__select-all-button),
+.modal-content button:not(:disabled):not(.chips-field__action):not(.chip__dismiss):not(.selection-menu__clear):not(.selection-menu__select-all-button) {
   border: 1px solid var(--theme-border);
   background: white;
   color: var(--theme-primary);
 }
 
-[role="dialog"] button:not(:disabled):hover,
-.modal button:not(:disabled):hover,
-.modal-content button:not(:disabled):hover {
+[role="dialog"] button:not(:disabled):not(.chips-field__action):not(.chip__dismiss):not(.selection-menu__clear):not(.selection-menu__select-all-button):hover,
+.modal button:not(:disabled):not(.chips-field__action):not(.chip__dismiss):not(.selection-menu__clear):not(.selection-menu__select-all-button):hover,
+.modal-content button:not(:disabled):not(.chips-field__action):not(.chip__dismiss):not(.selection-menu__clear):not(.selection-menu__select-all-button):hover {
   background: var(--theme-background);
   border-color: var(--theme-primary);
 }
@@ -998,13 +998,13 @@ body {
   background: var(--theme-secondary);
 }
 
-[role="dialog"] input:not(.text-field__input):not(.search-comp__input),
+[role="dialog"] input:not(.text-field__input):not(.search-comp__input):not(.chips-field__input),
 [role="dialog"] textarea,
 [role="dialog"] select,
-.modal input:not(.text-field__input):not(.search-comp__input),
+.modal input:not(.text-field__input):not(.search-comp__input):not(.chips-field__input),
 .modal textarea,
 .modal select,
-.modal-content input:not(.text-field__input):not(.search-comp__input),
+.modal-content input:not(.text-field__input):not(.search-comp__input):not(.chips-field__input),
 .modal-content textarea,
 .modal-content select {
   border: 1px solid var(--theme-border);
@@ -1015,13 +1015,13 @@ body {
   background: white;
 }
 
-[role="dialog"] input:not(.text-field__input):not(.search-comp__input):focus,
+[role="dialog"] input:not(.text-field__input):not(.search-comp__input):not(.chips-field__input):focus,
 [role="dialog"] textarea:focus,
 [role="dialog"] select:focus,
-.modal input:not(.text-field__input):not(.search-comp__input):focus,
+.modal input:not(.text-field__input):not(.search-comp__input):not(.chips-field__input):focus,
 .modal textarea:focus,
 .modal select:focus,
-.modal-content input:not(.text-field__input):not(.search-comp__input):focus,
+.modal-content input:not(.text-field__input):not(.search-comp__input):not(.chips-field__input):focus,
 .modal-content textarea:focus,
 .modal-content select:focus {
   outline: none;
@@ -1313,9 +1313,9 @@ body {
   margin-bottom: 16px;
 }
 
-[role="dialog"] button,
-.modal button,
-.modal-content button {
+[role="dialog"] button:not(.chips-field__action):not(.chip__dismiss):not(.selection-menu__clear):not(.selection-menu__select-all-button),
+.modal button:not(.chips-field__action):not(.chip__dismiss):not(.selection-menu__clear):not(.selection-menu__select-all-button),
+.modal-content button:not(.chips-field__action):not(.chip__dismiss):not(.selection-menu__clear):not(.selection-menu__select-all-button) {
   border-radius: 4px;
   cursor: pointer;
   padding: 8px 16px;
@@ -1323,17 +1323,17 @@ body {
   font-weight: 500;
 }
 
-[role="dialog"] button:not(:disabled),
-.modal button:not(:disabled),
-.modal-content button:not(:disabled) {
+[role="dialog"] button:not(:disabled):not(.chips-field__action):not(.chip__dismiss):not(.selection-menu__clear):not(.selection-menu__select-all-button),
+.modal button:not(:disabled):not(.chips-field__action):not(.chip__dismiss):not(.selection-menu__clear):not(.selection-menu__select-all-button),
+.modal-content button:not(:disabled):not(.chips-field__action):not(.chip__dismiss):not(.selection-menu__clear):not(.selection-menu__select-all-button) {
   border: 1px solid var(--theme-border);
   background: white;
   color: var(--theme-primary);
 }
 
-[role="dialog"] button:not(:disabled):hover,
-.modal button:not(:disabled):hover,
-.modal-content button:not(:disabled):hover {
+[role="dialog"] button:not(:disabled):not(.chips-field__action):not(.chip__dismiss):not(.selection-menu__clear):not(.selection-menu__select-all-button):hover,
+.modal button:not(:disabled):not(.chips-field__action):not(.chip__dismiss):not(.selection-menu__clear):not(.selection-menu__select-all-button):hover,
+.modal-content button:not(:disabled):not(.chips-field__action):not(.chip__dismiss):not(.selection-menu__clear):not(.selection-menu__select-all-button):hover {
   background: var(--theme-background);
   border-color: var(--theme-primary);
 }
@@ -1358,13 +1358,13 @@ body {
   background: var(--theme-secondary);
 }
 
-[role="dialog"] input:not(.text-field__input):not(.search-comp__input),
+[role="dialog"] input:not(.text-field__input):not(.search-comp__input):not(.chips-field__input),
 [role="dialog"] textarea,
 [role="dialog"] select,
-.modal input:not(.text-field__input):not(.search-comp__input),
+.modal input:not(.text-field__input):not(.search-comp__input):not(.chips-field__input),
 .modal textarea,
 .modal select,
-.modal-content input:not(.text-field__input):not(.search-comp__input),
+.modal-content input:not(.text-field__input):not(.search-comp__input):not(.chips-field__input),
 .modal-content textarea,
 .modal-content select {
   border: 1px solid var(--theme-border);
@@ -1375,13 +1375,13 @@ body {
   background: white;
 }
 
-[role="dialog"] input:not(.text-field__input):not(.search-comp__input):focus,
+[role="dialog"] input:not(.text-field__input):not(.search-comp__input):not(.chips-field__input):focus,
 [role="dialog"] textarea:focus,
 [role="dialog"] select:focus,
-.modal input:not(.text-field__input):not(.search-comp__input):focus,
+.modal input:not(.text-field__input):not(.search-comp__input):not(.chips-field__input):focus,
 .modal textarea:focus,
 .modal select:focus,
-.modal-content input:not(.text-field__input):not(.search-comp__input):focus,
+.modal-content input:not(.text-field__input):not(.search-comp__input):not(.chips-field__input):focus,
 .modal-content textarea:focus,
 .modal-content select:focus {
   outline: none;

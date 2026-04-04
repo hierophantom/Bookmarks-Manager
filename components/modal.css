@@ -106,16 +106,19 @@
 .modal--form {
   display: flex;
   flex-direction: column;
+  overflow: visible;
 }
 
 .modal--form .modal__content {
   flex: 1;
   min-height: 0;
+  overflow: visible;
 }
 
 .modal--form .modal__body {
   flex: 1;
   min-height: 0;
+  overflow: visible;
 }
 
 .modal--form .modal__fields {
@@ -125,11 +128,13 @@
   gap: 8px;
   flex: 1;
   min-height: 0;
+  overflow: visible;
 }
 
 .modal--form .modal__field {
   flex: 0 0 auto;
   min-height: auto;
+  overflow: visible;
 }
 
 .modal--form.delete-folder-modal-shell,
@@ -196,6 +201,14 @@
   font-weight: var(--weight-regular, 400);
 }
 
+.modal__field-helper {
+  color: var(--common-common-bright-15, rgba(255, 255, 255, 0.6));
+  font-family: var(--font-family-sans-serif, 'Lato', sans-serif);
+  font-size: var(--size-medium, 12px);
+  font-weight: var(--weight-light, 300);
+  line-height: 1.3;
+}
+
 .modal__text-field {
   width: 100%;
   box-sizing: border-box;
@@ -211,14 +224,18 @@
 }
 
 .modal__field .selection-field,
-.modal__selection-field {
+.modal__selection-field,
+.modal__field .chips-field,
+.modal__chips-field {
   width: stretch;
   width: 100%;
   box-sizing: border-box;
 }
 
 .modal__field .selection-field__menu,
-.modal__selection-field .selection-field__menu {
+.modal__selection-field .selection-field__menu,
+.modal__field .chips-field__menu,
+.modal__chips-field .chips-field__menu {
   right: -1px;
   z-index: 30;
 }

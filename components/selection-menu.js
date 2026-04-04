@@ -183,6 +183,7 @@ function createSelectionMenu(options = {}) {
       selectAll.className = 'selection-menu__select-all';
 
       const selectAllBtn = document.createElement('button');
+      selectAllBtn.className = 'selection-menu__select-all-button';
       selectAllBtn.type = 'button';
       selectAllBtn.textContent = 'Select all';
       selectAllBtn.addEventListener('click', () => {
@@ -204,6 +205,7 @@ function createSelectionMenu(options = {}) {
       selectAll.className = 'selection-menu__select-all';
 
       const selectAllBtn = document.createElement('button');
+      selectAllBtn.className = 'selection-menu__select-all-button';
       selectAllBtn.type = 'button';
       selectAllBtn.textContent = 'Select all';
       selectAllBtn.addEventListener('click', () => {

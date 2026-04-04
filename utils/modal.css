@@ -31,7 +31,7 @@
   gap: var(--padding-and-gap-x-large, 16px);
   width: min(90vw, 640px);
   max-height: 90vh;
-  overflow: hidden;
+  overflow: visible;
   background: linear-gradient(
     90deg,
     rgba(0, 0, 0, 0.2) 0%,
@@ -54,6 +54,7 @@
 
 .modal--form {
   width: min(90vw, 640px);
+  overflow: visible;
 }
 
 .modal--form.delete-folder-modal-shell,
@@ -69,18 +70,21 @@
   flex-direction: column;
   gap: var(--padding-and-gap-large, 8px);
   min-width: 0;
+  overflow: visible;
 }
 
 .modal__fields {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  overflow: visible;
 }
 
 .modal__field {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  overflow: visible;
 }
 
 .modal__title {
@@ -98,48 +102,11 @@
   width: 100%;
 }
 
-/* Tagify suggestion dropdown above modal overlay */
-.tagify__dropdown {
-  z-index: 100000 !important;
-}
-
-.modal__tagify {
-  --tags-focus-border-color: transparent;
-}
-
-.modal__text-field--tagify {
-  height: auto;
-  min-height: 0;
-  padding: 0;
-  background: transparent;
-  border-color: transparent;
-}
-
-.modal__text-field--tagify:hover,
-.modal__text-field--tagify:focus-within {
-  background: transparent;
-  border-color: transparent;
-}
-
-.modal__tagify-input {
-  position: absolute !important;
-  width: 1px !important;
-  height: 1px !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  opacity: 0 !important;
-  pointer-events: none !important;
-}
-
-.modal__tagify.tagify--focus,
-.modal__tagify:focus-within {
-  border-color: transparent !important;
-  box-shadow: none !important;
-}
-
 /* Selection field width stretch inside modal */
 .modal__field .selection-field,
-.modal__selection-field {
+.modal__selection-field,
+.modal__field .chips-field,
+.modal__chips-field {
   width: 100%;
   box-sizing: border-box;
 }
@@ -151,7 +118,9 @@
 }
 
 .modal__field .selection-field__menu,
-.modal__selection-field .selection-field__menu {
+.modal__selection-field .selection-field__menu,
+.modal__field .chips-field__menu,
+.modal__chips-field .chips-field__menu {
   left: -1px;
   right: -1px;
   width: auto;
