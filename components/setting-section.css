@@ -1,0 +1,74 @@
+/**
+ * Setting Section Component
+ *
+ * Design System Component - BMG-178
+ * Derived from preferences modal sections in Figma.
+ */
+
+.setting-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--padding-and-gap-medium, 4px);
+  width: 100%;
+  padding: var(--padding-and-gap-x-large, 16px) 0;
+}
+
+.setting-section--divided {
+  border-bottom: 1px solid var(--common-common-dark-05, rgba(0, 0, 0, 0.1));
+}
+
+.setting-section--low.setting-section--divided {
+  border-bottom-color: var(--common-common-bright-05, rgba(255, 255, 255, 0.1));
+}
+
+.setting-section__header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--padding-and-gap-medium, 4px);
+  min-width: 0;
+}
+
+.setting-section__title {
+  margin: 0;
+  font-family: var(--font-family-sans-serif, 'Lato', sans-serif);
+  font-size: var(--size-large, 16px);
+  font-weight: var(--weight-regular, 400);
+  line-height: 1.2;
+  color: var(--common-common-dark-25, rgba(0, 0, 0, 0.8));
+}
+
+.setting-section__description {
+  margin: 0;
+  font-family: var(--font-family-sans-serif, 'Lato', sans-serif);
+  font-size: var(--size-medium, 12px);
+  font-weight: var(--weight-light, 300);
+  line-height: 1.3;
+  color: var(--common-common-dark-20, rgba(0, 0, 0, 0.6));
+}
+
+.setting-section__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--padding-and-gap-large, 8px);
+  width: 100%;
+  min-width: 0;
+}
+
+.setting-section__footer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--padding-and-gap-medium, 4px);
+  width: 100%;
+}
+
+.setting-section--compact {
+  padding: var(--padding-and-gap-large, 8px) 0;
+}
+
+.setting-section--low .setting-section__title {
+  color: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
+}
+
+.setting-section--low .setting-section__description {
+  color: var(--common-common-bright-15, rgba(255, 255, 255, 0.6));
+}

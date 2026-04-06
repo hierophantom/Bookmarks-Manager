@@ -1,644 +1,830 @@
 /**
  * ThemeSettingsModal
- * Provides UI for theme selection and background customization
- * Refactored to use BaseModal pattern with Tailwind CSS utilities
+ * Preferences modal rebuilt with Shelf design-system components.
  */
 
 const ThemeSettingsModal = (() => {
-  /**
-   * Show theme and background settings modal
-   */
   async function show() {
+    const requiredApis = [
+      'createActionButton',
+      'createTab',
+      'createOptionCard',
+      'createChoiceGroup',
+      'createSelectionField',
+      'createSelectionMenu',
+      'createSettingSection',
+      'createDimmer'
+    ];
+
+    const missingApis = requiredApis.filter((name) => typeof window[name] !== 'function');
+    if (missingApis.length > 0) {
+      await Modal.openError({
+        title: 'Preferences unavailable',
+        message: `Missing UI dependencies: ${missingApis.join(', ')}`
+      });
+      return null;
+    }
+
     const [themes, currentThemeId, bgSettings, newTabEnabled, quoteEnabled, topbarBackdropEnabled] = await Promise.all([
       Promise.resolve(ThemesService.getThemes()),
       ThemesService.getCurrentThemeId(),
       BackgroundsService.getBackgroundSettings(),
       Storage.get('newTabOverrideEnabled'),
       Storage.get('dailyQuoteEnabled'),
-      Storage.get('topbarBackdropEnabled'),
+      Storage.get('topbarBackdropEnabled')
     ]);
 
-    if (typeof createModal !== 'function' || typeof showModal !== 'function') {
-      await Modal.openError({
-        title: 'Modal unavailable',
-        message: 'Theme settings modal is unavailable. Please reload and try again.'
-      });
-      return null;
-    }
+    const frequencyOptions = Object.entries(BackgroundsService.FREQUENCIES).map(([value, config]) => ({
+      value,
+      label: config.label
+    }));
 
-    const unsplashCategories = BackgroundsService.getUnsplashCategories();
-    const frequencies = BackgroundsService.FREQUENCIES;
-
-    let selectedTheme = currentThemeId;
-    let backgroundType = bgSettings.type;
-    let selectedColor = bgSettings.color;
-    let selectedCategories = bgSettings.unsplashCategories || [];
-    let selectedFrequency = bgSettings.unsplashFrequency || 'never';
-    let selectedDimmer = bgSettings.dimmer || 0;
-    let newTabOverride = newTabEnabled !== false; // Default to true
-    let dailyQuoteShow = quoteEnabled !== false; // Default to true
-    let showTopbarBackdrop = topbarBackdropEnabled !== false; // Default to true
-
-    const themePreviewsHtml = Object.entries(themes)
-      .map(
-        ([id, theme]) => `
-        <div class="theme-preview-item" data-theme-id="${id}" style="
-          cursor: pointer;
-          padding: 12px;
-          border: ${id === selectedTheme ? '3px solid #000' : '2px solid #ddd'};
-          border-radius: 8px;
-          text-align: center;
-          transition: all 0.2s;
-          min-width: 120px;
-        ">
-          <div style="
-            display: flex;
-            gap: 4px;
-            margin-bottom: 8px;
-          ">
-            <div style="
-              flex: 1;
-              height: 30px;
-              background: ${theme.primary};
-              border-radius: 4px;
-            "></div>
-            <div style="
-              flex: 1;
-              height: 30px;
-              background: ${theme.secondary};
-              border-radius: 4px;
-            "></div>
-            <div style="
-              flex: 1;
-              height: 30px;
-              background: ${theme.accent};
-              border-radius: 4px;
-            "></div>
-          </div>
-          <div style="font-size: 80%; font-weight: bold; color: #333;">${theme.name}</div>
-        </div>
-      `
-      )
-      .join('');
-
-    const categoriesHtml = unsplashCategories
-      .map(
-        (cat) => `
-        <label style="
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          padding: 8px;
-          cursor: pointer;
-          border-radius: 4px;
-          transition: background 0.2s;
-        ">
-          <input 
-            type="checkbox" 
-            class="unsplash-category" 
-            value="${cat.id}"
-            ${selectedCategories.includes(cat.id) ? 'checked' : ''}
-            style="cursor: pointer;"
-          >
-          <span style="color: var(--common-common-dark-20, rgba(0, 0, 0, 0.8));">${cat.name}</span>
-        </label>
-      `
-      )
-      .join('');
-
-    const frequencyOptionsHtml = Object.entries(frequencies)
-      .map(
-        ([key, freq]) => `
-        <option value="${key}" ${selectedFrequency === key ? 'selected' : ''}>
-          ${freq.label}
-        </option>
-      `
-      )
-      .join('');
+    const state = {
+      activePane: 'look-feel',
+      themes,
+      unsplashCategories: BackgroundsService.getUnsplashCategories(),
+      frequencyOptions,
+      selectedTheme: currentThemeId,
+      backgroundType: bgSettings.type || 'color',
+      selectedColor: bgSettings.color || '#001194',
+      selectedCategories: Array.isArray(bgSettings.unsplashCategories) ? [...bgSettings.unsplashCategories] : [],
+      selectedFrequency: bgSettings.unsplashFrequency || 'never',
+      selectedDimmer: Number.isFinite(bgSettings.dimmer) ? bgSettings.dimmer : 0,
+      newTabOverride: newTabEnabled !== false,
+      dailyQuoteShow: quoteEnabled !== false,
+      showTopbarBackdrop: topbarBackdropEnabled !== false,
+      backgroundSettings: bgSettings,
+      pendingUploadName: '',
+      uploadStatus: '',
+      uploadStatusTone: 'muted',
+      unsplashStatus: '',
+      unsplashStatusTone: 'muted',
+      cleanupFns: []
+    };
 
     const content = document.createElement('div');
     content.className = 'theme-settings-modal__content';
 
-    content.innerHTML = `
-      <div class="theme-settings-modal__surface">
-
-        <!-- Color Themes Section -->
-        <div style="margin-bottom: 32px;">
-          <h3 style="margin-top: 0; margin-bottom: 12px; color: var(--theme-primary);">Color Themes</h3>
-          <div style="
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-            gap: 12px;
-            margin-bottom: 16px;
-          ">
-            ${themePreviewsHtml}
-          </div>
-        </div>
-New Tab Override Section -->
-        <div style="margin-bottom: 32px; padding-top: 24px; border-top: 1px solid var(--theme-border);">
-          <h3 style="margin-top: 0; margin-bottom: 16px; color: var(--theme-primary);">New Tab Behavior</h3>
-          <label style="
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            cursor: pointer;
-            padding: 12px;
-            background: rgba(0,0,0,0.02);
-            border-radius: 4px;
-            margin-bottom: 8px;
-          ">
-            <input 
-              type="checkbox" 
-              id="new-tab-override-toggle"
-              ${newTabOverride ? 'checked' : ''}
-              style="cursor: pointer; width: 18px; height: 18px;"
-            >
-            <div>
-              <div style="font-weight: bold; color: var(--theme-primary);">Open this extension on new tabs</div>
-              <div style="font-size: 85%; color: var(--theme-secondary); margin-top: 4px;">
-                When enabled, new tabs will show your bookmarks instead of the default Chrome new tab page.
-              </div>
-            </div>
-          </label>
-        </div>
-
-        <!-- Topbar Backdrop Section -->
-        <div style="margin-bottom: 32px; padding-top: 24px; border-top: 1px solid var(--theme-border);">
-          <h3 style="margin-top: 0; margin-bottom: 16px; color: var(--theme-primary);">Topbar Appearance</h3>
-          <label style="
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            cursor: pointer;
-            padding: 12px;
-            background: rgba(0,0,0,0.02);
-            border-radius: 4px;
-            margin-bottom: 8px;
-          ">
-            <input 
-              type="checkbox" 
-              id="topbar-backdrop-toggle"
-              ${showTopbarBackdrop ? 'checked' : ''}
-              style="cursor: pointer; width: 18px; height: 18px;"
-            >
-            <div>
-              <div style="font-weight: bold; color: var(--theme-primary);">Show topbar background</div>
-              <div style="font-size: 85%; color: var(--theme-secondary); margin-top: 4px;">
-                When disabled, the topbar will be transparent with no backdrop blur.
-              </div>
-            </div>
-          </label>
-        </div>
-
-        <!-- Daily Quote Section -->
-        <div style="margin-bottom: 32px; padding-top: 24px; border-top: 1px solid var(--theme-border);">
-          <h3 style="margin-top: 0; margin-bottom: 16px; color: var(--theme-primary);">Daily Inspiration</h3>
-          <label style="
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            cursor: pointer;
-            padding: 12px;
-            background: rgba(0,0,0,0.02);
-            border-radius: 4px;
-            margin-bottom: 8px;
-          ">
-            <input 
-              type="checkbox" 
-              id="daily-quote-toggle"
-              ${dailyQuoteShow ? 'checked' : ''}
-              style="cursor: pointer; width: 18px; height: 18px;"
-            >
-            <div>
-              <div style="font-weight: bold; color: var(--theme-primary);">Show daily inspirational quote</div>
-              <div style="font-size: 85%; color: var(--theme-secondary); margin-top: 4px;">
-                Display a new inspirational quote each day on your homepage with manual refresh option.
-              </div>
-            </div>
-          </label>
-        </div>
-
-        <!-- 
-        <!-- Background Section -->
-        <div style="margin-bottom: 32px; padding-top: 24px; border-top: 1px solid var(--theme-border);">
-          <h3 style="margin-top: 0; margin-bottom: 16px; color: var(--theme-primary);">Background</h3>
-
-          <!-- Background Type Selector -->
-          <div style="margin-bottom: 16px;">
-            <label style="
-              display: flex;
-              align-items: center;
-              gap: 8px;
-              margin-bottom: 12px;
-              cursor: pointer;
-            ">
-              <input 
-                type="radio" 
-                name="bg-type" 
-                value="color" 
-                ${backgroundType === 'color' ? 'checked' : ''}
-                style="cursor: pointer;"
-              >
-              <span>Solid Color</span>
-            </label>
-            <label style="
-              display: flex;
-              align-items: center;
-              gap: 8px;
-              margin-bottom: 12px;
-              cursor: pointer;
-            ">
-              <input 
-                type="radio" 
-                name="bg-type" 
-                value="upload" 
-                ${backgroundType === 'upload' ? 'checked' : ''}
-                style="cursor: pointer;"
-              >
-              <span>Upload Image</span>
-            </label>
-            <label style="
-              display: flex;
-              align-items: center;
-              gap: 8px;
-              cursor: pointer;
-            ">
-              <input 
-                type="radio" 
-                name="bg-type" 
-                value="unsplash" 
-                ${backgroundType === 'unsplash' ? 'checked' : ''}
-                style="cursor: pointer;"
-              >
-              <span>Unsplash</span>
-            </label>
-          </div>
-
-          <!-- Color Picker -->
-          <div id="color-bg-section" style="display: ${backgroundType === 'color' ? 'block' : 'none'}; margin-bottom: 16px;">
-            <label style="display: block; margin-bottom: 8px; font-weight: bold; color: var(--theme-primary);">
-              Pick a Color:
-            </label>
-            <div style="display: flex; gap: 8px; align-items: center;">
-              <input 
-                type="color" 
-                id="bg-color-picker" 
-                value="${selectedColor}" 
-                style="width: 60px; height: 40px; cursor: pointer; border: 2px solid var(--theme-border); border-radius: 4px;"
-              >
-              <span id="color-value" style="font-family: monospace; color: var(--theme-secondary);">${selectedColor}</span>
-            </div>
-          </div>
-
-          <!-- Image Upload -->
-          <div id="upload-bg-section" style="display: ${backgroundType === 'upload' ? 'block' : 'none'}; margin-bottom: 16px;">
-            <label style="display: block; margin-bottom: 8px; font-weight: bold; color: var(--theme-primary);">
-              Upload Image:
-            </label>
-            <p style="font-size: 85%; color: var(--theme-secondary); margin: 0 0 8px 0;">
-              Min: 400×300px, Max: 5MB (JPG, PNG, WebP)
-            </p>
-            <input 
-              type="file" 
-              id="image-upload" 
-              accept="image/jpeg,image/png,image/webp"
-              style="display: block;"
-            >
-            <div id="upload-status" style="margin-top: 8px; font-size: 90%;"></div>
-          </div>
-
-          <!-- Unsplash Section -->
-          <div id="unsplash-bg-section" style="display: ${backgroundType === 'unsplash' ? 'block' : 'none'};">
-            <label style="display: block; margin-bottom: 12px; font-weight: bold; color: var(--theme-primary);">
-              Categories:
-            </label>
-            <div style="
-              display: grid;
-              grid-template-columns: repeat(2, 1fr);
-              gap: 8px;
-              margin-bottom: 16px;
-              max-height: 150px;
-              overflow-y: auto;
-              border: 1px solid var(--theme-border);
-              padding: 8px;
-              border-radius: 4px;
-              background: white;
-            ">
-              ${categoriesHtml}
-            </div>
-
-            <label style="display: block; margin-bottom: 8px; font-weight: bold; color: var(--theme-primary);">
-              Update Frequency:
-            </label>
-            <select id="unsplash-frequency" style="
-              width: 100%;
-              padding: 8px;
-              border: 1px solid var(--theme-border);
-              border-radius: 4px;
-              margin-bottom: 16px;
-              background: white;
-              color: var(--theme-text);
-            ">
-              ${frequencyOptionsHtml}
-            </select>
-
-            <button id="fetch-unsplash-btn" style="
-              width: 100%;
-              padding: 10px;
-              background: var(--theme-primary);
-              color: white;
-              border: none;
-              border-radius: 4px;
-              cursor: pointer;
-              font-weight: bold;
-              transition: background 0.2s;
-            ">
-              Get Random Image
-            </button>
-            <div id="unsplash-status" style="margin-top: 8px; font-size: 90%;"></div>
-          </div>
-        </div>
-
-        <!-- Dimmer/Shader Section -->
-        <div style="margin-bottom: 32px; padding-top: 24px; border-top: 1px solid var(--theme-border);">
-          <h3 style="margin-top: 0; margin-bottom: 8px; color: var(--theme-primary);">Background Shader</h3>
-          <p style="margin: 0 0 16px 0; font-size: 85%; color: var(--theme-secondary);">Dim or lighten your background for better visibility</p>
-          
-          <div style="display: flex; align-items: center; gap: 12px;">
-            <span style="font-size: 12px; color: var(--theme-secondary); font-weight: 600; min-width: 60px;">Dimmest</span>
-            <input 
-              type="range" 
-              id="dimmer-slider" 
-              min="-70" 
-              max="70" 
-              value="${selectedDimmer}" 
-              style="flex: 1; height: 6px; cursor: pointer; accent-color: var(--theme-primary);"
-            />
-            <span style="font-size: 12px; color: var(--theme-secondary); font-weight: 600; min-width: 60px; text-align: right;">Lightest</span>
-          </div>
-          <div style="text-align: center; margin-top: 8px; font-size: 12px; color: var(--theme-secondary);">
-            <span id="dimmer-value">${selectedDimmer > 0 ? '+' : ''}${selectedDimmer}%</span>
-          </div>
-        </div>
-
-        <!-- Buttons -->
-        <div class="theme-settings-modal__utility-actions" style="display: flex; gap: 8px; justify-content: space-between; padding-top: 16px; border-top: 1px solid var(--theme-border);">
-          <button id="privacy-policy-btn" style="
-            padding: 10px 16px;
-            background: transparent;
-            border: 1px solid var(--theme-border);
-            color: var(--theme-primary);
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: bold;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            transition: all 0.2s;
-          ">
-            <span class="material-symbols-outlined" aria-hidden="true" style="font-size: 18px;">policy</span>
-            Privacy Policy
-          </button>
-        </div>
-      </div>
-    `;
-
-    let shouldReload = false;
-
-    const modalOverlay = createModal({
-      type: 'form',
-      title: 'Personalize your experience',
+    const modalOverlay = createPreferencesShell({
       content,
-      buttons: [
-        { label: 'Cancel', type: 'common', role: 'cancel', shortcut: 'ESC' },
-        { label: 'Save', type: 'primary', role: 'confirm', shortcut: '↵' }
-      ],
-      onSubmit: handleSave,
-      onClose: (confirmed) => {
-        if (confirmed && shouldReload) {
-          window.location.reload();
-        }
+      onClose: () => {
+        cleanupRender(state);
       }
     });
 
-    const modal = modalOverlay.querySelector('.modal');
-    modal.classList.add('theme-settings-modal');
-    showModal(modalOverlay);
+    renderModal(content, modalOverlay.close, state);
+    showPreferencesShell(modalOverlay.overlay);
 
-    // New tab override toggle
-    const newTabToggle = modalOverlay.querySelector('#new-tab-override-toggle');
-    if (newTabToggle) {
-      newTabToggle.addEventListener('change', (e) => {
-        newTabOverride = e.target.checked;
+    return modalOverlay.overlay;
+  }
+
+  function renderModal(content, closePreferences, state) {
+    cleanupRender(state);
+    content.innerHTML = '';
+
+    const closeButton = createActionButton({
+      icon: createModalIcon('close'),
+      label: 'Close preferences',
+      onClick: closePreferences
+    });
+    closeButton.classList.add('theme-settings-modal__close');
+
+    const layout = document.createElement('div');
+    layout.className = 'theme-settings-modal__layout';
+
+    layout.appendChild(buildSidebar(state, () => renderModal(content, closePreferences, state)));
+    layout.appendChild(buildPanel(state, () => renderModal(content, closePreferences, state)));
+
+    content.append(layout, closeButton);
+  }
+
+  function buildSidebar(state, rerender) {
+    const sidebar = document.createElement('aside');
+    sidebar.className = 'theme-settings-modal__sidebar';
+
+    const sidebarContent = document.createElement('div');
+    sidebarContent.className = 'theme-settings-modal__sidebar-content';
+
+    const tabs = document.createElement('div');
+    tabs.className = 'theme-settings-modal__tabs';
+    tabs.setAttribute('role', 'tablist');
+    tabs.setAttribute('aria-label', 'Preferences sections');
+
+    const tabConfigs = [
+      {
+        key: 'look-feel',
+        label: 'Look & feel',
+        subtitle: 'Control how the app looks'
+      },
+      {
+        key: 'general',
+        label: 'General behaviour',
+        subtitle: 'Control how the app acts'
+      }
+    ];
+
+    tabConfigs.forEach((config) => {
+      const tab = createTab({
+        label: config.label,
+        subtitle: config.subtitle,
+        active: state.activePane === config.key,
+        onClick: () => {
+          if (state.activePane === config.key) return;
+          state.activePane = config.key;
+          rerender();
+        }
       });
+      tabs.appendChild(tab);
+    });
+
+    const footer = document.createElement('div');
+    footer.className = 'theme-settings-modal__sidebar-footer';
+
+    const privacyLink = document.createElement('a');
+    privacyLink.className = 'theme-settings-modal__privacy-link';
+    privacyLink.textContent = 'Privacy Policy';
+    privacyLink.href = chrome.runtime.getURL('core/privacy-policy.html');
+    privacyLink.target = '_blank';
+    privacyLink.rel = 'noopener noreferrer';
+
+    sidebarContent.append(tabs, footer);
+    footer.appendChild(privacyLink);
+    sidebar.appendChild(sidebarContent);
+    return sidebar;
+  }
+
+  function buildPanel(state, rerender) {
+    const panel = document.createElement('section');
+    panel.className = 'theme-settings-modal__panel';
+
+    const header = document.createElement('div');
+    header.className = 'theme-settings-modal__panel-header';
+
+    const titleWrap = document.createElement('div');
+    titleWrap.className = 'theme-settings-modal__title-wrap';
+
+    const title = document.createElement('h2');
+    title.className = 'theme-settings-modal__title';
+    title.id = 'theme-settings-title';
+    title.textContent = state.activePane === 'look-feel' ? 'Look & feel' : 'General behaviour';
+
+    const subtitle = document.createElement('p');
+    subtitle.className = 'theme-settings-modal__subtitle';
+    subtitle.textContent = state.activePane === 'look-feel'
+      ? 'Control how the app looks'
+      : 'Control how the app acts';
+
+    titleWrap.append(title, subtitle);
+
+    header.append(titleWrap);
+    panel.appendChild(header);
+
+    const body = document.createElement('div');
+    body.className = 'theme-settings-modal__panel-body';
+    body.appendChild(
+      state.activePane === 'look-feel'
+        ? buildLookAndFeelPane(state, rerender)
+        : buildGeneralBehaviourPane(state, rerender)
+    );
+    panel.appendChild(body);
+
+    return panel;
+  }
+
+  function buildLookAndFeelPane(state, rerender) {
+    const pane = document.createElement('div');
+    pane.className = 'theme-settings-modal__pane';
+
+    pane.appendChild(buildThemesSection(state, rerender));
+    pane.appendChild(buildBackgroundSection(state, rerender));
+    pane.appendChild(buildDimmerSection(state));
+
+    return pane;
+  }
+
+  function buildGeneralBehaviourPane(state, rerender) {
+    const pane = document.createElement('div');
+    pane.className = 'theme-settings-modal__pane';
+
+    pane.appendChild(createSettingSection({
+      title: 'Open bookmark manager on new tabs',
+      description: 'Allow Bookmark Manager to replace the default Chrome new-tab page.',
+      content: createChoiceGroup({
+        type: 'radio',
+        items: [
+          { label: 'Enabled', value: 'enabled', checked: state.newTabOverride },
+          { label: 'Disabled', value: 'disabled', checked: !state.newTabOverride }
+        ],
+        onChange: async ({ changedValue }) => {
+          state.newTabOverride = changedValue === 'enabled';
+          await Storage.set({ newTabOverrideEnabled: state.newTabOverride });
+        }
+      })
+    }));
+
+    pane.appendChild(createSettingSection({
+      title: 'Header backdrop',
+      description: 'Show or hide the blurred background behind the top bar.',
+      content: createChoiceGroup({
+        type: 'radio',
+        items: [
+          { label: 'Show', value: 'show', checked: state.showTopbarBackdrop },
+          { label: 'Hide', value: 'hide', checked: !state.showTopbarBackdrop }
+        ],
+        onChange: async ({ changedValue }) => {
+          state.showTopbarBackdrop = changedValue === 'show';
+          await Storage.set({ topbarBackdropEnabled: state.showTopbarBackdrop });
+          const topbar = document.querySelector('.topbar');
+          if (topbar) {
+            topbar.classList.toggle('topbar--no-backdrop', !state.showTopbarBackdrop);
+          }
+        }
+      })
+    }));
+
+    pane.appendChild(createSettingSection({
+      title: 'Daily inspiration',
+      description: 'Display a new inspirational quote each day on the home screen.',
+      divided: false,
+      content: createChoiceGroup({
+        type: 'radio',
+        items: [
+          { label: 'Show', value: 'show', checked: state.dailyQuoteShow },
+          { label: 'Hide', value: 'hide', checked: !state.dailyQuoteShow }
+        ],
+        onChange: async ({ changedValue }) => {
+          state.dailyQuoteShow = changedValue === 'show';
+          await applyDailyQuoteVisibility(state.dailyQuoteShow);
+        }
+      })
+    }));
+
+    return pane;
+  }
+
+  function buildThemesSection(state, rerender) {
+    const grid = document.createElement('div');
+    grid.className = 'theme-settings-modal__option-grid';
+
+    Object.entries(state.themes).forEach(([themeId, theme]) => {
+      const leading = document.createElement('span');
+      leading.className = 'theme-settings-modal__theme-dot';
+      leading.style.background = theme.primary;
+
+      const card = createOptionCard({
+        label: theme.name,
+        leading,
+        selected: state.selectedTheme === themeId,
+        value: themeId,
+        onClick: async () => {
+          state.selectedTheme = themeId;
+          await ThemesService.setTheme(themeId);
+          grid.querySelectorAll('.option-card').forEach((item) => {
+            setOptionCardSelected(item, item.dataset.optionCardValue === themeId);
+          });
+        }
+      });
+      grid.appendChild(card);
+    });
+
+    return createSettingSection({
+      title: 'Themes',
+      content: grid
+    });
+  }
+
+  function buildBackgroundSection(state, rerender) {
+    const sectionContent = [];
+
+    sectionContent.push(createChoiceGroup({
+      type: 'radio',
+      items: [
+        {
+          label: 'Solid color',
+          value: 'color',
+          checked: state.backgroundType === 'color',
+          meta: state.selectedColor,
+          metaType: 'tag'
+        },
+        {
+          label: 'Upload image',
+          value: 'upload',
+          checked: state.backgroundType === 'upload',
+          meta: getUploadSummary(state)
+        },
+        {
+          label: 'Unsplash',
+          value: 'unsplash',
+          checked: state.backgroundType === 'unsplash'
+        }
+      ],
+        onChange: async ({ changedValue }) => {
+        state.backgroundType = changedValue;
+          await applyBackgroundTypeSelection(state);
+        rerender();
+      }
+    }));
+
+    if (state.backgroundType === 'color') {
+      sectionContent.push(buildColorControls(state));
     }
 
-    // Daily quote toggle
-    const quoteToggle = modalOverlay.querySelector('#daily-quote-toggle');
-    if (quoteToggle) {
-      quoteToggle.addEventListener('change', (e) => {
-        dailyQuoteShow = e.target.checked;
-      });
+    if (state.backgroundType === 'upload') {
+      sectionContent.push(buildUploadControls(state, rerender));
     }
 
-    // Topbar backdrop toggle
-    const topbarBackdropToggle = modalOverlay.querySelector('#topbar-backdrop-toggle');
-    if (topbarBackdropToggle) {
-      topbarBackdropToggle.addEventListener('change', (e) => {
-        showTopbarBackdrop = e.target.checked;
-      });
+    if (state.backgroundType === 'unsplash') {
+      sectionContent.push(buildUnsplashControls(state, rerender));
     }
 
-    // Theme selection
-    modalOverlay.querySelectorAll('.theme-preview-item').forEach((item) => {
-      item.addEventListener('click', () => {
-        modalOverlay.querySelectorAll('.theme-preview-item').forEach((el) => {
-          el.style.border = '2px solid #ddd';
+    return createSettingSection({
+      title: 'Background',
+      description: 'Select solid color, a random picture, or your own image.',
+      content: sectionContent
+    });
+  }
+
+  function buildColorControls(state) {
+    const wrap = document.createElement('div');
+    wrap.className = 'theme-settings-modal__color-controls';
+
+    const input = document.createElement('input');
+    input.className = 'theme-settings-modal__color-input';
+    input.type = 'color';
+    input.value = state.selectedColor;
+    input.setAttribute('aria-label', 'Background color');
+    input.addEventListener('input', async (event) => {
+      state.selectedColor = event.target.value;
+      swatch.style.background = state.selectedColor;
+      valueTag.textContent = state.selectedColor;
+      await BackgroundsService.setColorBackground(state.selectedColor);
+      state.backgroundSettings = await BackgroundsService.getBackgroundSettings();
+    });
+
+    const swatch = document.createElement('span');
+    swatch.className = 'theme-settings-modal__color-swatch';
+    swatch.style.background = state.selectedColor;
+
+    const valueTag = document.createElement('span');
+    valueTag.className = 'theme-settings-modal__color-value';
+    valueTag.textContent = state.selectedColor;
+
+    wrap.append(input, swatch, valueTag);
+    return wrap;
+  }
+
+  function buildUploadControls(state, rerender) {
+    const wrap = document.createElement('div');
+    wrap.className = 'theme-settings-modal__stack';
+
+    const controls = document.createElement('div');
+    controls.className = 'theme-settings-modal__upload-controls';
+
+    const hiddenInput = document.createElement('input');
+    hiddenInput.type = 'file';
+    hiddenInput.accept = 'image/jpeg,image/png,image/webp';
+    hiddenInput.className = 'theme-settings-modal__file-input';
+
+    const button = createPrimaryButton({
+      label: state.pendingUploadData ? 'Replace image' : 'Upload image',
+      contrast: 'high',
+      icon: 'add_2',
+      onClick: () => hiddenInput.click()
+    });
+
+    const currentFile = document.createElement('span');
+    currentFile.className = 'theme-settings-modal__meta-text';
+    currentFile.textContent = getUploadSummary(state);
+
+    hiddenInput.addEventListener('change', async (event) => {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+
+      state.uploadStatus = 'Uploading image...';
+      state.uploadStatusTone = 'muted';
+      rerender();
+
+      try {
+        await BackgroundsService.uploadCustomImage(file);
+        state.pendingUploadName = file.name;
+        state.backgroundType = 'upload';
+        state.backgroundSettings = await BackgroundsService.getBackgroundSettings();
+        state.uploadStatus = 'Image applied.';
+        state.uploadStatusTone = 'success';
+      } catch (error) {
+        state.uploadStatus = error.message;
+        state.uploadStatusTone = 'error';
+      }
+
+      rerender();
+    });
+
+    controls.append(button, currentFile, hiddenInput);
+    wrap.appendChild(controls);
+
+    wrap.appendChild(createHelpText(getUploadRequirementsLabel()));
+
+    if (state.uploadStatus) {
+      wrap.appendChild(createStatusMessage(state.uploadStatus, state.uploadStatusTone));
+    }
+
+    return wrap;
+  }
+
+  function buildUnsplashControls(state, rerender) {
+    const wrap = document.createElement('div');
+    wrap.className = 'theme-settings-modal__stack';
+
+    wrap.appendChild(createChoiceGroup({
+      type: 'checkbox',
+      columns: 2,
+      items: state.unsplashCategories.map((category) => ({
+        label: category.name,
+        value: category.id,
+        checked: state.selectedCategories.includes(category.id)
+      })),
+      onChange: ({ value }) => {
+        state.selectedCategories = Array.isArray(value) ? value : [];
+        persistUnsplashPreferences(state).catch((error) => {
+          state.unsplashStatus = error.message;
+          state.unsplashStatusTone = 'error';
+          rerender();
         });
-        item.style.border = '3px solid #000';
-        selectedTheme = item.dataset.themeId;
-      });
-    });
+      }
+    }));
 
-    // Background type radio buttons
-    modalOverlay.querySelectorAll('input[name="bg-type"]').forEach((radio) => {
-      radio.addEventListener('change', (e) => {
-        backgroundType = e.target.value;
-        document.getElementById('color-bg-section').style.display =
-          backgroundType === 'color' ? 'block' : 'none';
-        document.getElementById('upload-bg-section').style.display =
-          backgroundType === 'upload' ? 'block' : 'none';
-        document.getElementById('unsplash-bg-section').style.display =
-          backgroundType === 'unsplash' ? 'block' : 'none';
-      });
-    });
+    const controlsRow = document.createElement('div');
+    controlsRow.className = 'theme-settings-modal__unsplash-controls';
 
-    // Color picker
-    const colorPicker = modalOverlay.querySelector('#bg-color-picker');
-    if (colorPicker) {
-      colorPicker.addEventListener('change', (e) => {
-        selectedColor = e.target.value;
-        document.getElementById('color-value').textContent = selectedColor;
-      });
-    }
+    const frequencyField = buildFrequencyField(state, rerender);
+    controlsRow.appendChild(frequencyField);
 
-    // Image upload
-    const imageUpload = modalOverlay.querySelector('#image-upload');
-    if (imageUpload) {
-      imageUpload.addEventListener('change', async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-
-        const statusEl = document.getElementById('upload-status');
-        statusEl.textContent = 'Uploading...';
-        statusEl.style.color = '#666';
-
-        try {
-          await BackgroundsService.uploadCustomImage(file);
-          statusEl.textContent = 'Image uploaded successfully!';
-          statusEl.style.color = '#00b020';
-          backgroundType = 'upload';
-          modalOverlay.querySelector('input[value="upload"]').checked = true;
-          document.getElementById('color-bg-section').style.display = 'none';
-          document.getElementById('upload-bg-section').style.display = 'block';
-          document.getElementById('unsplash-bg-section').style.display = 'none';
-        } catch (err) {
-          statusEl.textContent = `Error: ${err.message}`;
-          statusEl.style.color = '#f5222d';
-        }
-      });
-    }
-
-    // Category checkboxes
-    modalOverlay.querySelectorAll('.unsplash-category').forEach((checkbox) => {
-      checkbox.addEventListener('change', (e) => {
-        if (e.target.checked) {
-          selectedCategories.push(e.target.value);
-        } else {
-          selectedCategories = selectedCategories.filter((id) => id !== e.target.value);
-        }
-      });
-    });
-
-    // Frequency select
-    const frequencySelect = modalOverlay.querySelector('#unsplash-frequency');
-    if (frequencySelect) {
-      frequencySelect.addEventListener('change', (e) => {
-        selectedFrequency = e.target.value;
-      });
-    }
-
-    // Dimmer slider
-    const dimmerSlider = modalOverlay.querySelector('#dimmer-slider');
-    const dimmerValue = modalOverlay.querySelector('#dimmer-value');
-    if (dimmerSlider) {
-      dimmerSlider.addEventListener('input', (e) => {
-        selectedDimmer = parseInt(e.target.value);
-        dimmerValue.textContent = selectedDimmer > 0 ? '+' + selectedDimmer + '%' : selectedDimmer + '%';
-      });
-    }
-
-    // Fetch Unsplash image
-    const fetchBtn = modalOverlay.querySelector('#fetch-unsplash-btn');
-    if (fetchBtn) {
-      fetchBtn.addEventListener('click', async () => {
-        if (selectedCategories.length === 0) {
-          const statusEl = document.getElementById('unsplash-status');
-          statusEl.textContent = 'Please select at least one category';
-          statusEl.style.color = '#f5222d';
+    const fetchButton = createPrimaryButton({
+      label: 'Load random image',
+      contrast: 'high',
+      onClick: async () => {
+        if (state.selectedCategories.length === 0) {
+          state.unsplashStatus = 'Select at least one category before loading an image.';
+          state.unsplashStatusTone = 'error';
+          rerender();
           return;
         }
 
-        const statusEl = document.getElementById('unsplash-status');
-        statusEl.textContent = 'Fetching image...';
-        statusEl.style.color = '#666';
-        fetchBtn.disabled = true;
-// Save new tab override preference
-        await Storage.set({ newTabOverrideEnabled: newTabOverride });
+          state.unsplashStatus = 'Fetching image...';
+        state.unsplashStatusTone = 'muted';
+        rerender();
 
-        
         try {
-          await BackgroundsService.setUnsplashBackground(selectedCategories, selectedFrequency);
-          statusEl.textContent = 'Image loaded successfully!';
-          statusEl.style.color = '#00b020';
-          backgroundType = 'unsplash';
-          modalOverlay.querySelector('input[value="unsplash"]').checked = true;
-          document.getElementById('color-bg-section').style.display = 'none';
-          document.getElementById('upload-bg-section').style.display = 'none';
-          document.getElementById('unsplash-bg-section').style.display = 'block';
-        } catch (err) {
-          statusEl.textContent = `Error: ${err.message}`;
-          statusEl.style.color = '#f5222d';
-        } finally {
-          fetchBtn.disabled = false;
+          await BackgroundsService.setUnsplashBackground(state.selectedCategories, state.selectedFrequency);
+          state.backgroundSettings = await BackgroundsService.getBackgroundSettings();
+          state.backgroundType = 'unsplash';
+          state.unsplashStatus = 'Random image applied.';
+          state.unsplashStatusTone = 'success';
+        } catch (error) {
+          state.unsplashStatus = error.message;
+          state.unsplashStatusTone = 'error';
         }
-      });
+
+        rerender();
+      }
+    });
+    controlsRow.appendChild(fetchButton);
+
+    wrap.appendChild(controlsRow);
+
+    if (state.unsplashStatus) {
+      wrap.appendChild(createStatusMessage(state.unsplashStatus, state.unsplashStatusTone));
     }
 
-    // Privacy policy button
-    const privacyPolicyBtn = modalOverlay.querySelector('#privacy-policy-btn');
-    if (privacyPolicyBtn) {
-      privacyPolicyBtn.addEventListener('click', () => {
-        const policyUrl = chrome.runtime.getURL('core/privacy-policy.html');
-        window.open(policyUrl, '_blank', 'noopener,noreferrer');
-      });
-    }
+    return wrap;
+  }
 
-    // Keyboard accessibility for theme settings
-    async function handleSave() {
-      try {
-        // Apply theme
-        await ThemesService.setTheme(selectedTheme);
-
-        // Apply background
-        if (backgroundType === 'color') {
-          await BackgroundsService.setColorBackground(selectedColor);
-        } else if (backgroundType === 'unsplash') {
-          await BackgroundsService.updateUnsplashSettings(selectedCategories, selectedFrequency);
-        }
-
-        // Save dimmer preference
-        const currentSettings = await BackgroundsService.getBackgroundSettings();
-        currentSettings.dimmer = selectedDimmer;
-        await BackgroundsService.saveBackgroundSettings(currentSettings);
-
-        // Apply dimmer overlay
-        if (typeof ShaderService !== 'undefined') {
-          ShaderService.applyShader(selectedDimmer);
-        }
-
-        // Save new tab override preference
-        await Storage.set({ newTabOverrideEnabled: newTabOverride });
-
-        // Save daily quote preference
-        await Storage.set({ dailyQuoteEnabled: dailyQuoteShow });
-
-        // Save topbar backdrop preference
-        await Storage.set({ topbarBackdropEnabled: showTopbarBackdrop });
-        
-        // Apply topbar backdrop immediately
-        const topbar = document.querySelector('.topbar');
-        if (topbar) {
-          if (showTopbarBackdrop) {
-            topbar.classList.remove('topbar--no-backdrop');
-          } else {
-            topbar.classList.add('topbar--no-backdrop');
+  function buildFrequencyField(state, rerender) {
+    const currentOption = state.frequencyOptions.find((option) => option.value === state.selectedFrequency) || state.frequencyOptions[0];
+    const hasSelection = Boolean(currentOption && currentOption.value !== 'never');
+    const field = createSelectionField({
+      label: currentOption ? currentOption.label : 'Never',
+      selectionText: currentOption ? currentOption.label : 'Never',
+      contrast: 'high',
+      state: hasSelection ? 'selection' : 'idle',
+      onClear: hasSelection
+        ? () => {
+            state.selectedFrequency = 'never';
+            persistUnsplashPreferences(state).catch(() => {});
+            rerender();
           }
+        : null
+    });
+    field.classList.add('theme-settings-modal__frequency-field');
+
+    let open = false;
+    let menuWrapper = null;
+    let documentClickHandler = null;
+
+    const closeMenu = () => {
+      if (!open) return;
+      open = false;
+      if (menuWrapper && menuWrapper.parentNode) {
+        menuWrapper.parentNode.removeChild(menuWrapper);
+      }
+      menuWrapper = null;
+      applySelectionFieldState(field, hasSelection ? 'selection' : 'idle');
+      if (documentClickHandler) {
+        document.removeEventListener('click', documentClickHandler);
+        documentClickHandler = null;
+      }
+    };
+
+    const openMenu = () => {
+      if (open) return;
+      open = true;
+      const selectedIndex = Math.max(0, state.frequencyOptions.findIndex((option) => option.value === state.selectedFrequency));
+      const menu = createSelectionMenu({
+        type: 'sort',
+        contrast: 'high',
+        items: state.frequencyOptions.map((option) => option.label),
+        selectedIndex,
+        onSelect: (index) => {
+          const selection = state.frequencyOptions[index];
+          state.selectedFrequency = selection ? selection.value : 'never';
+          persistUnsplashPreferences(state).catch(() => {});
+          closeMenu();
+          rerender();
+        }
+      });
+
+      menuWrapper = document.createElement('div');
+      menuWrapper.className = 'selection-field__menu';
+      menuWrapper.appendChild(menu);
+      field.appendChild(menuWrapper);
+      applySelectionFieldState(field, 'active');
+
+      documentClickHandler = (event) => {
+        if (!field.contains(event.target)) {
+          closeMenu();
+        }
+      };
+      document.addEventListener('click', documentClickHandler);
+    };
+
+    field.addEventListener('click', (event) => {
+      event.stopPropagation();
+      if (open) {
+        closeMenu();
+      } else {
+        openMenu();
+      }
+    });
+
+    state.cleanupFns.push(() => {
+      closeMenu();
+    });
+
+    return field;
+  }
+
+  function buildDimmerSection(state) {
+    return createSettingSection({
+      title: 'Dimmer',
+      description: 'Dim or lighten your background for better readability.',
+      divided: false,
+      content: createDimmer({
+        value: state.selectedDimmer,
+        showValue: true,
+        onInput: (value) => {
+          state.selectedDimmer = value;
+          if (typeof ShaderService !== 'undefined') {
+            ShaderService.applyShader(value);
+          }
+        },
+        onChange: async (value) => {
+          state.selectedDimmer = value;
+          const currentSettings = await BackgroundsService.getBackgroundSettings();
+          currentSettings.dimmer = value;
+          await BackgroundsService.saveBackgroundSettings(currentSettings);
+          state.backgroundSettings = currentSettings;
+        }
+      })
+    });
+  }
+
+  function getUploadRequirementsLabel() {
+    const constraints = BackgroundsService.IMAGE_CONSTRAINTS || {};
+    const formats = (constraints.ALLOWED_FORMATS || [])
+      .map((type) => type.split('/')[1])
+      .filter(Boolean)
+      .map((part) => part.toUpperCase())
+      .join(', ');
+
+    const sizeLabel = typeof constraints.MAX_SIZE === 'number'
+      ? `${Math.round(constraints.MAX_SIZE / 1024 / 1024)}MB`
+      : '5MB';
+
+    return `Min: ${constraints.MIN_WIDTH || 400}x${constraints.MIN_HEIGHT || 300}px, Max ${sizeLabel} (${formats || 'JPG, PNG, WEBP'})`;
+  }
+
+  function getUploadSummary(state) {
+    if (state.pendingUploadName) return state.pendingUploadName;
+    if (state.backgroundSettings.type === 'upload' && state.backgroundSettings.imageFile) return 'Saved image';
+    return 'No file chosen';
+  }
+
+  async function persistUnsplashPreferences(state) {
+    const currentSettings = await BackgroundsService.getBackgroundSettings();
+    currentSettings.unsplashCategories = [...state.selectedCategories];
+    currentSettings.unsplashFrequency = state.selectedFrequency;
+    await BackgroundsService.saveBackgroundSettings(currentSettings);
+    state.backgroundSettings = currentSettings;
+  }
+
+    async function applyBackgroundTypeSelection(state) {
+      if (state.backgroundType === 'color') {
+        await BackgroundsService.setColorBackground(state.selectedColor);
+        state.backgroundSettings = await BackgroundsService.getBackgroundSettings();
+        return;
+      }
+
+      if (state.backgroundType === 'upload') {
+        const currentSettings = await BackgroundsService.getBackgroundSettings();
+        if (!currentSettings.imageFile) {
+          state.uploadStatus = 'Choose an image to apply this background.';
+          state.uploadStatusTone = 'muted';
+          return;
         }
 
-        shouldReload = true;
-        return true;
-      } catch (e) {
-        console.error('Failed to save settings', e);
-        await Modal.openError({
-          title: 'Save failed',
-          message: 'Failed to save settings: ' + e.message
-        });
-        return false;
+        currentSettings.type = 'upload';
+        currentSettings.imageUrl = null;
+        currentSettings.photographer = null;
+        currentSettings.photographerUrl = null;
+        currentSettings.unsplashUrl = null;
+        currentSettings.lastUnsplashUpdate = null;
+        await BackgroundsService.saveBackgroundSettings(currentSettings);
+        state.backgroundSettings = currentSettings;
+        return;
+      }
+
+      if (state.selectedCategories.length === 0) {
+        state.unsplashStatus = 'Select at least one category to apply Unsplash.';
+        state.unsplashStatusTone = 'muted';
+        return;
+      }
+
+      const currentSettings = await BackgroundsService.getBackgroundSettings();
+      currentSettings.unsplashCategories = [...state.selectedCategories];
+      currentSettings.unsplashFrequency = state.selectedFrequency;
+
+      if (currentSettings.imageUrl) {
+        currentSettings.type = 'unsplash';
+        await BackgroundsService.saveBackgroundSettings(currentSettings);
+      } else {
+        await BackgroundsService.setUnsplashBackground(state.selectedCategories, state.selectedFrequency);
+      }
+
+      state.backgroundSettings = await BackgroundsService.getBackgroundSettings();
+    }
+
+  function createHelpText(text) {
+    const help = document.createElement('p');
+    help.className = 'theme-settings-modal__helptext';
+    help.textContent = text;
+    return help;
+  }
+
+  function createStatusMessage(message, tone = 'muted') {
+    const status = document.createElement('div');
+    status.className = `theme-settings-modal__status theme-settings-modal__status--${tone}`;
+    status.textContent = message;
+    return status;
+  }
+
+  function cleanupRender(state) {
+    if (!Array.isArray(state.cleanupFns)) {
+      state.cleanupFns = [];
+      return;
+    }
+
+    state.cleanupFns.forEach((cleanup) => {
+      try {
+        cleanup();
+      } catch (error) {
+        console.warn('Theme settings cleanup failed', error);
+      }
+    });
+    state.cleanupFns = [];
+  }
+
+  function createModalIcon(name) {
+    const icon = document.createElement('span');
+    icon.className = 'material-symbols-outlined';
+    icon.setAttribute('aria-hidden', 'true');
+    icon.textContent = name;
+    return icon;
+  }
+
+  function createPreferencesShell(options = {}) {
+    const {
+      content = null,
+      onClose = null,
+      closeOnEscape = true,
+      closeOnBackdrop = true
+    } = options;
+
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay modal-overlay--entering theme-settings-shell-overlay';
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
+    overlay.setAttribute('aria-labelledby', 'theme-settings-title');
+
+    const shell = document.createElement('div');
+    shell.className = 'theme-settings-shell theme-settings-shell--entering';
+
+    if (content instanceof HTMLElement) {
+      shell.appendChild(content);
+    }
+
+    overlay.appendChild(shell);
+
+    let closed = false;
+
+    function close(confirmed = false) {
+      if (closed) return;
+      closed = true;
+
+      overlay.classList.add('modal-overlay--exiting');
+      shell.classList.add('theme-settings-shell--exiting');
+      document.removeEventListener('keydown', handleKeyDown);
+
+      window.setTimeout(() => {
+        if (overlay.parentNode) {
+          overlay.parentNode.removeChild(overlay);
+        }
+
+        if (typeof onClose === 'function') {
+          onClose(confirmed);
+        }
+      }, 200);
+    }
+
+    function handleKeyDown(event) {
+      if (closeOnEscape && event.key === 'Escape') {
+        event.preventDefault();
+        close(false);
       }
     }
 
-    return modalOverlay;
+    overlay.addEventListener('click', (event) => {
+      if (closeOnBackdrop && event.target === overlay) {
+        close(false);
+      }
+    });
+
+    document.addEventListener('keydown', handleKeyDown);
+
+    return { overlay, shell, close };
+  }
+
+  function showPreferencesShell(overlay) {
+    document.body.appendChild(overlay);
+
+    window.setTimeout(() => {
+      const firstFocusable = overlay.querySelector('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+      if (firstFocusable) {
+        firstFocusable.focus();
+      }
+    }, 80);
+  }
+
+  async function applyDailyQuoteVisibility(show) {
+    if (typeof DailyQuoteService !== 'undefined' && typeof DailyQuoteService.setEnabled === 'function') {
+      await DailyQuoteService.setEnabled(show);
+    } else {
+      await Storage.set({ dailyQuoteEnabled: show });
+    }
+
+    const quoteContainer = document.getElementById('header-inspiration');
+    const quoteText = document.getElementById('header-quote-text');
+    const quoteAuthor = document.getElementById('header-quote-author');
+
+    if (!show) {
+      if (quoteContainer) quoteContainer.style.display = 'none';
+      return;
+    }
+
+    if (quoteContainer) quoteContainer.style.display = '';
+
+    if (typeof DailyQuoteService !== 'undefined' && typeof DailyQuoteService.getQuote === 'function') {
+      try {
+        const quote = await DailyQuoteService.getQuote();
+        if (quoteText) quoteText.textContent = `"${quote.text}"`;
+        if (quoteAuthor) {
+          const authorName = quote.author;
+          quoteAuthor.textContent = authorName;
+          quoteAuthor.href = `https://en.wikipedia.org/wiki/${encodeURIComponent(authorName.replace(/ /g, '_'))}`;
+        }
+      } catch (error) {
+        console.warn('Failed to refresh daily quote visibility', error);
+      }
+    }
   }
 
   const api = { show };

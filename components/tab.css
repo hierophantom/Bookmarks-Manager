@@ -15,7 +15,7 @@
   align-items: center;
   gap: var(--padding-and-gap-small, 2px);
   width: 200px;
-  padding: var(--padding-and-gap-medium, 4px) var(--padding-and-gap-large, 8px);
+  padding: var(--padding-and-gap-large, 8px) var(--padding-and-gap-large, 8px);
   
   /* Appearance */
   border-radius: var(--corner-radius-small, 4px);
