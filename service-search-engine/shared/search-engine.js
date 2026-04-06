@@ -132,7 +132,8 @@ export class SearchEngine {
    * Get default results when query is empty
    */
   async getDefaultResults(context) {
-    const [tabs, history, chromeSettings] = await Promise.all([
+    const [bookmarks, tabs, history, chromeSettings] = await Promise.all([
+      this.searchBookmarks(''),
       this.searchTabs(''),
       this.searchHistory(''),
       this.searchChromeSettings('')
@@ -140,6 +141,7 @@ export class SearchEngine {
 
     return {
       Actions: await this.getActions('', context),
+      Bookmarks: bookmarks.slice(0, 5),
       Tabs: tabs,
       History: history.slice(0, 5), // Limit to 5 recent
       'Chrome Settings': chromeSettings

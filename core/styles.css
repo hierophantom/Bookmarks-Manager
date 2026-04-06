@@ -1083,11 +1083,17 @@ body {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  position: relative;
 }
 
 .widget-stack-section__title {
   margin: 0;
   color: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
+}
+
+.widget-stack-section--search {
+  gap: 0;
+  z-index: 40;
 }
 
 .widgets-section {

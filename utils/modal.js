@@ -837,6 +837,7 @@ const Modal = (() => {
     return new Promise((resolve) => {
       if (typeof createModal === 'function' && typeof showModal === 'function') {
         const widgets = [
+          { id: 'search-bar-widget', title: 'Search', subtitle: 'Web + bookmarks', icon: 'search' },
           { id: 'clock', title: 'Clock', subtitle: 'Time', icon: 'schedule' },
           { id: 'quicklinks', title: 'Quick Links', subtitle: 'Shortcuts', icon: 'bolt' },
           { id: 'notes', title: 'Notes', subtitle: 'Scratchpad', icon: 'sticky_note_2' }
@@ -931,6 +932,7 @@ const Modal = (() => {
       card.className = 'bm-modal-card bg-white rounded-lg shadow-lg p-6 max-w-md w-full mx-4';
 
       const widgets = [
+        { id: 'search-bar-widget', title: 'Search', icon: '🔎' },
         { id: 'clock', title: 'Clock', icon: '🕐' },
         { id: 'quicklinks', title: 'Quick Links', icon: '⚡' },
         { id: 'notes', title: 'Notes', icon: '📝' }

@@ -10,6 +10,7 @@ const ThemeSettingsModal = (() => {
       'createTab',
       'createOptionCard',
       'createChoiceGroup',
+      'createTextField',
       'createSelectionField',
       'createSelectionMenu',
       'createSettingSection',
@@ -25,13 +26,15 @@ const ThemeSettingsModal = (() => {
       return null;
     }
 
-    const [themes, currentThemeId, bgSettings, newTabEnabled, quoteEnabled, topbarBackdropEnabled] = await Promise.all([
+    const [themes, currentThemeId, bgSettings, newTabEnabled, quoteEnabled, topbarBackdropEnabled, searchEngine, customSearchProviderTemplate] = await Promise.all([
       Promise.resolve(ThemesService.getThemes()),
       ThemesService.getCurrentThemeId(),
       BackgroundsService.getBackgroundSettings(),
       Storage.get('newTabOverrideEnabled'),
       Storage.get('dailyQuoteEnabled'),
-      Storage.get('topbarBackdropEnabled')
+      Storage.get('topbarBackdropEnabled'),
+      Storage.get('searchEngine'),
+      Storage.get('customSearchProviderTemplate')
     ]);
 
     const frequencyOptions = Object.entries(BackgroundsService.FREQUENCIES).map(([value, config]) => ({
@@ -53,6 +56,10 @@ const ThemeSettingsModal = (() => {
       newTabOverride: newTabEnabled !== false,
       dailyQuoteShow: quoteEnabled !== false,
       showTopbarBackdrop: topbarBackdropEnabled !== false,
+      searchEngine: normalizeSearchProviderId(searchEngine),
+      customSearchProviderTemplate: typeof customSearchProviderTemplate === 'string' ? customSearchProviderTemplate : '',
+      searchEngineStatus: '',
+      searchEngineStatusTone: 'muted',
       backgroundSettings: bgSettings,
       pendingUploadName: '',
       uploadStatus: '',
@@ -222,6 +229,8 @@ const ThemeSettingsModal = (() => {
       })
     }));
 
+    pane.appendChild(buildSearchEngineSection(state, rerender));
+
     pane.appendChild(createSettingSection({
       title: 'Header backdrop',
       description: 'Show or hide the blurred background behind the top bar.',
@@ -260,6 +269,65 @@ const ThemeSettingsModal = (() => {
     }));
 
     return pane;
+  }
+
+  function buildSearchEngineSection(state, rerender) {
+    const content = [];
+
+    content.push(createChoiceGroup({
+      type: 'radio',
+      items: [
+        { label: 'Google', value: 'google', checked: state.searchEngine === 'google' },
+        { label: 'DuckDuckGo', value: 'duckduckgo', checked: state.searchEngine === 'duckduckgo' },
+        { label: 'Yahoo', value: 'yahoo', checked: state.searchEngine === 'yahoo' },
+        { label: 'Bing', value: 'bing', checked: state.searchEngine === 'bing' },
+        { label: 'Custom', value: 'custom', checked: state.searchEngine === 'custom' }
+      ],
+      onChange: async ({ changedValue }) => {
+        state.searchEngine = normalizeSearchProviderId(changedValue);
+        state.searchEngineStatus = '';
+        state.searchEngineStatusTone = 'muted';
+        await persistSearchEnginePreferences(state);
+        rerender();
+      }
+    }));
+
+    if (state.searchEngine === 'custom') {
+      const templateField = createTextField({
+        value: state.customSearchProviderTemplate,
+        placeholder: 'https://example.com/search?q={query}',
+        contrast: 'high',
+        ariaLabel: 'Custom search URL template',
+        onInput: (_event, value) => {
+          state.customSearchProviderTemplate = value;
+        },
+        onSubmit: async (_event, value) => {
+          state.customSearchProviderTemplate = value;
+          await persistSearchEnginePreferences(state);
+          rerender();
+        }
+      });
+      templateField.classList.add('theme-settings-modal__search-template-field');
+      const templateInput = templateField.querySelector('.text-field__input');
+      if (templateInput) {
+        templateInput.addEventListener('blur', async () => {
+          await persistSearchEnginePreferences(state);
+          rerender();
+        });
+      }
+      content.push(templateField);
+      content.push(createHelpText('Use {query} where the user search should be inserted.'));
+    }
+
+    if (state.searchEngineStatus) {
+      content.push(createStatusMessage(state.searchEngineStatus, state.searchEngineStatusTone));
+    }
+
+    return createSettingSection({
+      title: 'Search engine',
+      description: 'Select the homepage search provider.',
+      content
+    });
   }
 
   function buildThemesSection(state, rerender) {
@@ -695,6 +763,68 @@ const ThemeSettingsModal = (() => {
     status.className = `theme-settings-modal__status theme-settings-modal__status--${tone}`;
     status.textContent = message;
     return status;
+  }
+
+  function normalizeSearchProviderId(value) {
+    const normalized = String(value || '').trim().toLowerCase();
+    if (['google', 'duckduckgo', 'yahoo', 'bing', 'custom'].includes(normalized)) {
+      return normalized;
+    }
+    return 'google';
+  }
+
+  function isValidCustomSearchTemplate(template) {
+    if (typeof template !== 'string') return false;
+    const normalized = template.trim();
+    if (!normalized || !normalized.includes('{query}')) return false;
+    try {
+      const parsed = new URL(normalized.replace('{query}', 'example'));
+      return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+    } catch (error) {
+      return false;
+    }
+  }
+
+  async function persistSearchEnginePreferences(state) {
+    const providerId = normalizeSearchProviderId(state.searchEngine);
+    const nextState = { searchEngine: providerId };
+
+    if (providerId === 'custom') {
+      if (!isValidCustomSearchTemplate(state.customSearchProviderTemplate)) {
+        state.searchEngineStatus = 'Add a valid URL template with {query} to enable the custom provider.';
+        state.searchEngineStatusTone = 'error';
+      } else {
+        nextState.customSearchProviderTemplate = state.customSearchProviderTemplate.trim();
+        state.searchEngineStatus = 'Custom search provider saved.';
+        state.searchEngineStatusTone = 'success';
+      }
+    } else {
+      state.searchEngineStatus = `${getSearchEngineLabel(providerId)} selected.`;
+      state.searchEngineStatusTone = 'success';
+    }
+
+    await Storage.set(nextState);
+    await refreshHomepageSearchWidget();
+  }
+
+  function getSearchEngineLabel(providerId) {
+    switch (providerId) {
+      case 'duckduckgo': return 'DuckDuckGo';
+      case 'yahoo': return 'Yahoo';
+      case 'bing': return 'Bing';
+      case 'custom': return 'Custom provider';
+      default: return 'Google';
+    }
+  }
+
+  async function refreshHomepageSearchWidget() {
+    if (typeof WidgetsService === 'undefined' || !WidgetsService || typeof WidgetsService.render !== 'function') {
+      return;
+    }
+
+    const container = document.getElementById('widgets-container');
+    if (!container) return;
+    await WidgetsService.render('widgets-container');
   }
 
   function cleanupRender(state) {
