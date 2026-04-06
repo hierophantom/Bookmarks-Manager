@@ -24,11 +24,22 @@
 }
 
 .option-card__leading,
-.option-card__swatches {
+.option-card__swatches,
+.option-card__trailing {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+}
+
+.option-card__trailing {
+  margin-left: auto;
+  color: var(--option-card-meta, var(--common-common-dark-20, rgba(0, 0, 0, 0.6)));
+}
+
+.option-card__trailing .material-symbols-outlined {
+  font-size: 20px;
+  line-height: 1;
 }
 
 .option-card__swatches {

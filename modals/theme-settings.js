@@ -56,6 +56,9 @@ const ThemeSettingsModal = (() => {
       newTabOverride: newTabEnabled !== false,
       dailyQuoteShow: quoteEnabled !== false,
       showTopbarBackdrop: topbarBackdropEnabled !== false,
+      homePageSections: typeof HomePageSectionsService !== 'undefined' && HomePageSectionsService
+        ? await HomePageSectionsService.getState()
+        : {},
       searchEngine: normalizeSearchProviderId(searchEngine),
       customSearchProviderTemplate: typeof customSearchProviderTemplate === 'string' ? customSearchProviderTemplate : '',
       searchEngineStatus: '',
@@ -230,6 +233,7 @@ const ThemeSettingsModal = (() => {
     }));
 
     pane.appendChild(buildSearchEngineSection(state, rerender));
+    pane.appendChild(buildHomePageSectionsSection(state, rerender));
 
     pane.appendChild(createSettingSection({
       title: 'Header backdrop',
@@ -327,6 +331,54 @@ const ThemeSettingsModal = (() => {
       title: 'Search engine',
       description: 'Select the homepage search provider.',
       content
+    });
+  }
+
+  function buildHomePageSectionsSection(state, rerender) {
+    const stack = document.createElement('div');
+    stack.className = 'theme-settings-modal__stack';
+
+    const definitions = typeof HomePageSectionsService !== 'undefined' && HomePageSectionsService
+      ? HomePageSectionsService.getDefinitions()
+      : [];
+
+    definitions
+      .sort((left, right) => {
+        const leftOrder = state.homePageSections[left.id]?.order ?? left.defaultOrder ?? 0;
+        const rightOrder = state.homePageSections[right.id]?.order ?? right.defaultOrder ?? 0;
+        return leftOrder - rightOrder;
+      })
+      .forEach((definition) => {
+        const visible = state.homePageSections[definition.id]
+          ? state.homePageSections[definition.id].visible !== false
+          : definition.defaultVisible !== false;
+
+        const leading = createModalIcon(definition.icon);
+        const card = createOptionCard({
+          label: definition.label,
+          description: visible ? 'Visible on the home page' : 'Hidden from the home page',
+          leading,
+          trailing: visible ? 'visibility' : 'visibility_off',
+          selected: visible,
+          value: definition.id,
+          onClick: async () => {
+            if (typeof HomePageSectionsService === 'undefined' || !HomePageSectionsService) {
+              return;
+            }
+
+            const nextVisible = !visible;
+            state.homePageSections = await HomePageSectionsService.setSectionVisibility(definition.id, nextVisible);
+            await refreshHomepageSectionVisibility(state.homePageSections);
+            rerender();
+          }
+        });
+        stack.appendChild(card);
+      });
+
+    return createSettingSection({
+      title: 'Home page sections',
+      description: 'Hide or show homepage sections without deleting their saved content. This also lays the groundwork for future section ordering.',
+      content: stack
     });
   }
 
@@ -825,6 +877,10 @@ const ThemeSettingsModal = (() => {
     const container = document.getElementById('widgets-container');
     if (!container) return;
     await WidgetsService.render('widgets-container');
+  }
+
+  async function refreshHomepageSectionVisibility() {
+    await refreshHomepageSearchWidget();
   }
 
   function cleanupRender(state) {

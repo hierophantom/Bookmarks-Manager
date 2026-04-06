@@ -12,6 +12,7 @@ function createOptionCard(options = {}) {
     meta = '',
     swatches = [],
     leading = null,
+    trailing = null,
     selected = false,
     disabled = false,
     contrast = 'high',
@@ -70,6 +71,11 @@ function createOptionCard(options = {}) {
     card.appendChild(metaEl);
   }
 
+  const trailingEl = buildOptionCardTrailing(trailing);
+  if (trailingEl) {
+    card.appendChild(trailingEl);
+  }
+
   if (typeof onClick === 'function' && !disabled) {
     card.addEventListener('click', () => onClick(card));
   }
@@ -100,6 +106,29 @@ function buildOptionCardLeading(swatches, leading) {
   });
 
   return swatchWrap;
+}
+
+function buildOptionCardTrailing(trailing) {
+  if (!trailing) return null;
+
+  const wrap = document.createElement('div');
+  wrap.className = 'option-card__trailing';
+
+  if (trailing instanceof HTMLElement) {
+    wrap.appendChild(trailing);
+    return wrap;
+  }
+
+  if (typeof trailing === 'string') {
+    const icon = document.createElement('span');
+    icon.className = 'material-symbols-outlined';
+    icon.setAttribute('aria-hidden', 'true');
+    icon.textContent = trailing;
+    wrap.appendChild(icon);
+    return wrap;
+  }
+
+  return null;
 }
 
 function setOptionCardSelected(card, selected) {

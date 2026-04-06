@@ -52,9 +52,28 @@ const WidgetsService = (()=>{
     container.innerHTML = '';
 
     await ensureSearchWidgetSeeded();
-    await renderSearchWidget(container, containerId);
-    await renderBookmarkWidgets(container, containerId);
-    await renderStandardWidgets(container, containerId);
+    const sectionState = await getHomePageSectionState();
+    const orderedSections = [
+      { id: 'search', defaultOrder: 20, renderSection: () => renderSearchWidget(container, containerId, sectionState) },
+      { id: 'quick-links', defaultOrder: 30, renderSection: () => renderBookmarkWidgets(container, containerId, sectionState) },
+      { id: 'widgets', defaultOrder: 40, renderSection: () => renderStandardWidgets(container, containerId, sectionState) }
+    ].sort((left, right) => {
+      const leftOrder = sectionState && sectionState[left.id] ? sectionState[left.id].order : left.defaultOrder;
+      const rightOrder = sectionState && sectionState[right.id] ? sectionState[right.id].order : right.defaultOrder;
+      return leftOrder - rightOrder;
+    });
+
+    for (const section of orderedSections) {
+      await section.renderSection();
+    }
+  }
+
+  async function getHomePageSectionState() {
+    if (typeof HomePageSectionsService === 'undefined' || !HomePageSectionsService || typeof HomePageSectionsService.getState !== 'function') {
+      return null;
+    }
+
+    return HomePageSectionsService.getState();
   }
 
   async function ensureSearchWidgetSeeded() {
@@ -79,7 +98,11 @@ const WidgetsService = (()=>{
     await Storage.set({ [SEARCH_WIDGET_SEEDED_KEY]: true });
   }
 
-  async function renderSearchWidget(container, containerId) {
+  async function renderSearchWidget(container, containerId, sectionState = null) {
+    if (sectionState && sectionState.search && sectionState.search.visible === false) {
+      return;
+    }
+
     const slots = await SlotSystem.ensureSlots(STORAGE_KEY, DEFAULT_SLOTS);
     if (slots.findIndex(isSearchWidgetRecord) === -1) return;
 
@@ -88,7 +111,11 @@ const WidgetsService = (()=>{
     container.appendChild(createSearchWidgetSection(widget));
   }
 
-  async function renderBookmarkWidgets(container, containerId) {
+  async function renderBookmarkWidgets(container, containerId, sectionState = null) {
+    if (sectionState && sectionState['quick-links'] && sectionState['quick-links'].visible === false) {
+      return;
+    }
+
     const slots = await normalizeBookmarkSlots({ compact: true });
 
     const bookmarkItems = slots.map((item, idx) => {
@@ -231,7 +258,11 @@ const WidgetsService = (()=>{
     container.appendChild(createWidgetSection('Quick links', bookmarkSection));
   }
 
-  async function renderStandardWidgets(container, containerId) {
+  async function renderStandardWidgets(container, containerId, sectionState = null) {
+    if (sectionState && sectionState.widgets && sectionState.widgets.visible === false) {
+      return;
+    }
+
     const slots = await SlotSystem.ensureSlots(STORAGE_KEY, DEFAULT_SLOTS);
     const slotEntries = slots
       .map((item, slotIndex) => ({ item, slotIndex }))
