@@ -10,11 +10,19 @@
 
 /* Base tab styles */
 .tab {
+  --tab-label-color: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
+  --tab-subtitle-color: var(--common-common-bright-15, rgba(255, 255, 255, 0.6));
+  --tab-badge-bg: var(--common-common-dark-15, rgba(0, 0, 0, 0.4));
+  --tab-badge-color: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
+  --tab-hover-bg: var(--common-common-dark-05, rgba(0, 0, 0, 0.1));
+  --tab-active-bg: var(--primary-primary-20, rgba(46, 51, 185, 0.8));
+
   /* Layout */
   display: flex;
   align-items: center;
   gap: var(--padding-and-gap-small, 2px);
   width: 200px;
+  min-height: 40px;
   padding: var(--padding-and-gap-large, 8px) var(--padding-and-gap-large, 8px);
   
   /* Appearance */
@@ -46,7 +54,7 @@
   font-family: var(--font-family-sans-serif, 'Lato', sans-serif);
   font-size: var(--size-large, 16px);
   font-weight: var(--weight-regular, 400);
-  color: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
+  color: var(--tab-label-color);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -57,9 +65,28 @@
   font-family: var(--font-family-sans-serif, 'Lato', sans-serif);
   font-size: var(--size-medium, 12px);
   font-weight: var(--weight-light, 300);
-  color: var(--common-common-bright-15, rgba(255, 255, 255, 0.6));
+  color: var(--tab-subtitle-color);
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tab__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 16px;
+  height: 16px;
+  padding: 2px 4px;
+  border-radius: var(--corner-radius-pill, 999px);
+  background: var(--tab-badge-bg);
+  color: var(--tab-badge-color);
+  font-family: var(--font-family-sans-serif, 'Lato', sans-serif);
+  font-size: var(--size-medium, 12px);
+  font-weight: var(--weight-bold, 700);
+  line-height: 1;
+  box-sizing: border-box;
+  flex-shrink: 0;
   white-space: nowrap;
 }
 
@@ -89,7 +116,7 @@
 
 .tab--hover,
 .tab:hover:not(.tab--active) {
-  background: var(--common-common-dark-05, rgba(0, 0, 0, 0.1));
+  background: var(--tab-hover-bg);
 }
 
 .tab--hover .tab__icon,
@@ -103,7 +130,7 @@
 
 .tab--active,
 .tab[aria-selected="true"] {
-  background: var(--primary-primary-20, rgba(46, 51, 185, 0.8));
+  background: var(--tab-active-bg);
 }
 
 .tab--active .tab__icon,

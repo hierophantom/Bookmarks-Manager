@@ -137,6 +137,7 @@ const ThemeSettingsModal = (() => {
       const tab = createTab({
         label: config.label,
         subtitle: config.subtitle,
+        hideBadge: true,
         active: state.activePane === config.key,
         onClick: () => {
           if (state.activePane === config.key) return;

@@ -29,6 +29,9 @@
  * @param {boolean} [options.active=false] - Whether tab is active
  * @param {Function} [options.onClick] - Click handler
  * @param {boolean} [options.disabled=false] - Whether tab is disabled
+ * @param {number|string} [options.badgeCount=0] - Counter badge value
+ * @param {boolean} [options.hideBadge=false] - Hide the counter badge when not needed
+ * @param {string} [options.ariaLabel] - Optional explicit accessible label
  * @param {string} [options.iconSrc] - Custom icon source (default: chevron)
  * @returns {HTMLButtonElement} The tab element
  */
@@ -39,6 +42,9 @@ function createTab(options = {}) {
     active = false,
     onClick = null,
     disabled = false,
+    badgeCount = 0,
+    hideBadge = false,
+    ariaLabel = '',
     iconSrc = null
   } = options;
 
@@ -53,6 +59,7 @@ function createTab(options = {}) {
   button.type = 'button';
   button.setAttribute('role', 'tab');
   button.setAttribute('aria-selected', active.toString());
+  button.setAttribute('aria-label', ariaLabel || buildTabAriaLabel({ label, subtitle, badgeCount, hideBadge }));
   
   if (active) {
     button.classList.add('tab--active');
@@ -85,6 +92,14 @@ function createTab(options = {}) {
 
   button.appendChild(content);
 
+  if (!hideBadge) {
+    const badge = document.createElement('span');
+    badge.className = 'tab__badge';
+    badge.textContent = String(badgeCount);
+    badge.setAttribute('aria-hidden', 'true');
+    button.appendChild(badge);
+  }
+
   // Create icon (chevron)
   const icon = document.createElement('img');
   icon.className = 'tab__icon';
@@ -106,6 +121,20 @@ function createTab(options = {}) {
   }
 
   return button;
+}
+
+function buildTabAriaLabel({ label, subtitle, badgeCount, hideBadge }) {
+  const parts = [label];
+
+  if (subtitle) {
+    parts.push(subtitle);
+  }
+
+  if (!hideBadge) {
+    parts.push(`${badgeCount} items`);
+  }
+
+  return parts.join(', ');
 }
 
 /**
@@ -166,6 +195,7 @@ function updateTabLabel(tab, label) {
   const labelEl = tab.querySelector('.tab__label');
   if (labelEl) {
     labelEl.textContent = label;
+    syncTabAccessibility(tab);
   }
 }
 
@@ -187,7 +217,22 @@ function updateTabSubtitle(tab, subtitle) {
   
   if (subtitleEl) {
     subtitleEl.textContent = subtitle;
+    syncTabAccessibility(tab);
   }
+}
+
+function syncTabAccessibility(tab) {
+  const label = tab.querySelector('.tab__label')?.textContent || '';
+  const subtitle = tab.querySelector('.tab__subtitle')?.textContent || '';
+  const badgeText = tab.querySelector('.tab__badge')?.textContent || '0';
+  const hideBadge = !tab.querySelector('.tab__badge');
+
+  tab.setAttribute('aria-label', buildTabAriaLabel({
+    label,
+    subtitle,
+    badgeCount: badgeText,
+    hideBadge
+  }));
 }
 
 /**

@@ -834,172 +834,483 @@ const Modal = (() => {
    * WidgetPicker Modal
    */
   function openWidgetPicker(defaults = {}) {
-    return new Promise((resolve) => {
-      if (typeof createModal === 'function' && typeof showModal === 'function') {
-        const widgets = [
-          { id: 'search-bar-widget', title: 'Search', subtitle: 'Web + bookmarks', icon: 'search' },
-          { id: 'clock', title: 'Clock', subtitle: 'Time', icon: 'schedule' },
-          { id: 'quicklinks', title: 'Quick Links', subtitle: 'Shortcuts', icon: 'bolt' },
-          { id: 'notes', title: 'Notes', subtitle: 'Scratchpad', icon: 'sticky_note_2' }
-        ];
-
-        let selectedWidget = widgets.find((widget) => widget.id === defaults.id) || null;
-        const list = document.createElement('div');
-        list.className = 'bm-widget-list';
-
-        widgets.forEach((widget) => {
-          const optionBtn = document.createElement('button');
-          optionBtn.type = 'button';
-          optionBtn.className = 'bm-widget-item-btn';
-
-          const preview = typeof createWidgetSmall === 'function'
-            ? createWidgetSmall({
-              type: 'widget',
-              state: 'idle',
-              label: widget.title,
-              subtext: widget.subtitle,
-              icon: widget.icon
-            })
-            : null;
-
-          if (preview) {
-            optionBtn.appendChild(preview);
-          } else {
-            optionBtn.textContent = widget.title;
-          }
-
-          optionBtn.setAttribute('aria-label', `Select ${widget.title} widget`);
-          optionBtn.setAttribute('aria-pressed', selectedWidget?.id === widget.id ? 'true' : 'false');
-          optionBtn.addEventListener('click', () => {
-            selectedWidget = widget;
-            list.querySelectorAll('.bm-widget-item-btn').forEach((btn) => {
-              btn.classList.remove('bm-widget-item-btn--selected');
-              btn.setAttribute('aria-pressed', 'false');
-            });
-            optionBtn.classList.add('bm-widget-item-btn--selected');
-            optionBtn.setAttribute('aria-pressed', 'true');
-          });
-
-          if (selectedWidget?.id === widget.id) {
-            optionBtn.classList.add('bm-widget-item-btn--selected');
-          }
-
-          list.appendChild(optionBtn);
+    return new Promise(async (resolve) => {
+      if (typeof WidgetRegistryService === 'undefined' || !WidgetRegistryService) {
+        await openError({
+          title: 'Widget shop unavailable',
+          message: 'The widget registry is missing. Please reload and try again.'
         });
-
-        const modal = createModal({
-          type: 'form',
-          title: 'Add widget',
-          content: list,
-          buttons: [
-            { label: 'Cancel', type: 'common', role: 'cancel', shortcut: 'ESC' },
-            { label: 'Add', type: 'primary', role: 'confirm', shortcut: '↵' }
-          ],
-          onSubmit: async () => {
-            if (!selectedWidget) {
-              await openError({
-                title: 'No Widget Selected',
-                message: 'Please select a widget.'
-              });
-              return false;
-            }
-            return true;
-          },
-          onClose: (confirmed) => {
-            resolve(confirmed ? selectedWidget : null);
-          }
-        });
-
-        showModal(modal);
+        resolve(null);
         return;
       }
 
+      const categories = WidgetRegistryService.getCategories();
+      const defaultWidgetId = defaults.widgetId || defaults.id || null;
+      const defaultDefinition = WidgetRegistryService.getDefinition(defaultWidgetId);
+      const state = {
+        activeCategoryId: defaultDefinition?.categoryId || 'all',
+        query: ''
+      };
+
       const overlay = document.createElement('div');
-      overlay.id = 'bm-modal-overlay';
-      overlay.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+      overlay.className = 'modal-overlay modal-overlay--entering widget-shop-shell-overlay';
       overlay.setAttribute('role', 'dialog');
       overlay.setAttribute('aria-modal', 'true');
-      overlay.setAttribute('aria-labelledby', 'bm-widget-title');
+      overlay.setAttribute('aria-labelledby', 'widget-shop-title');
 
-      overlay.addEventListener('click', (e) => {
-        if (e.target === overlay) {
+      const shell = document.createElement('div');
+      shell.className = 'theme-settings-shell theme-settings-shell--entering widget-shop-shell';
+
+      const shellHeader = document.createElement('div');
+      shellHeader.className = 'widget-shop-modal__shell-header';
+
+      const shellTitle = document.createElement('h2');
+      shellTitle.id = 'widget-shop-title';
+      shellTitle.className = 'widget-shop-modal__shell-title';
+      shellTitle.textContent = 'Widgets store';
+
+      const closeButton = createActionButton({
+        icon: createWidgetShopIcon('close'),
+        label: 'Close widget store',
+        onClick: () => closeOverlay(null)
+      });
+      closeButton.classList.add('theme-settings-modal__close', 'widget-shop-modal__close');
+
+      shellHeader.append(shellTitle, closeButton);
+
+      const content = document.createElement('div');
+      content.className = 'theme-settings-modal__content widget-shop-modal__content';
+
+      const layout = document.createElement('div');
+      layout.className = 'theme-settings-modal__layout widget-shop-modal__layout';
+
+      const sidebar = document.createElement('aside');
+      sidebar.className = 'theme-settings-modal__sidebar widget-shop-modal__sidebar';
+
+      const sidebarContent = document.createElement('div');
+      sidebarContent.className = 'theme-settings-modal__sidebar-content widget-shop-modal__sidebar-content';
+
+      const tabsWrap = document.createElement('div');
+      tabsWrap.className = 'widget-shop-modal__tabs';
+      sidebarContent.appendChild(tabsWrap);
+      sidebar.appendChild(sidebarContent);
+
+      const panel = document.createElement('section');
+      panel.className = 'theme-settings-modal__panel widget-shop-modal__panel';
+
+      const panelHeader = document.createElement('div');
+      panelHeader.className = 'theme-settings-modal__panel-header widget-shop-modal__panel-header';
+
+      const contentTitle = document.createElement('h3');
+      contentTitle.className = 'theme-settings-modal__title widget-shop-modal__content-title';
+
+      const titleWrap = document.createElement('div');
+      titleWrap.className = 'theme-settings-modal__title-wrap widget-shop-modal__title-wrap';
+
+      const searchField = createTextField({
+        placeholder: 'Search this category',
+        value: '',
+        contrast: 'high',
+        ariaLabel: 'Search widgets in the active category',
+        onInput: (_event, value) => {
+          state.query = value;
+          renderWidgetCatalog();
+        }
+      });
+      searchField.classList.add('widget-shop-modal__search');
+
+      const searchInput = searchField.querySelector('.text-field__input');
+
+      const cardsWrap = document.createElement('div');
+  cardsWrap.className = 'theme-settings-modal__panel-body widget-shop-modal__panel-body widget-shop-modal__cards';
+
+  titleWrap.appendChild(contentTitle);
+  panelHeader.append(titleWrap, searchField);
+  panel.append(panelHeader, cardsWrap);
+      layout.append(sidebar, panel);
+      content.append(shellHeader, layout);
+  shell.appendChild(content);
+  overlay.appendChild(shell);
+
+      let closed = false;
+
+      function closeOverlay(result = null) {
+        if (closed) return;
+        closed = true;
+        document.removeEventListener('keydown', handleKeyDown);
+        overlay.classList.add('modal-overlay--exiting');
+        shell.classList.add('theme-settings-shell--exiting');
+
+        window.setTimeout(() => {
           overlay.remove();
-          resolve(null);
+          resolve(result);
+        }, 200);
+      }
+
+      function handleKeyDown(event) {
+        if (event.key === 'Escape') {
+          event.preventDefault();
+          closeOverlay(null);
+        }
+      }
+
+      overlay.addEventListener('click', (event) => {
+        if (event.target === overlay) {
+          closeOverlay(null);
         }
       });
 
-      const card = document.createElement('div');
-      card.className = 'bm-modal-card bg-white rounded-lg shadow-lg p-6 max-w-md w-full mx-4';
+      document.addEventListener('keydown', handleKeyDown);
 
-      const widgets = [
-        { id: 'search-bar-widget', title: 'Search', icon: '🔎' },
-        { id: 'clock', title: 'Clock', icon: '🕐' },
-        { id: 'quicklinks', title: 'Quick Links', icon: '⚡' },
-        { id: 'notes', title: 'Notes', icon: '📝' }
-      ];
+      const renderTabs = () => {
+        tabsWrap.innerHTML = '';
 
-      const widgetsHtml = widgets
-        .map(
-          (w, i) =>
-            `<button class="bm-widget-item w-full p-3 mb-2 text-left bg-gray-50 hover:bg-blue-50 border border-gray-200 rounded-md transition-colors" data-widget-id="${w.id}" aria-label="${w.title} widget (Press ${i + 1} to select)">
-              <div class="text-lg">${w.icon}</div>
-              <div class="font-medium text-gray-900">${w.title}</div>
-            </button>`
-        )
-        .join('');
-
-      card.innerHTML = `
-        <h2 id="bm-widget-title" class="text-xl font-bold text-gray-900 mb-4">Add widget</h2>
-        <div class="bm-widget-list mb-4" role="group" aria-label="Widget options">
-          ${widgetsHtml}
-        </div>
-        <button id="bm_widget_cancel" type="button" aria-label="Cancel and close dialog" class="w-full px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 font-medium transition-colors">
-          Cancel
-        </button>
-      `;
-
-      overlay.appendChild(card);
-      document.body.appendChild(overlay);
-
-      // Attach click handlers to widget buttons
-      card.querySelectorAll('.bm-widget-item').forEach((btn) => {
-        btn.addEventListener('click', () => {
-          const widgetId = btn.dataset.widgetId;
-          const widget = widgets.find((w) => w.id === widgetId);
-          overlay.remove();
-          resolve(widget);
-        });
-      });
-
-      card.querySelector('#bm_widget_cancel').addEventListener('click', () => {
-        overlay.remove();
-        resolve(null);
-      });
-
-      // Keyboard accessibility
-      document.addEventListener('keydown', (e) => {
-        // Only handle if overlay is visible
-        if (!document.body.contains(overlay)) return;
-
-        // Escape to close
-        if (e.key === 'Escape') {
-          e.preventDefault();
-          overlay.remove();
-          resolve(null);
-        }
-
-        // Number keys 1-3 to select widgets
-        if (['1', '2', '3'].includes(e.key)) {
-          e.preventDefault();
-          const index = parseInt(e.key, 10) - 1;
-          if (index < widgets.length) {
-            const widget = widgets[index];
-            overlay.remove();
-            resolve(widget);
+        const allWidgets = WidgetRegistryService.getCatalogWidgets();
+        tabsWrap.appendChild(createTab({
+          label: 'All widgets',
+          badgeCount: allWidgets.length,
+          active: state.activeCategoryId === 'all',
+          onClick: () => {
+            if (state.activeCategoryId === 'all') return;
+            state.activeCategoryId = 'all';
+            state.query = '';
+            if (searchInput) {
+              searchInput.value = '';
+            }
+            renderWidgetCatalog();
           }
+        }));
+
+        categories.forEach((category) => {
+          const totalWidgets = WidgetRegistryService.getCatalogWidgets({ categoryId: category.id }).length;
+          const tab = createTab({
+            label: category.label,
+            badgeCount: totalWidgets,
+            active: state.activeCategoryId === category.id,
+            onClick: () => {
+              if (state.activeCategoryId === category.id) return;
+
+              state.activeCategoryId = category.id;
+              state.query = '';
+              if (searchInput) {
+                searchInput.value = '';
+              }
+              renderWidgetCatalog();
+            }
+          });
+
+          tabsWrap.appendChild(tab);
+        });
+      };
+
+      const renderWidgetCatalog = () => {
+        const filteredWidgets = WidgetRegistryService.getCatalogWidgets({
+          categoryId: state.activeCategoryId === 'all' ? null : state.activeCategoryId,
+          query: state.query
+        });
+        const activeCategory = categories.find((category) => category.id === state.activeCategoryId);
+
+        contentTitle.textContent = activeCategory ? activeCategory.label : 'All widgets';
+
+        cardsWrap.innerHTML = '';
+
+        if (!filteredWidgets.length) {
+          const emptyState = document.createElement('div');
+          emptyState.className = 'widget-shop-modal__empty-state';
+
+          const emptyMessage = document.createElement('p');
+          emptyMessage.className = 'widget-shop-modal__empty-message';
+          emptyMessage.textContent = state.query
+            ? 'No results found'
+            : 'No widgets found';
+
+          emptyState.appendChild(emptyMessage);
+          cardsWrap.appendChild(emptyState);
+          return;
         }
-      }, true);
+
+        filteredWidgets.forEach((definition) => {
+          const card = createWidgetShopCard(definition, () => {
+            const widgetInstance = WidgetRegistryService.createInstance(definition.id);
+            closeOverlay(widgetInstance);
+          });
+          cardsWrap.appendChild(card);
+        });
+      };
+
+      renderTabs();
+      renderWidgetCatalog();
+      document.body.appendChild(overlay);
+      window.setTimeout(() => {
+        if (searchInput) {
+          searchInput.focus();
+        }
+      }, 50);
     });
+  }
+
+  function openWidgetSettings(widgetRecord) {
+    return new Promise(async (resolve) => {
+      if (typeof createModal !== 'function' || typeof showModal !== 'function') {
+        resolve(null);
+        return;
+      }
+
+      if (typeof WidgetRegistryService === 'undefined' || !WidgetRegistryService) {
+        await openError({
+          title: 'Widget settings unavailable',
+          message: 'The widget registry is missing. Please reload and try again.'
+        });
+        resolve(null);
+        return;
+      }
+
+      const normalizedRecord = WidgetRegistryService.normalizeStoredRecord(widgetRecord);
+      const definition = WidgetRegistryService.getDefinition(normalizedRecord?.widgetId);
+
+      if (!definition || !WidgetRegistryService.hasSettings(normalizedRecord)) {
+        await openNotice({
+          title: 'No settings yet',
+          message: 'This widget does not have editable settings yet.'
+        });
+        resolve(null);
+        return;
+      }
+
+      const state = {
+        ...definition.sanitizeSettings(normalizedRecord.settings || {})
+      };
+
+      if (definition.id === 'quick-note') {
+        const content = document.createElement('div');
+        content.className = 'widget-settings-modal__content';
+
+        const stack = document.createElement('div');
+        stack.className = 'widget-settings-modal__stack';
+
+        const noteField = createTextField({
+          value: state.note || '',
+          placeholder: 'Capture your next step',
+          contrast: 'low',
+          ariaLabel: 'Quick note text',
+          onInput: (_event, value) => {
+            state.note = value;
+          }
+        });
+        noteField.classList.add('widget-settings-modal__field');
+        const noteInput = noteField.querySelector('.text-field__input');
+
+        stack.appendChild(createSettingSection({
+          title: 'Note',
+          description: 'Keep this short so it stays glanceable on the home page.',
+          contrast: 'low',
+          content: noteField,
+          divided: false
+        }));
+
+        content.appendChild(stack);
+
+        let submitResult = null;
+        let modal = null;
+
+        modal = createModal({
+          type: 'form',
+          title: `${definition.name} settings`,
+          subtitle: 'This note is saved per widget instance.',
+          content,
+          buttons: [
+            { label: 'Cancel', type: 'common', role: 'cancel', shortcut: 'ESC' },
+            { label: 'Save', type: 'primary', role: 'confirm', shortcut: '↵' }
+          ],
+          onSubmit: () => {
+            clearModalInlineError(modal);
+
+            submitResult = {
+              ...normalizedRecord,
+              settings: definition.sanitizeSettings({
+                note: (noteInput?.value || state.note || '').trim()
+              })
+            };
+            return true;
+          },
+          onClose: (confirmed) => {
+            resolve(confirmed ? submitResult : null);
+          }
+        });
+
+        modal.querySelector('.modal')?.classList.add('widget-settings-modal');
+        showModal(modal);
+        window.setTimeout(() => {
+          if (noteInput) {
+            noteInput.focus();
+            noteInput.select();
+          }
+        }, 50);
+        return;
+      }
+
+      const content = document.createElement('div');
+      content.className = 'widget-settings-modal__content';
+
+      const stack = document.createElement('div');
+      stack.className = 'widget-settings-modal__stack';
+
+      stack.appendChild(createSettingSection({
+        title: 'Display',
+        description: 'Choose how this clock instance should look.',
+        contrast: 'low',
+        content: [
+          createChoiceGroup({
+            type: 'radio',
+            contrast: 'low',
+            items: [
+              { label: '24-hour', value: '24-hour', checked: state.timeFormat === '24-hour' },
+              { label: '12-hour', value: '12-hour', checked: state.timeFormat === '12-hour' }
+            ],
+            onChange: ({ changedValue }) => {
+              state.timeFormat = changedValue;
+            }
+          }),
+          createChoiceGroup({
+            type: 'radio',
+            contrast: 'low',
+            items: [
+              { label: 'Hide seconds', value: 'hide', checked: !state.showSeconds },
+              { label: 'Show seconds', value: 'show', checked: state.showSeconds }
+            ],
+            onChange: ({ changedValue }) => {
+              state.showSeconds = changedValue === 'show';
+            }
+          })
+        ]
+      }));
+
+      const timezoneField = createTextField({
+        value: state.timezone === 'local' ? '' : state.timezone,
+        placeholder: 'local or Europe/London',
+        contrast: 'low',
+        ariaLabel: 'Clock timezone',
+        onInput: (_event, value) => {
+          state.timezone = value;
+        }
+      });
+      timezoneField.classList.add('widget-settings-modal__field');
+      const timezoneInput = timezoneField.querySelector('.text-field__input');
+
+      const labelField = createTextField({
+        value: state.label,
+        placeholder: 'Optional label',
+        contrast: 'low',
+        ariaLabel: 'Clock label',
+        onInput: (_event, value) => {
+          state.label = value;
+        }
+      });
+      labelField.classList.add('widget-settings-modal__field');
+      const labelInput = labelField.querySelector('.text-field__input');
+
+      stack.appendChild(createSettingSection({
+        title: 'Location',
+        description: 'Use local or a valid IANA timezone to pin another city.',
+        contrast: 'low',
+        content: timezoneField
+      }));
+
+      stack.appendChild(createSettingSection({
+        title: 'Label',
+        description: 'Optional short label shown under the time.',
+        contrast: 'low',
+        content: labelField,
+        divided: false
+      }));
+
+      content.appendChild(stack);
+
+      let submitResult = null;
+      let modal = null;
+
+      modal = createModal({
+        type: 'form',
+        title: `${definition.name} settings`,
+        subtitle: 'These settings are saved per widget instance.',
+        content,
+        buttons: [
+          { label: 'Cancel', type: 'common', role: 'cancel', shortcut: 'ESC' },
+          { label: 'Save', type: 'primary', role: 'confirm', shortcut: '↵' }
+        ],
+        onSubmit: () => {
+          clearModalInlineError(modal);
+
+          const nextSettings = definition.sanitizeSettings({
+            timeFormat: state.timeFormat,
+            showSeconds: state.showSeconds,
+            timezone: (timezoneInput?.value || state.timezone || '').trim() || 'local',
+            label: (labelInput?.value || state.label || '').trim()
+          });
+
+          const validation = WidgetRegistryService.validateWidgetSettings(definition.id, nextSettings);
+          if (!validation.valid) {
+            showModalInlineError(modal, timezoneInput, validation.message || 'Please enter a valid timezone.');
+            return false;
+          }
+
+          submitResult = {
+            ...normalizedRecord,
+            settings: nextSettings
+          };
+          return true;
+        },
+        onClose: (confirmed) => {
+          resolve(confirmed ? submitResult : null);
+        }
+      });
+
+      modal.querySelector('.modal')?.classList.add('widget-settings-modal');
+      showModal(modal);
+      window.setTimeout(() => {
+        if (timezoneInput) {
+          timezoneInput.focus();
+          timezoneInput.select();
+        }
+      }, 50);
+    });
+  }
+
+  function createWidgetShopIcon(iconName) {
+    const icon = document.createElement('span');
+    icon.className = 'material-symbols-outlined widget-shop-modal__card-icon';
+    icon.setAttribute('aria-hidden', 'true');
+    icon.textContent = iconName || 'widgets';
+    return icon;
+  }
+
+  function createWidgetShopCard(definition, onAdd) {
+    const card = document.createElement('div');
+    card.className = 'widget-shop-modal__card';
+
+    const icon = createWidgetShopIcon(definition.icon || 'widgets');
+
+    const copy = document.createElement('div');
+    copy.className = 'widget-shop-modal__card-copy';
+
+    const title = document.createElement('p');
+    title.className = 'widget-shop-modal__card-title';
+    title.textContent = definition.name;
+
+    const description = document.createElement('p');
+    description.className = 'widget-shop-modal__card-description';
+    description.textContent = definition.description;
+
+    const addButton = createPrimaryButton({
+      label: 'Add widget',
+      contrast: 'high',
+      onClick: onAdd
+    });
+    addButton.classList.add('widget-shop-modal__card-button');
+
+    copy.append(title, description);
+    card.append(icon, copy, addButton);
+    return card;
   }
 
   /**
@@ -1212,6 +1523,7 @@ const Modal = (() => {
     openFolderForm, 
     openTabsPicker, 
     openWidgetPicker, 
+    openWidgetSettings,
     openConfirmation,
     openError,
     openNotice,

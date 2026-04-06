@@ -8,6 +8,7 @@ const WidgetsService = (()=>{
   const SEARCH_PROVIDER_KEY = 'searchEngine';
   const SEARCH_CUSTOM_TEMPLATE_KEY = 'customSearchProviderTemplate';
   const SEARCH_WIDGET_SEARCH_DEBOUNCE_MS = 180;
+  const renderedWidgetCleanups = [];
   const SEARCH_PROVIDER_REGISTRY = {
     google: {
       id: 'google',
@@ -49,6 +50,7 @@ const WidgetsService = (()=>{
   async function render(containerId){
     const container = document.getElementById(containerId);
     if (!container) return;
+    cleanupRenderedWidgets();
     container.innerHTML = '';
 
     await ensureSearchWidgetSeeded();
@@ -263,7 +265,7 @@ const WidgetsService = (()=>{
       return;
     }
 
-    const slots = await SlotSystem.ensureSlots(STORAGE_KEY, DEFAULT_SLOTS);
+    const slots = await normalizeStandardWidgetSlots();
     const slotEntries = slots
       .map((item, slotIndex) => ({ item, slotIndex }))
       .filter(({ item }) => !isSearchWidgetRecord(item));
@@ -311,22 +313,34 @@ const WidgetsService = (()=>{
         
         return emptyWidget;
       } else {
-        // Widget with content
-        const title = item.title || item.id || 'Label';
-        const subtitle = item.subtitle || 'Subtext';
-        const icon = 'bookmark'; // Use Material Icon
+        const normalizedItem = normalizeStandardWidgetRecord(item);
+        const preview = getStandardWidgetPreview(normalizedItem);
+        const canEditWidget = typeof WidgetRegistryService !== 'undefined'
+          && WidgetRegistryService
+          && typeof WidgetRegistryService.hasSettings === 'function'
+          && WidgetRegistryService.hasSettings(normalizedItem);
         
         // Create action buttons for hover state
-        const editBtn = createCubeActionButton({
-          icon: 'edit',
-          label: 'Edit',
-          tooltip: 'Edit widget',
-          colorScheme: 'default',
-          onClick: async (e) => {
-            e.stopPropagation();
-            // TODO: Implement edit
-          }
-        });
+        const editBtn = canEditWidget
+          ? createCubeActionButton({
+            icon: 'edit',
+            label: 'Edit',
+            tooltip: 'Edit widget',
+            colorScheme: 'default',
+            onClick: async (e) => {
+              e.stopPropagation();
+              if (typeof Modal === 'undefined' || !Modal || typeof Modal.openWidgetSettings !== 'function') {
+                return;
+              }
+
+              const updatedWidget = await Modal.openWidgetSettings(normalizedItem);
+              if (!updatedWidget) return;
+
+              await setStandardWidgetSlot(slotIndex, updatedWidget);
+              await render(containerId);
+            }
+          })
+          : null;
         
         const removeBtn = createCubeActionButton({
           icon: 'close',
@@ -350,11 +364,12 @@ const WidgetsService = (()=>{
         const widget = createWidgetSmall({
           type: 'widget',
           state: 'idle',
-          label: title,
-          subtext: subtitle,
-          icon: icon,
-          actions: [editBtn, removeBtn]
+          label: preview.label,
+          subtext: preview.subtext,
+          icon: preview.icon,
+          actions: [editBtn, removeBtn].filter(Boolean)
         });
+        bindStandardWidget(widget, normalizedItem);
         
         // Make widget draggable
         widget.setAttribute('draggable', 'true');
@@ -465,7 +480,9 @@ const WidgetsService = (()=>{
   }
 
   async function setStandardWidgetSlot(index, item) {
-    if (isSearchWidgetRecord(item)) {
+    const normalizedItem = normalizeStandardWidgetRecord(item);
+
+    if (isSearchWidgetRecord(normalizedItem)) {
       const slots = await SlotSystem.ensureSlots(STORAGE_KEY, DEFAULT_SLOTS);
       const existingSearchIndex = slots.findIndex(isSearchWidgetRecord);
       if (existingSearchIndex !== -1 && existingSearchIndex !== index) {
@@ -473,8 +490,80 @@ const WidgetsService = (()=>{
       }
     }
 
-    await SlotSystem.setSlot(STORAGE_KEY, index, item);
+    await SlotSystem.setSlot(STORAGE_KEY, index, normalizedItem);
     return { success: true };
+  }
+
+  function cleanupRenderedWidgets() {
+    while (renderedWidgetCleanups.length > 0) {
+      const cleanup = renderedWidgetCleanups.pop();
+      if (typeof cleanup !== 'function') continue;
+
+      try {
+        cleanup();
+      } catch (error) {
+        console.warn('Widget cleanup failed', error);
+      }
+    }
+  }
+
+  async function normalizeStandardWidgetSlots() {
+    const slots = await SlotSystem.ensureSlots(STORAGE_KEY, DEFAULT_SLOTS);
+    let changed = false;
+
+    const normalizedSlots = slots.map((item) => {
+      if (!item || isSearchWidgetRecord(item)) {
+        return item;
+      }
+
+      const normalizedItem = normalizeStandardWidgetRecord(item);
+      if (JSON.stringify(normalizedItem) !== JSON.stringify(item)) {
+        changed = true;
+      }
+
+      return normalizedItem;
+    });
+
+    if (changed) {
+      await SlotSystem.save(STORAGE_KEY, normalizedSlots);
+    }
+
+    return normalizedSlots;
+  }
+
+  function normalizeStandardWidgetRecord(item) {
+    if (!item || isSearchWidgetRecord(item)) {
+      return item;
+    }
+
+    if (typeof WidgetRegistryService !== 'undefined' && WidgetRegistryService && typeof WidgetRegistryService.normalizeStoredRecord === 'function') {
+      return WidgetRegistryService.normalizeStoredRecord(item);
+    }
+
+    return item;
+  }
+
+  function getStandardWidgetPreview(item) {
+    if (typeof WidgetRegistryService !== 'undefined' && WidgetRegistryService && typeof WidgetRegistryService.getWidgetPreview === 'function') {
+      return WidgetRegistryService.getWidgetPreview(item);
+    }
+
+    return {
+      label: item?.title || item?.id || 'Widget',
+      subtext: item?.subtitle || 'Custom widget',
+      icon: item?.icon || 'bookmark'
+    };
+  }
+
+  function bindStandardWidget(widget, item) {
+    if (typeof WidgetRegistryService === 'undefined' || !WidgetRegistryService || typeof WidgetRegistryService.bindWidgetElement !== 'function') {
+      return;
+    }
+
+    const cleanup = WidgetRegistryService.bindWidgetElement(widget, item);
+    if (typeof cleanup === 'function') {
+      renderedWidgetCleanups.push(cleanup);
+    }
   }
 
   async function createHomepageSearchWidget(containerId) {
@@ -1039,13 +1128,14 @@ const WidgetsService = (()=>{
   }
 
   async function addWidgetToFirstEmpty(pick){
+    const normalizedPick = normalizeStandardWidgetRecord(pick);
     const slots = await SlotSystem.ensureSlots(STORAGE_KEY, DEFAULT_SLOTS);
-    if (isSearchWidgetRecord(pick) && slots.some(isSearchWidgetRecord)) {
+    if (isSearchWidgetRecord(normalizedPick) && slots.some(isSearchWidgetRecord)) {
       return false;
     }
     const idx = slots.findIndex(s=>!s);
     if (idx < 0) return false;
-    await SlotSystem.setSlot(STORAGE_KEY, idx, pick);
+    await SlotSystem.setSlot(STORAGE_KEY, idx, normalizedPick);
     return true;
   }
 

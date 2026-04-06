@@ -11,6 +11,7 @@ A bookmark-focused Chrome new tab extension with theming, tagging, and homepage 
 - **🖼️ Custom Backgrounds** - Solid colors, uploaded images, or Unsplash integration
 - **📊 Tab Groups** - View and manage browser tab groups
 - **🏠 Custom New Tab** - Homepage with widgets, bookmarks, and daily quotes
+- **🧩 Widget Store** - Registry-backed widget picker with category tabs and per-instance widget settings
 - **💾 Undo/Redo** - Easily undo deletions and changes
 
 ## 🚀 Installation
@@ -23,6 +24,7 @@ A bookmark-focused Chrome new tab extension with theming, tagging, and homepage 
 ## 📖 Documentation
 
 - [ARCHITECTURE.md](ARCHITECTURE.md) - System architecture and design
+- [ARCHITECTURE.md#homepage-widget-architecture](ARCHITECTURE.md#homepage-widget-architecture) - Widget registry contract, storage model, and add-a-widget standards
 - [docs/CHANGELOG.md](docs/CHANGELOG.md) - Version history and changes
 - [docs/README.md](docs/README.md) - Technical specs and debug docs
 

@@ -318,6 +318,142 @@ Key additions:
 - Use debounce for real-time search (100ms)
 - Limit history search to last 30 days by default
 
+---
+
+## Homepage Widget Architecture
+
+The homepage widget area now uses a registry-backed model instead of a hardcoded picker-only flow.
+
+### Goals
+
+- Keep the widget store curated and shipped by the extension.
+- Allow multiple instances of the same widget.
+- Keep per-instance settings persistent across sessions.
+- Make the shop data-driven so new widgets can be added without rewriting the modal and render flow.
+
+### Core Files
+
+- [services/widget-registry.js](services/widget-registry.js): widget definitions, categories, instance creation, settings sanitization, preview helpers, and optional live binding.
+- [services/widgets.js](services/widgets.js): homepage render pipeline, slot normalization, widget actions, and per-widget binding lifecycle.
+- [utils/modal.js](utils/modal.js): widget store modal and widget settings modal.
+- [components/tab.js](components/tab.js): sidebar tabs used by the widget store.
+- [components/widget-small.js](components/widget-small.js): compact homepage widget tile used for widget previews on the homepage.
+
+### Storage Model
+
+Homepage widgets still live in the existing `slotWidgets` array, but standard widgets now use normalized instance records.
+
+```js
+{
+  kind: 'widget-instance',
+  version: 1,
+  instanceId: 'widget-...',
+  widgetId: 'digital-clock',
+  settings: {
+    // widget-specific, sanitized per definition
+  }
+}
+```
+
+Notes:
+
+- The search widget remains a special-case homepage section record.
+- Legacy `clock` records are normalized into `digital-clock` instances during render.
+- Bookmark quick links continue to use their separate `bookmarkWidgetSlots` storage model.
+
+### Registry Contract
+
+Each widget definition should provide the following shape in [services/widget-registry.js](services/widget-registry.js):
+
+```js
+{
+  id: 'quick-note',
+  name: 'Quick note',
+  description: 'Pin a short reminder or next step to the home page.',
+  categoryId: 'productivity',
+  icon: 'edit_note',
+  tags: ['note', 'memo'],
+  supportsMultiple: true,
+  hasSettings: true,
+  sortOrder: 10,
+  sanitizeSettings(settings) { ... },
+  validateSettings(settings) { ... },
+  getPreview(record, now) { ... },
+  bindElement(element, record) { ... } // optional
+}
+```
+
+Behavior rules:
+
+- `sanitizeSettings()` must return a safe, complete settings object.
+- `validateSettings()` should return `{ valid: true }` or `{ valid: false, field, message }`.
+- `getPreview()` must return the compact homepage tile copy: `{ label, subtext, icon }`.
+- `bindElement()` is optional and should only be used for live widgets that need to update after initial render.
+
+### Categories
+
+Current store categories:
+
+- `productivity`
+- `information`
+- `wellness-motivation`
+- `time-calendar`
+
+The widget store also exposes an `All widgets` tab at the UI layer.
+
+### Current Shipped Widgets
+
+Registry-backed widgets currently shipped:
+
+- `digital-clock`
+- `today-date`
+- `quick-note`
+- `bookmark-count`
+- `daily-affirmation`
+
+### Widget Settings Standard
+
+Settings are always per instance, not global per widget type.
+
+Rules:
+
+- Only widgets with `hasSettings: true` should show the homepage edit button.
+- The settings modal must save sanitized data back into the instance record.
+- A widget without settings should not expose a dead-end edit affordance.
+- Keep settings minimal and glanceable-first; homepage widgets are summary surfaces, not full tools.
+
+### Render Lifecycle
+
+The homepage render flow in [services/widgets.js](services/widgets.js) is:
+
+1. Load and normalize `slotWidgets`.
+2. Skip the special search record when rendering standard widgets.
+3. Ask the registry for the widget preview.
+4. Render the shared `widget-small` tile.
+5. If the widget definition provides `bindElement()`, register and clean up that binding on re-render.
+
+This allows live widgets like clocks or counters without baking widget-specific logic into the render service.
+
+### Add-A-Widget Standard
+
+When adding a new widget to the store:
+
+1. Add its definition to [services/widget-registry.js](services/widget-registry.js).
+2. Choose exactly one category.
+3. Provide a stable `id`, icon, description, tags, and sort order.
+4. Implement `sanitizeSettings()` even if the widget has no settings.
+5. Add `validateSettings()` and modal support if the widget is editable.
+6. Ensure `getPreview()` is concise enough for a `160x160` compact tile.
+7. Add or update tests in [tests/services/widget-registry.test.js](tests/services/widget-registry.test.js).
+
+### Constraints And Standards
+
+- The store is curated; user-submitted widgets are not loaded dynamically at runtime.
+- Search in the store is scoped to the currently selected category tab.
+- The store has no installed state; users can add as many instances as they want.
+- Widget cards in the store are fixed-size gallery tiles and should stay glanceable.
+- Use Shelf components where possible for the store UI instead of local one-off controls.
+
 ### 6. **Deduplication**
 - Same URL bookmarked + in history = show once (prioritize bookmark)
 - Same tab in multiple windows = show once
