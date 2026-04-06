@@ -9,15 +9,15 @@ const BackgroundsService = (() => {
   const UNSPLASH_API_URL = 'https://api.unsplash.com/photos/random';
   const UNSPLASH_CATEGORIES = [
     { id: '6sMVjTLSkeQ', name: 'Nature' },
-    { id: 'xHxYTMHLgOc', name: 'Urban' },
-    { id: 'qPYsDzvJOYc', name: 'Abstract' },
+    { id: 'M8jVbLbTRws', name: 'Architecture & Interiors' },
+    { id: 'qPYsDzvJOYc', name: 'Experimental' },
     { id: 'Jpg6Kidl-Hk', name: 'Animals' },
-    { id: 'CDwuwXJAbEw', name: 'Technology' },
-    { id: 'Fzo3zuOHN6w', name: 'Travel' },
+    { id: 'iUIsnVtjB0Y', name: 'Textures & Patterns' },
+    { id: 'bo8jQKTaE0Y', name: 'Wallpapers' },
   ];
   const LEGACY_UNSPLASH_CATEGORY_MAP = {
     '1065976': '6sMVjTLSkeQ',
-    '1088404': 'xHxYTMHLgOc',
+    '1088404': 'M8jVbLbTRws',
     '1491704': 'qPYsDzvJOYc',
     '799589': 'Jpg6Kidl-Hk',
     '1447306': 'pIF7l5_hgxg',
