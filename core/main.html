@@ -29,6 +29,9 @@
   <link rel="stylesheet" href="../components/setting-section.css">
   <link rel="stylesheet" href="../components/chips-field.css">
   <link rel="stylesheet" href="../components/button-common.css">
+  <link rel="stylesheet" href="../components/segmented-control.css">
+  <link rel="stylesheet" href="../components/journey-origin-item.css">
+  <link rel="stylesheet" href="../components/journey-node-card.css">
   <link rel="stylesheet" href="../components/option-card.css">
   <link rel="stylesheet" href="../components/button-primary.css">
   <link rel="stylesheet" href="../components/chip.css">
@@ -45,6 +48,7 @@
   <link rel="stylesheet" href="../components/folder-tree-view.css">
   <link rel="stylesheet" href="../components/active-sessions-panel.css">
   <link rel="stylesheet" href="../components/folder-tree-item.css">
+  <link rel="stylesheet" href="journey.css">
   <!-- Load main overlay for this chrome-extension:// page -->
   <script type="module" src="../service-search-engine/main-overlay/overlay.js"></script>
   <!-- Load BaseModal class for all modals -->
@@ -131,9 +135,57 @@
       </section>
 
       <!-- Page 3: Journey -->
-      <section class="page" data-page="2">
-        <h2 class="page__title">Journey</h2>
-        <p style="font-size:16px;color:var(--theme-secondary);">Coming soon. For now, enjoy this joke: Why do programmers prefer dark mode? Because light attracts bugs.</p>
+      <section class="page journey-page" data-page="2">
+        <div class="journey-page__content">
+          <div class="journey-page__toolbar">
+            <div id="journey-timeframes" class="journey-page__timeframes"></div>
+            <div id="journey-filters" class="journey-page__filters"></div>
+            <div id="journey-toolbar-settings" class="journey-page__toolbar-settings"></div>
+          </div>
+
+          <div class="journey-page__layout">
+            <aside class="journey-page__origins" aria-label="Journeys">
+              <h2 class="journey-page__origins-title">Journeys (0)</h2>
+              <div id="journey-origin-search" class="journey-page__origin-search"></div>
+              <div id="journey-origin-list" class="journey-page__origin-list"></div>
+            </aside>
+
+            <section class="journey-page__canvas" aria-label="Journey map">
+              <div id="journey-actions" class="journey-page__actions"></div>
+              <div id="journey-canvas-surface" class="journey-page__canvas-surface">
+                <div id="journey-panzoom" class="journey-page__panzoom">
+                  <div id="journey-map-stage" class="journey-page__map-stage">
+                    <div id="journey-connectors" class="journey-page__connectors" aria-hidden="true"></div>
+                    <div id="journey-node-map" class="journey-page__node-map"></div>
+                  </div>
+                </div>
+              </div>
+              <div id="journey-canvas-controls" class="journey-page__canvas-controls" aria-label="Canvas controls"></div>
+              <div class="journey-page__legend" aria-label="Journey legend">
+                <div class="journey-page__legend-item">
+                  <span class="journey-page__legend-swatch journey-page__legend-swatch--origin" aria-hidden="true"></span>
+                  <span class="journey-page__legend-label">Origin</span>
+                </div>
+                <div class="journey-page__legend-item">
+                  <span class="journey-page__legend-swatch journey-page__legend-swatch--branch" aria-hidden="true"></span>
+                  <span class="journey-page__legend-label">Branch</span>
+                </div>
+                <div class="journey-page__legend-item">
+                  <span class="journey-page__legend-swatch journey-page__legend-swatch--end-point" aria-hidden="true"></span>
+                  <span class="journey-page__legend-label">End point</span>
+                </div>
+              </div>
+              <div id="journey-more-menu" class="journey-page__more-menu" hidden>
+                <button id="journey-open-all-nodes" class="journey-page__more-menu-item" type="button">Open all nodes</button>
+                <button id="journey-save-bookmarks" class="journey-page__more-menu-item" type="button">Save all to bookmarks</button>
+                <button id="journey-delete-branches" class="journey-page__more-menu-item" type="button">
+                  <span class="journey-page__more-menu-item-icon material-symbols-outlined" aria-hidden="true">delete</span>
+                  <span>Delete all branches</span>
+                </button>
+              </div>
+            </section>
+          </div>
+        </div>
       </section>
     </div>
 
@@ -174,6 +226,9 @@
   <script src="../components/setting-section.js"></script>
   <script src="../components/chips-field.js"></script>
   <script src="../components/button-common.js"></script>
+  <script src="../components/segmented-control.js"></script>
+  <script src="../components/journey-origin-item.js"></script>
+  <script src="../components/journey-node-card.js"></script>
   <script src="../components/option-card.js"></script>
   <script src="../components/button-primary.js"></script>
   <script src="../components/chip.js"></script>
@@ -223,6 +278,7 @@
   <script src="../utils/about-modal.js"></script>
   <script src="../utils/unsplash-attribution-modal.js"></script>
   <script src="../utils/shader.js"></script>
+  <script src="journey.js"></script>
 
   <!-- Main app logic -->
   <script src="main.js"></script>

@@ -648,6 +648,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.warn('Widgets render failed', e);
       }
     }
+    if (activePageIndex === 2 && window.JourneyPage && typeof window.JourneyPage.activate === 'function') {
+      try {
+        await window.JourneyPage.activate();
+      } catch (e) {
+        console.warn('Journey page activate failed', e);
+      }
+    }
     if (pageContainer && direction) {
       pageContainer.classList.remove('slide-left', 'slide-right');
       void pageContainer.offsetWidth; // reflow to restart animation

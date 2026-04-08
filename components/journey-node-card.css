@@ -1,0 +1,231 @@
+/**
+ * Journey Node Card Component
+ *
+ * Design System Component - BMG-209
+ * Based on Figma: node-id=227-14918
+ */
+
+.journey-node-card {
+  --journey-node-card-shell-bg: var(--primary-primary-15, rgba(46, 51, 185, 0.6));
+  --journey-node-card-shell-border: var(--primary-primary-15, rgba(46, 51, 185, 0.6));
+  --journey-node-card-menu-bg: var(--primary-primary-25, #2e33b9);
+
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 85px;
+}
+
+.journey-node-card__visual {
+  position: relative;
+  width: 85px;
+  height: 85px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.journey-node-card__visual:focus-visible {
+  outline: 2px solid var(--primary-primary-25, #2e33b9);
+  outline-offset: 2px;
+}
+
+.journey-node-card__visual:focus {
+  outline: none;
+}
+
+.journey-node-card__icon-stage {
+  position: relative;
+  width: 85px;
+  height: 85px;
+}
+
+.journey-node-card__shell {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 60px;
+  height: 60px;
+  transform: translate(-50%, -50%);
+  border: 1px solid var(--journey-node-card-shell-border);
+  border-radius: var(--corner-radius-small, 4px);
+  background: var(--journey-node-card-shell-bg);
+}
+
+.journey-node-card--origin {
+  border-color: transparent;
+  --journey-node-card-shell-border: transparent;
+  --journey-node-card-shell-bg: radial-gradient(circle at center, rgba(255, 255, 255, 0.96) 0 32%, transparent 33%), var(--primary-primary-15, rgba(46, 51, 185, 0.6));
+}
+
+.journey-node-card--origin .journey-node-card__shell {
+  border-radius: 999px;
+}
+
+.journey-node-card--branch.journey-node-card--hover,
+.journey-node-card--branch.journey-node-card--menu-open,
+.journey-node-card--origin.journey-node-card--menu-open,
+.journey-node-card--origin.journey-node-card--hover,
+.journey-node-card--end-point.journey-node-card--hover,
+.journey-node-card--end-point.journey-node-card--menu-open {
+  --journey-node-card-shell-bg: var(--primary-primary-25, #2e33b9);
+  --journey-node-card-shell-border: var(--primary-primary-25, #2e33b9);
+}
+
+.journey-node-card--origin.journey-node-card--hover,
+.journey-node-card--origin.journey-node-card--menu-open {
+  --journey-node-card-shell-border: transparent;
+  --journey-node-card-shell-bg: radial-gradient(circle at center, rgba(255, 255, 255, 0.96) 0 32%, transparent 33%), var(--primary-primary-25, #2e33b9);
+}
+
+.journey-node-card--end-point .journey-node-card__shell {
+  width: 50px;
+  height: 50px;
+  border-color: var(--role-affermative-25, #3eb92e);
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.journey-node-card__favicon {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 40px;
+  height: 40px;
+  transform: translate(-50%, -50%);
+  border-radius: var(--corner-radius-small, 4px);
+  z-index: 1;
+}
+
+.journey-node-card__favicon--fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--common-common-bright-10, rgba(255, 255, 255, 0.2));
+  background: var(--common-common-bright-05, rgba(255, 255, 255, 0.1));
+}
+
+.journey-node-card__favicon--fallback::after {
+  content: '';
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  background: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
+}
+
+.journey-node-card__details {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  padding: var(--padding-and-gap-medium, 4px);
+  background: var(--common-common-dark-05, rgba(0, 0, 0, 0.1));
+  text-align: center;
+}
+
+.journey-node-card__domain,
+.journey-node-card__url {
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1;
+}
+
+.journey-node-card__domain {
+  color: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
+  font-family: var(--font-family-sans-serif, 'Lato', sans-serif);
+  font-size: var(--size-large, 16px);
+  font-weight: var(--weight-bold, 700);
+}
+
+.journey-node-card__url {
+  color: var(--common-common-bright-15, rgba(255, 255, 255, 0.6));
+  font-family: var(--font-family-sans-serif, 'Lato', sans-serif);
+  font-size: var(--size-medium, 12px);
+  font-weight: var(--weight-light, 300);
+}
+
+.journey-node-card__menu-trigger {
+  position: absolute;
+  right: -8px;
+  top: -8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  border-radius: var(--corner-radius-pill, 999px);
+  background: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
+  color: var(--primary-primary-25, #2e33b9);
+  z-index: 2;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.16s ease;
+}
+
+.journey-node-card:hover .journey-node-card__menu-trigger,
+.journey-node-card--hover .journey-node-card__menu-trigger,
+.journey-node-card--menu-open .journey-node-card__menu-trigger {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.journey-node-card__menu-trigger .material-symbols-outlined {
+  font-size: 12px;
+  line-height: 1;
+}
+
+.journey-node-card__menu {
+  position: absolute;
+  left: 90px;
+  top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--padding-and-gap-zero, 0px);
+  width: 200px;
+  padding: var(--padding-and-gap-large, 8px);
+  border: 1px solid var(--primary-primary-25, #2e33b9);
+  border-radius: var(--corner-radius-small, 4px);
+  background: var(--journey-node-card-menu-bg);
+  box-shadow: var(--effect-drop-shadow-05);
+  z-index: 3;
+}
+
+.journey-node-card__menu-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: var(--padding-and-gap-medium, 4px);
+  border: none;
+  background: transparent;
+  color: var(--common-common-bright-20, rgba(255, 255, 255, 0.8));
+  font-family: var(--font-family-sans-serif, 'Lato', sans-serif);
+  font-size: var(--size-medium, 12px);
+  font-weight: var(--weight-regular, 400);
+  text-align: left;
+  cursor: pointer;
+}
+
+.journey-node-card__menu-item:hover:not(:disabled),
+.journey-node-card__menu-item:focus-visible {
+  color: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
+}
+
+.journey-node-card__menu-item:focus {
+  outline: none;
+}
+
+.journey-node-card--disabled {
+  opacity: 0.45;
+}
+
+.journey-node-card--disabled .journey-node-card__visual,
+.journey-node-card--disabled .journey-node-card__menu-trigger,
+.journey-node-card--disabled .journey-node-card__menu-item {
+  cursor: not-allowed;
+}
