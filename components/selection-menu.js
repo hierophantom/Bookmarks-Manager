@@ -41,12 +41,15 @@ function createSelectionMenu(options = {}) {
     selectedIndices = [],
     showClear = true,
     showSelectAll = true,
+    showHeader = true,
+    showSelectionIndicator = true,
     onSelect = null,
     onClear = null,
     onSelectAll = null
   } = options;
 
   const normalizedType = normalizeSelectionMenuType(type);
+  const showSortIndicator = normalizedType === 'sort' && showSelectionIndicator !== false;
 
   const menu = document.createElement('div');
   menu.className = `selection-menu selection-menu--${contrast}`;
@@ -54,6 +57,13 @@ function createSelectionMenu(options = {}) {
   const isMultiSelect = normalizedType === 'tag' || normalizedType === 'simple';
 
   const updateSortSelection = (selectedItem, selectedLabel) => {
+    if (!showSortIndicator) {
+      if (typeof selectedLabel === 'string') {
+        menu.dataset.selectedLabel = selectedLabel;
+      }
+      return;
+    }
+
     const sortItems = menu.querySelectorAll('.selection-menu__item[data-selection-sort-item="true"]');
     sortItems.forEach((itemEl) => {
       const checkEl = itemEl.querySelector('.selection-menu__checkmark');
@@ -71,52 +81,55 @@ function createSelectionMenu(options = {}) {
     }
   };
 
-  const header = document.createElement('div');
-  header.className = 'selection-menu__header';
+  if (showHeader) {
+    const header = document.createElement('div');
+    header.className = 'selection-menu__header';
 
-  const headerTitle = document.createElement('div');
-  headerTitle.className = 'selection-menu__title';
-  headerTitle.textContent = title || (normalizedType === 'sort' ? 'Sort view' : 'Select options');
-  header.appendChild(headerTitle);
+    const headerTitle = document.createElement('div');
+    headerTitle.className = 'selection-menu__title';
+    headerTitle.textContent = title || (normalizedType === 'sort' ? 'Sort view' : 'Select options');
+    header.appendChild(headerTitle);
 
-  if (isMultiSelect && showClear) {
-    const clearBtn = document.createElement('button');
-    clearBtn.className = 'selection-menu__clear';
-    clearBtn.type = 'button';
-    clearBtn.textContent = 'Clear';
-    clearBtn.addEventListener('click', () => {
-      if (typeof onClear === 'function') {
-        onClear();
-      }
-    });
-    header.appendChild(clearBtn);
+    if (isMultiSelect && showClear) {
+      const clearBtn = document.createElement('button');
+      clearBtn.className = 'selection-menu__clear';
+      clearBtn.type = 'button';
+      clearBtn.textContent = 'Clear';
+      clearBtn.addEventListener('click', () => {
+        if (typeof onClear === 'function') {
+          onClear();
+        }
+      });
+      header.appendChild(clearBtn);
+    }
+
+    menu.appendChild(header);
   }
 
-  menu.appendChild(header);
-
   const addTagItem = (label, index) => {
+    const descriptor = normalizeSelectionMenuItem(label);
     const item = document.createElement('div');
     item.className = 'selection-menu__item';
+    makeSelectionMenuItemInteractive(item, () => {
+      if (typeof onSelect === 'function') {
+        onSelect(index, descriptor.label);
+      }
+    });
 
     const checkbox = createSelectionMenuCheckbox(selectedIndices.includes(index));
 
     const tagEl = typeof createTag === 'function'
-      ? createTag({ text: label })
-      : createSelectionMenuTag(label);
+      ? createTag({ text: descriptor.label })
+      : createSelectionMenuTag(descriptor.label);
 
     item.appendChild(checkbox);
     item.appendChild(tagEl);
-
-    item.addEventListener('click', () => {
-      if (typeof onSelect === 'function') {
-        onSelect(index, label);
-      }
-    });
 
     menu.appendChild(item);
   };
 
   const addSimpleItem = (label, index) => {
+    const descriptor = normalizeSelectionMenuItem(label);
     const item = document.createElement('div');
     item.className = 'selection-menu__item selection-menu__item--simple';
     if (selectedIndices.includes(index)) {
@@ -125,16 +138,14 @@ function createSelectionMenu(options = {}) {
 
     const checkbox = createSelectionMenuCheckbox(selectedIndices.includes(index));
 
-    const labelEl = document.createElement('span');
-    labelEl.className = 'selection-menu__label';
-    labelEl.textContent = label;
+    const textWrap = createSelectionMenuText(descriptor);
 
     item.appendChild(checkbox);
-    item.appendChild(labelEl);
+    item.appendChild(textWrap);
 
-    item.addEventListener('click', () => {
+    makeSelectionMenuItemInteractive(item, () => {
       if (typeof onSelect === 'function') {
-        onSelect(index, label);
+        onSelect(index, descriptor.label);
       }
     });
 
@@ -142,29 +153,29 @@ function createSelectionMenu(options = {}) {
   };
 
   const addSortItem = (label, index, isSelected) => {
+    const descriptor = normalizeSelectionMenuItem(label);
     const item = document.createElement('div');
     item.className = 'selection-menu__item';
     item.dataset.selectionSortItem = 'true';
-    if (isSelected) {
+    if (showSortIndicator && isSelected) {
       item.classList.add('selection-menu__item--selected');
     }
 
-    const check = document.createElement('span');
-    check.className = 'selection-menu__checkmark';
-    if (isSelected) {
-      check.innerHTML = "<svg viewBox='0 0 12 12' aria-hidden='true'><path d='M4.5 8.5L2 6l1-1 1.5 1.5L9 2l1 1z'/></svg>";
+    if (showSortIndicator) {
+      const check = document.createElement('span');
+      check.className = 'selection-menu__checkmark';
+      if (isSelected) {
+        check.innerHTML = "<svg viewBox='0 0 12 12' aria-hidden='true'><path d='M4.5 8.5L2 6l1-1 1.5 1.5L9 2l1 1z'/></svg>";
+      }
+      item.appendChild(check);
     }
 
-    const labelEl = document.createElement('span');
-    labelEl.textContent = label;
+    item.appendChild(createSelectionMenuText(descriptor));
 
-    item.appendChild(check);
-    item.appendChild(labelEl);
-
-    item.addEventListener('click', () => {
-      updateSortSelection(item, label);
+    makeSelectionMenuItemInteractive(item, () => {
+      updateSortSelection(item, descriptor.label);
       if (typeof onSelect === 'function') {
-        onSelect(index, label);
+        onSelect(index, descriptor.label);
       }
     });
 
@@ -238,6 +249,55 @@ function createSelectionMenu(options = {}) {
   }
 
   return menu;
+}
+
+function normalizeSelectionMenuItem(item) {
+  if (item && typeof item === 'object') {
+    return {
+      label: String(item.label || item.title || ''),
+      description: item.description ? String(item.description) : ''
+    };
+  }
+
+  return {
+    label: String(item || ''),
+    description: ''
+  };
+}
+
+function createSelectionMenuText(descriptor) {
+  if (descriptor.description) {
+    const wrap = document.createElement('span');
+    wrap.className = 'selection-menu__text selection-menu__text--with-description';
+
+    const labelEl = document.createElement('span');
+    labelEl.className = 'selection-menu__label';
+    labelEl.textContent = descriptor.label;
+
+    const descriptionEl = document.createElement('span');
+    descriptionEl.className = 'selection-menu__description';
+    descriptionEl.textContent = descriptor.description;
+
+    wrap.appendChild(labelEl);
+    wrap.appendChild(descriptionEl);
+    return wrap;
+  }
+
+  const labelEl = document.createElement('span');
+  labelEl.className = 'selection-menu__label';
+  labelEl.textContent = descriptor.label;
+  return labelEl;
+}
+
+function makeSelectionMenuItemInteractive(item, onActivate) {
+  item.tabIndex = 0;
+  item.addEventListener('click', onActivate);
+  item.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      onActivate();
+    }
+  });
 }
 
 function normalizeSelectionMenuType(type) {

@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Bookmark Manager Changelog</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./changelog-visualizer.css" />
+</head>
+<body>
+  <div class="changelog-shell">
+    <header class="changelog-header">
+      <p class="changelog-eyebrow">Bookmark Manager</p>
+      <h1>Version Changelog</h1>
+      <p class="changelog-subtitle">Technical release notes rendered from CHANGELOG.md</p>
+    </header>
+
+    <main id="changelog-content" class="changelog-content" aria-live="polite">
+      <p class="changelog-loading">Loading changelog...</p>
+    </main>
+
+    <footer class="changelog-footer">
+      <p>Source: docs/CHANGELOG.md</p>
+      <a href="./CHANGELOG.md" target="_blank" rel="noopener noreferrer">Open Markdown Source</a>
+    </footer>
+  </div>
+
+  <script src="../utils/changelog-parser.js"></script>
+  <script src="./changelog-visualizer.js"></script>
+</body>
+</html>

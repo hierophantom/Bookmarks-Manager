@@ -40,6 +40,7 @@
   <link rel="stylesheet" href="../components/breadcrumbs.css">
   <link rel="stylesheet" href="../utils/tailwind-modal.css">
   <link rel="stylesheet" href="../utils/about-modal.css">
+  <link rel="stylesheet" href="../utils/changelog-modal.css">
   <link rel="stylesheet" href="../utils/modal.css">
   <link rel="stylesheet" href="../utils/unsplash-attribution-modal.css">
   <link rel="stylesheet" href="../components/modal.css">
@@ -90,9 +91,11 @@
         <button class="topbar__icon-btn" type="button" aria-label="Header action" style="display: none;">
           <span class="material-symbols-outlined" aria-hidden="true">import_contacts</span>
         </button>
-        <button id="help-btn" class="topbar__icon-btn" type="button" aria-label="Help">
-          <span class="material-symbols-outlined" aria-hidden="true">chat_info</span>
-        </button>
+        <div class="topbar__menu-shell">
+          <button id="app-menu-btn" class="topbar__icon-btn" type="button" aria-label="Info menu" aria-haspopup="menu" aria-expanded="false">
+            <span class="material-symbols-outlined" aria-hidden="true">info</span>
+          </button>
+        </div>
       </div>
     </header>
 
@@ -276,6 +279,8 @@
   <script src="../modals/theme-settings.js"></script>
   <script src="daily-quote.js"></script>
   <script src="../utils/about-modal.js"></script>
+  <script src="../utils/changelog-parser.js"></script>
+  <script src="../utils/changelog-modal.js"></script>
   <script src="../utils/unsplash-attribution-modal.js"></script>
   <script src="../utils/shader.js"></script>
   <script src="journey.js"></script>

@@ -26,6 +26,7 @@ A bookmark-focused Chrome new tab extension with theming, tagging, and homepage 
 - [ARCHITECTURE.md](ARCHITECTURE.md) - System architecture and design
 - [ARCHITECTURE.md#homepage-widget-architecture](ARCHITECTURE.md#homepage-widget-architecture) - Widget registry contract, storage model, and add-a-widget standards
 - [docs/CHANGELOG.md](docs/CHANGELOG.md) - Version history and changes
+- [docs/changelog-visualizer.html](docs/changelog-visualizer.html) - User-facing changelog viewer rendered from markdown
 - [docs/README.md](docs/README.md) - Technical specs and debug docs
 
 ## 🗺️ Roadmap & Tasks
