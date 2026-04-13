@@ -218,8 +218,8 @@ const ThemeSettingsModal = (() => {
     pane.className = 'theme-settings-modal__pane';
 
     pane.appendChild(createSettingSection({
-      title: 'Open bookmark manager on new tabs',
-      description: 'Allow Bookmark Manager to replace the default Chrome new-tab page.',
+      title: 'Open Journey on new tabs',
+      description: 'Allow Journey to replace the default Chrome new-tab page.',
       content: createChoiceGroup({
         type: 'radio',
         items: [

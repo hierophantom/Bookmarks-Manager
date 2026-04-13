@@ -7,7 +7,7 @@
 
 function createSearchBarWidget(options = {}) {
   const {
-    placeholder = 'Search Oasis or the web...',
+    placeholder = 'Search Journey or the web...',
     value = '',
     provider = null,
     results = [],

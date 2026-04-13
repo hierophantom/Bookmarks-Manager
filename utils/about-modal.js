@@ -47,7 +47,7 @@ const AboutModal = (() => {
           customContent: `
             <div class="about-modal">
               <p class="about-modal__copy">
-                Bookmark Manager was made by <a class="about-modal__link" href="${LINKEDIN_URL}" target="_blank" rel="noopener noreferrer">Lior Matza</a> with ❤️ & 🤖
+                Journey was made by <a class="about-modal__link" href="${LINKEDIN_URL}" target="_blank" rel="noopener noreferrer">Lior Matza</a> with ❤️ & 🤖
               </p>
             </div>
           `,
@@ -60,8 +60,8 @@ const AboutModal = (() => {
 
       if (typeof Modal !== 'undefined' && Modal.openNotice) {
         Modal.openNotice({
-          title: 'About Bookmark Manager',
-          message: `Bookmark Manager was made by Lior Matza with ❤️ & 🤖\n${LINKEDIN_URL}`,
+          title: 'About Journey',
+          message: `Journey was made by Lior Matza with ❤️ & 🤖\n${LINKEDIN_URL}`,
           buttonText: 'Close'
         });
         return null;
