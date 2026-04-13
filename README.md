@@ -1,4 +1,4 @@
-# Bookmark Manager Chrome Extension
+# Journey Chrome Extension
 
 A bookmark-focused Chrome new tab extension with theming, tagging, and homepage organization tools.
 

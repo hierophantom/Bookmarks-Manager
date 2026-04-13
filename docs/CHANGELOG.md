@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to Bookmark Manager are documented in this file.
+All notable changes to Journey are documented in this file.
 
 ## v0.2.0 - 2026-04-12
 
@@ -23,14 +23,14 @@ Summary: V2 introduces a visual Journey workflow, a clearer Info menu and in-app
 
 ### Customer Story
 - Browse Your Way Through Journeys: You can now see how your browsing paths connect in one visual workflow instead of reconstructing them mentally from raw tabs and folders.
-- Understand What Changed Without Leaving the App: Release updates now live directly inside Bookmark Manager, making it easy to stay current in context.
+- Understand What Changed Without Leaving the App: Release updates now live directly inside Journey, making it easy to stay current in context.
 - Faster Daily Flow: Search and navigation affordances are clearer, so common actions are easier to discover and repeat.
 - More Predictable Interaction Quality: Scroll stability and improved interaction polish reduce friction in frequent browsing and organization sessions.
 
 ## v0.1.0 - 2025-12-18
 
 Tags: #Core_release, #Bookmark_flow, #Themes
-Summary: V1 established the core Bookmark Manager experience: structured bookmark browsing, flexible tagging, customizable homepage widgets, and first-wave visual personalization.
+Summary: V1 established the core Journey experience: structured bookmark browsing, flexible tagging, customizable homepage widgets, and first-wave visual personalization.
 
 ### Added
 - Bookmark Core: Added bookmark browsing, section rendering, and folder-aware navigation.

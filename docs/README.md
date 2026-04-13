@@ -1,6 +1,6 @@
 # Docs Folder
 
-This folder contains documentation and local tooling that support Bookmark Manager releases.
+This folder contains documentation and local tooling that support Journey releases.
 
 ## Changelog workflow
 

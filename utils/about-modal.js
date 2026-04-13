@@ -7,7 +7,7 @@ const AboutModal = (() => {
 
     const copy = document.createElement('p');
     copy.className = 'about-modal__copy';
-    copy.appendChild(document.createTextNode('Bookmark Manager was made by '));
+    copy.appendChild(document.createTextNode('Journey was made by '));
 
     const authorLink = document.createElement('a');
     authorLink.className = 'about-modal__link';
@@ -29,7 +29,7 @@ const AboutModal = (() => {
         return new Promise((resolve) => {
           const modal = createModal({
             type: 'dialog',
-            title: 'About Bookmark Manager',
+            title: 'About Journey',
             content: createContent(),
             buttons: [
               { label: 'Close', type: 'common', role: 'cancel' }
@@ -43,7 +43,7 @@ const AboutModal = (() => {
 
       if (typeof BaseModal !== 'undefined') {
         const modal = new BaseModal({
-          title: 'About Bookmark Manager',
+          title: 'About Journey',
           customContent: `
             <div class="about-modal">
               <p class="about-modal__copy">

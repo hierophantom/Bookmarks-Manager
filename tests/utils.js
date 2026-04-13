@@ -1,5 +1,5 @@
 /**
- * Test utilities for Bookmark Manager
+ * Test utilities for Journey
  * Provides helper functions for setting up test scenarios
  */
 

@@ -2653,7 +2653,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  // Cmd/Ctrl+Shift+E to toggle overlay on Bookmark Manager page only
+  // Cmd/Ctrl+Shift+E to toggle overlay on Journey page only
   document.addEventListener('keydown', (e) => {
     const isCtrlOrCmd = e.ctrlKey || e.metaKey;
     if (!isCtrlOrCmd || !e.shiftKey || e.code !== 'KeyE') return;

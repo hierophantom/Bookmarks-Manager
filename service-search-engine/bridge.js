@@ -47,7 +47,7 @@ function waitForMainPageLoad(tabId) {
 
     const timeoutId = setTimeout(() => {
       cleanup();
-      reject(new Error('Timed out waiting for Bookmark Manager page to load'));
+      reject(new Error('Timed out waiting for Journey page to load'));
     }, 5000);
 
     chrome.tabs.onUpdated.addListener(listener);
