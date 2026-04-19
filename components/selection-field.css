@@ -99,10 +99,6 @@
   background: var(--selection-field-bg-selection, var(--primary-primary-10, rgba(46, 51, 185, 0.4)));
 }
 
-.selection-field--selection .selection-field__label {
-  font-size: var(--size-medium, 12px);
-}
-
 /* Contrast variants */
 .selection-field--low {
   --selection-field-bg: var(--primary-primary-10, rgba(46, 51, 185, 0.4));
