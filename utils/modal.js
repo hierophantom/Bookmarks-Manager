@@ -663,25 +663,45 @@ const Modal = (() => {
     return new Promise((resolve) => {
       if (typeof createModal === 'function' && typeof showModal === 'function') {
         const listWrap = document.createElement('div');
-        listWrap.className = 'bm-modal-form';
+        listWrap.className = 'save-tabs-modal__content';
 
-        const selectAllLabel = document.createElement('label');
-        selectAllLabel.className = 'bm-select-all-container';
-        selectAllLabel.innerHTML = '<input type="checkbox" id="bm_select_all" aria-label="Select all tabs" /> Select all';
-        listWrap.appendChild(selectAllLabel);
+        const tabsLabel = document.createElement('div');
+        tabsLabel.className = 'save-tabs-modal__label';
+        tabsLabel.textContent = 'Select tabs to add:';
+        listWrap.appendChild(tabsLabel);
 
         const list = document.createElement('div');
-        list.id = 'bm_tabs_list';
+        list.className = 'save-tabs-modal__tabs-list';
         list.setAttribute('role', 'listbox');
         list.setAttribute('aria-label', 'Tab selection list');
 
         tabs.forEach((tab, index) => {
           const row = document.createElement('label');
           row.className = 'save-tabs-modal__tab-row';
-          row.innerHTML = `
-            <input type="checkbox" class="bm-tab-checkbox" data-index="${index}" aria-label="Select ${escapeHtml(tab.title || tab.url)}" />
-            <span class="save-tabs-modal__tab-title" dir="auto">${escapeHtml(tab.title || tab.url)}</span>
-          `;
+
+          const checkbox = document.createElement('input');
+          checkbox.type = 'checkbox';
+          checkbox.className = 'bm-tab-checkbox save-tabs-modal__checkbox';
+          checkbox.dataset.index = String(index);
+          checkbox.checked = true;
+          checkbox.setAttribute('aria-label', `Select ${tab.title || tab.url}`);
+          row.appendChild(checkbox);
+
+          if (typeof FaviconService !== 'undefined' && tab && tab.url) {
+            const favicon = FaviconService.createFaviconElement(tab.url, {
+              size: 16,
+              className: 'tab-favicon save-tabs-modal__favicon',
+              alt: 'Favicon'
+            });
+            row.appendChild(favicon);
+          }
+
+          const title = document.createElement('span');
+          title.className = 'save-tabs-modal__tab-title';
+          title.setAttribute('dir', 'auto');
+          title.textContent = tab.title || tab.url;
+          row.appendChild(title);
+
           list.appendChild(row);
         });
 
@@ -707,19 +727,9 @@ const Modal = (() => {
           }
         });
 
-        showModal(modal);
+        modal.querySelector('.modal')?.classList.add('save-tabs-modal');
 
-        const selectAll = listWrap.querySelector('#bm_select_all');
-        const checkboxes = listWrap.querySelectorAll('.bm-tab-checkbox');
-        selectAll.addEventListener('change', () => {
-          checkboxes.forEach((cb) => (cb.checked = selectAll.checked));
-        });
-        checkboxes.forEach((cb) => {
-          cb.addEventListener('change', () => {
-            const allChecked = Array.from(checkboxes).every((c) => c.checked);
-            selectAll.checked = allChecked;
-          });
-        });
+        showModal(modal);
 
         return;
       }
