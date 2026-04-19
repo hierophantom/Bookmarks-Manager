@@ -966,12 +966,10 @@ body {
   color: var(--theme-text);
 }
 
-[role="dialog"] h2,
-[role="dialog"] h3,
-.modal h2,
-.modal h3,
-.modal-content h2,
-.modal-content h3 {
+[role="dialog"] .modal__title,
+.modal .modal__title,
+.modal-content .modal__title {
+  /* Scope shared heading styles to modal title API to avoid overriding custom modal content headings. */
   color: var(--theme-primary);
   margin-bottom: 16px;
 }
@@ -1332,12 +1330,10 @@ body {
   color: var(--theme-text);
 }
 
-[role="dialog"] h2,
-[role="dialog"] h3,
-.modal h2,
-.modal h3,
-.modal-content h2,
-.modal-content h3 {
+[role="dialog"] .modal__title,
+.modal .modal__title,
+.modal-content .modal__title {
+  /* Scope shared heading styles to modal title API to avoid overriding custom modal content headings. */
   color: var(--theme-primary);
   margin-bottom: 16px;
 }

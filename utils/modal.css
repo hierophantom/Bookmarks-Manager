@@ -498,12 +498,10 @@
   width: 100%;
 }
 
-[role="dialog"] h2,
-[role="dialog"] h3,
-.modal h2,
-.modal h3,
-.modal-content h2,
-.modal-content h3 {
+[role="dialog"] .modal__title,
+.modal .modal__title,
+.modal-content .modal__title {
+  /* Keep shared reset on modal title only so specialized modal h2/h3 styles can own their typography. */
   margin-bottom: 0 !important;
 }
 
