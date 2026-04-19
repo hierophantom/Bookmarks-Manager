@@ -155,6 +155,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   let availableTags = [];
   let currentFolderFilter = null; // Track which folder is being viewed
   const BOOKMARKS_SORT_STORAGE_KEY = 'bookmarksSortChoice';
+  const BOOKMARK_LINK_TRIGGER_STORAGE_KEY = 'bookmarkLinkTriggerMode';
+  let bookmarkLinkTriggerMode = 'new-tab';
+  let linkOpenModifierPressed = false;
 
   function createMaterialIcon(name) {
     const icon = document.createElement('span');
@@ -169,6 +172,76 @@ document.addEventListener('DOMContentLoaded', async () => {
       size: 24,
       className: 'bookmark-favicon bookmarks-gallery-view__favicon',
       alt: ''
+    });
+  }
+
+  function normalizeBookmarkLinkTriggerMode(value) {
+    return String(value || '').toLowerCase() === 'same-tab' ? 'same-tab' : 'new-tab';
+  }
+
+  function setBookmarkLinkTriggerMode(value) {
+    bookmarkLinkTriggerMode = normalizeBookmarkLinkTriggerMode(value);
+  }
+
+  async function hydrateBookmarkLinkTriggerMode() {
+    try {
+      setBookmarkLinkTriggerMode(await Storage.get(BOOKMARK_LINK_TRIGGER_STORAGE_KEY));
+    } catch (error) {
+      console.warn('Failed to read link interaction preference, defaulting to new tab', error);
+      setBookmarkLinkTriggerMode('new-tab');
+    }
+  }
+
+  function isBackgroundOpenRequested(event = null) {
+    if (event && (event.metaKey || event.ctrlKey)) return true;
+    return linkOpenModifierPressed;
+  }
+
+  function handleLinkModifierState(event) {
+    linkOpenModifierPressed = Boolean(event && (event.metaKey || event.ctrlKey));
+  }
+
+  async function openBookmarkUrl(url, event = null) {
+    if (!url) return;
+    const isCommandClick = isBackgroundOpenRequested(event);
+    if (isCommandClick) {
+      await chrome.tabs.create({ url, active: false });
+      return;
+    }
+
+    if (bookmarkLinkTriggerMode === 'same-tab') {
+      try {
+        const currentTab = await chrome.tabs.getCurrent();
+        if (currentTab && currentTab.id) {
+          await chrome.tabs.update(currentTab.id, { url });
+          return;
+        }
+      } catch (error) {
+        console.warn('Failed to update current tab for link interaction, falling back to location.assign', error);
+      }
+      window.location.assign(url);
+      return;
+    }
+
+    await chrome.tabs.create({ url });
+  }
+
+  await hydrateBookmarkLinkTriggerMode();
+  if (typeof window !== 'undefined') {
+    window.setBookmarkLinkTriggerMode = setBookmarkLinkTriggerMode;
+  }
+
+  document.addEventListener('keydown', handleLinkModifierState, true);
+  document.addEventListener('keyup', handleLinkModifierState, true);
+  window.addEventListener('blur', () => {
+    linkOpenModifierPressed = false;
+  });
+
+  if (chrome?.storage?.onChanged) {
+    chrome.storage.onChanged.addListener((changes, areaName) => {
+      if (areaName !== 'local' || !changes[BOOKMARK_LINK_TRIGGER_STORAGE_KEY]) return;
+      const nextValue = changes[BOOKMARK_LINK_TRIGGER_STORAGE_KEY].newValue;
+      setBookmarkLinkTriggerMode(nextValue);
     });
   }
 
@@ -1267,8 +1340,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         tile.dataset.id = child.id;
         tile.draggable = true;
-        tile.addEventListener('click', () => {
-          chrome.tabs.create({ url: child.url });
+        tile.addEventListener('click', (event) => {
+          openBookmarkUrl(child.url, event);
         });
         addDragHandlers(tile);
         items.push(tile);
@@ -1784,8 +1857,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       tile.dataset.id = child.id;
       tile.draggable = true;
-      tile.addEventListener('click', () => {
-        chrome.tabs.create({ url: child.url });
+      tile.addEventListener('click', (event) => {
+        openBookmarkUrl(child.url, event);
       });
       addDragHandlers(tile);
       return tile;

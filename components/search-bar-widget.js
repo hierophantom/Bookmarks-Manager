@@ -177,12 +177,12 @@ function createSearchBarWidgetResultItem(item, onResultClick, widget) {
       state: item.state || 'idle',
       ariaLabel: item.ariaLabel,
       disabled: item.disabled,
-      onClick: () => {
+      onClick: (event) => {
         if (typeof item.onClick === 'function') {
-          item.onClick(item, widget);
+          item.onClick(item, widget, event);
         }
         if (typeof onResultClick === 'function') {
-          onResultClick(item, widget);
+          onResultClick(item, widget, event);
         }
       }
     });
@@ -192,9 +192,9 @@ function createSearchBarWidgetResultItem(item, onResultClick, widget) {
   fallback.type = 'button';
   fallback.className = 'search-bar-widget__fallback-result';
   fallback.textContent = item.title || '';
-  fallback.addEventListener('click', () => {
+  fallback.addEventListener('click', (event) => {
     if (typeof onResultClick === 'function') {
-      onResultClick(item, widget);
+      onResultClick(item, widget, event);
     }
   });
   return fallback;

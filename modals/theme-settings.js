@@ -4,6 +4,8 @@
  */
 
 const ThemeSettingsModal = (() => {
+  const BOOKMARK_LINK_TRIGGER_STORAGE_KEY = 'bookmarkLinkTriggerMode';
+
   async function show() {
     const requiredApis = [
       'createActionButton',
@@ -26,7 +28,7 @@ const ThemeSettingsModal = (() => {
       return null;
     }
 
-    const [themes, currentThemeId, bgSettings, newTabEnabled, quoteEnabled, topbarBackdropEnabled, searchEngine, customSearchProviderTemplate] = await Promise.all([
+    const [themes, currentThemeId, bgSettings, newTabEnabled, quoteEnabled, topbarBackdropEnabled, searchEngine, customSearchProviderTemplate, bookmarkLinkTriggerMode] = await Promise.all([
       Promise.resolve(ThemesService.getThemes()),
       ThemesService.getCurrentThemeId(),
       BackgroundsService.getBackgroundSettings(),
@@ -34,7 +36,8 @@ const ThemeSettingsModal = (() => {
       Storage.get('dailyQuoteEnabled'),
       Storage.get('topbarBackdropEnabled'),
       Storage.get('searchEngine'),
-      Storage.get('customSearchProviderTemplate')
+      Storage.get('customSearchProviderTemplate'),
+      Storage.get(BOOKMARK_LINK_TRIGGER_STORAGE_KEY)
     ]);
 
     const frequencyOptions = Object.entries(BackgroundsService.FREQUENCIES).map(([value, config]) => ({
@@ -61,6 +64,7 @@ const ThemeSettingsModal = (() => {
         : {},
       searchEngine: normalizeSearchProviderId(searchEngine),
       customSearchProviderTemplate: typeof customSearchProviderTemplate === 'string' ? customSearchProviderTemplate : '',
+      bookmarkLinkTriggerMode: normalizeBookmarkLinkTriggerMode(bookmarkLinkTriggerMode),
       searchEngineStatus: '',
       searchEngineStatusTone: 'muted',
       backgroundSettings: bgSettings,
@@ -229,6 +233,26 @@ const ThemeSettingsModal = (() => {
         onChange: async ({ changedValue }) => {
           state.newTabOverride = changedValue === 'enabled';
           await Storage.set({ newTabOverrideEnabled: state.newTabOverride });
+        }
+      })
+    }));
+
+    pane.appendChild(createSettingSection({
+      title: 'Link interaction',
+      description: 'Choose how bookmark links open when you click them.',
+      content: createChoiceGroup({
+        type: 'radio',
+        name: 'bookmark-link-trigger-mode',
+        items: [
+          { label: 'Open in a new tab', value: 'new-tab', checked: state.bookmarkLinkTriggerMode === 'new-tab' },
+          { label: 'Open in the same tab', value: 'same-tab', checked: state.bookmarkLinkTriggerMode === 'same-tab' }
+        ],
+        onChange: async ({ changedValue }) => {
+          state.bookmarkLinkTriggerMode = normalizeBookmarkLinkTriggerMode(changedValue);
+          await Storage.set({ [BOOKMARK_LINK_TRIGGER_STORAGE_KEY]: state.bookmarkLinkTriggerMode });
+          if (typeof window.setBookmarkLinkTriggerMode === 'function') {
+            window.setBookmarkLinkTriggerMode(state.bookmarkLinkTriggerMode);
+          }
         }
       })
     }));
@@ -824,6 +848,11 @@ const ThemeSettingsModal = (() => {
       return normalized;
     }
     return 'google';
+  }
+
+  function normalizeBookmarkLinkTriggerMode(value) {
+    const normalized = String(value || '').trim().toLowerCase();
+    return normalized === 'same-tab' ? 'same-tab' : 'new-tab';
   }
 
   function isValidCustomSearchTemplate(template) {

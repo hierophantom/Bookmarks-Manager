@@ -8,6 +8,7 @@ const WidgetsService = (()=>{
   const SEARCH_PROVIDER_KEY = 'searchEngine';
   const SEARCH_CUSTOM_TEMPLATE_KEY = 'customSearchProviderTemplate';
   const SEARCH_WIDGET_SEARCH_DEBOUNCE_MS = 180;
+  const BOOKMARK_LINK_TRIGGER_STORAGE_KEY = 'bookmarkLinkTriggerMode';
   const renderedWidgetCleanups = [];
   const SEARCH_PROVIDER_REGISTRY = {
     google: {
@@ -68,6 +69,43 @@ const WidgetsService = (()=>{
     for (const section of orderedSections) {
       await section.renderSection();
     }
+  }
+
+  function normalizeBookmarkLinkTriggerMode(value) {
+    return String(value || '').toLowerCase() === 'same-tab' ? 'same-tab' : 'new-tab';
+  }
+
+  async function openLinkByPreference(url, event = null) {
+    if (!url) return;
+
+    const openInBackgroundTab = Boolean(event && (event.metaKey || event.ctrlKey));
+    if (openInBackgroundTab) {
+      await chrome.tabs.create({ url, active: false });
+      return;
+    }
+
+    let triggerMode = 'new-tab';
+    try {
+      triggerMode = normalizeBookmarkLinkTriggerMode(await Storage.get(BOOKMARK_LINK_TRIGGER_STORAGE_KEY));
+    } catch (error) {
+      console.warn('Failed to read link interaction preference in widgets, defaulting to new tab', error);
+    }
+
+    if (triggerMode === 'same-tab') {
+      try {
+        const currentTab = await chrome.tabs.getCurrent();
+        if (currentTab && currentTab.id) {
+          await chrome.tabs.update(currentTab.id, { url });
+          return;
+        }
+      } catch (error) {
+        console.warn('Widgets could not update current tab, falling back to location.assign', error);
+      }
+      window.location.assign(url);
+      return;
+    }
+
+    await chrome.tabs.create({ url });
   }
 
   async function getHomePageSectionState() {
@@ -207,9 +245,9 @@ const WidgetsService = (()=>{
       });
 
       widget.setAttribute('draggable', 'true');
-      widget.addEventListener('click', () => {
+      widget.addEventListener('click', (event) => {
         if (!item.url) return;
-        chrome.tabs.create({ url: item.url });
+        openLinkByPreference(item.url, event);
       });
       widget.addEventListener('dragstart', (e) => {
         e.dataTransfer.setData('text/bookmark-widget-index', String(idx));
@@ -675,10 +713,10 @@ const WidgetsService = (()=>{
 
       const sections = buildSearchWidgetSections(normalizedQuery, bridgeResults, activeProvider);
       setSearchBarWidgetResults(widget, sections, {
-        onResultClick: async (item) => {
+        onResultClick: async (item, _widget, event) => {
           clearCloseTimer();
           clearSelection();
-          await handleSearchWidgetResultClick(item, widget, containerId);
+          await handleSearchWidgetResultClick(item, widget, containerId, event);
         }
       });
 
@@ -944,7 +982,7 @@ const WidgetsService = (()=>{
     return iconMap[item.type] || 'language';
   }
 
-  async function handleSearchWidgetResultClick(item, widget) {
+  async function handleSearchWidgetResultClick(item, widget, _containerId, event = null) {
     if (item.resultType === 'web-search') {
       await executeWebSearch(item.query, { newTab: false });
       return;
@@ -965,7 +1003,7 @@ const WidgetsService = (()=>{
     }
 
     if (item.url) {
-      await chrome.tabs.create({ url: item.url });
+      await openLinkByPreference(item.url, event);
     }
   }
 
