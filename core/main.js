@@ -1946,16 +1946,24 @@ document.addEventListener('DOMContentLoaded', async () => {
         label: 'Open',
         onClick: async (event) => {
           event.stopPropagation();
+          const isBookmarksBarRoot = folder.id === '1' || (folder.parentId === '0' && (folder.title || '').toLowerCase() === 'bookmarks bar');
           const bookmarksToOpen = [];
-          function collectBookmarks(node) {
-            if (node.url) {
-              bookmarksToOpen.push(node.url);
+
+          if (isBookmarksBarRoot) {
+            const directBookmarks = (folder.children || []).filter((child) => child && child.url);
+            directBookmarks.forEach((child) => bookmarksToOpen.push(child.url));
+          } else {
+            function collectBookmarks(node) {
+              if (node.url) {
+                bookmarksToOpen.push(node.url);
+              }
+              if (node.children) {
+                node.children.forEach(collectBookmarks);
+              }
             }
-            if (node.children) {
-              node.children.forEach(collectBookmarks);
-            }
+            collectBookmarks(folder);
           }
-          collectBookmarks(folder);
+
           if (bookmarksToOpen.length > 0) {
             if (bookmarksToOpen.length > 10) {
               const confirmed = await Modal.openConfirmation({
