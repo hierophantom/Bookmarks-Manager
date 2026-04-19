@@ -1990,6 +1990,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       // Root-level folders are direct children of Bookmarks Bar or Other Bookmarks
       const isRootFolder = folder.parentId === '1' || folder.parentId === '2';
+      const isBookmarksBarTopLevelSection = folder.parentId === '0' && folder.id === '1';
       // Allow hiding top-level system sections as well (Other Bookmarks and Mobile Bookmarks)
       const isHideableTopLevelSection = folder.parentId === '0' && (folder.id === '2' || folder.id === '3');
       const canHideFolderSection = isRootFolder || isHideableTopLevelSection;
@@ -2156,6 +2157,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         breadcrumbItems,
         actions: folderActions.filter(Boolean)
       });
+
+      if (isBookmarksBarTopLevelSection) {
+        section.classList.add('folder-section--root-surface');
+      }
 
       applyFolderCustomizationStyles(section, getFolderCustomization(folder.id));
       perf.sectionsRendered += 1;

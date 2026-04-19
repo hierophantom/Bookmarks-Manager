@@ -29,6 +29,10 @@
   background: transparent;
 }
 
+.folder-section--root-surface {
+  background: var(--common-common-dark-05, rgba(0, 0, 0, 0.1));
+}
+
 .folder-section--hover,
 .folder-section:hover {
   background: var(--common-common-dark-10, rgba(0, 0, 0, 0.2));
