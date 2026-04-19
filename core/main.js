@@ -1993,6 +1993,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       // Allow hiding top-level system sections as well (Other Bookmarks and Mobile Bookmarks)
       const isHideableTopLevelSection = folder.parentId === '0' && (folder.id === '2' || folder.id === '3');
       const canHideFolderSection = isRootFolder || isHideableTopLevelSection;
+      const canEditFolderSection = folder.parentId !== '0';
       const canDeleteFolderSection = folder.parentId !== '0';
 
       // Create folder section actions
@@ -2016,8 +2017,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         tooltipData.push('Hide folder');
       }
 
-      // Edit (only for root folders)
-      if (isRootFolder) {
+      // Edit for any non-system folder section (including nested folders)
+      if (canEditFolderSection) {
         const editBtn = createCubeActionButton({
           icon: 'edit',
           label: 'Edit',
