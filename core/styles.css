@@ -196,6 +196,7 @@ html {
   background-size: cover;
   background-attachment: fixed;
   background-repeat: no-repeat;
+  overflow-x: hidden;
   overflow-y: hidden;
 }
 
@@ -207,6 +208,7 @@ body {
   color: var(--theme-text);
   font-size: var(--body--reg);
   min-width: 1400px;
+  overflow-x: hidden;
 }
 
 :where(*, *::before, *::after) {
@@ -236,6 +238,10 @@ body {
 .right-panel {
   position: relative;
   z-index: 2;
+}
+
+#bmg-main-content {
+  overflow-x: hidden;
 }
 
 /* ===== TOPBAR ===== */
@@ -547,6 +553,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 20px;
+  overflow-x: hidden;
 }
 
 .page {

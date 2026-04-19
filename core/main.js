@@ -758,8 +758,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     const tag = target && target.tagName;
     if (tag === 'INPUT' || tag === 'TEXTAREA' || (target && target.isContentEditable)) return;
 
-    if (e.key === 'ArrowLeft') setActivePage(activePageIndex - 1);
-    if (e.key === 'ArrowRight') setActivePage(activePageIndex + 1);
+    if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      setActivePage(activePageIndex - 1);
+    }
+    if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      setActivePage(activePageIndex + 1);
+    }
     if (e.key === 'h' || e.key === 'H') setActivePage(0);
     if (e.key === 'b' || e.key === 'B') setActivePage(1);
     if (e.key === 'j' || e.key === 'J') setActivePage(2);
@@ -775,10 +781,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     const horizontal = Math.abs(e.deltaX) > Math.abs(e.deltaY) && Math.abs(e.deltaX) > WHEEL_THRESHOLD;
     if (!horizontal) return;
 
+    e.preventDefault();
     const dir = e.deltaX > 0 ? 1 : -1;
     wheelLockedUntil = now + WHEEL_LOCK_MS;
     setActivePage(activePageIndex + dir);
-  }, { passive: true });
+  }, { passive: false });
 
   // Sorting state
   currentSort = currentSort || 'none';
