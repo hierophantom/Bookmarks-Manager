@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Journey - Bookmark manager",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "A simple, yet beautiful bookmark manager extension.",
   "icons": {
     "16": "assets/icons/icon-16.png",
