@@ -89,6 +89,18 @@ async function toggleMainOverlayInTab(tab) {
 function init() {
   console.log('[Bridge] Service worker initialized');
 
+  if (chrome.runtime && chrome.runtime.onUpdateAvailable) {
+    chrome.runtime.onUpdateAvailable.addListener(async (details) => {
+      const nextVersion = details && details.version ? String(details.version) : '';
+      if (!nextVersion) return;
+      try {
+        await chrome.storage.local.set({ pendingUpdateVersion: nextVersion });
+      } catch (error) {
+        console.warn('[Bridge] Failed to persist pending update version', error);
+      }
+    });
+  }
+
   chrome.action.onClicked.addListener(async (tab) => {
     try {
       if (await toggleMainOverlayInTab(tab)) {

@@ -2743,6 +2743,207 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
+  // Extension update prompt handler
+  const updateAvailableSlot = document.getElementById('update-available-slot');
+  let updateAvailableBtn = null;
+
+  if (updateAvailableSlot) {
+    if (typeof createCommonButton === 'function') {
+      updateAvailableBtn = createCommonButton({
+        label: 'New version available',
+        icon: 'upgrade',
+        contrast: 'low'
+      });
+      updateAvailableBtn.classList.add('topbar__update-cta');
+    } else {
+      updateAvailableBtn = document.createElement('button');
+      updateAvailableBtn.type = 'button';
+      updateAvailableBtn.className = 'topbar__icon-btn';
+      updateAvailableBtn.textContent = 'New version available';
+    }
+
+    updateAvailableBtn.id = 'update-available-btn';
+    updateAvailableSlot.appendChild(updateAvailableBtn);
+  }
+
+  const PENDING_UPDATE_STORAGE_KEY = 'pendingUpdateVersion';
+  let pendingUpdateVersion = null;
+
+  async function loadLatestChangelogVersion() {
+    try {
+      if (!window.ChangelogParser || typeof window.ChangelogParser.parse !== 'function') {
+        return null;
+      }
+      const response = await fetch(chrome.runtime.getURL('docs/CHANGELOG.md'));
+      if (!response.ok) {
+        return null;
+      }
+      const markdown = await response.text();
+      const versions = window.ChangelogParser.parse(markdown);
+      return Array.isArray(versions) && versions.length > 0 ? versions[0] : null;
+    } catch (error) {
+      console.warn('Failed to load changelog version for update prompt', error);
+      return null;
+    }
+  }
+
+  function normalizeVersionFromHeading(heading) {
+    const match = String(heading || '').match(/v\d+(?:\.\d+){1,3}/i);
+    return match ? match[0].toLowerCase() : '';
+  }
+
+  function shouldShowUpdateButton(version) {
+    if (!version) return false;
+    const currentVersion = String(chrome.runtime.getManifest().version || '').toLowerCase();
+    const incomingVersion = String(version || '').toLowerCase();
+    return incomingVersion !== currentVersion;
+  }
+
+  function setUpdateButtonVisibility(visible, version = '') {
+    if (!updateAvailableBtn) return;
+    if (updateAvailableSlot) {
+      updateAvailableSlot.style.display = visible ? 'inline-flex' : 'none';
+    }
+    if (visible && version) {
+      updateAvailableBtn.setAttribute('title', `Update available: ${version}`);
+      updateAvailableBtn.setAttribute('aria-label', `Extension update available: ${version}`);
+    } else {
+      updateAvailableBtn.setAttribute('title', 'Extension update available');
+      updateAvailableBtn.setAttribute('aria-label', 'Extension update available');
+    }
+  }
+
+  function buildUpdateHighlights(version) {
+    const list = [];
+    if (!version) return list;
+
+    if (version.summary) {
+      list.push(version.summary);
+    }
+
+    if (Array.isArray(version.sections)) {
+      version.sections.slice(0, 3).forEach((section) => {
+        if (!section || !Array.isArray(section.items) || section.items.length === 0) return;
+        const firstItem = section.items[0];
+        if (!firstItem) return;
+        if (firstItem.title) {
+          list.push(`${section.title}: ${firstItem.title} - ${firstItem.text}`);
+        } else {
+          list.push(`${section.title}: ${firstItem.text}`);
+        }
+      });
+    }
+
+    return list.filter(Boolean).slice(0, 4);
+  }
+
+  async function showUpdatePromptModal() {
+    if (typeof createModal !== 'function' || typeof showModal !== 'function') {
+      return;
+    }
+
+    const latestVersion = await loadLatestChangelogVersion();
+    const normalizedLatest = normalizeVersionFromHeading(latestVersion?.heading);
+    const normalizedPending = String(pendingUpdateVersion || '').toLowerCase();
+    const titleVersion = pendingUpdateVersion || latestVersion?.heading || 'new version';
+    const highlights = buildUpdateHighlights(latestVersion);
+
+    const content = document.createElement('div');
+    content.className = 'update-available-modal__content';
+
+    const summary = document.createElement('p');
+    summary.className = 'update-available-modal__summary';
+    summary.textContent = 'A new Journey update is available. Update now to get the latest UI and fixes.';
+    content.appendChild(summary);
+
+    if (highlights.length > 0) {
+      const highlightsList = document.createElement('ul');
+      highlightsList.className = 'update-available-modal__highlights';
+      highlights.forEach((item) => {
+        const li = document.createElement('li');
+        li.textContent = item;
+        highlightsList.appendChild(li);
+      });
+      content.appendChild(highlightsList);
+    }
+
+    const modal = createModal({
+      type: 'form',
+      title: `Update available: ${titleVersion}`,
+      content,
+      buttons: [
+        { label: 'Later', type: 'common', role: 'cancel', shortcut: 'ESC' },
+        { label: 'Update now', type: 'primary', role: 'confirm', shortcut: '↵' }
+      ],
+      onSubmit: async () => {
+        try {
+          await chrome.storage.local.remove(PENDING_UPDATE_STORAGE_KEY);
+        } catch (error) {
+          console.warn('Failed to clear pending update version', error);
+        }
+        setUpdateButtonVisibility(false);
+
+        // Reload extension runtime so updated UI/assets are activated immediately.
+        chrome.runtime.reload();
+        return false;
+      }
+    });
+
+    showModal(modal);
+
+    // If changelog data indicates user is already on latest version, clear stale pending marker.
+    if (normalizedLatest && normalizedPending && normalizedLatest === normalizedPending) {
+      try {
+        await chrome.storage.local.remove(PENDING_UPDATE_STORAGE_KEY);
+      } catch (error) {
+        console.warn('Failed to clear stale pending update marker', error);
+      }
+      setUpdateButtonVisibility(false);
+    }
+  }
+
+  async function refreshUpdatePromptState() {
+    if (!updateAvailableBtn) return;
+    let storedVersion = '';
+    try {
+      const stored = await chrome.storage.local.get(PENDING_UPDATE_STORAGE_KEY);
+      storedVersion = stored && stored[PENDING_UPDATE_STORAGE_KEY]
+        ? String(stored[PENDING_UPDATE_STORAGE_KEY])
+        : '';
+    } catch (error) {
+      console.warn('Failed to read pending update version', error);
+    }
+
+    pendingUpdateVersion = storedVersion;
+    if (!shouldShowUpdateButton(pendingUpdateVersion)) {
+      setUpdateButtonVisibility(false);
+      if (pendingUpdateVersion) {
+        try {
+          await chrome.storage.local.remove(PENDING_UPDATE_STORAGE_KEY);
+        } catch (error) {
+          console.warn('Failed to clear outdated pending update version', error);
+        }
+        pendingUpdateVersion = null;
+      }
+      return;
+    }
+
+    setUpdateButtonVisibility(true, pendingUpdateVersion);
+  }
+
+  if (updateAvailableBtn) {
+    updateAvailableBtn.addEventListener('click', async () => {
+      await showUpdatePromptModal();
+    });
+    refreshUpdatePromptState();
+
+    chrome.storage.onChanged.addListener((changes, areaName) => {
+      if (areaName !== 'local') return;
+      if (!changes[PENDING_UPDATE_STORAGE_KEY]) return;
+      refreshUpdatePromptState();
+    });
+  }
+
   // App menu handler
   const appMenuBtn = document.getElementById('app-menu-btn');
   const appMenuShell = appMenuBtn ? appMenuBtn.closest('.topbar__menu-shell') : null;
