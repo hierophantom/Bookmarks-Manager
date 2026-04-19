@@ -9,6 +9,7 @@
   --segmented-control-surface-bg: var(--primary-primary-20, rgba(46, 51, 185, 0.8));
   --segmented-control-border: var(--primary-primary-25, #2e33b9);
   --segmented-control-item-hover: var(--primary-primary-25, #2e33b9);
+  --segmented-control-item-selected-bg: var(--primary-primary-25, #2e33b9);
   --segmented-control-item-selected-overlay: linear-gradient(90deg, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0.4) 100%);
   --segmented-control-item-color: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
   --segmented-control-title-color: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
@@ -63,7 +64,8 @@
 }
 
 .segmented-control__item--selected {
-  background-image: var(--segmented-control-item-selected-overlay), linear-gradient(90deg, rgba(46, 51, 185, 0.8) 0%, rgba(46, 51, 185, 0.8) 100%);
+  background-color: var(--segmented-control-item-selected-bg);
+  background-image: var(--segmented-control-item-selected-overlay);
 }
 
 .segmented-control__item:focus {
