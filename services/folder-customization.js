@@ -5,16 +5,16 @@
 const FolderCustomizationService = (() => {
   const STORAGE_KEY = 'folderCustomization';
   
-  // 8-color palette
+  // BMG-136 color palette
   const COLORS = [
-    { name: 'Red', value: '#ef4444' },
-    { name: 'Orange', value: '#f97316' },
-    { name: 'Yellow', value: '#eab308' },
-    { name: 'Green', value: '#22c55e' },
-    { name: 'Blue', value: '#3b82f6' },
-    { name: 'Purple', value: '#a855f7' },
-    { name: 'Pink', value: '#ec4899' },
-    { name: 'Gray', value: '#6b7280' }
+    { name: 'Cloud', value: '#DBDCE0' },
+    { name: 'Coral', value: '#FF847E' },
+    { name: 'Sun', value: '#FFD549' },
+    { name: 'Mint', value: '#69CB90' },
+    { name: 'Blush', value: '#FF83CF' },
+    { name: 'Lavender', value: '#CF88FF' },
+    { name: 'Aqua', value: '#4DDCEF' },
+    { name: 'Peach', value: '#FFAA63' }
   ];
 
   /**

@@ -61,7 +61,9 @@ function normalizeSegmentedControlItems(items) {
     .map((item, index) => ({
       label: item.label || `Option ${index + 1}`,
       value: item.value ?? item.label ?? `option-${index + 1}`,
-      disabled: Boolean(item.disabled)
+      disabled: Boolean(item.disabled),
+      ariaLabel: item.ariaLabel || '',
+      title: item.title || ''
     }));
 }
 
@@ -78,6 +80,12 @@ function renderSegmentedControlItems(control) {
     button.className = 'segmented-control__item';
     button.setAttribute('role', 'radio');
     button.dataset.segmentedControlValue = String(item.value);
+    if (item.ariaLabel) {
+      button.setAttribute('aria-label', item.ariaLabel);
+    }
+    if (item.title) {
+      button.title = item.title;
+    }
 
     const selected = item.value === config.selectedValue;
     button.setAttribute('aria-checked', selected ? 'true' : 'false');

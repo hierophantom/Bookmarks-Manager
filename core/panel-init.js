@@ -12,6 +12,10 @@ async function loadLeftPanelData(panel) {
   try {
     const tree = await BookmarksService.getTree();
     if (!tree || !tree[0]) return;
+
+    const folderCustomizations = (typeof FolderCustomizationService !== 'undefined' && typeof FolderCustomizationService.getAll === 'function')
+      ? await FolderCustomizationService.getAll()
+      : {};
     
     panel.clearFolders?.();
     const allItem = panel.addFolderItem?.({
@@ -39,7 +43,7 @@ async function loadLeftPanelData(panel) {
     if (root.children) {
       // Recursively add all folders with hierarchy
       for (const folder of root.children) {
-        await addFolderHierarchy(panel, folder, 0, '');
+        await addFolderHierarchy(panel, folder, 0, '', folderCustomizations);
       }
     }
 
@@ -50,7 +54,7 @@ async function loadLeftPanelData(panel) {
 }
 
 // Recursively add folders and subfolders
-async function addFolderHierarchy(panel, folderNode, level, parentId) {
+async function addFolderHierarchy(panel, folderNode, level, parentId, folderCustomizations = {}) {
   // Skip non-folders
   if (folderNode.url) return;
   
@@ -68,6 +72,9 @@ async function addFolderHierarchy(panel, folderNode, level, parentId) {
   
   // Add folder item to panel
   const hasChildren = childFolderCount > 0;
+  const customization = folderCustomizations && folderNode && folderNode.id
+    ? (folderCustomizations[folderNode.id] || null)
+    : null;
   const item = panel.addFolderItem?.({
     id: folderNode.id,
     label: folderNode.title || 'Untitled',
@@ -102,6 +109,7 @@ async function addFolderHierarchy(panel, folderNode, level, parentId) {
   });
 
   if (item) {
+    applyFolderTreeCustomization(item, customization);
     item.dataset.folderId = folderNode.id;
     item.dataset.parentId = parentId || '';
     item.dataset.level = `${level}`;
@@ -115,9 +123,49 @@ async function addFolderHierarchy(panel, folderNode, level, parentId) {
   if (folderNode.children) {
     for (const child of folderNode.children) {
       if (!child.url) { // Only show folders, not bookmarks
-        await addFolderHierarchy(panel, child, level + 1, folderNode.id);
+        await addFolderHierarchy(panel, child, level + 1, folderNode.id, folderCustomizations);
       }
     }
+  }
+}
+
+function applyFolderTreeCustomization(item, customization) {
+  if (!item) return;
+
+  const content = item.querySelector('.folder-tree-item__content');
+  const icon = item.querySelector('.folder-tree-item__folder-icon');
+
+  if (content) {
+    content.style.borderLeft = '';
+    content.style.backgroundColor = '';
+  }
+
+  if (icon) {
+    icon.classList.add('material-symbols-outlined');
+    icon.textContent = 'folder';
+    icon.style.cssText = '';
+  }
+
+  if (!customization) return;
+
+  if (content && typeof FolderCustomizationService !== 'undefined' && typeof FolderCustomizationService.getFolderStyles === 'function') {
+    const styles = FolderCustomizationService.getFolderStyles(customization);
+    if (styles.borderColor) {
+      content.style.borderLeft = `3px solid ${styles.borderColor}`;
+      content.style.backgroundColor = styles.backgroundColor || '';
+    }
+  }
+
+  if (icon && customization.emoji) {
+    icon.classList.remove('material-symbols-outlined');
+    icon.textContent = customization.emoji;
+    icon.style.fontSize = '22px';
+    icon.style.lineHeight = '1';
+    icon.style.display = 'inline-block';
+    icon.style.width = 'auto';
+    icon.style.height = 'auto';
+    icon.style.borderRadius = '0';
+    icon.style.background = 'transparent';
   }
 }
 
@@ -374,7 +422,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
       };
 
+      const subscribeLeftPanelCustomEvents = () => {
+        window.addEventListener('bookmark-manager:folder-updated', scheduleLeftPanelRefresh);
+      };
+
       subscribeLeftPanelBookmarkEvents();
+      subscribeLeftPanelCustomEvents();
 
       const revealFolderInTree = async (folderId) => {
         if (!folderId) return;

@@ -77,11 +77,8 @@ const LeftPanelUI = (() => {
       
       if (customization) {
         const iconElement = document.createElement('span');
-        if (customization.emoji && customization.color) {
-          iconElement.style.cssText = `display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; background: ${customization.color}; border-radius: 3px; font-size: 12px; margin-right: 6px;`;
-          iconElement.textContent = customization.emoji;
-        } else if (customization.emoji) {
-          iconElement.style.marginRight = '6px';
+        if (customization.emoji) {
+          iconElement.style.cssText = 'display: inline-block; font-size: 22px; line-height: 1; margin-right: 6px;';
           iconElement.textContent = customization.emoji;
         }
         folderLabel.appendChild(iconElement);

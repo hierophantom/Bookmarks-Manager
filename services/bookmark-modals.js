@@ -105,11 +105,23 @@ const BookmarkModals = (()=>{
       await FolderCustomizationService.remove(folderId);
     }
     
-    return new Promise((res,reject)=>{
+    const updated = await new Promise((res,reject)=>{
       chrome.bookmarks.update(folderId, { title: data.title }, updated=>{
         if (chrome.runtime.lastError) reject(chrome.runtime.lastError); else res(updated);
       });
     });
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('bookmark-manager:folder-updated', {
+        detail: {
+          folderId,
+          title: data.title,
+          customization: data.customization || null
+        }
+      }));
+    }
+
+    return updated;
   }
 
   async function addBookmarkGlobal(){

@@ -497,27 +497,28 @@ const Modal = (() => {
 
       const emojiLabel = document.createElement('label');
       emojiLabel.className = 'folder-form-modal__label';
-      emojiLabel.setAttribute('for', 'select-emoji-btn');
       emojiLabel.textContent = 'Folder icon (optional)';
-
-      const emojiBtn = document.createElement('button');
-      emojiBtn.id = 'select-emoji-btn';
-      emojiBtn.type = 'button';
-      emojiBtn.className = 'folder-form-modal__emoji-btn';
-
-      const emojiDisplay = document.createElement('span');
-      emojiDisplay.id = 'selected-emoji-display';
-      emojiDisplay.className = 'folder-form-modal__emoji';
-      emojiDisplay.textContent = selectedEmoji || '📁';
-
-      const emojiCopy = document.createElement('span');
-      emojiCopy.className = 'folder-form-modal__emoji-copy';
-      emojiCopy.textContent = `Click to ${selectedEmoji ? 'change' : 'select'}`;
-
-      emojiBtn.appendChild(emojiDisplay);
-      emojiBtn.appendChild(emojiCopy);
       emojiField.appendChild(emojiLabel);
-      emojiField.appendChild(emojiBtn);
+
+      const emojiFieldControl = typeof createSelectionField === 'function'
+        ? createSelectionField({
+          label: selectedEmoji ? `Emoji: ${selectedEmoji}` : 'Select emoji',
+          contrast: 'low',
+          state: selectedEmoji ? 'selection' : 'idle',
+          onClear: () => {
+            selectedEmoji = null;
+            updateEmojiFieldControl();
+          }
+        })
+        : document.createElement('button');
+
+      if (!emojiFieldControl.classList.contains('selection-field')) {
+        emojiFieldControl.className = 'folder-form-modal__selection-fallback';
+        emojiFieldControl.textContent = selectedEmoji ? `Emoji: ${selectedEmoji}` : 'Select emoji';
+      }
+
+      emojiField.appendChild(emojiFieldControl);
+
       content.appendChild(emojiField);
 
       const colorField = document.createElement('div');
@@ -527,84 +528,133 @@ const Modal = (() => {
       colorLabel.className = 'folder-form-modal__label';
       colorLabel.textContent = 'Folder color (optional)';
 
-      const colorGrid = document.createElement('div');
-      colorGrid.id = 'color-picker-grid';
-      colorGrid.className = 'folder-form-modal__color-grid';
-
-      const clearColorWrap = document.createElement('div');
-      clearColorWrap.className = 'folder-form-modal__clear-wrap';
-
       colorField.appendChild(colorLabel);
-      colorField.appendChild(colorGrid);
-      colorField.appendChild(clearColorWrap);
+
+      const colorFieldControl = typeof createSelectionField === 'function'
+        ? createSelectionField({
+          label: selectedColor ? `Color: ${selectedColor}` : 'Color: None',
+          contrast: 'low',
+          state: selectedColor ? 'selection' : 'idle'
+        })
+        : document.createElement('button');
+
+      if (!colorFieldControl.classList.contains('selection-field')) {
+        colorFieldControl.className = 'folder-form-modal__selection-fallback';
+        colorFieldControl.textContent = selectedColor ? `Color: ${selectedColor}` : 'Color: None';
+      }
+
+      const colorMenu = document.createElement('div');
+      colorMenu.className = 'folder-form-modal__color-menu';
+      colorMenu.hidden = true;
+
+      colorField.appendChild(colorFieldControl);
+      colorField.appendChild(colorMenu);
       content.appendChild(colorField);
 
       let modal = null;
       let submitResult = null;
 
-      const renderColorOptions = () => {
-        colorGrid.innerHTML = '';
+      function updateEmojiFieldControl() {
+        const nextLabel = selectedEmoji ? `Emoji: ${selectedEmoji}` : 'Select emoji';
+        if (typeof updateSelectionFieldLabel === 'function' && emojiFieldControl.classList.contains('selection-field')) {
+          updateSelectionFieldLabel(emojiFieldControl, nextLabel);
+        } else {
+          emojiFieldControl.textContent = nextLabel;
+        }
+      }
 
-        colorOptions.forEach((color) => {
-          const colorBtn = document.createElement('button');
-          colorBtn.type = 'button';
-          colorBtn.className = 'color-option folder-form-modal__color-option';
-          colorBtn.dataset.color = color.value;
-          colorBtn.style.background = color.value;
-          colorBtn.style.borderColor = selectedColor === color.value
-            ? 'var(--theme-text, #1a1a1a)'
-            : 'transparent';
+      function updateColorFieldControl() {
+        const selectedOption = colorOptions.find((color) => color.value === selectedColor) || null;
+        const nextLabel = selectedOption ? `Color: ${selectedOption.name}` : 'Color: None';
 
-          if (selectedColor === color.value) {
-            const check = document.createElement('span');
-            check.className = 'folder-form-modal__color-check';
-            check.textContent = '✓';
-            colorBtn.appendChild(check);
-          }
-
-          colorBtn.addEventListener('click', () => {
-            selectedColor = selectedColor === color.value ? null : color.value;
-            renderColorOptions();
-            renderClearColorButton();
-          });
-
-          colorGrid.appendChild(colorBtn);
-        });
-      };
-
-      const renderClearColorButton = () => {
-        clearColorWrap.innerHTML = '';
-        if (!selectedColor) return;
-
-        const clearBtn = typeof createCommonButton === 'function'
-          ? createCommonButton({ label: 'Clear color', contrast: 'low' })
-          : document.createElement('button');
-
-        if (!clearBtn.classList.contains('button-common')) {
-          clearBtn.type = 'button';
-          clearBtn.textContent = 'Clear color';
-          clearBtn.className = 'button-common button-common--low';
+        if (typeof applySelectionFieldState === 'function' && colorFieldControl.classList.contains('selection-field')) {
+          applySelectionFieldState(colorFieldControl, selectedOption ? 'selection' : 'idle');
         }
 
-        clearBtn.id = 'clear-color-btn';
-        clearBtn.classList.add('folder-form-modal__clear-btn');
-        clearBtn.addEventListener('click', () => {
-          selectedColor = null;
-          renderColorOptions();
-          renderClearColorButton();
-        });
+        if (typeof updateSelectionFieldSelectionState === 'function' && colorFieldControl.classList.contains('selection-field')) {
+          updateSelectionFieldSelectionState(colorFieldControl, Boolean(selectedOption));
+        }
 
-        clearColorWrap.appendChild(clearBtn);
+        if (colorFieldControl.classList.contains('selection-field')) {
+          const labelEl = colorFieldControl.querySelector('.selection-field__label');
+          if (labelEl) {
+            labelEl.textContent = '';
+
+            const labelWrap = document.createElement('span');
+            labelWrap.className = 'folder-form-modal__selected-color-label';
+
+            if (selectedOption) {
+              const swatch = document.createElement('span');
+              swatch.className = 'folder-form-modal__selected-color-swatch';
+              swatch.style.background = selectedOption.value;
+              labelWrap.appendChild(swatch);
+            }
+
+            const text = document.createElement('span');
+            text.className = 'folder-form-modal__selected-color-text';
+            text.textContent = nextLabel;
+            labelWrap.appendChild(text);
+
+            labelEl.appendChild(labelWrap);
+          }
+        } else {
+          colorFieldControl.textContent = nextLabel;
+        }
+      }
+
+      const renderColorMenu = () => {
+        colorMenu.innerHTML = '';
+
+        const header = document.createElement('div');
+        header.className = 'folder-form-modal__color-menu-header';
+        header.textContent = 'Select color';
+        colorMenu.appendChild(header);
+
+        const renderOption = (label, value, swatchColor = null) => {
+          const row = document.createElement('button');
+          row.type = 'button';
+          row.className = 'folder-form-modal__color-row';
+
+          const radio = document.createElement('span');
+          radio.className = 'material-symbols-outlined folder-form-modal__color-radio';
+          radio.textContent = selectedColor === value ? 'radio_button_checked' : 'radio_button_unchecked';
+          row.appendChild(radio);
+
+          if (swatchColor) {
+            const swatch = document.createElement('span');
+            swatch.className = 'folder-form-modal__color-swatch';
+            swatch.style.background = swatchColor;
+            row.appendChild(swatch);
+          }
+
+          const labelNode = document.createElement('span');
+          labelNode.className = 'folder-form-modal__color-text';
+          labelNode.textContent = label;
+          row.appendChild(labelNode);
+
+          row.addEventListener('click', () => {
+            selectedColor = value;
+            updateColorFieldControl();
+            renderColorMenu();
+            colorMenu.hidden = true;
+          });
+
+          colorMenu.appendChild(row);
+        };
+
+        renderOption('None', null);
+        colorOptions.forEach((color) => {
+          renderOption(color.name, color.value, color.value);
+        });
       };
 
-      renderColorOptions();
-      renderClearColorButton();
+      updateEmojiFieldControl();
+      updateColorFieldControl();
+      renderColorMenu();
 
-      // Focus title input
-      setTimeout(() => titleInput.focus(), 50);
-
-      // Emoji picker
-      emojiBtn.addEventListener('click', async () => {
+      emojiFieldControl.addEventListener('click', async (event) => {
+        event.preventDefault();
+        event.stopPropagation();
         if (typeof EmojiPicker === 'undefined') {
           await openError({
             title: 'Picker Unavailable',
@@ -615,10 +665,23 @@ const Modal = (() => {
         const emoji = await EmojiPicker.show(selectedEmoji);
         if (emoji !== null) {
           selectedEmoji = emoji || null;
-          emojiDisplay.textContent = selectedEmoji || '📁';
-          emojiCopy.textContent = `Click to ${selectedEmoji ? 'change' : 'select'}`;
+          updateEmojiFieldControl();
         }
       });
+
+      colorFieldControl.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        colorMenu.hidden = !colorMenu.hidden;
+      });
+
+      const handleDocumentClick = () => {
+        colorMenu.hidden = true;
+      };
+      document.addEventListener('click', handleDocumentClick);
+
+      // Focus title input
+      setTimeout(() => titleInput.focus(), 50);
 
       modal = createModal({
         type: 'form',
@@ -648,6 +711,7 @@ const Modal = (() => {
           return true;
         },
         onClose: (confirmed) => {
+          document.removeEventListener('click', handleDocumentClick);
           resolve(confirmed ? submitResult : null);
         }
       });

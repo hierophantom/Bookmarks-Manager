@@ -1106,6 +1106,46 @@ document.addEventListener('DOMContentLoaded', async () => {
       : null;
     const getTagsForId = (id) => (tagsMap && tagsMap[id]) ? tagsMap[id] : [];
 
+    const folderCustomizations = (typeof FolderCustomizationService !== 'undefined' && typeof FolderCustomizationService.getAll === 'function')
+      ? await FolderCustomizationService.getAll()
+      : {};
+
+    function getFolderCustomization(folderId) {
+      return folderId && folderCustomizations ? (folderCustomizations[folderId] || null) : null;
+    }
+
+    function createFolderIcon(customization, options = {}) {
+      const {
+        fontSize = 22
+      } = options;
+
+      if (!customization || !customization.emoji) {
+        return 'folder';
+      }
+
+      const emojiWrap = document.createElement('span');
+      emojiWrap.textContent = customization.emoji;
+      emojiWrap.style.display = 'inline-block';
+      emojiWrap.style.fontSize = `${fontSize}px`;
+      emojiWrap.style.lineHeight = '1';
+
+      return emojiWrap;
+    }
+
+    function applyFolderCustomizationStyles(target, customization) {
+      if (!target || !customization || typeof FolderCustomizationService === 'undefined') {
+        return;
+      }
+
+      const styles = FolderCustomizationService.getFolderStyles(customization);
+      if (styles.borderColor) {
+        target.style.borderColor = styles.borderColor;
+      }
+      if (styles.backgroundColor) {
+        target.style.backgroundColor = styles.backgroundColor;
+      }
+    }
+
     // Build id -> node map for folder path resolution
     const idToNode = new Map();
     (function buildMap(nodes){
@@ -1452,8 +1492,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
       return items.map((entry, index) => {
         const isCurrent = index === items.length - 1;
+        const customization = getFolderCustomization(entry.id);
+        const labelPrefix = customization && customization.emoji ? `${customization.emoji} ` : '';
         return {
-          label: entry.title || entry.id,
+          label: `${labelPrefix}${entry.title || entry.id}`,
           type: isCurrent ? 'current' : 'root',
           onClick: isCurrent ? null : () => focusFolderSection(entry.id)
         };
@@ -1893,12 +1935,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
 
       const childCount = (child.children && child.children.length) || 0;
+      const customization = getFolderCustomization(child.id);
       const tile = createBookmarksGalleryView({
         type: 'folder',
         state: 'idle',
         label: child.title || 'Folder',
         count: `${childCount} items`,
-        icon: 'folder',
+        icon: createFolderIcon(customization, { fontSize: 22 }),
         idleActions: Array.isArray(searchIdleActions) && searchIdleActions.length > 0
           ? searchIdleActions
           : [editAction, deleteAction],
@@ -1906,6 +1949,8 @@ document.addEventListener('DOMContentLoaded', async () => {
           ? showSearchIdleActions
           : false
       });
+
+      applyFolderCustomizationStyles(tile, customization);
 
       const actionsContainer = tile.querySelector('.bookmarks-gallery-view__actions');
       if (actionsContainer && Array.isArray(searchIdleActions) && searchIdleActions.length > 0) {
@@ -2110,6 +2155,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         breadcrumbItems,
         actions: folderActions.filter(Boolean)
       });
+
+      applyFolderCustomizationStyles(section, getFolderCustomization(folder.id));
       perf.sectionsRendered += 1;
       section.dataset.folderId = folder.id;
       section.id = `folder-${folder.id}`;
