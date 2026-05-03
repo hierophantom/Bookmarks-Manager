@@ -503,7 +503,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           type: 'simple',
           contrast: 'low',
           title: 'View Settings',
-          items: ['Hide nested folders'],
+          items: ['Hide nested folders', 'Collapse all folders', 'Expand all folders'],
           selectedIndices: hideNestedFolders ? [0] : [],
           showClear: false,
           showSelectAll: false,
@@ -512,6 +512,22 @@ document.addEventListener('DOMContentLoaded', async () => {
               // Toggle the setting
               const currentValue = await Storage.get('hideNestedFolders') || false;
               await Storage.set({ hideNestedFolders: !currentValue });
+              menu.remove();
+              document.removeEventListener('click', closeMenu);
+              await render(true);
+            } else if (index === 1) {
+              // Collapse all folders
+              idToNode.forEach((node) => {
+                if (!node.url) collapsedFolders.add(node.id);
+              });
+              await Storage.set({ [COLLAPSED_FOLDERS_KEY]: [...collapsedFolders] });
+              menu.remove();
+              document.removeEventListener('click', closeMenu);
+              await render(true);
+            } else if (index === 2) {
+              // Expand all folders
+              collapsedFolders.clear();
+              await Storage.set({ [COLLAPSED_FOLDERS_KEY]: [] });
               menu.remove();
               document.removeEventListener('click', closeMenu);
               await render(true);
