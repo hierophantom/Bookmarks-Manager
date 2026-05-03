@@ -9,6 +9,8 @@ const KeyboardNavigation = (() => {
    * @param {string} itemSelector - CSS selector for list items
    * @param {Object} options - Configuration options
    * @param {Function} options.onItemFocus - Callback when item is focused
+    * @param {Function} options.resolveAdjacentItem - Optional resolver for cross-container navigation.
+    * Signature: ({ direction, currentItem, currentIndex, items }) => HTMLElement|null
    * @param {string} options.focusClass - CSS class to apply to focused item (default: 'focused')
    * @param {string} options.focusAttribute - Data attribute to mark focusable items (default: 'tabindex')
    */
@@ -17,6 +19,7 @@ const KeyboardNavigation = (() => {
 
     const {
       onItemFocus = null,
+      resolveAdjacentItem = null,
       focusClass = 'focused',
       focusAttribute = 'tabindex'
     } = options;
@@ -32,6 +35,23 @@ const KeyboardNavigation = (() => {
 
     // Set initial focus to first item
     let currentIndex = 0;
+
+    function getRowStep() {
+      if (items.length <= 1) return 1;
+
+      const firstTop = items[0].offsetTop;
+      let columns = 0;
+
+      for (const item of items) {
+        if (Math.abs(item.offsetTop - firstTop) <= 2) {
+          columns += 1;
+        } else {
+          break;
+        }
+      }
+
+      return Math.max(1, columns);
+    }
 
     function focusItem(index) {
       // Wrap around
@@ -59,6 +79,20 @@ const KeyboardNavigation = (() => {
       items[currentIndex].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 
+    function focusExternalItem(targetItem) {
+      if (!targetItem || typeof targetItem.focus !== 'function') return false;
+
+      // Leaving this section: clear local focus markers so stale strokes don't remain.
+      items.forEach((item, i) => {
+        item.classList.remove(focusClass);
+        item.setAttribute(focusAttribute, '-1');
+      });
+
+      targetItem.focus();
+      targetItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      return true;
+    }
+
     // Keyboard event handler
     const handleKeydown = (e) => {
       // Only handle if container is visible or focused
@@ -67,16 +101,53 @@ const KeyboardNavigation = (() => {
       }
 
       let handled = false;
+      const rowStep = getRowStep();
 
       switch (e.key) {
         case 'ArrowDown':
+          if (currentIndex + rowStep >= items.length && typeof resolveAdjacentItem === 'function') {
+            const nextItem = resolveAdjacentItem({
+              direction: 'next',
+              currentItem: items[currentIndex],
+              currentIndex,
+              items
+            });
+            if (focusExternalItem(nextItem)) {
+              e.preventDefault();
+              handled = true;
+              break;
+            }
+          }
+          e.preventDefault();
+          focusItem(currentIndex + rowStep);
+          handled = true;
+          break;
+
+        case 'ArrowUp':
+          if (currentIndex - rowStep < 0 && typeof resolveAdjacentItem === 'function') {
+            const previousItem = resolveAdjacentItem({
+              direction: 'previous',
+              currentItem: items[currentIndex],
+              currentIndex,
+              items
+            });
+            if (focusExternalItem(previousItem)) {
+              e.preventDefault();
+              handled = true;
+              break;
+            }
+          }
+          e.preventDefault();
+          focusItem(currentIndex - rowStep);
+          handled = true;
+          break;
+
         case 'ArrowRight':
           e.preventDefault();
           focusItem(currentIndex + 1);
           handled = true;
           break;
 
-        case 'ArrowUp':
         case 'ArrowLeft':
           e.preventDefault();
           focusItem(currentIndex - 1);

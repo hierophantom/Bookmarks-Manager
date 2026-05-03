@@ -320,6 +320,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
     searchComp.style.width = '200px';
     textSearchInput = searchComp.querySelector('.search-comp__input');
+    if (textSearchInput) {
+      textSearchInput.addEventListener('keydown', async (event) => {
+        if (event.key !== 'ArrowDown') return;
+
+        event.preventDefault();
+        await render(true);
+        focusFirstVisibleBookmarkResult();
+      });
+    }
     bookmarksActionsLeft.appendChild(searchComp);
 
     const tagField = createSelectionField({
@@ -831,14 +840,27 @@ document.addEventListener('DOMContentLoaded', async () => {
     const tag = target && target.tagName;
     if (tag === 'INPUT' || tag === 'TEXTAREA' || (target && target.isContentEditable)) return;
 
-    if (e.key === 'ArrowLeft') {
-      e.preventDefault();
-      setActivePage(activePageIndex - 1);
+    const activeEl = document.activeElement;
+    const activeTile = activeEl && typeof activeEl.closest === 'function'
+      ? activeEl.closest('.bookmarks-gallery-view')
+      : null;
+
+    if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && isBookmarksPageActive()) {
+      if (!activeTile) {
+        e.preventDefault();
+        focusFirstVisibleBookmarkResult(e.key === 'ArrowUp' ? 'last' : 'first');
+        return;
+      }
     }
-    if (e.key === 'ArrowRight') {
+
+    if ((e.key === 'Enter' || e.key === ' ') && activeTile && isBookmarksPageActive()) {
       e.preventDefault();
-      setActivePage(activePageIndex + 1);
+      activateBookmarkTile(activeTile).catch((error) => {
+        console.error('Failed to activate focused tile', error);
+      });
+      return;
     }
+
     if (e.key === 'h' || e.key === 'H') setActivePage(0);
     if (e.key === 'b' || e.key === 'B') setActivePage(1);
     if (e.key === 'j' || e.key === 'J') setActivePage(2);
@@ -1379,6 +1401,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           tile.setAttribute('title', `Location: ${locationPath}`);
         }
         tile.dataset.id = child.id;
+        tile.dataset.url = child.url || '';
         tile.draggable = true;
         tile.addEventListener('click', (event) => {
           openBookmarkUrl(child.url, event);
@@ -1898,6 +1921,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
 
       tile.dataset.id = child.id;
+      tile.dataset.url = child.url || '';
       tile.draggable = true;
       tile.addEventListener('click', (event) => {
         openBookmarkUrl(child.url, event);
@@ -2233,6 +2257,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         updateFolderSectionItems(section, sectionItems);
         FaviconService.attachErrorHandlers(section);
+        setupKeyboardNavigation();
       };
 
       section._renderFolderItems = renderItemsOnce;
@@ -2821,22 +2846,102 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
     
+    function resolveAdjacentSectionItem(currentContainer, direction) {
+      if (!currentContainer) return null;
+
+      const allSections = Array.from(document.querySelectorAll('.folder-section__content'));
+      const visibleSections = allSections.filter((section) => section && section.offsetParent !== null);
+      const currentSectionIndex = visibleSections.indexOf(currentContainer);
+      if (currentSectionIndex === -1) return null;
+
+      const step = direction === 'previous' ? -1 : 1;
+      let probeIndex = currentSectionIndex + step;
+
+      while (probeIndex >= 0 && probeIndex < visibleSections.length) {
+        const probeSection = visibleSections[probeIndex];
+        const visibleItems = Array.from(probeSection.querySelectorAll('.bookmarks-gallery-view'))
+          .filter((item) => item && item.offsetParent !== null);
+        if (visibleItems.length > 0) {
+          return direction === 'previous'
+            ? visibleItems[visibleItems.length - 1]
+            : visibleItems[0];
+        }
+        probeIndex += step;
+      }
+
+      return null;
+    }
+
     // For each folder section content, set up arrow key navigation
     document.querySelectorAll('.folder-section__content').forEach(contentContainer => {
       if (!contentContainer.getAttribute('data-kbd-nav-initialized')) {
-        KeyboardNavigation.setupListNavigation(contentContainer, '.bookmarks-gallery-view', {
+        const navApi = KeyboardNavigation.setupListNavigation(contentContainer, '.bookmarks-gallery-view', {
           focusClass: 'bm-focused',
+          resolveAdjacentItem: ({ direction }) => resolveAdjacentSectionItem(contentContainer, direction),
           onItemFocus: (item) => {
             item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
           }
         });
-        contentContainer.setAttribute('data-kbd-nav-initialized', 'true');
+        if (navApi) {
+          contentContainer.setAttribute('data-kbd-nav-initialized', 'true');
+        }
       }
     });
   }
 
   // Setup keyboard navigation after rendering
   setupKeyboardNavigation();
+
+  async function activateBookmarkTile(tile) {
+    if (!tile) return false;
+
+    if (tile.classList.contains('bookmarks-gallery-view--folder')) {
+      const folderId = tile.dataset.id;
+      if (!folderId) return false;
+
+      if (typeof window.openFolderTreeToFolder === 'function') {
+        await window.openFolderTreeToFolder(folderId);
+        return true;
+      }
+
+      if (typeof window.showBookmarksInFolder === 'function') {
+        await window.showBookmarksInFolder(folderId);
+        return true;
+      }
+
+      return false;
+    }
+
+    const url = tile.dataset.url || '';
+    if (!url) return false;
+
+    await chrome.tabs.create({ url });
+    return true;
+  }
+
+  function focusFirstVisibleBookmarkResult(direction = 'first') {
+    const sections = Array.from(document.querySelectorAll('.folder-section__content'));
+    const pickLast = direction === 'last';
+
+    for (const section of sections) {
+      if (!section || section.offsetParent === null) continue;
+
+      const visibleItems = Array.from(section.querySelectorAll('.bookmarks-gallery-view'))
+        .filter((item) => item && item.offsetParent !== null);
+
+      const firstResult = pickLast
+        ? visibleItems[visibleItems.length - 1]
+        : visibleItems[0];
+
+      if (!firstResult) continue;
+
+      firstResult.focus();
+      firstResult.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      return true;
+    }
+
+    return false;
+  }
 
   // render widgets area
   try{ if (typeof WidgetsService !== 'undefined') await WidgetsService.render('widgets-container'); }catch(e){ console.warn('Widgets render failed', e); }

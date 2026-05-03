@@ -742,7 +742,7 @@ body {
 }
 
 .bookmarks-gallery-view.bm-focused {
-  outline: 2px solid var(--primary-primary-25, #2e33b9);
+  outline: 2px solid var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
   outline-offset: 4px;
 }
 
