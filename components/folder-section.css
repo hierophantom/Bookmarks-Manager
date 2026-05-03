@@ -135,12 +135,8 @@
   background: transparent;
   color: var(--common-common-bright-15, rgba(255, 255, 255, 0.6));
   cursor: pointer;
-  opacity: 0;
-  transition: opacity 0.15s ease, background 0.15s ease;
-}
-
-.folder-section:hover .folder-section__collapse-toggle {
   opacity: 1;
+  transition: background 0.15s ease;
 }
 
 .folder-section__collapse-toggle:hover,
