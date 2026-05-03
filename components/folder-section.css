@@ -123,22 +123,20 @@
 /* Collapse / expand toggle */
 .folder-section__collapse-toggle {
   flex-shrink: 0;
-  margin-left: auto;
+  margin-left: 8px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 24px;
+  height: 24px;
   padding: 0;
   border: none;
   border-radius: 4px;
-  background: red !important;
-  color: white !important;
+  background: transparent;
+  color: var(--common-common-bright-15, rgba(255, 255, 255, 0.6));
   cursor: pointer;
-  opacity: 1 !important;
+  opacity: 0;
   transition: opacity 0.15s ease, background 0.15s ease;
-  z-index: 999;
-  position: relative;
 }
 
 .folder-section:hover .folder-section__collapse-toggle {
@@ -170,4 +168,8 @@
 /* Hide content when collapsed */
 .folder-section--collapsed .folder-section__content {
   display: none;
+}
+
+.folder-section--collapsed {
+  min-height: 20px;
 }
