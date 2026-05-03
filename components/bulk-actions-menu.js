@@ -1,0 +1,136 @@
+/**
+ * Bulk Actions Menu
+ *
+ * Design System Component - BMG-242
+ *
+ * Opens at the bottom center of the page and shows
+ * selected count with action buttons.
+ */
+function createBulkActionsMenu(options = {}) {
+  const {
+    selectedCount = 0,
+    actions = [],
+    visible = true,
+    attachToBody = true
+  } = options;
+
+  const element = document.createElement('div');
+  element.className = 'bulk-actions-menu';
+  if (!visible) {
+    element.classList.add('bulk-actions-menu--hidden');
+  }
+
+  const counter = document.createElement('div');
+  counter.className = 'bulk-actions-menu__counter';
+
+  const actionsWrap = document.createElement('div');
+  actionsWrap.className = 'bulk-actions-menu__actions';
+
+  element.appendChild(counter);
+  element.appendChild(actionsWrap);
+
+  function setSelectedCount(count) {
+    const safeCount = Number.isFinite(count) ? Math.max(0, Number(count)) : 0;
+    counter.textContent = `${safeCount} selected`;
+  }
+
+  function createActionButton(action = {}) {
+    const {
+      label = '',
+      icon = null,
+      variant = 'common',
+      onClick = null
+    } = action;
+
+    if (!label) return null;
+
+    let button = null;
+    const resolvedIcon = icon ? createBulkActionIcon(icon) : null;
+
+    if (variant === 'primary' && typeof createPrimaryButton === 'function') {
+      button = createPrimaryButton({
+        label,
+        icon: resolvedIcon,
+        onClick: () => {
+          if (typeof onClick === 'function') onClick(action);
+        }
+      });
+    } else if (typeof createCommonButton === 'function') {
+      button = createCommonButton({
+        label,
+        icon: resolvedIcon,
+        onClick: () => {
+          if (typeof onClick === 'function') onClick(action);
+        }
+      });
+    } else {
+      button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'bulk-actions-menu__fallback-button';
+      button.textContent = label;
+      button.addEventListener('click', () => {
+        if (typeof onClick === 'function') onClick(action);
+      });
+    }
+
+    button.classList.add('bulk-actions-menu__action');
+    return button;
+  }
+
+  function setActions(nextActions = []) {
+    actionsWrap.innerHTML = '';
+    const normalized = Array.isArray(nextActions) ? nextActions : [];
+    normalized.forEach((action) => {
+      const button = createActionButton(action);
+      if (button) {
+        actionsWrap.appendChild(button);
+      }
+    });
+  }
+
+  function show() {
+    element.classList.remove('bulk-actions-menu--hidden');
+  }
+
+  function hide() {
+    element.classList.add('bulk-actions-menu--hidden');
+  }
+
+  function destroy() {
+    element.remove();
+  }
+
+  setSelectedCount(selectedCount);
+  setActions(actions);
+
+  if (attachToBody && document.body) {
+    document.body.appendChild(element);
+  }
+
+  return {
+    element,
+    setSelectedCount,
+    setActions,
+    show,
+    hide,
+    destroy
+  };
+}
+
+function createBulkActionIcon(iconName) {
+  if (iconName instanceof HTMLElement) {
+    return iconName;
+  }
+
+  const icon = document.createElement('span');
+  icon.className = 'material-symbols-outlined';
+  icon.setAttribute('aria-hidden', 'true');
+  icon.textContent = String(iconName || '');
+  return icon;
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = {
+    createBulkActionsMenu
+  };
+}

@@ -1,0 +1,62 @@
+/**
+ * Bulk Actions Menu
+ *
+ * Design System Component - BMG-242
+ */
+
+.bulk-actions-menu {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  z-index: 1200;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--common-common-bright-05, rgba(255, 255, 255, 0.1));
+  background: var(--common-common-dark-20, rgba(0, 0, 0, 0.45));
+  backdrop-filter: blur(8px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.24);
+}
+
+.bulk-actions-menu--hidden {
+  display: none;
+}
+
+.bulk-actions-menu__counter {
+  color: var(--common-common-bright-20, rgba(255, 255, 255, 0.85));
+  font-family: var(--font-family-sans-serif, 'Lato', sans-serif);
+  font-size: var(--size-large, 16px);
+  font-weight: var(--weight-bold, 700);
+  white-space: nowrap;
+}
+
+.bulk-actions-menu__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bulk-actions-menu__action {
+  height: 32px;
+}
+
+.bulk-actions-menu__fallback-button {
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid var(--common-common-bright-05, rgba(255, 255, 255, 0.1));
+  background: var(--common-common-bright-05, rgba(255, 255, 255, 0.08));
+  color: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
+  padding: 0 10px;
+  font-family: var(--font-family-sans-serif, 'Lato', sans-serif);
+  font-size: var(--size-medium, 12px);
+  font-weight: var(--weight-regular, 400);
+  cursor: pointer;
+}
+
+.bulk-actions-menu__fallback-button:hover {
+  background: var(--common-common-bright-10, rgba(255, 255, 255, 0.14));
+}

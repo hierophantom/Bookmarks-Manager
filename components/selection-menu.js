@@ -55,6 +55,19 @@ function createSelectionMenu(options = {}) {
   menu.className = `selection-menu selection-menu--${contrast}`;
   menu.dataset.selectionMenuType = normalizedType;
   const isMultiSelect = normalizedType === 'tag' || normalizedType === 'simple';
+  const supportsClear = normalizedType === 'tag' || normalizedType === 'simple' || normalizedType === 'sort';
+
+  const body = document.createElement('div');
+  body.className = 'selection-menu__body';
+
+  let footer = null;
+  const ensureFooter = () => {
+    if (footer) return footer;
+    footer = document.createElement('div');
+    footer.className = 'selection-menu__footer';
+    menu.appendChild(footer);
+    return footer;
+  };
 
   const updateSortSelection = (selectedItem, selectedLabel) => {
     if (!showSortIndicator) {
@@ -90,21 +103,21 @@ function createSelectionMenu(options = {}) {
     headerTitle.textContent = title || (normalizedType === 'sort' ? 'Sort view' : 'Select options');
     header.appendChild(headerTitle);
 
-    if (isMultiSelect && showClear) {
+    if (supportsClear && showClear && typeof onClear === 'function') {
       const clearBtn = document.createElement('button');
       clearBtn.className = 'selection-menu__clear';
       clearBtn.type = 'button';
       clearBtn.textContent = 'Clear';
       clearBtn.addEventListener('click', () => {
-        if (typeof onClear === 'function') {
-          onClear();
-        }
+        onClear();
       });
       header.appendChild(clearBtn);
     }
 
     menu.appendChild(header);
   }
+
+  menu.appendChild(body);
 
   const addTagItem = (label, index) => {
     const descriptor = normalizeSelectionMenuItem(label);
@@ -125,7 +138,7 @@ function createSelectionMenu(options = {}) {
     item.appendChild(checkbox);
     item.appendChild(tagEl);
 
-    menu.appendChild(item);
+    body.appendChild(item);
   };
 
   const addSimpleItem = (label, index) => {
@@ -149,7 +162,7 @@ function createSelectionMenu(options = {}) {
       }
     });
 
-    menu.appendChild(item);
+    body.appendChild(item);
   };
 
   const addSortItem = (label, index, isSelected) => {
@@ -179,7 +192,7 @@ function createSelectionMenu(options = {}) {
       }
     });
 
-    menu.appendChild(item);
+    body.appendChild(item);
   };
 
   const addCheckboxItem = (label, index) => {
@@ -204,7 +217,7 @@ function createSelectionMenu(options = {}) {
       });
 
       selectAll.appendChild(selectAllBtn);
-      menu.appendChild(selectAll);
+      ensureFooter().appendChild(selectAll);
     }
   }
 
@@ -225,7 +238,7 @@ function createSelectionMenu(options = {}) {
         }
       });
       selectAll.appendChild(selectAllBtn);
-      menu.appendChild(selectAll);
+      ensureFooter().appendChild(selectAll);
     }
   }
 
@@ -236,7 +249,7 @@ function createSelectionMenu(options = {}) {
         const sectionTitle = document.createElement('div');
         sectionTitle.className = 'selection-menu__section-title';
         sectionTitle.textContent = section.title;
-        menu.appendChild(sectionTitle);
+        body.appendChild(sectionTitle);
 
         section.items.forEach((label, index) => {
           addSortItem(label, offset + index, selectedIndex === offset + index);
