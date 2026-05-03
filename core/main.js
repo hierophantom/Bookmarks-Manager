@@ -1052,26 +1052,38 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!tab || !tab.url) return;
     const data = await Modal.openBookmarkForm({
       title: tab.title || tab.url,
-      url: tab.url
+      url: tab.url,
+      folderId: '1'
     }, {
+      showFolderSelector: true,
       showTabsSuggestions: false
     });
     if (!data) return;
 
     const destinationFolderId = data.folderId || data.parentId || '1';
-    const createdNode = await new Promise((resolve, reject) => {
-      chrome.bookmarks.create({
-        parentId: destinationFolderId,
-        title: data.title || tab.title || tab.url,
-        url: data.url || tab.url
-      }, (node) => {
-        if (chrome.runtime.lastError) {
-          reject(chrome.runtime.lastError);
-          return;
-        }
-        resolve(node);
+    let createdNode = null;
+    try {
+      createdNode = await new Promise((resolve, reject) => {
+        chrome.bookmarks.create({
+          parentId: destinationFolderId,
+          title: data.title || tab.title || tab.url,
+          url: data.url || tab.url
+        }, (node) => {
+          if (chrome.runtime.lastError) {
+            reject(chrome.runtime.lastError);
+            return;
+          }
+          resolve(node);
+        });
       });
-    });
+    } catch (error) {
+      console.error('Failed to save session tab bookmark', error);
+      await Modal.openError({
+        title: 'Save Failed',
+        message: 'Could not save this tab as a bookmark. Please try again.'
+      });
+      return;
+    }
 
     if (createdNode && data.tags && data.tags.length && typeof TagsService !== 'undefined') {
       await TagsService.setTags(createdNode.id, data.tags);
@@ -1100,6 +1112,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         await saveSingleSessionTab(tab);
       }
     });
+    closeAction.setAttribute('title', 'Close tab');
+    saveAction.setAttribute('title', 'Save as bookmark');
 
     const icon = tab.favIconUrl
       ? FaviconService.createFaviconElement(tab.url, {
