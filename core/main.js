@@ -148,6 +148,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   const bookmarksActionsSettings = document.getElementById('bookmarks-actions-settings');
   const bookmarksFloatingLeft = document.getElementById('bookmarks-floating-left');
   const bookmarksFloatingRight = document.getElementById('bookmarks-floating-right');
+  const thisSessionRoot = document.getElementById('this-session-root');
+  const thisSessionActionsLeft = document.getElementById('this-session-actions-left');
+  const thisSessionActionsSettings = document.getElementById('this-session-actions-settings');
+  const thisSessionActionsRight = document.getElementById('this-session-actions-right');
 
   let textSearchInput = null;
   let currentFilterTags = [];
@@ -162,6 +166,18 @@ document.addEventListener('DOMContentLoaded', async () => {
   let linkOpenModifierPressed = false;
   let activeContextMenu = null;
   let cleanupContextMenuListeners = null;
+  let thisSessionSearchQuery = '';
+  let thisSessionSort = 'browser-order';
+  let thisSessionSearchInput = null;
+  let thisSessionSortField = null;
+  let thisSessionActionsInitialized = false;
+  let thisSessionLastSnapshot = null;
+  let thisSessionRefreshTimer = null;
+  let thisSessionCurrentWindowId = null;
+  let thisSessionWindowCounter = 0;
+  const thisSessionCollapsedWindowIds = new Set();
+  const thisSessionVisitedTabIds = new Set();
+  const THIS_SESSION_SORT_STORAGE_KEY = 'thisSessionSortChoice';
 
   function createMaterialIcon(name) {
     const icon = document.createElement('span');
@@ -892,6 +908,573 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
+  function normalizeThisSessionSortChoice(value) {
+    const normalized = String(value || '').toLowerCase();
+    if (normalized === 'az' || normalized === 'za' || normalized === 'browser-order') {
+      return normalized;
+    }
+    return 'browser-order';
+  }
+
+  function mapTabGroupColor(colorName) {
+    const byName = {
+      grey: '#9AA0A6',
+      blue: '#1A73E8',
+      red: '#EA4335',
+      yellow: '#F9AB00',
+      green: '#34A853',
+      pink: '#E52592',
+      purple: '#A142F4',
+      cyan: '#00ACC1',
+      orange: '#FB8C00'
+    };
+    return byName[String(colorName || '').toLowerCase()] || '#1A73E8';
+  }
+
+  function getTabTitle(tab) {
+    return (tab && (tab.title || tab.url)) || 'Untitled tab';
+  }
+
+  function getTabHost(url) {
+    try {
+      return new URL(url).hostname.replace(/^www\./, '');
+    } catch (error) {
+      return 'Tab';
+    }
+  }
+
+  function compareTabsBySort(a, b) {
+    if (thisSessionSort === 'az') {
+      return getTabTitle(a).localeCompare(getTabTitle(b));
+    }
+    if (thisSessionSort === 'za') {
+      return getTabTitle(b).localeCompare(getTabTitle(a));
+    }
+    return (a.index || 0) - (b.index || 0);
+  }
+
+  async function getSessionWindowsSnapshot() {
+    const windows = await chrome.windows.getAll({ populate: true, windowTypes: ['normal'] });
+
+    let currentWindowId = null;
+    try {
+      const currentTab = await chrome.tabs.getCurrent();
+      currentWindowId = currentTab ? currentTab.windowId : null;
+    } catch (error) {
+      console.warn('getCurrent tab failed while loading this session page', error);
+    }
+
+    if (!currentWindowId) {
+      try {
+        const currentWindow = await chrome.windows.getCurrent();
+        currentWindowId = currentWindow ? currentWindow.id : null;
+      } catch (error) {
+        console.warn('getCurrent window failed while loading this session page', error);
+      }
+    }
+
+    const extensionUrl = chrome.runtime.getURL('core/main.html');
+    const groupIds = new Set();
+
+    const mappedWindows = windows.map((win) => {
+      const tabs = (win.tabs || [])
+        .filter((tab) => tab.url && !tab.url.includes(extensionUrl))
+        .map((tab) => {
+          if (typeof tab.groupId === 'number' && tab.groupId >= 0) {
+            groupIds.add(tab.groupId);
+          }
+          return {
+            id: tab.id,
+            windowId: tab.windowId,
+            index: tab.index,
+            title: tab.title || tab.url,
+            url: tab.url,
+            favIconUrl: tab.favIconUrl || '',
+            active: Boolean(tab.active),
+            groupId: typeof tab.groupId === 'number' ? tab.groupId : -1,
+            incognito: Boolean(tab.incognito)
+          };
+        });
+
+      return {
+        id: win.id,
+        focused: Boolean(win.focused),
+        tabs
+      };
+    }).filter((win) => win.tabs.length > 0);
+
+    const groupColorById = {};
+    await Promise.all(Array.from(groupIds).map(async (groupId) => {
+      try {
+        const group = await chrome.tabGroups.get(groupId);
+        groupColorById[groupId] = mapTabGroupColor(group && group.color);
+      } catch (error) {
+        groupColorById[groupId] = mapTabGroupColor('blue');
+      }
+    }));
+
+    mappedWindows.forEach((win) => {
+      win.tabs.forEach((tab) => {
+        if (tab.active) {
+          thisSessionVisitedTabIds.add(tab.id);
+        }
+        if (tab.groupId >= 0 && groupColorById[tab.groupId]) {
+          tab.groupColor = groupColorById[tab.groupId];
+        }
+      });
+    });
+
+    const focusedWindow = mappedWindows.find((win) => win.id === currentWindowId)
+      || mappedWindows.find((win) => win.focused)
+      || mappedWindows[0]
+      || null;
+
+    return {
+      currentWindowId: focusedWindow ? focusedWindow.id : null,
+      windows: mappedWindows
+    };
+  }
+
+  async function openTabFromSession(tab) {
+    if (!tab || !tab.id) return;
+    thisSessionVisitedTabIds.add(tab.id);
+    await chrome.windows.update(tab.windowId, { focused: true });
+    await chrome.tabs.update(tab.id, { active: true });
+    await renderThisSessionPage(true);
+  }
+
+  async function saveSingleSessionTab(tab) {
+    if (!tab || !tab.url) return;
+    const data = await Modal.openBookmarkForm({
+      title: tab.title || tab.url,
+      url: tab.url
+    }, {
+      showTabsSuggestions: false
+    });
+    if (!data) return;
+
+    const destinationFolderId = data.folderId || data.parentId || '1';
+    const createdNode = await new Promise((resolve, reject) => {
+      chrome.bookmarks.create({
+        parentId: destinationFolderId,
+        title: data.title || tab.title || tab.url,
+        url: data.url || tab.url
+      }, (node) => {
+        if (chrome.runtime.lastError) {
+          reject(chrome.runtime.lastError);
+          return;
+        }
+        resolve(node);
+      });
+    });
+
+    if (createdNode && data.tags && data.tags.length && typeof TagsService !== 'undefined') {
+      await TagsService.setTags(createdNode.id, data.tags);
+    }
+  }
+
+  function createThisSessionTabTile(tab) {
+    const closeAction = createCubeActionButton({
+      icon: 'close',
+      label: 'Close tab',
+      colorScheme: 'destructive',
+      onClick: async (event) => {
+        event.stopPropagation();
+        await chrome.tabs.remove(tab.id);
+        await renderThisSessionPage(true);
+      }
+    });
+
+    const saveAction = createCubeActionButton({
+      icon: 'bookmark_add',
+      label: 'Save tab',
+      onClick: async (event) => {
+        event.stopPropagation();
+        await saveSingleSessionTab(tab);
+      }
+    });
+
+    const icon = tab.favIconUrl
+      ? FaviconService.createFaviconElement(tab.url, {
+        size: 24,
+        className: 'bookmark-favicon bookmarks-gallery-view__favicon',
+        alt: ''
+      })
+      : createMaterialIcon('tab');
+
+    const tile = createBookmarksGalleryView({
+      type: 'bookmark',
+      state: 'idle',
+      label: tab.title || tab.url || 'Untitled tab',
+      subtext: getTabHost(tab.url),
+      icon,
+      idleActions: [closeAction, saveAction],
+      showIdleActions: false
+    });
+
+    if (tab.groupColor) {
+      tile.style.borderColor = tab.groupColor;
+      tile.classList.add('this-session-tab--grouped');
+    }
+
+    if (!thisSessionVisitedTabIds.has(tab.id)) {
+      const dot = document.createElement('span');
+      dot.className = 'this-session-tab__unvisited-dot';
+      tile.appendChild(dot);
+    }
+
+    if (tab.incognito) {
+      const incognitoBadge = document.createElement('span');
+      incognitoBadge.className = 'this-session-tab__incognito';
+      const iconEl = createMaterialIcon('domino_mask');
+      incognitoBadge.appendChild(iconEl);
+      tile.appendChild(incognitoBadge);
+      if (typeof createTooltip === 'function') {
+        createTooltip({
+          text: 'Incognito mode',
+          target: incognitoBadge,
+          position: 'top',
+          delay: 'fast'
+        });
+      }
+    }
+
+    tile.dataset.id = String(tab.id);
+    tile.addEventListener('click', async () => {
+      await openTabFromSession(tab);
+    });
+
+    tile.addEventListener('contextmenu', (event) => {
+      openContextMenu(event, [
+        {
+          label: 'Open',
+          icon: 'arrow_outward',
+          onSelect: async () => {
+            await openTabFromSession(tab);
+          }
+        },
+        {
+          label: 'Open in new tab',
+          icon: 'open_in_new',
+          onSelect: async () => {
+            await chrome.tabs.create({ url: tab.url, active: true });
+          }
+        },
+        {
+          label: 'Copy URL',
+          icon: 'content_copy',
+          onSelect: async () => {
+            await copyTextToClipboard(tab.url);
+          }
+        },
+        { type: 'divider' },
+        {
+          label: 'Save tab',
+          icon: 'bookmark_add',
+          onSelect: async () => {
+            await saveSingleSessionTab(tab);
+          }
+        },
+        {
+          label: 'Delete',
+          icon: 'delete',
+          destructive: true,
+          onSelect: async () => {
+            const confirmed = await Modal.openConfirmation({
+              title: 'Close tab',
+              message: 'Are you sure you want to close this tab?',
+              confirmText: 'Close',
+              destructive: true
+            });
+            if (!confirmed) return;
+            await chrome.tabs.remove(tab.id);
+            await renderThisSessionPage(true);
+          }
+        }
+      ]);
+    });
+
+    return tile;
+  }
+
+  async function closeDuplicateTabsInWindow(windowTabs) {
+    const seen = new Set();
+    const toClose = [];
+
+    windowTabs.forEach((tab) => {
+      const key = String(tab.url || '').trim();
+      if (!key) return;
+      if (seen.has(key)) {
+        toClose.push(tab.id);
+        return;
+      }
+      seen.add(key);
+    });
+
+    if (!toClose.length) return;
+    await chrome.tabs.remove(toClose);
+  }
+
+  async function closeStaleTabsInWindow(windowTabs) {
+    const staleIds = windowTabs
+      .filter((tab) => !thisSessionVisitedTabIds.has(tab.id) && !tab.active)
+      .map((tab) => tab.id);
+
+    if (!staleIds.length) return;
+    await chrome.tabs.remove(staleIds);
+  }
+
+  async function saveCurrentWindowSession() {
+    const snapshot = thisSessionLastSnapshot || await getSessionWindowsSnapshot();
+    const currentWindow = snapshot.windows.find((win) => win.id === snapshot.currentWindowId) || snapshot.windows[0] || null;
+    const tabs = currentWindow ? currentWindow.tabs : [];
+
+    if (!tabs.length) {
+      await Modal.openNotice({
+        title: 'No Tabs to Save',
+        message: 'No tabs to save in this window.'
+      });
+      return;
+    }
+
+    await SaveTabsModal.show(tabs.map((tab) => ({
+      id: tab.id,
+      title: tab.title,
+      url: tab.url
+    })));
+  }
+
+  function updateThisSessionSortFieldLabel() {
+    if (!thisSessionSortField) return;
+    const labelByValue = {
+      'browser-order': 'Tabs order',
+      az: 'A-Z',
+      za: 'Z-A'
+    };
+    updateSelectionFieldLabel(thisSessionSortField, `Sort tabs: ${labelByValue[thisSessionSort] || 'Tabs order'}`);
+    updateSelectionFieldSelectionState(thisSessionSortField, thisSessionSort !== 'browser-order');
+    applySelectionFieldState(thisSessionSortField, thisSessionSort === 'browser-order' ? 'idle' : 'selection');
+  }
+
+  async function renderThisSessionPage(forceRefresh = false) {
+    if (!thisSessionRoot || !thisSessionActionsInitialized) return;
+    if (activePageIndex !== 3 && !forceRefresh) return;
+
+    let snapshot;
+    try {
+      snapshot = await getSessionWindowsSnapshot();
+    } catch (error) {
+      console.error('Failed to fetch session windows', error);
+      return;
+    }
+
+    thisSessionLastSnapshot = snapshot;
+    thisSessionCurrentWindowId = snapshot.currentWindowId;
+    thisSessionRoot.innerHTML = '';
+    thisSessionWindowCounter = 0;
+
+    const query = String(thisSessionSearchQuery || '').trim().toLowerCase();
+
+    const currentWindow = snapshot.windows.find((win) => win.id === snapshot.currentWindowId)
+      || snapshot.windows.find((win) => win.focused)
+      || snapshot.windows[0]
+      || null;
+
+    const otherWindows = snapshot.windows.filter((win) => !currentWindow || win.id !== currentWindow.id);
+    const orderedWindows = [];
+    if (currentWindow) orderedWindows.push(currentWindow);
+    orderedWindows.push(...otherWindows);
+
+    const createWindowSection = async (windowData, isCurrentWindow) => {
+      const tabs = [...windowData.tabs].sort(compareTabsBySort);
+      const filteredTabs = query
+        ? tabs.filter((tab) => {
+          const title = String(tab.title || '').toLowerCase();
+          const url = String(tab.url || '').toLowerCase();
+          return title.includes(query) || url.includes(query);
+        })
+        : tabs;
+
+      if (!filteredTabs.length && query) {
+        return;
+      }
+
+      if (!isCurrentWindow && !thisSessionCollapsedWindowIds.has(windowData.id)) {
+        thisSessionCollapsedWindowIds.add(windowData.id);
+      }
+
+      thisSessionWindowCounter += 1;
+      const title = isCurrentWindow
+        ? `Current window (${filteredTabs.length} tabs)`
+        : `Window ${thisSessionWindowCounter - 1} (${filteredTabs.length} tabs)`;
+
+      const closeDuplicatesAction = createCubeActionButton({
+        icon: 'content_copy',
+        label: 'Close duplicates',
+        onClick: async (event) => {
+          event.stopPropagation();
+          await closeDuplicateTabsInWindow(windowData.tabs);
+          await renderThisSessionPage(true);
+        }
+      });
+
+      const closeStaleAction = createCubeActionButton({
+        icon: 'history',
+        label: 'Close stale tabs',
+        onClick: async (event) => {
+          event.stopPropagation();
+          await closeStaleTabsInWindow(windowData.tabs);
+          await renderThisSessionPage(true);
+        }
+      });
+
+      const section = createFolderSection({
+        state: 'idle',
+        breadcrumbItems: [{ label: title, type: 'current' }],
+        items: filteredTabs.map((tab) => createThisSessionTabTile(tab)),
+        actions: [closeDuplicatesAction, closeStaleAction],
+        collapsed: !isCurrentWindow && thisSessionCollapsedWindowIds.has(windowData.id),
+        onToggleCollapse: (isCollapsed) => {
+          if (isCurrentWindow) return;
+          if (isCollapsed) {
+            thisSessionCollapsedWindowIds.add(windowData.id);
+          } else {
+            thisSessionCollapsedWindowIds.delete(windowData.id);
+          }
+        }
+      });
+
+      section.dataset.windowId = String(windowData.id);
+      section.classList.add('this-session-section');
+      thisSessionRoot.appendChild(section);
+    };
+
+    for (const windowData of orderedWindows) {
+      await createWindowSection(windowData, Boolean(currentWindow && windowData.id === currentWindow.id));
+    }
+  }
+
+  function queueThisSessionRender() {
+    if (thisSessionRefreshTimer) {
+      clearTimeout(thisSessionRefreshTimer);
+    }
+    thisSessionRefreshTimer = setTimeout(() => {
+      thisSessionRefreshTimer = null;
+      if (activePageIndex === 3) {
+        renderThisSessionPage(true);
+      }
+    }, 120);
+  }
+
+  async function initThisSessionActions() {
+    if (thisSessionActionsInitialized) return;
+    if (!thisSessionActionsLeft || !thisSessionActionsSettings || !thisSessionActionsRight) return;
+
+    const searchComp = createSearchComp({
+      placeholder: 'Search tabs...',
+      contrast: 'low',
+      shortcutKeys: ['T'],
+      onInput: () => {
+        thisSessionSearchQuery = thisSessionSearchInput ? thisSessionSearchInput.value : '';
+        renderThisSessionPage(true);
+      }
+    });
+    searchComp.style.width = '220px';
+    thisSessionSearchInput = searchComp.querySelector('.search-comp__input');
+    thisSessionActionsLeft.appendChild(searchComp);
+
+    try {
+      thisSessionSort = normalizeThisSessionSortChoice(await Storage.get(THIS_SESSION_SORT_STORAGE_KEY));
+    } catch (error) {
+      thisSessionSort = 'browser-order';
+    }
+
+    thisSessionSortField = createSelectionField({
+      label: 'Sort tabs: Tabs order',
+      contrast: 'low',
+      state: 'idle',
+      onClear: async () => {
+        thisSessionSort = 'browser-order';
+        await Storage.set({ [THIS_SESSION_SORT_STORAGE_KEY]: thisSessionSort });
+        updateThisSessionSortFieldLabel();
+        await renderThisSessionPage(true);
+      }
+    });
+    updateThisSessionSortFieldLabel();
+
+    setupSelectionFieldMenu(thisSessionSortField, () => {
+      const options = [
+        { label: 'Tabs order', value: 'browser-order' },
+        { label: 'A-Z', value: 'az' },
+        { label: 'Z-A', value: 'za' }
+      ];
+      const selectedIndex = Math.max(0, options.findIndex((option) => option.value === thisSessionSort));
+
+      return createSelectionMenu({
+        type: 'sort',
+        contrast: 'low',
+        title: 'Sort tabs',
+        items: options.map((option) => option.label),
+        selectedIndex,
+        onSelect: async (index) => {
+          const selected = options[index] || options[0];
+          thisSessionSort = selected.value;
+          await Storage.set({ [THIS_SESSION_SORT_STORAGE_KEY]: thisSessionSort });
+          updateThisSessionSortFieldLabel();
+          await renderThisSessionPage(true);
+        }
+      });
+    });
+
+    thisSessionActionsSettings.appendChild(thisSessionSortField);
+
+    const openJourneyButton = createCommonButton({
+      label: 'Open Session Journey',
+      icon: createMaterialIcon('conversion_path'),
+      contrast: 'low',
+      onClick: async () => {
+        await setActivePage(2);
+      }
+    });
+
+    const saveSessionButton = createPrimaryButton({
+      label: 'Save this session',
+      icon: createMaterialIcon('save'),
+      contrast: 'low',
+      onClick: async () => {
+        await saveCurrentWindowSession();
+      }
+    });
+
+    thisSessionActionsRight.appendChild(openJourneyButton);
+    thisSessionActionsRight.appendChild(saveSessionButton);
+    thisSessionActionsInitialized = true;
+
+    if (chrome?.tabs?.onActivated) {
+      chrome.tabs.onActivated.addListener((info) => {
+        if (info && info.tabId) {
+          thisSessionVisitedTabIds.add(info.tabId);
+        }
+        queueThisSessionRender();
+      });
+    }
+    if (chrome?.tabs?.onCreated) {
+      chrome.tabs.onCreated.addListener(queueThisSessionRender);
+    }
+    if (chrome?.tabs?.onRemoved) {
+      chrome.tabs.onRemoved.addListener((tabId) => {
+        thisSessionVisitedTabIds.delete(tabId);
+        queueThisSessionRender();
+      });
+    }
+    if (chrome?.tabs?.onUpdated) {
+      chrome.tabs.onUpdated.addListener(queueThisSessionRender);
+    }
+    if (chrome?.windows?.onFocusChanged) {
+      chrome.windows.onFocusChanged.addListener(queueThisSessionRender);
+    }
+  }
+
   // Page navigation setup
   const pageContainer = document.getElementById('page-container');
   const pages = Array.from(document.querySelectorAll('.page'));
@@ -978,6 +1561,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.warn('Journey page activate failed', e);
       }
     }
+    if (activePageIndex === 3) {
+      try {
+        await renderThisSessionPage(true);
+      } catch (e) {
+        console.warn('This Session page render failed', e);
+      }
+    }
     if (pageContainer && direction) {
       pageContainer.classList.remove('slide-left', 'slide-right');
       void pageContainer.offsetWidth; // reflow to restart animation
@@ -1005,9 +1595,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   await initBookmarksActions();
+  await initThisSessionActions();
 
   // Add keyboard shortcut tooltips to navigation buttons
-  const shortcuts = ['H', 'B', 'J'];
+  const shortcuts = ['H', 'B', 'J', 'T'];
   if (typeof createTooltip === 'function') {
     navButtons.forEach((btn, index) => {
       if (index < shortcuts.length) {
@@ -1105,6 +1696,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (e.key === 'h' || e.key === 'H') setActivePage(0);
     if (e.key === 'b' || e.key === 'B') setActivePage(1);
     if (e.key === 'j' || e.key === 'J') setActivePage(2);
+    if (e.key === 't' || e.key === 'T') setActivePage(3);
   });
 
   // Magic mouse horizontal swipe navigation (fast, single-step lock)
