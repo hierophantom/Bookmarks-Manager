@@ -500,11 +500,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         const hideNestedFolders = await Storage.get('hideNestedFolders') || false;
         
         const menu = createSelectionMenu({
-          type: 'simple',
+          type: 'sort',
           contrast: 'low',
           title: 'View Settings',
           items: ['Hide nested folders', 'Collapse all folders', 'Expand all folders'],
-          selectedIndices: hideNestedFolders ? [0] : [],
+          selectedIndex: -1,
+          showSelectionIndicator: false,
           showClear: false,
           showSelectAll: false,
           onSelect: async (index) => {
@@ -520,14 +521,22 @@ document.addEventListener('DOMContentLoaded', async () => {
               idToNode.forEach((node) => {
                 if (!node.url) collapsedFolders.add(node.id);
               });
-              await Storage.set({ [COLLAPSED_FOLDERS_KEY]: [...collapsedFolders] });
+              try {
+                await Storage.set({ [COLLAPSED_FOLDERS_KEY]: [...collapsedFolders] });
+              } catch (e) {
+                console.warn('Failed to persist collapsed folder sections', e);
+              }
               menu.remove();
               document.removeEventListener('click', closeMenu);
               await render(true);
             } else if (index === 2) {
               // Expand all folders
               collapsedFolders.clear();
-              await Storage.set({ [COLLAPSED_FOLDERS_KEY]: [] });
+              try {
+                await Storage.set({ [COLLAPSED_FOLDERS_KEY]: [] });
+              } catch (e) {
+                console.warn('Failed to persist collapsed folder sections', e);
+              }
               menu.remove();
               document.removeEventListener('click', closeMenu);
               await render(true);
