@@ -413,8 +413,14 @@ const FaviconService = (() => {
     const fallbackIcon = getFallbackIcon(url);
 
     if (candidates.length === 0) {
-      img.src = fallbackIcon;
-      return img;
+      const icon = document.createElement('span');
+      icon.className = `material-symbols-outlined ${className}`.trim();
+      icon.setAttribute('aria-hidden', 'true');
+      icon.style.fontSize = `${size}px`;
+      icon.style.width = `${size}px`;
+      icon.style.height = `${size}px`;
+      icon.textContent = 'book';
+      return icon;
     }
 
     img.dataset.faviconCandidateIndex = '0';
