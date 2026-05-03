@@ -67,6 +67,11 @@ function createActiveSessionsPanel(options = {}) {
   zeroState.innerHTML = '<p>No active tabs</p>';
   panel.content.appendChild(zeroState);
 
+  const incognitoHint = document.createElement('div');
+  incognitoHint.className = 'active-sessions-panel__incognito-hint';
+  incognitoHint.hidden = true;
+  panel.content.insertBefore(incognitoHint, zeroState);
+
   function hasContent() {
     return sessions.size > 0 || windowGroups.size > 0;
   }
@@ -126,14 +131,6 @@ function createActiveSessionsPanel(options = {}) {
 
     tabItem.appendChild(textWrap);
 
-    if (tab.incognito) {
-      const incognitoIcon = document.createElement('span');
-      incognitoIcon.className = 'active-sessions-panel__tab-incognito material-symbols-outlined';
-      incognitoIcon.setAttribute('aria-label', 'Incognito tab');
-      incognitoIcon.textContent = 'domino_mask';
-      tabItem.appendChild(incognitoIcon);
-    }
-
     const actions = document.createElement('div');
     actions.className = 'active-sessions-panel__tab-actions';
     tabItem.appendChild(actions);
@@ -184,7 +181,8 @@ function createActiveSessionsPanel(options = {}) {
       if (incognito) {
         const maskIcon = document.createElement('span');
         maskIcon.className = 'active-sessions-panel__group-incognito material-symbols-outlined';
-        maskIcon.setAttribute('aria-hidden', 'true');
+        maskIcon.setAttribute('aria-label', 'Incognito');
+        maskIcon.title = 'Incognito';
         maskIcon.textContent = 'domino_mask';
         titleEl.appendChild(maskIcon);
       }
@@ -336,6 +334,18 @@ function createActiveSessionsPanel(options = {}) {
         ...options,
         tabs: Array.isArray(options.tabs) ? options.tabs.slice() : []
       }));
+    },
+
+    setIncognitoAccessHint(message = '') {
+      const text = String(message || '').trim();
+      if (!text) {
+        incognitoHint.hidden = true;
+        incognitoHint.textContent = '';
+        return;
+      }
+
+      incognitoHint.textContent = text;
+      incognitoHint.hidden = false;
     },
 
     /**

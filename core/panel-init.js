@@ -251,11 +251,38 @@ function areAncestorsExpanded(panel, node) {
   return true;
 }
 
+async function isIncognitoAccessAllowed() {
+  return new Promise((resolve) => {
+    if (!chrome.extension || typeof chrome.extension.isAllowedIncognitoAccess !== 'function') {
+      resolve(null);
+      return;
+    }
+
+    chrome.extension.isAllowedIncognitoAccess((isAllowed) => {
+      if (chrome.runtime.lastError) {
+        console.warn('Unable to determine incognito access:', chrome.runtime.lastError.message);
+        resolve(null);
+        return;
+      }
+
+      resolve(Boolean(isAllowed));
+    });
+  });
+}
+
 // Load tabs/sessions data
 async function loadRightPanelData(panel) {
   if (!panel) return;
   
   try {
+    const incognitoAccessAllowed = await isIncognitoAccessAllowed();
+
+    panel.setIncognitoAccessHint?.(
+      incognitoAccessAllowed === false
+        ? 'Incognito windows are hidden until Allow in Incognito is enabled for this extension in chrome://extensions.'
+        : ''
+    );
+
     const windows = await new Promise((resolve) => {
       chrome.windows.getAll({ populate: true }, (allWindows) => {
         resolve(allWindows || []);
