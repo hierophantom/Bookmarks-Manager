@@ -155,13 +155,24 @@ const Modal = (() => {
       });
 
       showModal(modal);
-      if (showTabsSuggestions && typeof chrome !== 'undefined' && chrome.tabs && typeof chrome.tabs.query === 'function') {
-        chrome.tabs.query({ currentWindow: true }, (tabs) => {
-          if (chrome.runtime && chrome.runtime.lastError) {
-            return;
-          }
-          cleanupTabsSuggestions = setupTabsSuggestions(Array.isArray(tabs) ? tabs : []);
-        });
+      if (showTabsSuggestions && typeof chrome !== 'undefined') {
+        const suggestionSources = {
+          tabs: [],
+          historyEnabled: Boolean(chrome.history && typeof chrome.history.search === 'function')
+        };
+
+        if (chrome.tabs && typeof chrome.tabs.query === 'function') {
+          chrome.tabs.query({ currentWindow: true }, (tabs) => {
+            if (chrome.runtime && chrome.runtime.lastError) {
+              return;
+            }
+
+            suggestionSources.tabs = Array.isArray(tabs) ? tabs : [];
+            cleanupTabsSuggestions = setupTabsSuggestions(suggestionSources);
+          });
+        } else {
+          cleanupTabsSuggestions = setupTabsSuggestions(suggestionSources);
+        }
       }
     });
   }
@@ -212,11 +223,13 @@ const Modal = (() => {
     highlighted.forEach((el) => el.classList.remove('modal__text-field-input--error'));
   }
 
-  // Setup tabs suggestions dropdown
-  function setupTabsSuggestions(tabs) {
+  // Setup URL suggestions dropdown using open tabs and browsing history
+  function setupTabsSuggestions(sources = {}) {
     const urlInput = document.getElementById('bm_url');
     const titleInput = document.getElementById('bm_title');
-    if (!urlInput || !titleInput || !Array.isArray(tabs) || tabs.length === 0) return null;
+    const tabs = Array.isArray(sources.tabs) ? sources.tabs : [];
+    const historyEnabled = Boolean(sources.historyEnabled);
+    if (!urlInput || !titleInput || (!tabs.length && !historyEnabled)) return null;
 
     const userEdited = {
       url: false,
@@ -286,21 +299,80 @@ const Modal = (() => {
       }
     }
 
-    // Populate dropdown with tabs
-    function updateSuggestions(filter = '') {
+    function normalizeSourceUrl(value) {
+      return String(value || '').trim().toLowerCase();
+    }
+
+    function createSuggestionItem(data) {
+      return {
+        title: data.title || data.url || 'Untitled',
+        url: data.url || '',
+        source: data.source || 'tab',
+        lastVisitTime: Number(data.lastVisitTime || 0)
+      };
+    }
+
+    async function getHistorySuggestions(filter) {
+      if (!historyEnabled || !chrome.history || typeof chrome.history.search !== 'function') {
+        return [];
+      }
+
+      try {
+        const historyItems = await chrome.history.search({
+          text: filter,
+          startTime: 0,
+          maxResults: 25
+        });
+
+        return (Array.isArray(historyItems) ? historyItems : [])
+          .filter((item) => item && item.url)
+          .map((item) => createSuggestionItem({
+            title: item.title || item.url,
+            url: item.url,
+            source: 'history',
+            lastVisitTime: item.lastVisitTime || 0
+          }));
+      } catch (error) {
+        console.warn('Bookmark history suggestions failed:', error);
+        return [];
+      }
+    }
+
+    async function updateSuggestions(filter = '') {
       dropdown.innerHTML = '';
       const filterLower = filter.toLowerCase();
-      const filteredTabs = tabs.filter(tab => 
-        (tab.title && tab.title.toLowerCase().includes(filterLower)) ||
-        (tab.url && tab.url.toLowerCase().includes(filterLower))
-      ).slice(0, 10); // Limit to 10 suggestions
+      const filteredTabs = tabs
+        .filter((tab) =>
+          (tab.title && tab.title.toLowerCase().includes(filterLower)) ||
+          (tab.url && tab.url.toLowerCase().includes(filterLower))
+        )
+        .map((tab) => createSuggestionItem({
+          title: tab.title || tab.url,
+          url: tab.url,
+          source: 'tab'
+        }));
 
-      if (filteredTabs.length === 0) {
+      const historySuggestions = await getHistorySuggestions(filter);
+      const mergedSuggestions = [];
+      const seenUrls = new Set();
+
+      [...filteredTabs, ...historySuggestions].forEach((item) => {
+        const normalizedUrl = normalizeSourceUrl(item.url);
+        if (!normalizedUrl || seenUrls.has(normalizedUrl)) {
+          return;
+        }
+        seenUrls.add(normalizedUrl);
+        mergedSuggestions.push(item);
+      });
+
+      const visibleSuggestions = mergedSuggestions.slice(0, 10);
+
+      if (visibleSuggestions.length === 0) {
         dropdown.style.display = 'none';
         return;
       }
 
-      filteredTabs.forEach(tab => {
+      visibleSuggestions.forEach((suggestion) => {
         const item = document.createElement('div');
         item.style.cssText = `
           padding: 8px 12px;
@@ -313,8 +385,8 @@ const Modal = (() => {
         
         // Create favicon element - use FaviconService for proper handling
         let faviconElement;
-        if (typeof FaviconService !== 'undefined' && tab.url) {
-          faviconElement = FaviconService.createFaviconElement(tab.url, { size: 16 });
+        if (typeof FaviconService !== 'undefined' && suggestion.url) {
+          faviconElement = FaviconService.createFaviconElement(suggestion.url, { size: 16 });
         } else {
           // Fallback if FaviconService not available
           faviconElement = document.createElement('span');
@@ -328,14 +400,19 @@ const Modal = (() => {
         
         const titleDiv = document.createElement('div');
         titleDiv.style.cssText = 'font-size: 13px; font-weight: 500; color: #111827; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;';
-        titleDiv.textContent = tab.title || tab.url;
+        titleDiv.textContent = suggestion.title || suggestion.url;
         
         const urlDiv = document.createElement('div');
         urlDiv.style.cssText = 'font-size: 11px; color: #6b7280; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;';
-        urlDiv.textContent = tab.url;
+        urlDiv.textContent = suggestion.url;
+
+        const metaDiv = document.createElement('div');
+        metaDiv.style.cssText = 'font-size: 10px; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.04em; margin-top: 2px;';
+        metaDiv.textContent = suggestion.source === 'history' ? 'History' : 'Open tab';
         
         textContainer.appendChild(titleDiv);
         textContainer.appendChild(urlDiv);
+        textContainer.appendChild(metaDiv);
         
         item.appendChild(faviconElement);
         item.appendChild(textContainer);
@@ -347,9 +424,9 @@ const Modal = (() => {
           item.style.background = 'white';
         });
         item.addEventListener('click', () => {
-          urlInput.value = tab.url;
+          urlInput.value = suggestion.url;
           if (!titleInput.value || !userEdited.title) {
-            titleInput.value = tab.title || tab.url;
+            titleInput.value = suggestion.title || suggestion.url;
           }
           dropdown.style.display = 'none';
           urlInput.focus();

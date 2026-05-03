@@ -213,6 +213,25 @@ const ThemeSettingsModal = (() => {
     pane.appendChild(buildThemesSection(state, rerender));
     pane.appendChild(buildBackgroundSection(state, rerender));
     pane.appendChild(buildDimmerSection(state));
+    pane.appendChild(createSettingSection({
+      title: 'Header backdrop',
+      description: 'Show or hide the blurred background behind the top bar.',
+      content: createChoiceGroup({
+        type: 'radio',
+        items: [
+          { label: 'Show', value: 'show', checked: state.showTopbarBackdrop },
+          { label: 'Hide', value: 'hide', checked: !state.showTopbarBackdrop }
+        ],
+        onChange: async ({ changedValue }) => {
+          state.showTopbarBackdrop = changedValue === 'show';
+          await Storage.set({ topbarBackdropEnabled: state.showTopbarBackdrop });
+          const topbar = document.querySelector('.topbar');
+          if (topbar) {
+            topbar.classList.toggle('topbar--no-backdrop', !state.showTopbarBackdrop);
+          }
+        }
+      })
+    }));
 
     return pane;
   }
@@ -259,26 +278,6 @@ const ThemeSettingsModal = (() => {
 
     pane.appendChild(buildSearchEngineSection(state, rerender));
     pane.appendChild(buildHomePageSectionsSection(state, rerender));
-
-    pane.appendChild(createSettingSection({
-      title: 'Header backdrop',
-      description: 'Show or hide the blurred background behind the top bar.',
-      content: createChoiceGroup({
-        type: 'radio',
-        items: [
-          { label: 'Show', value: 'show', checked: state.showTopbarBackdrop },
-          { label: 'Hide', value: 'hide', checked: !state.showTopbarBackdrop }
-        ],
-        onChange: async ({ changedValue }) => {
-          state.showTopbarBackdrop = changedValue === 'show';
-          await Storage.set({ topbarBackdropEnabled: state.showTopbarBackdrop });
-          const topbar = document.querySelector('.topbar');
-          if (topbar) {
-            topbar.classList.toggle('topbar--no-backdrop', !state.showTopbarBackdrop);
-          }
-        }
-      })
-    }));
 
     pane.appendChild(createSettingSection({
       title: 'Daily inspiration',
