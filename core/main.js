@@ -155,6 +155,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   let availableTags = [];
   let currentFolderFilter = null; // Track which folder is being viewed
   const BOOKMARKS_SORT_STORAGE_KEY = 'bookmarksSortChoice';
+  const COLLAPSED_FOLDERS_KEY = 'collapsedFolderSections';
+  let collapsedFolders = new Set();
   const BOOKMARK_LINK_TRIGGER_STORAGE_KEY = 'bookmarkLinkTriggerMode';
   let bookmarkLinkTriggerMode = 'new-tab';
   let linkOpenModifierPressed = false;
@@ -372,6 +374,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     } catch (e) {
       console.warn('Failed to restore bookmarks sort choice, defaulting to none', e);
       currentSort = 'none';
+    }
+
+    try {
+      const storedCollapsed = await Storage.get(COLLAPSED_FOLDERS_KEY);
+      if (Array.isArray(storedCollapsed)) {
+        collapsedFolders = new Set(storedCollapsed);
+      }
+    } catch (e) {
+      console.warn('Failed to restore collapsed folder sections', e);
     }
 
     function getSortIndex() {
@@ -1479,6 +1490,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (!folderId) return;
       const targetEl = document.getElementById(`folder-${folderId}`);
       if (!targetEl) return;
+
+      // Auto-expand if collapsed so the user can see the destination
+      if (targetEl.classList.contains('folder-section--collapsed')) {
+        const toggleBtn = targetEl.querySelector('.folder-section__collapse-toggle');
+        if (toggleBtn) toggleBtn.click();
+      }
+
       const scrollContainer = document.querySelector('.bookmarks-sections')
         || targetEl.closest('.bookmarks-sections');
       if (scrollContainer) {
@@ -2179,7 +2197,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         state: 'idle',
         items,
         breadcrumbItems,
-        actions: folderActions.filter(Boolean)
+        actions: folderActions.filter(Boolean),
+        collapsed: collapsedFolders.has(folder.id),
+        onToggleCollapse: async (isCollapsed) => {
+          if (isCollapsed) {
+            collapsedFolders.add(folder.id);
+          } else {
+            collapsedFolders.delete(folder.id);
+          }
+          try {
+            await Storage.set({ [COLLAPSED_FOLDERS_KEY]: [...collapsedFolders] });
+          } catch (e) {
+            console.warn('Failed to persist collapsed folder sections', e);
+          }
+        }
       });
 
       if (isBookmarksBarTopLevelSection) {

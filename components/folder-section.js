@@ -12,6 +12,8 @@
  * @param {string} [options.state='idle'] - 'idle' or 'hover'
  * @param {Array<Object>} [options.breadcrumbItems] - Breadcrumb items
  * @param {Array<HTMLElement>|null} [options.actions] - Action bar items
+ * @param {boolean} [options.collapsed=false] - Whether the section starts collapsed
+ * @param {Function} [options.onToggleCollapse] - Called with (isCollapsed) on toggle
  * @returns {HTMLDivElement} The folder section element
  */
 function createFolderSection(options = {}) {
@@ -19,13 +21,19 @@ function createFolderSection(options = {}) {
     items = [],
     state = 'idle',
     breadcrumbItems = null,
-    actions = null
+    actions = null,
+    collapsed = false,
+    onToggleCollapse = null
   } = options;
 
   const section = document.createElement('div');
   section.className = 'folder-section';
 
   applyFolderSectionState(section, state);
+
+  if (collapsed) {
+    section.classList.add('folder-section--collapsed');
+  }
 
   const header = document.createElement('div');
   header.className = 'folder-section__header';
@@ -34,6 +42,27 @@ function createFolderSection(options = {}) {
   if (breadcrumbsEl) {
     header.appendChild(breadcrumbsEl);
   }
+
+  const toggleBtn = document.createElement('button');
+  toggleBtn.type = 'button';
+  toggleBtn.className = 'folder-section__collapse-toggle';
+  toggleBtn.setAttribute('aria-label', collapsed ? 'Expand section' : 'Collapse section');
+  const toggleIcon = document.createElement('span');
+  toggleIcon.className = 'material-symbols-outlined';
+  toggleIcon.setAttribute('aria-hidden', 'true');
+  toggleIcon.textContent = 'keyboard_arrow_down';
+  toggleBtn.appendChild(toggleIcon);
+  header.appendChild(toggleBtn);
+
+  toggleBtn.addEventListener('click', (event) => {
+    event.stopPropagation();
+    const isNowCollapsed = !section.classList.contains('folder-section--collapsed');
+    section.classList.toggle('folder-section--collapsed', isNowCollapsed);
+    toggleBtn.setAttribute('aria-label', isNowCollapsed ? 'Expand section' : 'Collapse section');
+    if (typeof onToggleCollapse === 'function') {
+      onToggleCollapse(isNowCollapsed);
+    }
+  });
 
   section.appendChild(header);
 

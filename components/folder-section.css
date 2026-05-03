@@ -119,3 +119,53 @@
   font-size: 20px;
   color: var(--common-common-bright-15, rgba(255, 255, 255, 0.6));
 }
+
+/* Collapse / expand toggle */
+.folder-section__collapse-toggle {
+  flex-shrink: 0;
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--common-common-bright-15, rgba(255, 255, 255, 0.6));
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s ease, background 0.15s ease;
+}
+
+.folder-section:hover .folder-section__collapse-toggle {
+  opacity: 1;
+}
+
+.folder-section__collapse-toggle:hover,
+.folder-section__collapse-toggle:focus-visible {
+  opacity: 1;
+  background: var(--common-common-bright-05, rgba(255, 255, 255, 0.06));
+  outline: none;
+}
+
+.folder-section__collapse-toggle .material-symbols-outlined {
+  font-size: 20px;
+  line-height: 1;
+  transition: transform 0.2s ease;
+}
+
+/* When collapsed: always show toggle so user can expand, and rotate chevron */
+.folder-section--collapsed .folder-section__collapse-toggle {
+  opacity: 1;
+}
+
+.folder-section--collapsed .folder-section__collapse-toggle .material-symbols-outlined {
+  transform: rotate(-90deg);
+}
+
+/* Hide content when collapsed */
+.folder-section--collapsed .folder-section__content {
+  display: none;
+}
