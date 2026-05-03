@@ -187,7 +187,7 @@ const SaveTabsModal = (() => {
 
         const modal = createModal({
           type: 'form',
-          title: 'Save session',
+          title: 'Save journey',
           content,
           buttons: [
             { label: 'Cancel', type: 'common', role: 'cancel', shortcut: 'ESC' },

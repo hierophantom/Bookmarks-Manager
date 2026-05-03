@@ -291,7 +291,8 @@ async function loadRightPanelData(panel) {
         id: tab.id,
         title: tab.title || tab.url || 'Untitled',
         url: tab.url,
-        windowId: tab.windowId
+        windowId: tab.windowId,
+        incognito: tab.incognito || false
       }));
 
       panel.addWindowGroup?.({

@@ -126,6 +126,14 @@ function createActiveSessionsPanel(options = {}) {
 
     tabItem.appendChild(textWrap);
 
+    if (tab.incognito) {
+      const incognitoIcon = document.createElement('span');
+      incognitoIcon.className = 'active-sessions-panel__tab-incognito material-symbols-outlined';
+      incognitoIcon.setAttribute('aria-label', 'Incognito tab');
+      incognitoIcon.textContent = 'domino_mask';
+      tabItem.appendChild(incognitoIcon);
+    }
+
     const actions = document.createElement('div');
     actions.className = 'active-sessions-panel__tab-actions';
     tabItem.appendChild(actions);
@@ -193,7 +201,7 @@ function createActiveSessionsPanel(options = {}) {
         icon.textContent = 'arrow_insert';
 
         saveButton = createPrimaryButton({
-          label: 'Save session',
+          label: 'Save journey',
           icon,
           contrast: 'high',
           onClick: async (event) => {
@@ -206,7 +214,7 @@ function createActiveSessionsPanel(options = {}) {
       } else {
         saveButton = document.createElement('button');
         saveButton.type = 'button';
-        saveButton.textContent = 'Save session';
+        saveButton.textContent = 'Save journey';
         saveButton.addEventListener('click', async (event) => {
           event?.preventDefault?.();
           if (typeof onSaveSession === 'function') {
@@ -225,7 +233,7 @@ function createActiveSessionsPanel(options = {}) {
         icon.textContent = 'ios_share';
 
         exportButton = createCommonButton({
-          label: 'Export session',
+          label: 'Export journey',
           icon,
           contrast: 'low',
           onClick: async (event) => {
@@ -244,9 +252,9 @@ function createActiveSessionsPanel(options = {}) {
 
               setTimeout(() => {
                 if (typeof updateCommonButtonLabel === 'function') {
-                  updateCommonButtonLabel(exportButton, 'Export session');
+                  updateCommonButtonLabel(exportButton, 'Export journey');
                 } else {
-                  exportButton.textContent = 'Export session';
+                  exportButton.textContent = 'Export journey';
                 }
               }, 1400);
             }
@@ -255,7 +263,7 @@ function createActiveSessionsPanel(options = {}) {
       } else {
         exportButton = document.createElement('button');
         exportButton.type = 'button';
-        exportButton.textContent = 'Export session';
+        exportButton.textContent = 'Export journey';
         exportButton.addEventListener('click', async (event) => {
           event?.preventDefault?.();
           let exported = false;
@@ -266,7 +274,7 @@ function createActiveSessionsPanel(options = {}) {
           if (exported) {
             exportButton.textContent = 'Copied to clipboard';
             setTimeout(() => {
-              exportButton.textContent = 'Export session';
+              exportButton.textContent = 'Export journey';
             }, 1400);
           }
         });

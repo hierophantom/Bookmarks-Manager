@@ -963,7 +963,7 @@ const WidgetsService = (()=>{
     return [
       {
         id: 'save-session',
-        title: 'Save session',
+        title: 'Save journey',
         details: 'Save all tabs in this window as bookmarks',
         meta: 'Action',
         leading: 'save',
@@ -1092,7 +1092,7 @@ const WidgetsService = (()=>{
       if (typeof SaveTabsModal === 'undefined') {
         await Modal.openError({
           title: 'Modal unavailable',
-          message: 'Save session modal is unavailable.'
+          message: 'Save journey modal is unavailable.'
         });
         return;
       }
@@ -1102,7 +1102,7 @@ const WidgetsService = (()=>{
       console.error('Search widget save session failed:', error);
       await Modal.openError({
         title: 'Save Failed',
-        message: 'Failed to save this session.'
+        message: 'Failed to save this journey.'
       });
     }
   }

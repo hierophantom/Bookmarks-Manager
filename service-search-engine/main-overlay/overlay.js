@@ -265,7 +265,7 @@ class MainOverlay {
       console.error('[MainOverlay] handleSaveSession failed:', error);
       await Modal.openError({
         title: 'Save Failed',
-        message: 'Failed to save session.'
+        message: 'Failed to save journey.'
       });
     }
   }
@@ -300,7 +300,7 @@ class MainOverlay {
         id: 'save-session',
         type: 'action',
         icon: '💾',
-        title: 'Save session',
+        title: 'Save journey',
         description: 'Save all tabs in this window as bookmarks'
       }
     };

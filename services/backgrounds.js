@@ -229,6 +229,7 @@ const BackgroundsService = (() => {
         photographer: data.user.name,
         photographerUrl: data.user.links.html,
         unsplashUrl: data.links.html,
+        description: data.alt_description || '',
       };
     } catch (e) {
       console.error('Failed to fetch Unsplash image', e);
@@ -252,6 +253,7 @@ const BackgroundsService = (() => {
       settings.photographer = image.photographer;
       settings.photographerUrl = image.photographerUrl;
       settings.unsplashUrl = image.unsplashUrl;
+      settings.imageDescription = image.description || '';
       await saveBackgroundSettings(settings);
       scheduleUnsplashRotation(frequency, normalizedCategories);
       return true;

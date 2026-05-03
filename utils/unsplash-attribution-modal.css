@@ -6,6 +6,17 @@
   min-width: 0;
 }
 
+.unsplash-attribution-modal__description {
+  margin: 0;
+  min-width: 0;
+  color: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
+  font-family: var(--font-family-sans-serif, 'Lato', sans-serif);
+  font-size: var(--body--reg, 16px);
+  font-weight: var(--weight-semibold, 600);
+  line-height: 1.4;
+  text-transform: capitalize;
+}
+
 .unsplash-attribution-modal__copy {
   margin: 0;
   min-width: 0;

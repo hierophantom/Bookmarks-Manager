@@ -46,6 +46,13 @@ const UnsplashAttributionModal = (() => {
 
           courtesyCopy.appendChild(unsplashLink);
 
+          if (settings.imageDescription) {
+            const descEl = document.createElement('p');
+            descEl.className = 'unsplash-attribution-modal__description';
+            descEl.textContent = settings.imageDescription;
+            content.appendChild(descEl);
+          }
+
           content.appendChild(photographerLink);
           content.appendChild(courtesyCopy);
 
