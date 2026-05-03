@@ -115,8 +115,22 @@
         </div>
       </section>
 
-      <!-- Page 2: Bookmarks -->
-      <section class="page bookmarks-page" data-page="1">
+      <!-- Page 2: This Session -->
+      <section class="page this-session-page" data-page="1">
+        <div class="this-session-page__content">
+          <div class="bookmarks-actions" id="this-session-actions">
+            <div class="bookmarks-actions__left" id="this-session-actions-left"></div>
+            <div class="bookmarks-actions__divider" aria-hidden="true"></div>
+            <div class="bookmarks-actions__settings" id="this-session-actions-settings"></div>
+            <div class="bookmarks-actions__spacer"></div>
+            <div class="bookmarks-actions__right" id="this-session-actions-right"></div>
+          </div>
+          <div class="bookmarks-sections this-session-sections" id="this-session-root"></div>
+        </div>
+      </section>
+
+      <!-- Page 3: Bookmarks -->
+      <section class="page bookmarks-page" data-page="2">
         <div class="bookmarks-page__content">
           <div class="bookmarks-actions" id="bookmarks-actions">
             <div class="bookmarks-actions__left" id="bookmarks-actions-left"></div>
@@ -137,8 +151,8 @@
         </div>
       </section>
 
-      <!-- Page 3: Journey -->
-      <section class="page journey-page" data-page="2">
+      <!-- Page 4: Journey -->
+      <section class="page journey-page" data-page="3">
         <div class="journey-page__content">
           <div class="journey-page__toolbar">
             <div id="journey-timeframes" class="journey-page__timeframes"></div>
@@ -191,19 +205,6 @@
         </div>
       </section>
 
-      <!-- Page 4: This Session -->
-      <section class="page this-session-page" data-page="3">
-        <div class="this-session-page__content">
-          <div class="bookmarks-actions" id="this-session-actions">
-            <div class="bookmarks-actions__left" id="this-session-actions-left"></div>
-            <div class="bookmarks-actions__divider" aria-hidden="true"></div>
-            <div class="bookmarks-actions__settings" id="this-session-actions-settings"></div>
-            <div class="bookmarks-actions__spacer"></div>
-            <div class="bookmarks-actions__right" id="this-session-actions-right"></div>
-          </div>
-          <div class="bookmarks-sections this-session-sections" id="this-session-root"></div>
-        </div>
-      </section>
     </div>
 
     <!-- Side Panels (mounted outside page content) -->
@@ -219,16 +220,16 @@
         <span class="c-nav__label">Home</span>
       </button>
       <button class="c-nav__btn" data-target="1">
+        <span class="c-nav__icon material-symbols-outlined" aria-hidden="true">ad</span>
+        <span class="c-nav__label">This Session</span>
+      </button>
+      <button class="c-nav__btn" data-target="2">
         <span class="c-nav__icon material-symbols-outlined" aria-hidden="true">bookmark</span>
         <span class="c-nav__label">Bookmarks</span>
       </button>
-      <button class="c-nav__btn" data-target="2">
+      <button class="c-nav__btn" data-target="3">
         <span class="c-nav__icon material-symbols-outlined" aria-hidden="true">conversion_path</span>
         <span class="c-nav__label">Journey</span>
-      </button>
-      <button class="c-nav__btn" data-target="3">
-        <span class="c-nav__icon material-symbols-outlined" aria-hidden="true">ad</span>
-        <span class="c-nav__label">This Session</span>
       </button>
     </nav>
   </div>

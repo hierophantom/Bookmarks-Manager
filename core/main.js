@@ -954,7 +954,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   async function getSessionWindowsSnapshot() {
-    const windows = await chrome.windows.getAll({ populate: true, windowTypes: ['normal'] });
+    const windows = await chrome.windows.getAll({ populate: true });
 
     let currentWindowId = null;
     try {
@@ -978,8 +978,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const mappedWindows = windows.map((win) => {
       const tabs = (win.tabs || [])
-        .filter((tab) => tab.url && !tab.url.includes(extensionUrl))
+        .filter((tab) => {
+          const effectiveUrl = tab.url || tab.pendingUrl || '';
+          return !effectiveUrl.includes(extensionUrl);
+        })
         .map((tab) => {
+          const effectiveUrl = tab.url || tab.pendingUrl || '';
           if (typeof tab.groupId === 'number' && tab.groupId >= 0) {
             groupIds.add(tab.groupId);
           }
@@ -987,8 +991,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             id: tab.id,
             windowId: tab.windowId,
             index: tab.index,
-            title: tab.title || tab.url,
-            url: tab.url,
+            title: tab.title || effectiveUrl || 'Untitled tab',
+            url: effectiveUrl,
             favIconUrl: tab.favIconUrl || '',
             active: Boolean(tab.active),
             groupId: typeof tab.groupId === 'number' ? tab.groupId : -1,
@@ -999,6 +1003,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       return {
         id: win.id,
         focused: Boolean(win.focused),
+        incognito: Boolean(win.incognito),
         tabs
       };
     }).filter((win) => win.tabs.length > 0);
@@ -1077,6 +1082,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const closeAction = createCubeActionButton({
       icon: 'close',
       label: 'Close tab',
+      tooltip: 'Close tab',
       colorScheme: 'destructive',
       onClick: async (event) => {
         event.stopPropagation();
@@ -1088,6 +1094,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const saveAction = createCubeActionButton({
       icon: 'bookmark_add',
       label: 'Save tab',
+      tooltip: 'Save as bookmark',
       onClick: async (event) => {
         event.stopPropagation();
         await saveSingleSessionTab(tab);
@@ -1156,6 +1163,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         {
           label: 'Open in new tab',
           icon: 'open_in_new',
+          disabled: !tab.url,
           onSelect: async () => {
             await chrome.tabs.create({ url: tab.url, active: true });
           }
@@ -1163,6 +1171,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         {
           label: 'Copy URL',
           icon: 'content_copy',
+          disabled: !tab.url,
           onSelect: async () => {
             await copyTextToClipboard(tab.url);
           }
@@ -1171,6 +1180,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         {
           label: 'Save tab',
           icon: 'bookmark_add',
+          disabled: !tab.url,
           onSelect: async () => {
             await saveSingleSessionTab(tab);
           }
@@ -1258,7 +1268,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   async function renderThisSessionPage(forceRefresh = false) {
     if (!thisSessionRoot || !thisSessionActionsInitialized) return;
-    if (activePageIndex !== 3 && !forceRefresh) return;
+    if (activePageIndex !== 1 && !forceRefresh) return;
 
     let snapshot;
     try {
@@ -1306,10 +1316,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       thisSessionWindowCounter += 1;
       const title = isCurrentWindow
         ? `Current window (${filteredTabs.length} tabs)`
-        : `Window ${thisSessionWindowCounter - 1} (${filteredTabs.length} tabs)`;
+        : `Window ${thisSessionWindowCounter - 1}${windowData.incognito ? ' (Incognito)' : ''} (${filteredTabs.length} tabs)`;
 
-      const closeDuplicatesAction = createCubeActionButton({
-        icon: 'content_copy',
+      const closeDuplicatesAction = createCubeActionButtonWithLabel({
+        icon: 'difference',
         label: 'Close duplicates',
         onClick: async (event) => {
           event.stopPropagation();
@@ -1318,7 +1328,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
       });
 
-      const closeStaleAction = createCubeActionButton({
+      const closeStaleAction = createCubeActionButtonWithLabel({
         icon: 'history',
         label: 'Close stale tabs',
         onClick: async (event) => {
@@ -1360,7 +1370,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     thisSessionRefreshTimer = setTimeout(() => {
       thisSessionRefreshTimer = null;
-      if (activePageIndex === 3) {
+      if (activePageIndex === 1) {
         renderThisSessionPage(true);
       }
     }, 120);
@@ -1433,7 +1443,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       icon: createMaterialIcon('conversion_path'),
       contrast: 'low',
       onClick: async () => {
-        await setActivePage(2);
+        await setActivePage(3);
       }
     });
 
@@ -1483,7 +1493,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   let lastPageIndex = 0;
 
   function isBookmarksPageActive() {
-    return activePageIndex === 1;
+    return activePageIndex === 2;
   }
 
   function syncBookmarksSidePanelScope() {
@@ -1554,14 +1564,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.warn('Widgets render failed', e);
       }
     }
-    if (activePageIndex === 2 && window.JourneyPage && typeof window.JourneyPage.activate === 'function') {
+    if (activePageIndex === 3 && window.JourneyPage && typeof window.JourneyPage.activate === 'function') {
       try {
         await window.JourneyPage.activate();
       } catch (e) {
         console.warn('Journey page activate failed', e);
       }
     }
-    if (activePageIndex === 3) {
+    if (activePageIndex === 1) {
       try {
         await renderThisSessionPage(true);
       } catch (e) {
@@ -1598,7 +1608,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   await initThisSessionActions();
 
   // Add keyboard shortcut tooltips to navigation buttons
-  const shortcuts = ['H', 'B', 'J', 'T'];
+  const shortcuts = ['H', 'T', 'B', 'J'];
   if (typeof createTooltip === 'function') {
     navButtons.forEach((btn, index) => {
       if (index < shortcuts.length) {
@@ -1694,9 +1704,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     if (e.key === 'h' || e.key === 'H') setActivePage(0);
-    if (e.key === 'b' || e.key === 'B') setActivePage(1);
-    if (e.key === 'j' || e.key === 'J') setActivePage(2);
-    if (e.key === 't' || e.key === 'T') setActivePage(3);
+    if (e.key === 't' || e.key === 'T') setActivePage(1);
+    if (e.key === 'b' || e.key === 'B') setActivePage(2);
+    if (e.key === 'j' || e.key === 'J') setActivePage(3);
   });
 
   // Magic mouse horizontal swipe navigation (fast, single-step lock)
