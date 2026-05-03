@@ -160,6 +160,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   const BOOKMARK_LINK_TRIGGER_STORAGE_KEY = 'bookmarkLinkTriggerMode';
   let bookmarkLinkTriggerMode = 'new-tab';
   let linkOpenModifierPressed = false;
+  let activeContextMenu = null;
+  let cleanupContextMenuListeners = null;
 
   function createMaterialIcon(name) {
     const icon = document.createElement('span');
@@ -226,6 +228,155 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     await chrome.tabs.create({ url });
+  }
+
+  async function copyTextToClipboard(text) {
+    const value = String(text || '');
+    if (!value) return;
+
+    if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+      await navigator.clipboard.writeText(value);
+      return;
+    }
+
+    const textarea = document.createElement('textarea');
+    textarea.value = value;
+    textarea.setAttribute('readonly', '');
+    textarea.style.position = 'absolute';
+    textarea.style.left = '-9999px';
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textarea);
+  }
+
+  function countBookmarksInNode(node) {
+    if (!node) return 0;
+    if (node.url) return 1;
+    const children = Array.isArray(node.children) ? node.children : [];
+    return children.reduce((sum, child) => sum + countBookmarksInNode(child), 0);
+  }
+
+  function collectBookmarkUrlsFromNode(node, urls = []) {
+    if (!node) return urls;
+    if (node.url) {
+      urls.push(node.url);
+      return urls;
+    }
+
+    const children = Array.isArray(node.children) ? node.children : [];
+    children.forEach((child) => collectBookmarkUrlsFromNode(child, urls));
+    return urls;
+  }
+
+  async function getFolderBookmarkUrls(folderId) {
+    if (!folderId) return [];
+    try {
+      const subtree = await BookmarksService.getSubTree(folderId);
+      return collectBookmarkUrlsFromNode(subtree, []);
+    } catch (error) {
+      console.warn('Failed to collect folder bookmarks', error);
+      return [];
+    }
+  }
+
+  function closeContextMenu() {
+    if (cleanupContextMenuListeners) {
+      cleanupContextMenuListeners();
+      cleanupContextMenuListeners = null;
+    }
+
+    if (activeContextMenu && activeContextMenu.parentNode) {
+      activeContextMenu.parentNode.removeChild(activeContextMenu);
+    }
+    activeContextMenu = null;
+  }
+
+  function openContextMenu(event, items = []) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    closeContextMenu();
+
+    const menu = document.createElement('div');
+    menu.className = 'selection-menu selection-menu--low';
+    menu.style.position = 'fixed';
+    menu.style.zIndex = '2000';
+    menu.style.width = '220px';
+
+    const body = document.createElement('div');
+    body.className = 'selection-menu__body';
+
+    items.forEach((itemConfig) => {
+      if (!itemConfig) return;
+      if (itemConfig.type === 'divider') {
+        body.appendChild(createSelectionItem({ type: 'divider' }));
+        return;
+      }
+
+      const item = createSelectionItem({
+        type: itemConfig.destructive ? 'destructive' : 'link',
+        inputType: 'text',
+        label: itemConfig.label || '',
+        icon: itemConfig.icon || null,
+        disabled: Boolean(itemConfig.disabled)
+      });
+
+      if (!itemConfig.disabled && typeof itemConfig.onSelect === 'function') {
+        item.addEventListener('click', async (clickEvent) => {
+          clickEvent.preventDefault();
+          clickEvent.stopPropagation();
+          closeContextMenu();
+          await itemConfig.onSelect();
+        });
+      }
+
+      body.appendChild(item);
+    });
+
+    menu.appendChild(body);
+    document.body.appendChild(menu);
+
+    const margin = 8;
+    const rect = menu.getBoundingClientRect();
+    const targetLeft = event.clientX;
+    const targetTop = event.clientY;
+
+    const left = Math.max(margin, Math.min(targetLeft, window.innerWidth - rect.width - margin));
+    const top = Math.max(margin, Math.min(targetTop, window.innerHeight - rect.height - margin));
+
+    menu.style.left = `${Math.round(left)}px`;
+    menu.style.top = `${Math.round(top)}px`;
+
+    const onDocumentMouseDown = (mouseEvent) => {
+      if (!menu.contains(mouseEvent.target)) {
+        closeContextMenu();
+      }
+    };
+
+    const onDocumentKeyDown = (keyEvent) => {
+      if (keyEvent.key === 'Escape') {
+        keyEvent.preventDefault();
+        closeContextMenu();
+      }
+    };
+
+    const onScroll = () => closeContextMenu();
+    const onResize = () => closeContextMenu();
+
+    document.addEventListener('mousedown', onDocumentMouseDown, true);
+    document.addEventListener('keydown', onDocumentKeyDown, true);
+    document.addEventListener('scroll', onScroll, true);
+    window.addEventListener('resize', onResize);
+
+    cleanupContextMenuListeners = () => {
+      document.removeEventListener('mousedown', onDocumentMouseDown, true);
+      document.removeEventListener('keydown', onDocumentKeyDown, true);
+      document.removeEventListener('scroll', onScroll, true);
+      window.removeEventListener('resize', onResize);
+    };
+
+    activeContextMenu = menu;
   }
 
   await hydrateBookmarkLinkTriggerMode();
@@ -2023,6 +2174,58 @@ document.addEventListener('DOMContentLoaded', async () => {
       tile.addEventListener('click', (event) => {
         openBookmarkUrl(child.url, event);
       });
+      tile.addEventListener('contextmenu', (event) => {
+        openContextMenu(event, [
+          {
+            label: 'Open',
+            icon: 'arrow_outward',
+            onSelect: async () => {
+              await openBookmarkUrl(child.url);
+            }
+          },
+          {
+            label: 'Open in new tab',
+            icon: 'open_in_new',
+            onSelect: async () => {
+              if (!child.url) return;
+              await chrome.tabs.create({ url: child.url });
+            }
+          },
+          {
+            label: 'Copy URL',
+            icon: 'content_copy',
+            onSelect: async () => {
+              if (!child.url) return;
+              await copyTextToClipboard(child.url);
+            }
+          },
+          { type: 'divider' },
+          {
+            label: 'Edit',
+            icon: 'edit',
+            onSelect: async () => {
+              await BookmarksService.editBookmarkPrompt(child.id);
+              await render(true);
+            }
+          },
+          {
+            label: 'Delete',
+            icon: 'delete',
+            destructive: true,
+            onSelect: async () => {
+              const confirmed = await Modal.openConfirmation({
+                title: 'Delete bookmark',
+                message: 'Are you sure you want to delete this bookmark?',
+                confirmText: 'Delete',
+                destructive: true
+              });
+              if (!confirmed) return;
+              await BookmarksService.deleteWithUndo(child.id);
+              await render(true);
+            }
+          }
+        ]);
+      });
       addDragHandlers(tile);
       return tile;
     }
@@ -2096,6 +2299,65 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       tile.dataset.id = child.id;
       tile.draggable = true;
+      tile.addEventListener('contextmenu', (event) => {
+        const nestedBookmarkCount = countBookmarksInNode(child);
+        openContextMenu(event, [
+          {
+            label: 'Edit',
+            icon: 'edit',
+            onSelect: async () => {
+              await BookmarkModals.editFolder(child.id);
+              await render(true);
+            }
+          },
+          {
+            label: `Open all bookmarks (${nestedBookmarkCount})`,
+            icon: 'open_in_new',
+            disabled: nestedBookmarkCount === 0,
+            onSelect: async () => {
+              const bookmarksToOpen = await getFolderBookmarkUrls(child.id);
+              if (bookmarksToOpen.length === 0) return;
+              if (bookmarksToOpen.length > 10) {
+                const confirmed = await Modal.openConfirmation({
+                  title: 'Open all bookmarks?',
+                  message: `Open ${bookmarksToOpen.length} bookmarks?`,
+                  confirmText: 'Open'
+                });
+                if (!confirmed) return;
+              }
+              bookmarksToOpen.forEach((url) => chrome.tabs.create({ url, active: false }));
+            }
+          },
+          {
+            label: 'Hide',
+            icon: 'visibility_off',
+            onSelect: async () => {
+              const hiddenFolders = await Storage.get('hiddenFolders') || [];
+              if (!hiddenFolders.includes(child.id)) {
+                hiddenFolders.push(child.id);
+                await Storage.set({ hiddenFolders });
+              }
+              await render(true);
+            }
+          },
+          { type: 'divider' },
+          {
+            label: 'Delete',
+            icon: 'delete',
+            destructive: true,
+            onSelect: async () => {
+              const confirmed = await Modal.openConfirmation({
+                title: 'Delete folder',
+                message: 'Are you sure you want to delete this folder?',
+                confirmText: 'Continue',
+                destructive: true
+              });
+              if (!confirmed) return;
+              await deleteFolderWithDestination(child);
+            }
+          }
+        ]);
+      });
       addDragHandlers(tile);
       return tile;
     }
