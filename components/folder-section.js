@@ -38,11 +38,6 @@ function createFolderSection(options = {}) {
   const header = document.createElement('div');
   header.className = 'folder-section__header';
 
-  const breadcrumbsEl = buildFolderSectionBreadcrumbs(breadcrumbItems);
-  if (breadcrumbsEl) {
-    header.appendChild(breadcrumbsEl);
-  }
-
   const toggleBtn = document.createElement('button');
   toggleBtn.type = 'button';
   toggleBtn.className = 'folder-section__collapse-toggle';
@@ -53,6 +48,11 @@ function createFolderSection(options = {}) {
   toggleIcon.textContent = 'keyboard_arrow_down';
   toggleBtn.appendChild(toggleIcon);
   header.appendChild(toggleBtn);
+
+  const breadcrumbsEl = buildFolderSectionBreadcrumbs(breadcrumbItems);
+  if (breadcrumbsEl) {
+    header.appendChild(breadcrumbsEl);
+  }
 
   toggleBtn.addEventListener('click', (event) => {
     event.stopPropagation();

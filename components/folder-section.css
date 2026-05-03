@@ -123,7 +123,7 @@
 /* Collapse / expand toggle */
 .folder-section__collapse-toggle {
   flex-shrink: 0;
-  margin-left: 8px;
+  margin-right: 8px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
