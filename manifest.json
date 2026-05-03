@@ -9,7 +9,7 @@
     "48": "assets/icons/icon-48.png",
     "128": "assets/icons/icon-128.png"
   },
-  "permissions": ["bookmarks", "tabs", "tabGroups", "storage", "history"],
+  "permissions": ["bookmarks", "tabs", "tabGroups", "storage", "history", "topSites"],
   "background": {
     "service_worker": "service-search-engine/bridge.js",
     "type": "module"

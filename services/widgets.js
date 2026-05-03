@@ -9,6 +9,7 @@ const WidgetsService = (()=>{
   const SEARCH_CUSTOM_TEMPLATE_KEY = 'customSearchProviderTemplate';
   const SEARCH_WIDGET_SEARCH_DEBOUNCE_MS = 180;
   const BOOKMARK_LINK_TRIGGER_STORAGE_KEY = 'bookmarkLinkTriggerMode';
+  const QUICK_LINKS_SEEDED_KEY = 'quickLinksTopSitesSeeded';
   const renderedWidgetCleanups = [];
   const SEARCH_PROVIDER_REGISTRY = {
     google: {
@@ -55,6 +56,7 @@ const WidgetsService = (()=>{
     container.innerHTML = '';
 
     await ensureSearchWidgetSeeded();
+    await ensureQuickLinksSeeded();
     const sectionState = await getHomePageSectionState();
     const orderedSections = [
       { id: 'search', defaultOrder: 20, renderSection: () => renderSearchWidget(container, containerId, sectionState) },
@@ -136,6 +138,40 @@ const WidgetsService = (()=>{
 
     await SlotSystem.setSlot(STORAGE_KEY, emptyIndex, createSearchWidgetRecord());
     await Storage.set({ [SEARCH_WIDGET_SEEDED_KEY]: true });
+  }
+
+  async function ensureQuickLinksSeeded() {
+    const seeded = await Storage.get(QUICK_LINKS_SEEDED_KEY);
+    if (seeded) return;
+
+    // If user already has data, respect it and just mark seeded
+    const existingSlots = await SlotSystem.getSlots(BOOKMARK_WIDGETS_KEY);
+    const hasExistingData = Array.isArray(existingSlots) && existingSlots.some(Boolean);
+    if (hasExistingData) {
+      await Storage.set({ [QUICK_LINKS_SEEDED_KEY]: true });
+      return;
+    }
+
+    // Mark seeded upfront so a failed call never retries
+    await Storage.set({ [QUICK_LINKS_SEEDED_KEY]: true });
+
+    let topSites = [];
+    try {
+      if (typeof chrome !== 'undefined' && chrome.topSites && typeof chrome.topSites.get === 'function') {
+        topSites = await chrome.topSites.get();
+      }
+    } catch (error) {
+      console.warn('Quick links seeding: could not load top sites', error);
+    }
+
+    if (!topSites.length) return;
+
+    const toSeed = topSites.slice(0, BOOKMARK_ROW_SIZE);
+    const seedSlots = toSeed.map((site) => createBookmarkWidgetRecord({ title: site.title || site.url, url: site.url }));
+    while (seedSlots.length < BOOKMARK_ROW_SIZE) {
+      seedSlots.push(null);
+    }
+    await SlotSystem.save(BOOKMARK_WIDGETS_KEY, seedSlots);
   }
 
   async function renderSearchWidget(container, containerId, sectionState = null) {
