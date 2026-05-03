@@ -1545,6 +1545,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.warn('Widgets render failed', e);
       }
     }
+    if (activePageIndex === 2) {
+      try {
+        await render(true);
+      } catch (e) {
+        console.warn('Bookmarks page render failed', e);
+      }
+    }
     if (activePageIndex === 3 && window.JourneyPage && typeof window.JourneyPage.activate === 'function') {
       try {
         await window.JourneyPage.activate();
@@ -1795,7 +1802,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       tilesRendered: 0,
       sectionsRendered: 0
     };
-    const sectionsContainer = document.querySelector('.bookmarks-sections');
+    const sectionsContainer = root;
     let scrollAnchor = null;
 
     if (preserveScroll && sectionsContainer) {
@@ -1837,7 +1844,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       const apply = () => {
         attempts += 1;
-        const liveSections = document.querySelector('.bookmarks-sections');
+        const liveSections = root;
         if (!liveSections) {
           if (attempts < maxAttempts) {
             requestAnimationFrame(apply);
@@ -2310,8 +2317,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (toggleBtn) toggleBtn.click();
       }
 
-      const scrollContainer = document.querySelector('.bookmarks-sections')
-        || targetEl.closest('.bookmarks-sections');
+      const scrollContainer = root || targetEl.closest('.bookmarks-sections');
       if (scrollContainer) {
         const containerRect = scrollContainer.getBoundingClientRect();
         const targetRect = targetEl.getBoundingClientRect();
