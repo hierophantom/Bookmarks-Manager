@@ -127,16 +127,18 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
+  width: 32px;
+  height: 32px;
   padding: 0;
   border: none;
   border-radius: 4px;
-  background: transparent;
-  color: var(--common-common-bright-15, rgba(255, 255, 255, 0.6));
+  background: red !important;
+  color: white !important;
   cursor: pointer;
-  opacity: 0.4;
+  opacity: 1 !important;
   transition: opacity 0.15s ease, background 0.15s ease;
+  z-index: 999;
+  position: relative;
 }
 
 .folder-section:hover .folder-section__collapse-toggle {

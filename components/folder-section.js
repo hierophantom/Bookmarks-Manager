@@ -43,6 +43,7 @@ function createFolderSection(options = {}) {
     header.appendChild(breadcrumbsEl);
   }
 
+  console.log('[BMG-168] createFolderSection: attaching collapse toggle');
   const toggleBtn = document.createElement('button');
   toggleBtn.type = 'button';
   toggleBtn.className = 'folder-section__collapse-toggle';
