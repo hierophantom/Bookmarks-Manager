@@ -499,50 +499,104 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Create settings menu
         const hideNestedFolders = await Storage.get('hideNestedFolders') || false;
         
+        const showNestedFolders = !hideNestedFolders;
         const menu = createSelectionMenu({
-          type: 'sort',
+          type: 'simple',
           contrast: 'low',
           title: 'View Settings',
-          items: ['Hide nested folders', 'Collapse all folders', 'Expand all folders'],
-          selectedIndex: -1,
-          showSelectionIndicator: false,
+          items: ['Show nested folders'],
+          selectedIndices: showNestedFolders ? [0] : [],
           showClear: false,
           showSelectAll: false,
           onSelect: async (index) => {
             if (index === 0) {
-              // Toggle the setting
               const currentValue = await Storage.get('hideNestedFolders') || false;
               await Storage.set({ hideNestedFolders: !currentValue });
-              menu.remove();
-              document.removeEventListener('click', closeMenu);
-              await render(true);
-            } else if (index === 1) {
-              // Collapse all folders
-              idToNode.forEach((node) => {
-                if (!node.url) collapsedFolders.add(node.id);
-              });
-              try {
-                await Storage.set({ [COLLAPSED_FOLDERS_KEY]: [...collapsedFolders] });
-              } catch (e) {
-                console.warn('Failed to persist collapsed folder sections', e);
-              }
-              menu.remove();
-              document.removeEventListener('click', closeMenu);
-              await render(true);
-            } else if (index === 2) {
-              // Expand all folders
-              collapsedFolders.clear();
-              try {
-                await Storage.set({ [COLLAPSED_FOLDERS_KEY]: [] });
-              } catch (e) {
-                console.warn('Failed to persist collapsed folder sections', e);
-              }
               menu.remove();
               document.removeEventListener('click', closeMenu);
               await render(true);
             }
           }
         });
+
+        const applyCollapsedStateToAllVisibleSections = async (shouldCollapse) => {
+          const sectionEls = Array.from(document.querySelectorAll('.folder-section[data-folder-id]'))
+            .filter((sectionEl) => sectionEl.dataset.folderId && sectionEl.dataset.folderId !== 'results');
+
+          const visibleFolderIds = [];
+          sectionEls.forEach((sectionEl) => {
+            const folderId = sectionEl.dataset.folderId;
+            if (!folderId) return;
+            visibleFolderIds.push(folderId);
+            sectionEl.classList.toggle('folder-section--collapsed', shouldCollapse);
+            const toggleBtn = sectionEl.querySelector('.folder-section__collapse-toggle');
+            if (toggleBtn) {
+              toggleBtn.setAttribute('aria-label', shouldCollapse ? 'Expand section' : 'Collapse section');
+            }
+          });
+
+          if (shouldCollapse) {
+            collapsedFolders = new Set(visibleFolderIds);
+          } else {
+            collapsedFolders.clear();
+          }
+
+          try {
+            await Storage.set({ [COLLAPSED_FOLDERS_KEY]: [...collapsedFolders] });
+          } catch (e) {
+            console.warn('Failed to persist collapsed folder sections', e);
+          }
+        };
+
+        const menuBody = menu.querySelector('.selection-menu__body');
+        if (menuBody) {
+          const actionSectionTitle = document.createElement('div');
+          actionSectionTitle.className = 'selection-menu__section-title';
+          actionSectionTitle.textContent = 'Folder sections';
+          menuBody.appendChild(actionSectionTitle);
+
+          const createActionItem = (label, onActivate) => {
+            const item = document.createElement('div');
+            item.className = 'selection-menu__item';
+            item.setAttribute('role', 'button');
+            item.tabIndex = 0;
+
+            const textWrap = document.createElement('span');
+            textWrap.className = 'selection-menu__text';
+
+            const labelEl = document.createElement('span');
+            labelEl.className = 'selection-menu__label';
+            labelEl.textContent = label;
+
+            textWrap.appendChild(labelEl);
+            item.appendChild(textWrap);
+
+            const handleActivate = async (event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              await onActivate();
+              menu.remove();
+              document.removeEventListener('click', closeMenu);
+            };
+
+            item.addEventListener('click', handleActivate);
+            item.addEventListener('keydown', async (event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                await handleActivate(event);
+              }
+            });
+
+            menuBody.appendChild(item);
+          };
+
+          createActionItem('Collapse all folders', async () => {
+            await applyCollapsedStateToAllVisibleSections(true);
+          });
+
+          createActionItem('Expand all folders', async () => {
+            await applyCollapsedStateToAllVisibleSections(false);
+          });
+        }
 
         // Mark this as view settings menu
         menu.setAttribute('data-menu-type', 'view-settings');
