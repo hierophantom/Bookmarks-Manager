@@ -1151,59 +1151,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       await openTabFromSession(tab);
     });
 
-    tile.addEventListener('contextmenu', (event) => {
-      openContextMenu(event, [
-        {
-          label: 'Open',
-          icon: 'arrow_outward',
-          onSelect: async () => {
-            await openTabFromSession(tab);
-          }
-        },
-        {
-          label: 'Open in new tab',
-          icon: 'open_in_new',
-          disabled: !tab.url,
-          onSelect: async () => {
-            await chrome.tabs.create({ url: tab.url, active: true });
-          }
-        },
-        {
-          label: 'Copy URL',
-          icon: 'content_copy',
-          disabled: !tab.url,
-          onSelect: async () => {
-            await copyTextToClipboard(tab.url);
-          }
-        },
-        { type: 'divider' },
-        {
-          label: 'Save tab',
-          icon: 'bookmark_add',
-          disabled: !tab.url,
-          onSelect: async () => {
-            await saveSingleSessionTab(tab);
-          }
-        },
-        {
-          label: 'Delete',
-          icon: 'delete',
-          destructive: true,
-          onSelect: async () => {
-            const confirmed = await Modal.openConfirmation({
-              title: 'Close tab',
-              message: 'Are you sure you want to close this tab?',
-              confirmText: 'Close',
-              destructive: true
-            });
-            if (!confirmed) return;
-            await chrome.tabs.remove(tab.id);
-            await renderThisSessionPage(true);
-          }
-        }
-      ]);
-    });
-
     return tile;
   }
 
@@ -1316,7 +1263,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       thisSessionWindowCounter += 1;
       const title = isCurrentWindow
         ? `Current window (${filteredTabs.length} tabs)`
-        : `Window ${thisSessionWindowCounter - 1}${windowData.incognito ? ' (Incognito)' : ''} (${filteredTabs.length} tabs)`;
+        : `Window ${thisSessionWindowCounter - 1} (${filteredTabs.length} tabs)`;
 
       const closeDuplicatesAction = createCubeActionButtonWithLabel({
         icon: 'difference',
@@ -1356,6 +1303,26 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       section.dataset.windowId = String(windowData.id);
       section.classList.add('this-session-section');
+
+      if (windowData.incognito) {
+        const header = section.querySelector('.folder-section__header');
+        if (header) {
+          const incognitoBadge = document.createElement('span');
+          incognitoBadge.className = 'this-session-section__incognito';
+          incognitoBadge.appendChild(createMaterialIcon('domino_mask'));
+          header.appendChild(incognitoBadge);
+
+          if (typeof createTooltip === 'function') {
+            createTooltip({
+              text: 'Incognito window',
+              target: incognitoBadge,
+              position: 'top',
+              delay: 'fast'
+            });
+          }
+        }
+      }
+
       thisSessionRoot.appendChild(section);
     };
 

@@ -663,6 +663,24 @@ body {
   width: 100%;
 }
 
+.this-session-section__incognito {
+  margin-left: 8px;
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.35);
+  color: var(--common-common-bright-20, rgba(255, 255, 255, 0.8));
+  cursor: default;
+}
+
+.this-session-section__incognito .material-symbols-outlined {
+  font-size: 12px;
+  line-height: 1;
+}
+
 .this-session-tab--grouped {
   border-width: 1px;
   border-style: solid;
