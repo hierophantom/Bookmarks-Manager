@@ -272,6 +272,7 @@ async function loadRightPanelData(panel) {
 
         return {
           id: windowInfo.id,
+          incognito: windowInfo.incognito || false,
           tabs
         };
       })
@@ -297,7 +298,8 @@ async function loadRightPanelData(panel) {
 
       panel.addWindowGroup?.({
         id: windowInfo.id,
-        label: `Window ${index + 1}`,
+        label: windowInfo.incognito ? `Incognito Window ${index + 1}` : `Window ${index + 1}`,
+        incognito: windowInfo.incognito,
         tabs,
         onOpenTab: (tab) => {
           if (!tab || !tab.id) return;

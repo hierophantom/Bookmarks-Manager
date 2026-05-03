@@ -147,6 +147,14 @@
   font-variation-settings: 'FILL' 1;
 }
 
+.active-sessions-panel__group-incognito {
+  font-size: 14px;
+  margin-left: 6px;
+  vertical-align: middle;
+  color: var(--side-panel-text-muted, rgba(255, 255, 255, 0.5));
+  font-variation-settings: 'FILL' 1;
+}
+
 .active-sessions-panel__group-actions {
   display: flex;
   gap: 8px;

@@ -157,6 +157,7 @@ function createActiveSessionsPanel(options = {}) {
       const {
         id = '',
         label = 'Window',
+        incognito = false,
         tabs = [],
         onOpenTab = null,
         onSaveSession = null,
@@ -179,6 +180,15 @@ function createActiveSessionsPanel(options = {}) {
       const titleEl = document.createElement('h4');
       titleEl.className = 'active-sessions-panel__group-title';
       titleEl.textContent = label;
+
+      if (incognito) {
+        const maskIcon = document.createElement('span');
+        maskIcon.className = 'active-sessions-panel__group-incognito material-symbols-outlined';
+        maskIcon.setAttribute('aria-hidden', 'true');
+        maskIcon.textContent = 'domino_mask';
+        titleEl.appendChild(maskIcon);
+      }
+
       groupEl.appendChild(titleEl);
 
       const tabsEl = document.createElement('div');
