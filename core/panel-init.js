@@ -48,9 +48,50 @@ async function loadLeftPanelData(panel) {
     }
 
     updateFolderTreeVisibility(panel);
+    syncCollapseAllButton(panel);
   } catch (e) {
     console.error('Error loading folder data:', e);
   }
+}
+
+function createCollapseAllButton(panel) {
+  if (!panel?.header || panel.header.querySelector('[data-folder-tree-action="collapse-all"]')) {
+    return;
+  }
+
+  const controls = panel.header.querySelector('.side-panel__controls');
+  if (!controls) return;
+
+  const iconUrl = typeof chrome !== 'undefined' && chrome.runtime && typeof chrome.runtime.getURL === 'function'
+    ? chrome.runtime.getURL('assets/icons/materials/collapse_all.svg')
+    : '../assets/icons/materials/collapse_all.svg';
+
+  // Duplicate the X (close) button construction exactly — same class, same size.
+  const button = document.createElement('button');
+  button.className = 'side-panel__btn side-panel__btn--close';
+  button.type = 'button';
+  button.setAttribute('aria-label', 'Collapse all folders');
+  button.title = 'Collapse all folders';
+  button.dataset.folderTreeAction = 'collapse-all';
+
+  const icon = document.createElement('span');
+  icon.setAttribute('aria-hidden', 'true');
+  icon.style.cssText = `display:block;width:1em;height:1em;background-color:currentColor;mask:url("${iconUrl}") center/contain no-repeat;-webkit-mask:url("${iconUrl}") center/contain no-repeat;`;
+  button.appendChild(icon);
+
+  button.addEventListener('click', () => collapseAllFolders(panel));
+
+  controls.insertBefore(button, controls.firstChild);
+  syncCollapseAllButton(panel);
+}
+
+function syncCollapseAllButton(panel) {
+  const button = panel?.header?.querySelector('[data-folder-tree-action="collapse-all"]');
+  if (!button) return;
+
+  const items = panel.content?.querySelectorAll('.folder-tree-item[data-has-children="true"]') || [];
+  const hasExpandedFolders = Array.from(items).some((item) => item.dataset.expanded === 'true');
+  button.disabled = !hasExpandedFolders;
 }
 
 // Recursively add folders and subfolders
@@ -201,6 +242,18 @@ function setFolderExpanded(panel, folderId, expanded) {
   }
 
   updateFolderTreeVisibility(panel);
+  syncCollapseAllButton(panel);
+}
+
+function collapseAllFolders(panel) {
+  const items = panel.content?.querySelectorAll('.folder-tree-item[data-has-children="true"]') || [];
+  items.forEach((node) => {
+    node.dataset.expanded = 'false';
+    panel.updateFolderItem?.(node.dataset.folderId, { variant: 'collapsed' });
+  });
+
+  updateFolderTreeVisibility(panel);
+  syncCollapseAllButton(panel);
 }
 
 function collapseDescendants(panel, ancestorId) {
@@ -414,6 +467,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         docked: false,
         onClose: () => leftPanel.hide()
       });
+
+      createCollapseAllButton(leftPanel);
       
       leftPanelContainer.appendChild(leftPanel.element);
       

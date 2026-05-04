@@ -51,8 +51,24 @@
 
 .action-button__icon .material-symbols-outlined {
   font-size: 20px;
+  width: 20px;
+  height: 20px;
+  display: block;
   line-height: 1;
   color: inherit;
+}
+
+.action-button__icon img.app-local-icon {
+  width: 20px;
+  height: 20px;
+  display: block;
+  object-fit: contain;
+}
+
+.action-button__icon .app-local-icon {
+  width: 20px;
+  height: 20px;
+  display: block;
 }
 
 /* States */

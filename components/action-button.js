@@ -15,7 +15,7 @@
 /**
  * Creates an action button element
  * @param {Object} options - Button configuration
- * @param {string|HTMLElement} options.icon - Icon (emoji string, SVG string, or element)
+ * @param {string|HTMLElement} options.icon - Icon (emoji string, local SVG filename, SVG string, or element)
  * @param {string} [options.label] - Accessible label for screen readers
  * @param {Function} [options.onClick] - Click handler
  * @param {boolean} [options.disabled=false] - Whether button is disabled
@@ -58,6 +58,11 @@ function createActionButton(options = {}) {
     if (icon.startsWith('<svg')) {
       // SVG string
       iconEl.innerHTML = icon;
+    } else if (/\.svg$/i.test(icon.trim())) {
+      const localIcon = createActionButtonLocalSvgIcon(icon);
+      if (localIcon) {
+        iconEl.appendChild(localIcon);
+      }
     } else {
       // Emoji or text icon
       iconEl.textContent = icon;
@@ -101,6 +106,11 @@ function updateActionButtonIcon(button, icon) {
   if (typeof icon === 'string') {
     if (icon.startsWith('<svg')) {
       iconEl.innerHTML = icon;
+    } else if (/\.svg$/i.test(icon.trim())) {
+      const localIcon = createActionButtonLocalSvgIcon(icon);
+      if (localIcon) {
+        iconEl.appendChild(localIcon);
+      }
     } else {
       iconEl.textContent = icon;
       iconEl.style.fontSize = '20px';
@@ -108,6 +118,24 @@ function updateActionButtonIcon(button, icon) {
   } else if (icon instanceof HTMLElement) {
     iconEl.appendChild(icon);
   }
+}
+
+function createActionButtonLocalSvgIcon(iconName) {
+  const normalizedName = String(iconName || '').trim();
+  if (!normalizedName) return null;
+
+  const relativePath = normalizedName.includes('/')
+    ? normalizedName.replace(/^\/+/, '')
+    : `assets/icons/materials/${normalizedName}`;
+  const iconUrl = typeof chrome !== 'undefined' && chrome.runtime && typeof chrome.runtime.getURL === 'function'
+    ? chrome.runtime.getURL(relativePath)
+    : `../${relativePath}`;
+
+  const iconEl = document.createElement('span');
+  iconEl.className = 'material-symbols-outlined app-local-icon';
+  iconEl.setAttribute('aria-hidden', 'true');
+  iconEl.style.setProperty('--app-local-icon-url', `url("${iconUrl}")`);
+  return iconEl;
 }
 
 /**
