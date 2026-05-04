@@ -10,7 +10,7 @@
   --theme-hover-shadow: 0 6px 14px rgba(0, 102, 255, 0.12);
   --theme-input-shadow: rgba(0, 102, 255, 0.12);
 
-  --font-family-sans: "Lato", system-ui, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  --font-family-sans: "Lato", Arial, Helvetica, sans-serif;
   --font-weight-light: 300;
   --font-weight-regular: 400;
   --font-weight-medium: 500;
@@ -444,6 +444,32 @@ body {
   flex: 0 0 auto;
 }
 
+.topbar__offline-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 89, 94, 0.45);
+  background: rgba(255, 89, 94, 0.12);
+  color: rgba(255, 220, 221, 0.95);
+  font-size: var(--size-medium, 12px);
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.topbar__offline-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ff595e;
+  box-shadow: 0 0 0 3px rgba(255, 89, 94, 0.18);
+}
+
+.topbar__offline-text {
+  font-weight: 600;
+}
+
 .topbar__icon-btn {
   font-size: 16px;
 }
@@ -481,6 +507,25 @@ body {
 
 .material-symbols-outlined {
   font-variation-settings: "wght" 400, "FILL" 0, "GRAD" 0, "opsz" 20;
+}
+
+img.app-local-icon.material-symbols-outlined {
+  width: 1em;
+  height: 1em;
+  object-fit: contain;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.material-symbols-outlined.app-local-icon {
+  width: 1em;
+  height: 1em;
+  display: inline-block;
+  vertical-align: middle;
+  background-color: currentColor;
+  -webkit-mask: var(--app-local-icon-url) center / contain no-repeat;
+  mask: var(--app-local-icon-url) center / contain no-repeat;
+  line-height: 1;
 }
 
 #page-container,

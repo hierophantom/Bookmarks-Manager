@@ -54,6 +54,19 @@
   font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
 }
 
+.cube-action-button__icon img.app-local-icon {
+  width: 12px;
+  height: 12px;
+  display: block;
+  object-fit: contain;
+}
+
+.cube-action-button__icon .app-local-icon {
+  width: 12px;
+  height: 12px;
+  display: block;
+}
+
 /* Color Schemes */
 
 /* Default scheme */

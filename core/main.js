@@ -157,6 +157,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const thisSessionActionsLeft = document.getElementById('this-session-actions-left');
   const thisSessionActionsSettings = document.getElementById('this-session-actions-settings');
   const thisSessionActionsRight = document.getElementById('this-session-actions-right');
+  const offlineIndicator = document.getElementById('offline-indicator');
 
   let textSearchInput = null;
   let currentFilterTags = [];
@@ -191,6 +192,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     icon.textContent = name;
     return icon;
   }
+
+  function syncOfflineIndicator() {
+    if (!offlineIndicator) return;
+    const isOffline = typeof navigator !== 'undefined' && navigator.onLine === false;
+    offlineIndicator.hidden = !isOffline;
+    // Defensive explicit display override in case a component style forces display.
+    offlineIndicator.style.display = isOffline ? 'inline-flex' : 'none';
+  }
+
+  syncOfflineIndicator();
+  window.addEventListener('online', syncOfflineIndicator);
+  window.addEventListener('offline', syncOfflineIndicator);
+  window.addEventListener('focus', syncOfflineIndicator);
+  document.addEventListener('visibilitychange', syncOfflineIndicator);
 
   function createFaviconIcon(url) {
     return FaviconService.createFaviconElement(url, {

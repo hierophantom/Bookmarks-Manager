@@ -51,20 +51,32 @@ function createCommonButton(options = {}) {
   if (icon) {
     const iconEl = document.createElement('span');
     iconEl.className = 'button-common__icon';
+    let hasRenderableIcon = false;
+
     if (typeof icon === 'string') {
       if (icon.startsWith('<svg')) {
         iconEl.innerHTML = icon;
+        hasRenderableIcon = true;
       } else {
-        const materialIcon = document.createElement('span');
-        materialIcon.className = 'material-symbols-outlined';
-        materialIcon.setAttribute('aria-hidden', 'true');
-        materialIcon.textContent = icon;
-        iconEl.appendChild(materialIcon);
+        // Guard against raw text fallback (e.g. "+") when icon fonts/assets are unavailable.
+        const isMaterialToken = /^[a-z0-9_]+$/.test(icon);
+        if (isMaterialToken) {
+          const materialIcon = document.createElement('span');
+          materialIcon.className = 'material-symbols-outlined';
+          materialIcon.setAttribute('aria-hidden', 'true');
+          materialIcon.textContent = icon;
+          iconEl.appendChild(materialIcon);
+          hasRenderableIcon = true;
+        }
       }
     } else if (icon instanceof HTMLElement) {
       iconEl.appendChild(icon);
+      hasRenderableIcon = true;
     }
-    button.appendChild(iconEl);
+
+    if (hasRenderableIcon) {
+      button.appendChild(iconEl);
+    }
   }
 
   const labelEl = document.createElement('span');

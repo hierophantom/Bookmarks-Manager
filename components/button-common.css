@@ -19,7 +19,7 @@
   border: 1px solid var(--button-common-border, var(--common-common-bright-05, rgba(255, 255, 255, 0.1)));
   background: var(--button-common-bg, var(--common-common-bright-05, rgba(255, 255, 255, 0.1)));
   color: var(--button-common-text, var(--common-common-bright-15, rgba(255, 255, 255, 0.6)));
-  font-family: var(--font-family-sans-serif, 'Lato', sans-serif);
+  font-family: var(--font-family-sans-serif, 'Lato', Arial, Helvetica, sans-serif);
   font-size: var(--size-medium, 12px);
   font-weight: var(--weight-regular, 400);
   line-height: 1;
@@ -54,7 +54,7 @@
 }
 
 .button-common__label {
-  font-family: var(--font-family-sans-serif, 'Lato', sans-serif);
+  font-family: var(--font-family-sans-serif, 'Lato', Arial, Helvetica, sans-serif);
   font-size: inherit;
   font-weight: inherit;
   line-height: 1;

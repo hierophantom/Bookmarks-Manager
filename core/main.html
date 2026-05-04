@@ -89,6 +89,10 @@
       </button>
       <div class="topbar__actions">
         <div id="update-available-slot" class="topbar__update-slot"></div>
+        <div id="offline-indicator" class="topbar__offline-indicator" role="status" aria-live="polite" hidden>
+          <span class="topbar__offline-dot" aria-hidden="true"></span>
+          <span class="topbar__offline-text">Offline mode</span>
+        </div>
         <button id="unsplash-attribution-btn" class="topbar__icon-btn" type="button" aria-label="Photo attribution" style="display: none;">
           <span class="material-symbols-outlined" aria-hidden="true">landscape</span>
         </button>
@@ -263,6 +267,7 @@
   <script src="../utils/modal.js"></script>
   <script src="../utils/undo.js"></script>
   <script src="../utils/undo-persist.js"></script>
+  <script src="../utils/local-icon-overrides.js"></script>
   <script src="../utils/slots.js"></script>
   <!-- Load new panel components FIRST -->
   <script src="../components/side-panel.js"></script>

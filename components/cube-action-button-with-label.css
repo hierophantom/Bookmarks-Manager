@@ -78,6 +78,19 @@
   font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
 }
 
+.cube-action-button-with-label__icon img.app-local-icon {
+  width: 12px;
+  height: 12px;
+  display: block;
+  object-fit: contain;
+}
+
+.cube-action-button-with-label__icon .app-local-icon {
+  width: 12px;
+  height: 12px;
+  display: block;
+}
+
 /* Label */
 .cube-action-button-with-label__label {
   line-height: 1;
@@ -199,6 +212,16 @@
 
 .cube-action-button-with-label--medium .cube-action-button-with-label__icon .material-symbols-outlined {
   font-size: 16px;
+  width: 16px;
+  height: 16px;
+}
+
+.cube-action-button-with-label--medium .cube-action-button-with-label__icon img.app-local-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.cube-action-button-with-label--medium .cube-action-button-with-label__icon .app-local-icon {
   width: 16px;
   height: 16px;
 }

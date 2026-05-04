@@ -146,8 +146,14 @@ function applyFolderSectionSeparators(breadcrumbsEl) {
   if (!breadcrumbsEl) return;
   const separators = breadcrumbsEl.querySelectorAll('.breadcrumbs__separator');
   separators.forEach((separator) => {
-    separator.textContent = 'chevron_right';
-    separator.classList.add('material-symbols-outlined', 'folder-section__breadcrumb-separator');
+    separator.textContent = '';
+    separator.classList.add('folder-section__breadcrumb-separator');
+
+    const icon = document.createElement('span');
+    icon.className = 'material-symbols-outlined';
+    icon.setAttribute('aria-hidden', 'true');
+    icon.textContent = 'chevron_right';
+    separator.appendChild(icon);
   });
 }
 

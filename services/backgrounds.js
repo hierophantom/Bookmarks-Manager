@@ -309,11 +309,41 @@ const BackgroundsService = (() => {
    */
   function applyBackgroundToDOM(settings) {
     const root = document.documentElement;
+    const fallbackColor = settings && settings.color ? settings.color : '#001194';
+
+    // Always keep a solid fallback color, even when an image background is selected.
+    root.style.setProperty('--bg-color', fallbackColor);
+
+    function setImageWithFallback(url) {
+      if (!url) {
+        root.style.setProperty('--bg-type', 'color');
+        root.style.setProperty('--bg-image', 'none');
+        return;
+      }
+
+      // If we know we're offline, skip broken remote image requests immediately.
+      if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+        root.style.setProperty('--bg-type', 'color');
+        root.style.setProperty('--bg-image', 'none');
+        return;
+      }
+
+      const probe = new Image();
+      probe.onload = () => {
+        root.style.setProperty('--bg-type', 'image');
+        root.style.setProperty('--bg-image', `url('${url}')`);
+      };
+      probe.onerror = () => {
+        root.style.setProperty('--bg-type', 'color');
+        root.style.setProperty('--bg-image', 'none');
+      };
+      probe.src = url;
+    }
 
     switch (settings.type) {
       case 'color':
         root.style.setProperty('--bg-type', 'color');
-        root.style.setProperty('--bg-color', settings.color);
+        root.style.setProperty('--bg-color', fallbackColor);
         root.style.setProperty(
           '--bg-image',
           'none'
@@ -322,16 +352,25 @@ const BackgroundsService = (() => {
 
       case 'upload':
         if (settings.imageFile) {
-          root.style.setProperty('--bg-type', 'image');
-          root.style.setProperty('--bg-image', `url('${settings.imageFile}')`);
+          setImageWithFallback(settings.imageFile);
+        } else {
+          root.style.setProperty('--bg-type', 'color');
+          root.style.setProperty('--bg-image', 'none');
         }
         break;
 
       case 'unsplash':
         if (settings.imageUrl) {
-          root.style.setProperty('--bg-type', 'image');
-          root.style.setProperty('--bg-image', `url('${settings.imageUrl}')`);
+          setImageWithFallback(settings.imageUrl);
+        } else {
+          root.style.setProperty('--bg-type', 'color');
+          root.style.setProperty('--bg-image', 'none');
         }
+        break;
+
+      default:
+        root.style.setProperty('--bg-type', 'color');
+        root.style.setProperty('--bg-image', 'none');
         break;
     }
   }
