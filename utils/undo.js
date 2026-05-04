@@ -1,46 +1,82 @@
-const UndoService = (()=>{
-  const containerId = '__bm_undo_container';
-  function ensureContainer(){
-    let c = document.getElementById(containerId);
-    if (c) return c;
-    c = document.createElement('div');
-    c.id = containerId;
-    c.style.position = 'fixed';
-    c.style.left = '12px';
-    c.style.bottom = '12px';
-    c.style.zIndex = 100000;
-    document.body.appendChild(c);
-    return c;
-  }
+const UndoService = (() => {
+  // Tracks the most recent undo action so Ctrl+Z can trigger it
+  let _lastUndoFn = null;
+  let _lastUndoCancel = null;
 
-  // show undo toast; returns an object with `cancel()` to dismiss early
-  function show(message, onUndo, timeout = 8000){
-    const c = ensureContainer();
-    const el = document.createElement('div');
-    el.style.background = '#222';
-    el.style.color = '#fff';
-    el.style.padding = '10px 12px';
-    el.style.borderRadius = '6px';
-    el.style.boxShadow = '0 6px 18px rgba(0,0,0,0.3)';
-    el.style.marginTop = '8px';
-    el.innerHTML = `<span style="margin-right:12px">${escapeHtml(message)}</span>`;
-    const btn = document.createElement('button');
-    btn.textContent = 'Undo';
-    btn.style.marginLeft = '8px';
-    btn.style.padding = '6px 8px';
-    btn.addEventListener('click', ()=>{
-      clearTimeout(tid);
-      remove();
-      try{ onUndo(); }catch(e){ console.error(e); }
+  /**
+   * Show an undo snackbar.
+   * @param {string}   message    - Notification text.
+   * @param {Function} onUndo     - Called when the user clicks Undo or presses Ctrl+Z.
+   * @param {number}   [timeout]  - Auto-dismiss delay in ms (default 5000).
+   * @returns {{ cancel: Function }}
+   */
+  function show(message, onUndo, timeout = 5000) {
+    let consumed = false;
+    let snackbarHandle = null;
+
+    const runUndoOnce = () => {
+      if (consumed) return;
+      consumed = true;
+      if (_lastUndoFn === runUndoOnce) {
+        _lastUndoFn = null;
+        _lastUndoCancel = null;
+      }
+      if (snackbarHandle && typeof snackbarHandle.cancel === 'function') {
+        snackbarHandle.cancel();
+      }
+      try { onUndo(); } catch (e) { console.error('[UndoService] undo failed', e); }
+    };
+
+    _lastUndoFn = runUndoOnce;
+
+    snackbarHandle = SnackbarService.show({
+      message,
+      actionLabel: 'Undo',
+      onAction: runUndoOnce,
+      onDismiss: () => {
+        if (_lastUndoFn === runUndoOnce) {
+          _lastUndoFn = null;
+          _lastUndoCancel = null;
+        }
+      },
+      timeout,
     });
-    el.appendChild(btn);
-    c.appendChild(el);
-    function remove(){ if (el.parentNode) el.parentNode.removeChild(el); }
-    const tid = setTimeout(()=>{ remove(); }, timeout);
-    return { cancel: remove };
+
+    _lastUndoCancel = snackbarHandle && typeof snackbarHandle.cancel === 'function'
+      ? snackbarHandle.cancel
+      : null;
+
+    return snackbarHandle;
   }
 
-  function escapeHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  /**
+   * Programmatically trigger the most recent undo (used by Ctrl+Z handler).
+   */
+  function triggerLast() {
+    if (typeof _lastUndoFn !== 'function') return;
+    const fn = _lastUndoFn;
+    const cancel = _lastUndoCancel;
+    _lastUndoFn = null;
+    _lastUndoCancel = null;
+    if (typeof cancel === 'function') {
+      try { cancel(); } catch (e) { console.warn('[UndoService] failed to dismiss snackbar on keyboard undo', e); }
+    }
+    try { fn(); } catch (e) { console.error('[UndoService] triggerLast failed', e); }
+  }
 
-  return { show };
+  // Global Ctrl+Z / Cmd+Z handler — skip when focus is inside an editable field
+  document.addEventListener('keydown', (e) => {
+    if (!(e.ctrlKey || e.metaKey) || e.key !== 'z' || e.shiftKey) return;
+    const active = document.activeElement;
+    if (active) {
+      const tag = active.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || active.isContentEditable) return;
+    }
+    if (_lastUndoFn) {
+      e.preventDefault();
+      triggerLast();
+    }
+  });
+
+  return { show, triggerLast };
 })();

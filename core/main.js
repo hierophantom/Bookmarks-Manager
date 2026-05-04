@@ -24,6 +24,11 @@ function setupLazyObserver(root) {
   }
 }
 document.addEventListener('DOMContentLoaded', async () => {
+  // Re-render the bookmarks page when an undo operation restores data from bookmark-modals
+  window.addEventListener('bookmark-manager:bookmarks-changed', () => {
+    if (isBookmarksPageActive()) render(true);
+  });
+
   // Ensure main content is focused so keyboard shortcuts work immediately on new tab
   // Try to focus a hidden input to force focus out of the URL bar
   const focusHack = document.getElementById('bmg-focus-hack');
@@ -809,6 +814,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (data.customization && typeof FolderCustomizationService !== 'undefined') {
           await FolderCustomizationService.set(newFolder.id, data.customization);
         }
+        UndoService.show('Folder created', async () => {
+          await BookmarksService.removeFolder(newFolder.id);
+          await render(true);
+        });
         await render(true);
       }
     });
@@ -3013,9 +3022,14 @@ document.addEventListener('DOMContentLoaded', async () => {
           event.stopPropagation();
           const data = await Modal.openFolderForm({ title: '' });
           if (data && data.title) {
-            await chrome.bookmarks.create({
-              parentId: folder.id,
-              title: data.title
+            const newSubfolder = await new Promise((res, rej) => {
+              chrome.bookmarks.create({ parentId: folder.id, title: data.title }, node => {
+                if (chrome.runtime.lastError) rej(chrome.runtime.lastError); else res(node);
+              });
+            });
+            UndoService.show('Folder created', async () => {
+              await BookmarksService.removeFolder(newSubfolder.id);
+              await render(true);
             });
             await render(true);
           }
@@ -3097,6 +3111,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (data.tags && data.tags.length && newNode) {
               await TagsService.setTags(newNode.id, data.tags);
             }
+            UndoService.show('Bookmark added', async () => {
+              await BookmarksService.removeBookmark(newNode.id);
+              await render(true);
+            });
             await render(true);
           }
         }

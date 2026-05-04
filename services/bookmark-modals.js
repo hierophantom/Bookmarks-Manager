@@ -35,6 +35,10 @@ const BookmarkModals = (()=>{
               tags: data.tags
             });
           }
+          UndoService.show('Bookmark added', async () => {
+            await BookmarksService.removeBookmark(node.id);
+            window.dispatchEvent(new CustomEvent('bookmark-manager:bookmarks-changed'));
+          });
           res(node);
         } catch (e) {
           console.error('[BookmarkModals] addBookmark - error saving tags:', e);
@@ -67,12 +71,24 @@ const BookmarkModals = (()=>{
       const updateObj = { title: data.title };
       if (info.url) updateObj.url = data.url || '';
       console.log('[BookmarkModals] editBookmark - updating bookmark:', updateObj);
+      const oldTitle = info.title;
+      const oldUrl = info.url || '';
+      const oldTags = tags || [];
       chrome.bookmarks.update(id, updateObj, updated => {
         if (chrome.runtime.lastError) {
           console.error('[BookmarkModals] editBookmark - update failed:', chrome.runtime.lastError);
           reject(chrome.runtime.lastError);
         } else {
           console.log('[BookmarkModals] editBookmark - bookmark updated');
+          UndoService.show('Bookmark updated', async () => {
+            await TagsService.setTags(id, oldTags);
+            await new Promise((r, rej) => {
+              chrome.bookmarks.update(id, { title: oldTitle, url: oldUrl }, n => {
+                if (chrome.runtime.lastError) rej(chrome.runtime.lastError); else r(n);
+              });
+            });
+            window.dispatchEvent(new CustomEvent('bookmark-manager:bookmarks-changed'));
+          });
           res(updated);
         }
       });
@@ -89,11 +105,26 @@ const BookmarkModals = (()=>{
         if (chrome.runtime.lastError) reject(chrome.runtime.lastError); else res(node);
       });
     }));
-    return Promise.all(creates);
+    const nodes = await Promise.all(creates);
+    if (nodes.length > 0) {
+      const label = nodes.length === 1 ? '1 tab added' : `${nodes.length} tabs added`;
+      UndoService.show(label, async () => {
+        await Promise.all(nodes.map(n => BookmarksService.removeBookmark(n.id)));
+        window.dispatchEvent(new CustomEvent('bookmark-manager:bookmarks-changed'));
+      });
+    }
+    return nodes;
   }
 
   async function editFolder(folderId){
     const info = await BookmarksService.getBookmark(folderId);
+    const oldTitle = info.title;
+    // Capture old customization for undo
+    let oldCustomization = null;
+    if (typeof FolderCustomizationService !== 'undefined') {
+      try { oldCustomization = await FolderCustomizationService.get(folderId) || null; } catch(e) {}
+    }
+
     const data = await Modal.openFolderForm({ title: info.title, folderId: folderId });
     if (!data) return null;
     
@@ -109,6 +140,22 @@ const BookmarkModals = (()=>{
       chrome.bookmarks.update(folderId, { title: data.title }, updated=>{
         if (chrome.runtime.lastError) reject(chrome.runtime.lastError); else res(updated);
       });
+    });
+
+    UndoService.show('Folder updated', async () => {
+      await new Promise((r, rej) => {
+        chrome.bookmarks.update(folderId, { title: oldTitle }, n => {
+          if (chrome.runtime.lastError) rej(chrome.runtime.lastError); else r(n);
+        });
+      });
+      if (typeof FolderCustomizationService !== 'undefined') {
+        if (oldCustomization) {
+          await FolderCustomizationService.set(folderId, oldCustomization);
+        } else {
+          await FolderCustomizationService.remove(folderId);
+        }
+      }
+      window.dispatchEvent(new CustomEvent('bookmark-manager:bookmarks-changed'));
     });
 
     if (typeof window !== 'undefined') {
@@ -152,6 +199,10 @@ const BookmarkModals = (()=>{
             await TagsService.setTags(node.id, data.tags);
             console.log('[BookmarkModals] addBookmarkGlobal - tags saved successfully');
           }
+          UndoService.show('Bookmark added', async () => {
+            await BookmarksService.removeBookmark(node.id);
+            window.dispatchEvent(new CustomEvent('bookmark-manager:bookmarks-changed'));
+          });
           res(node);
         } catch (e) {
           console.error('[BookmarkModals] addBookmarkGlobal - error saving tags:', e);

@@ -184,6 +184,11 @@ const BookmarksService = (()=>{
       })();
       UndoService.show(message, async ()=>{
         try{ await restoreSnapshot(snapshot); }catch(e){ console.error('Undo restore failed', e); }
+        try{
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('bookmark-manager:bookmarks-changed'));
+          }
+        }catch(e){ console.warn('Failed to dispatch bookmarks refresh event after undo', e); }
         try{ const pid = await idPromise; if (pid) await UndoPersist.remove(pid); }catch(e){}
       }, 5000);
     }catch(e){ console.warn('Undo UI failed', e); }
