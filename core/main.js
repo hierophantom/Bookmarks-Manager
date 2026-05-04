@@ -193,17 +193,31 @@ document.addEventListener('DOMContentLoaded', async () => {
     return icon;
   }
 
-  function syncOfflineIndicator() {
+  function setOfflineIndicator(isOffline) {
     if (!offlineIndicator) return;
-    const isOffline = typeof navigator !== 'undefined' && navigator.onLine === false;
     offlineIndicator.hidden = !isOffline;
     // Defensive explicit display override in case a component style forces display.
     offlineIndicator.style.display = isOffline ? 'inline-flex' : 'none';
   }
 
+  function syncOfflineIndicator() {
+    if (typeof navigator === 'undefined') {
+      setOfflineIndicator(false);
+      return;
+    }
+
+    // Show indicator only if navigator.onLine is definitively false
+    // Hide if it's true or any other truthy value
+    const isOffline = navigator.onLine === false;
+    setOfflineIndicator(isOffline);
+  }
+
+  // Check initial state on page load
   syncOfflineIndicator();
+  // Listen for online/offline transitions
   window.addEventListener('online', syncOfflineIndicator);
   window.addEventListener('offline', syncOfflineIndicator);
+  // Re-check on focus and visibility change to catch transitions
   window.addEventListener('focus', syncOfflineIndicator);
   document.addEventListener('visibilitychange', syncOfflineIndicator);
 
