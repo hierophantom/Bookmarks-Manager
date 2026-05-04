@@ -10,10 +10,19 @@
     "128": "assets/icons/icon-128.png"
   },
   "permissions": ["bookmarks", "tabs", "tabGroups", "storage", "history", "topSites"],
+  "host_permissions": ["<all_urls>"],
   "background": {
     "service_worker": "service-search-engine/bridge.js",
     "type": "module"
   },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["service-search-engine/content-overlay.js"],
+      "run_at": "document_start",
+      "all_frames": false
+    }
+  ],
   "chrome_url_overrides": {
     "newtab": "core/main.html"
   },

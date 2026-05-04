@@ -101,6 +101,13 @@ function init() {
     });
   }
 
+  // Listen for keyboard shortcut command
+  chrome.commands.onCommand.addListener(async (command) => {
+    if (command === 'toggle-search') {
+      handleToggleCommand();
+    }
+  });
+
   chrome.action.onClicked.addListener(async (tab) => {
     try {
       if (await toggleMainOverlayInTab(tab)) {
@@ -188,7 +195,13 @@ async function handleToggleCommand() {
     return;
   }
 
-  console.log('[Bridge] Non-extension page - skipping toggle');
+  // Try to toggle overlay on HTML page via content script
+  try {
+    await sendMessageToTab(tab.id, { type: 'TOGGLE_OVERLAY' });
+    console.log('[Bridge] Sent toggle message to content script');
+  } catch (error) {
+    console.warn('[Bridge] Could not send toggle message to content script:', error);
+  }
 }
 
 /**

@@ -107,20 +107,23 @@ export class SearchEngine {
     const results = {};
     const normalizedQuery = query.toLowerCase().trim();
 
-    // Search each source
-    const [bookmarks, history, tabs, tags, chromeSettings] = await Promise.all([
-      this.searchBookmarks(normalizedQuery),
-      this.searchHistory(normalizedQuery),
-      this.searchTabs(normalizedQuery),
-      this.searchTags(normalizedQuery),
-      this.searchChromeSettings(normalizedQuery)
-    ]);
+    // BMG-239: After 3 characters, show results only from saved bookmarks
+    if (normalizedQuery.length < 3) {
+      // Before 3 characters, show top 5 recent from each source
+      const [bookmarks, history, tabs] = await Promise.all([
+        this.searchBookmarks(normalizedQuery),
+        this.searchHistory(normalizedQuery),
+        this.searchTabs(normalizedQuery)
+      ]);
 
-    if (bookmarks.length > 0) results.Bookmarks = bookmarks;
-    if (tags.length > 0) results.Tags = tags;
-    if (history.length > 0) results.History = history;
-    if (tabs.length > 0) results.Tabs = tabs;
-    if (chromeSettings.length > 0) results['Chrome Settings'] = chromeSettings;
+      if (bookmarks.length > 0) results.Bookmarks = bookmarks.slice(0, 5);
+      if (history.length > 0) results.History = history.slice(0, 5);
+      if (tabs.length > 0) results.Tabs = tabs.slice(0, 5);
+    } else {
+      // 3+ characters: show results from bookmarks only
+      const bookmarks = await this.searchBookmarks(normalizedQuery);
+      if (bookmarks.length > 0) results.Bookmarks = bookmarks;
+    }
 
     // Always include relevant actions
     results.Actions = await this.getActions(query, context);
