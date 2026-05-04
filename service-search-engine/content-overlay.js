@@ -1,648 +1,410 @@
 /**
- * Content Script - Handles overlay injection on regular HTML pages
- * Communicates with background service worker for search and actions
+ * Content Overlay - Compact bookmark search popup for HTML pages
+ * Design: BMG-239 (Figma node 317:10241)
+ * 300px dropdown panel, no backdrop, top-right position
  */
 
 class ContentOverlay {
   constructor() {
     this.isOpen = false;
     this.selectedIndex = -1;
-    this.currentResults = {};
-    this.resultItems = [];
+    this.flatItems = [];
     this.lastQuery = '';
     this.searchDebounceTimer = null;
     this.searchDebounceMs = 180;
     this.searchRequestId = 0;
-    this.resultsAnimationFrame = null;
   }
 
-  /**
-   * Initialize overlay - called when content script loads
-   */
   async init() {
-    console.log('[ContentOverlay] Initializing');
-
-    // Inject overlay HTML
-    this.injectOverlay();
-
-    // Setup UI elements
+    this.injectStyles();
+    this.injectPanel();
     this.setupUI();
-
-    // Setup keyboard listeners
     this.setupKeyboardListeners();
 
-    // Setup styles
-    this.injectStyles();
-
-    // Listen for toggle messages from background
     chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       if (request.type === 'TOGGLE_OVERLAY') {
         this.toggle();
         sendResponse({ success: true });
       }
     });
-
-    console.log('[ContentOverlay] Initialization complete');
   }
 
-  /**
-   * Inject overlay HTML into DOM
-   */
-  injectOverlay() {
-    if (document.getElementById('bm-content-overlay')) {
-      return; // Already injected
-    }
+  injectPanel() {
+    if (document.getElementById('bm-popup')) return;
 
-    const overlay = document.createElement('div');
-    overlay.id = 'bm-content-overlay';
-    overlay.innerHTML = `
-      <div class="bm-overlay-backdrop" id="bm-overlay-backdrop"></div>
-      <div class="bm-overlay-modal" id="bm-overlay-modal">
-        <div class="bm-search-wrapper">
-          <input 
-            type="text" 
-            id="bm-search-input" 
-            class="bm-search-input" 
-            placeholder="Search bookmarks, history, tabs..."
-            autocomplete="off"
-          />
-        </div>
-        <div class="bm-results-container" id="bm-results-container">
-          <div class="bm-loading" id="bm-loading" style="display: none;">
-            <div class="bm-spinner"></div>
-            Searching...
-          </div>
-          <div class="bm-results" id="bm-results"></div>
-          <div class="bm-empty-state" id="bm-empty-state" style="display: none;">
-            <p>No results found</p>
-          </div>
-        </div>
-      </div>
+    const panel = document.createElement('div');
+    panel.id = 'bm-popup';
+    panel.innerHTML = `
+      <input
+        id="bm-popup-input"
+        type="text"
+        placeholder="Search bookmarks"
+        autocomplete="off"
+        spellcheck="false"
+      />
+      <p id="bm-popup-label" class="bm-popup-label"></p>
+      <div id="bm-popup-results"></div>
+      <button id="bm-popup-footer" class="bm-popup-footer">
+        Go to Journey
+      </button>
     `;
-    
-    document.body.appendChild(overlay);
-    console.log('[ContentOverlay] HTML injected');
+
+    document.documentElement.appendChild(panel);
   }
 
-  /**
-   * Setup UI references and event handlers
-   */
   setupUI() {
-    this.elements = {
-      overlay: document.getElementById('bm-content-overlay'),
-      modal: document.getElementById('bm-overlay-modal'),
-      backdrop: document.getElementById('bm-overlay-backdrop'),
-      input: document.getElementById('bm-search-input'),
-      loading: document.getElementById('bm-loading'),
-      results: document.getElementById('bm-results'),
-      empty: document.getElementById('bm-empty-state')
+    this.el = {
+      panel: document.getElementById('bm-popup'),
+      input: document.getElementById('bm-popup-input'),
+      label: document.getElementById('bm-popup-label'),
+      results: document.getElementById('bm-popup-results'),
+      footer: document.getElementById('bm-popup-footer'),
     };
 
-    // Backdrop click to close
-    this.elements.backdrop.addEventListener('click', () => this.close());
-
-    // Search input
-    this.elements.input.addEventListener('input', (e) => {
-      const value = e.target.value || '';
-      this.scheduleSearch(value);
+    this.el.input.addEventListener('input', (e) => {
+      this.scheduleSearch(e.target.value || '');
     });
 
-    // Prevent modal click from closing
-    this.elements.modal.addEventListener('click', (e) => e.stopPropagation());
-
-    // Event delegation for result clicks
-    if (this.elements.results) {
-      this.elements.results.addEventListener('click', (e) => {
-        const resultItem = e.target.closest('.bm-result-item');
-        if (resultItem) {
-          const matchingResult = this.resultItems.find(r => r.element === resultItem);
-          if (matchingResult) {
-            console.log('[ContentOverlay] Result clicked:', matchingResult.item.id);
-            this.executeResult(matchingResult.item);
-          }
-          return;
+    this.el.results.addEventListener('click', (e) => {
+      const item = e.target.closest('.bm-popup-item');
+      if (item) {
+        const idx = parseInt(item.dataset.idx, 10);
+        if (!isNaN(idx) && this.flatItems[idx]) {
+          this.execute(this.flatItems[idx]);
         }
-      });
-    }
-
-    console.log('[ContentOverlay] UI setup complete');
-  }
-
-  /**
-   * Setup keyboard shortcuts
-   */
-  setupKeyboardListeners() {
-    // Cmd+Shift+E to toggle overlay
-    document.addEventListener('keydown', (e) => {
-      const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
-      const isToggleShortcut = isMac ? 
-        (e.metaKey && e.shiftKey && e.key === 'e') :
-        (e.ctrlKey && e.shiftKey && e.key === 'e');
-
-      if (isToggleShortcut) {
-        e.preventDefault();
-        this.toggle();
       }
     });
 
-    // Escape to close
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && this.isOpen) {
+    this.el.results.addEventListener('mouseover', (e) => {
+      const item = e.target.closest('.bm-popup-item');
+      if (item) {
+        const idx = parseInt(item.dataset.idx, 10);
+        if (!isNaN(idx)) this.setSelected(idx);
+      }
+    });
+
+    this.el.footer.addEventListener('click', () => {
+      chrome.runtime.sendMessage({ type: 'OPEN_MAIN_PAGE' });
+      this.close();
+    });
+
+    // Click outside to close
+    document.addEventListener('click', (e) => {
+      if (this.isOpen && !this.el.panel.contains(e.target)) {
         this.close();
       }
-    });
+    }, true);
+  }
 
-    // Arrow keys for navigation
+  setupKeyboardListeners() {
     document.addEventListener('keydown', (e) => {
+      const isMac = navigator.platform.toUpperCase().includes('MAC');
+      const isToggle = isMac
+        ? e.metaKey && e.shiftKey && e.key.toLowerCase() === 'e'
+        : e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'e';
+
+      if (isToggle) {
+        e.preventDefault();
+        this.toggle();
+        return;
+      }
+
       if (!this.isOpen) return;
 
-      if (e.key === 'ArrowDown') {
+      if (e.key === 'Escape') {
         e.preventDefault();
-        this.selectNext();
+        this.close();
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        this.setSelected(Math.min(this.selectedIndex + 1, this.flatItems.length - 1));
       } else if (e.key === 'ArrowUp') {
         e.preventDefault();
-        this.selectPrev();
+        this.setSelected(Math.max(this.selectedIndex - 1, 0));
       } else if (e.key === 'Enter') {
-        if (this.selectedIndex < 0 && document.activeElement === this.elements.input) {
-          e.preventDefault();
-          return;
-        }
         e.preventDefault();
-        this.executeSelected();
+        if (this.selectedIndex >= 0 && this.flatItems[this.selectedIndex]) {
+          this.execute(this.flatItems[this.selectedIndex]);
+        }
       }
-    });
-
-    console.log('[ContentOverlay] Keyboard listeners setup');
+    }, true);
   }
 
   scheduleSearch(query) {
     this.lastQuery = query;
-
-    if (this.searchDebounceTimer) {
-      clearTimeout(this.searchDebounceTimer);
-    }
-
+    clearTimeout(this.searchDebounceTimer);
     this.searchDebounceTimer = setTimeout(() => {
-      this.searchDebounceTimer = null;
       this.handleSearch(query);
     }, this.searchDebounceMs);
   }
 
-  /**
-   * Handle search input - delegates to background service worker
-   */
   async handleSearch(query) {
-    console.log('[ContentOverlay] Searching:', query);
     const requestId = ++this.searchRequestId;
 
     try {
-      // Send search request to background service worker
-      const response = await chrome.runtime.sendMessage({
-        type: 'SEARCH',
-        query: query
-      });
-
-      if (requestId !== this.searchRequestId) {
-        return;
-      }
-
-      if (!response.success) {
-        console.error('[ContentOverlay] Search failed:', response.error);
-        this.showEmpty();
-        return;
-      }
-
-      this.currentResults = response.results;
-
-      console.log('[ContentOverlay] Results:', Object.keys(this.currentResults));
-      this.displayResults();
-    } catch (error) {
-      if (requestId !== this.searchRequestId) {
-        return;
-      }
-      console.error('[ContentOverlay] Search error:', error);
-      this.showEmpty();
+      const response = await chrome.runtime.sendMessage({ type: 'SEARCH', query });
+      if (requestId !== this.searchRequestId) return;
+      if (!response?.success) { this.renderEmpty(); return; }
+      this.renderResults(response.results, query);
+    } catch {
+      if (requestId !== this.searchRequestId) return;
+      this.renderEmpty();
     }
   }
 
-  /**
-   * Display results
-   */
-  displayResults() {
-    const resultsHtml = this.buildResultsHtml();
-    this.elements.results.innerHTML = resultsHtml;
-    this.hideLoading();
+  renderResults(results, query) {
+    this.flatItems = [];
+    this.selectedIndex = -1;
 
-    // Find all result items for keyboard navigation
-    this.resultItems = [];
-    this.elements.results.querySelectorAll('.bm-result-item').forEach((element) => {
-      const dataId = element.getAttribute('data-id');
-      const dataCategory = element.getAttribute('data-category');
-      
-      // Find the original item in currentResults
-      const category = this.currentResults[dataCategory];
-      if (category && Array.isArray(category)) {
-        const item = category.find(r => r.id === dataId);
-        if (item) {
-          this.resultItems.push({ element, item });
-        }
+    const isEmpty = !results || Object.keys(results).every(k => !results[k]?.length);
+    if (isEmpty) { this.renderEmpty(); return; }
+
+    const isDefaultView = !query || query.trim() === '';
+    let labelText = 'Results';
+    if (isDefaultView) {
+      labelText = results['Quick Links']?.length ? 'From quick links' : 'From history';
+    }
+    this.el.label.textContent = labelText;
+    this.el.label.style.display = 'block';
+
+    const allItems = [];
+    ['Quick Links', 'Bookmarks', 'History', 'Tabs', 'Actions'].forEach(cat => {
+      if (results[cat]?.length) results[cat].forEach(item => allItems.push(item));
+    });
+    Object.keys(results).forEach(cat => {
+      if (!['Quick Links', 'Bookmarks', 'History', 'Tabs', 'Actions'].includes(cat) && results[cat]?.length) {
+        results[cat].forEach(item => allItems.push(item));
       }
     });
 
-    if (this.resultItems.length === 0) {
-      this.showEmpty();
-    } else {
-      this.clearSelection();
-    }
-  }
+    const visible = allItems.slice(0, 5);
+    this.flatItems = visible;
 
-  /**
-   * Build HTML for results
-   */
-  buildResultsHtml() {
-    if (!this.currentResults || Object.keys(this.currentResults).length === 0) {
-      return '';
-    }
-
-    let html = '';
-
-    Object.entries(this.currentResults).forEach(([category, items]) => {
-      if (!Array.isArray(items) || items.length === 0) {
-        return;
-      }
-
-      html += `<div class="bm-result-category">${this.escapeHtml(category)}</div>`;
-
-      items.forEach((item) => {
-        html += this.createResultItemHtml(item, category);
-      });
-    });
-
-    return html;
-  }
-
-  /**
-   * Create HTML for a single result item
-   */
-  createResultItemHtml(item, category) {
-    const icon = item.icon || '📄';
-    const title = this.escapeHtml(item.title || '');
-    const description = this.escapeHtml(item.description || '');
-
-    return `
-      <div class="bm-result-item" data-id="${this.escapeHtml(item.id)}" data-category="${this.escapeHtml(category)}">
-        <div class="bm-result-icon">${icon}</div>
-        <div class="bm-result-content">
-          <div class="bm-result-title">${title}</div>
-          ${description ? `<div class="bm-result-description">${description}</div>` : ''}
+    this.el.results.innerHTML = visible.map((item, i) => {
+      const faviconUrl = item.url ? this.getFaviconUrl(item.url) : '';
+      const faviconHtml = faviconUrl
+        ? `<img class="bm-popup-favicon" src="${faviconUrl}" width="24" height="24" alt="" onerror="this.style.display='none';" />`
+        : `<span class="bm-popup-favicon-placeholder"></span>`;
+      const title = this.escapeHtml(item.title || item.url || 'Untitled');
+      return `
+        <div class="bm-popup-item${i === 0 ? ' bm-popup-item--selected' : ''}" data-idx="${i}">
+          ${faviconHtml}
+          <span class="bm-popup-item-title">${title}</span>
         </div>
-      </div>
-    `;
+      `;
+    }).join('');
+
+    if (visible.length > 0) this.selectedIndex = 0;
   }
 
-  /**
-   * Execute a result item - delegates to background service worker
-   */
-  async executeResult(item) {
-    console.log('[ContentOverlay] Executing result:', item.id, item.type);
+  renderEmpty() {
+    this.flatItems = [];
+    this.selectedIndex = -1;
+    this.el.label.textContent = 'Results';
+    this.el.label.style.display = 'block';
+    this.el.results.innerHTML = `<p class="bm-popup-no-results">No matching results</p>`;
+  }
 
+  setSelected(idx) {
+    this.selectedIndex = idx;
+    this.el.results.querySelectorAll('.bm-popup-item').forEach((el, i) => {
+      el.classList.toggle('bm-popup-item--selected', i === idx);
+    });
+  }
+
+  async execute(item) {
     try {
-      // Format message according to what bridge expects
-      const message = {
+      await chrome.runtime.sendMessage({
         type: 'EXECUTE_RESULT',
         resultType: item.type,
         resultId: item.id,
-        metadata: {
-          url: item.url,
-          tabId: item.tabId,
-          title: item.title,
-          description: item.description
-        }
-      };
-
-      // Send execution request to background service worker
-      const response = await chrome.runtime.sendMessage(message);
-
-      if (response.success) {
-        // Close overlay after successful execution
-        this.close();
-      } else {
-        console.error('[ContentOverlay] Execute failed:', response.error);
-      }
-    } catch (error) {
-      console.error('[ContentOverlay] Execute error:', error);
-    }
-  }
-
-  /**
-   * Navigation helpers
-   */
-  selectNext() {
-    if (this.resultItems.length === 0) return;
-    this.selectedIndex = (this.selectedIndex + 1) % this.resultItems.length;
-    this.updateSelection();
-  }
-
-  selectPrev() {
-    if (this.resultItems.length === 0) return;
-    this.selectedIndex = this.selectedIndex - 1;
-    if (this.selectedIndex < 0) {
-      this.selectedIndex = this.resultItems.length - 1;
-    }
-    this.updateSelection();
-  }
-
-  updateSelection() {
-    this.resultItems.forEach((r, i) => {
-      if (i === this.selectedIndex) {
-        r.element.classList.add('bm-selected');
-        r.element.scrollIntoView({ block: 'nearest' });
-      } else {
-        r.element.classList.remove('bm-selected');
-      }
-    });
-  }
-
-  clearSelection() {
-    this.selectedIndex = -1;
-    this.resultItems.forEach(r => r.element.classList.remove('bm-selected'));
-  }
-
-  executeSelected() {
-    if (this.selectedIndex >= 0 && this.resultItems[this.selectedIndex]) {
-      this.executeResult(this.resultItems[this.selectedIndex].item);
-    }
-  }
-
-  /**
-   * Visibility control
-   */
-  toggle() {
-    if (this.isOpen) {
+        metadata: { url: item.url, tabId: item.tabId, title: item.title }
+      });
       this.close();
-    } else {
-      this.open();
+    } catch (e) {
+      console.error('[ContentOverlay] Execute error:', e);
     }
   }
+
+  toggle() { this.isOpen ? this.close() : this.open(); }
 
   open() {
-    console.log('[ContentOverlay] Opening');
     this.isOpen = true;
-    this.elements.overlay.style.display = 'flex';
-    this.elements.input.focus();
-    this.elements.input.value = '';
+    this.el.panel.style.display = 'flex';
+    this.el.input.value = '';
+    this.el.label.textContent = '';
+    this.el.results.innerHTML = '';
+    this.el.input.focus();
     this.scheduleSearch('');
   }
 
   close() {
-    console.log('[ContentOverlay] Closing');
     this.isOpen = false;
-    if (this.searchDebounceTimer) {
-      clearTimeout(this.searchDebounceTimer);
-      this.searchDebounceTimer = null;
+    this.el.panel.style.display = 'none';
+    this.searchRequestId++;
+    clearTimeout(this.searchDebounceTimer);
+  }
+
+  getFaviconUrl(url) {
+    try {
+      const domain = new URL(url).hostname;
+      return `https://www.google.com/s2/favicons?domain=${domain}&sz=24`;
+    } catch {
+      return '';
     }
-    if (this.resultsAnimationFrame) {
-      cancelAnimationFrame(this.resultsAnimationFrame);
-      this.resultsAnimationFrame = null;
-    }
-    this.searchRequestId += 1;
-    this.elements.overlay.style.display = 'none';
   }
 
-  showLoading() {
-    this.elements.loading.style.display = 'flex';
-    this.elements.results.innerHTML = '';
-    this.elements.empty.style.display = 'none';
-  }
-
-  hideLoading() {
-    this.elements.loading.style.display = 'none';
-  }
-
-  showEmpty() {
-    this.elements.empty.style.display = 'block';
-    this.elements.results.innerHTML = '';
-  }
-
-  /**
-   * Utility
-   */
   escapeHtml(text) {
     if (!text) return '';
-    const map = {
-      '&': '&amp;',
-      '<': '&lt;',
-      '>': '&gt;',
-      '"': '&quot;',
-      "'": '&#039;'
-    };
-    return text.replace(/[&<>"']/g, m => map[m]);
+    return text
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#039;');
   }
 
-  /**
-   * Inject styles
-   */
   injectStyles() {
-    if (document.getElementById('bm-content-overlay-styles')) return;
+    if (document.getElementById('bm-popup-styles')) return;
 
     const style = document.createElement('style');
-    style.id = 'bm-content-overlay-styles';
+    style.id = 'bm-popup-styles';
     style.textContent = `
-      #bm-content-overlay {
+      #bm-popup {
         display: none;
         position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        z-index: 999999;
+        top: 80px;
+        right: 20px;
+        z-index: 2147483647;
+        width: 300px;
         flex-direction: column;
-        align-items: center;
-        justify-content: flex-start;
-        padding-top: 100px;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      }
-
-      .bm-overlay-backdrop {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(0, 0, 0, 0.5);
-        backdrop-filter: blur(4px);
-      }
-
-      .bm-overlay-modal {
-        position: relative;
-        z-index: 1;
-        width: 600px;
-        max-width: 90vw;
-        max-height: 70vh;
-        background: white;
-        border-radius: 12px;
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-        display: flex;
-        flex-direction: column;
+        gap: 10px;
+        padding: 16px;
+        padding-bottom: 56px;
+        background: rgba(255, 255, 255, 0.92);
+        border: 1px solid rgba(0, 0, 0, 0.4);
+        border-radius: 8px;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.18);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        font-family: 'Lato', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         overflow: hidden;
+        box-sizing: border-box;
       }
 
-      .bm-search-wrapper {
-        display: flex;
-        flex-direction: column;
-        align-items: stretch;
-        gap: 6px;
-        padding: 12px 12px 0 12px;
-      }
-
-      .bm-search-input {
-        flex: 1;
-        padding: 12px 14px;
-        border: 1px solid #e5e7eb;
-        border-radius: 10px;
+      #bm-popup-input {
+        all: unset;
+        display: block;
+        width: 100%;
+        box-sizing: border-box;
+        height: 36px;
+        padding: 8px 12px;
+        background: rgba(46, 51, 185, 0.4);
+        border-radius: 4px;
         font-size: 16px;
-        outline: none;
-        background: #f9fafb;
-      }
-
-      .bm-search-input::placeholder {
-        color: #999;
-      }
-
-      .bm-results-container {
-        flex: 1;
-        overflow-y: auto;
-        display: flex;
-        flex-direction: column;
-      }
-
-      .bm-loading {
-        display: none;
-        flex: 1;
-        align-items: center;
-        justify-content: center;
-        gap: 12px;
-        color: #666;
-      }
-
-      .bm-spinner {
-        width: 16px;
-        height: 16px;
-        border: 2px solid #ddd;
-        border-top-color: #666;
-        border-radius: 50%;
-        animation: spin 0.6s linear infinite;
-      }
-
-      @keyframes spin {
-        to { transform: rotate(360deg); }
-      }
-
-      .bm-empty-state {
-        display: none;
-        flex: 1;
-        align-items: center;
-        justify-content: center;
-        color: #999;
-        font-size: 14px;
-      }
-
-      .bm-results {
-        flex: 1;
-        opacity: 1;
-        transform: translateY(0);
-        transition: opacity 0.18s ease, transform 0.22s ease;
-        will-change: opacity, transform;
-      }
-
-      .bm-results.bm-results--pre-enter {
-        opacity: 0;
-        transform: translateY(8px);
-      }
-
-      .bm-results.bm-results--animate-in {
-        opacity: 1;
-        transform: translateY(0);
-      }
-
-      .bm-result-category {
-        padding: 8px 16px;
-        font-size: 12px;
-        font-weight: 600;
-        color: #999;
-        text-transform: uppercase;
-        background: #f9f9f9;
-        border-bottom: 1px solid #eee;
-        margin-top: 8px;
-      }
-
-      .bm-result-category:first-child {
-        margin-top: 0;
-      }
-
-      .bm-result-item {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 12px 16px;
-        cursor: pointer;
-        border-bottom: 1px solid #f0f0f0;
-        transition: background 0.2s;
-      }
-
-      .bm-result-item:hover,
-      .bm-result-item.bm-selected {
-        background: #f5f5f5;
-      }
-
-      .bm-result-icon {
-        font-size: 20px;
+        font-weight: 400;
+        color: rgba(255, 255, 255, 0.9);
+        line-height: 1;
         flex-shrink: 0;
       }
 
-      .bm-result-favicon {
-        width: 20px;
-        height: 20px;
-        border-radius: 3px;
-        object-fit: contain;
+      #bm-popup-input::placeholder {
+        color: rgba(255, 255, 255, 0.7);
       }
 
-      .bm-result-content {
-        flex: 1;
+      .bm-popup-label {
+        all: unset;
+        display: block;
+        font-size: 12px;
+        font-weight: 300;
+        color: rgba(0, 0, 0, 0.6);
+        line-height: 1;
+        flex-shrink: 0;
+      }
+
+      #bm-popup-results {
+        display: flex;
+        flex-direction: column;
+        flex-shrink: 0;
+      }
+
+      .bm-popup-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px;
+        border-radius: 4px;
+        cursor: pointer;
+        min-height: 40px;
+        box-sizing: border-box;
+      }
+
+      .bm-popup-item:hover,
+      .bm-popup-item--selected {
+        background: rgba(46, 51, 185, 0.6);
+      }
+
+      .bm-popup-item:hover .bm-popup-item-title,
+      .bm-popup-item--selected .bm-popup-item-title {
+        color: rgba(255, 255, 255, 0.9);
+      }
+
+      .bm-popup-item-title {
+        font-size: 16px;
+        font-weight: 400;
+        color: rgba(0, 0, 0, 0.8);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        line-height: 1;
         min-width: 0;
       }
 
-      .bm-result-title {
-        font-weight: 500;
-        color: #333;
-        white-space: nowrap;
-        text-overflow: ellipsis;
-        overflow: hidden;
-      }
-
-      .bm-result-description {
-        font-size: 12px;
-        color: #666;
-        white-space: nowrap;
-        text-overflow: ellipsis;
-        overflow: hidden;
-      }
-
-      .bm-results::-webkit-scrollbar {
-        width: 8px;
-      }
-
-      .bm-results::-webkit-scrollbar-track {
-        background: transparent;
-      }
-
-      .bm-results::-webkit-scrollbar-thumb {
-        background: #ccc;
+      .bm-popup-favicon {
+        width: 24px;
+        height: 24px;
         border-radius: 4px;
+        flex-shrink: 0;
+        object-fit: contain;
       }
 
-      .bm-results::-webkit-scrollbar-thumb:hover {
-        background: #999;
+      .bm-popup-favicon-placeholder {
+        display: inline-block;
+        width: 24px;
+        height: 24px;
+        border-radius: 4px;
+        flex-shrink: 0;
+        background: rgba(0, 0, 0, 0.1);
+      }
+
+      .bm-popup-no-results {
+        all: unset;
+        display: block;
+        text-align: center;
+        padding: 20px 0;
+        font-size: 14px;
+        color: rgba(0, 0, 0, 0.4);
+        width: 100%;
+      }
+
+      .bm-popup-footer {
+        all: unset;
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 11px 40px;
+        background: #e8e8e9;
+        border-top: 1px solid rgba(0, 0, 0, 0.15);
+        font-size: 16px;
+        font-weight: 400;
+        color: rgba(0, 0, 0, 0.8);
+        cursor: pointer;
+        white-space: nowrap;
+        box-sizing: border-box;
+      }
+
+      .bm-popup-footer:hover {
+        background: #dddde0;
       }
     `;
 
@@ -650,13 +412,11 @@ class ContentOverlay {
   }
 }
 
-// Auto-initialize when DOM is ready
 function initContentOverlay() {
   if (window.__bmContentOverlay) return;
-  
   const overlay = new ContentOverlay();
   window.__bmContentOverlay = overlay;
-  
+
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => overlay.init());
   } else {

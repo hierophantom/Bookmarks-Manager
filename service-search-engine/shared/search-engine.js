@@ -133,22 +133,65 @@ export class SearchEngine {
 
   /**
    * Get default results when query is empty
+   * For content overlay: returns 'Quick Links' if the section is visible, else 'History'
    */
   async getDefaultResults(context) {
-    const [bookmarks, tabs, history, chromeSettings] = await Promise.all([
-      this.searchBookmarks(''),
-      this.searchTabs(''),
-      this.searchHistory(''),
-      this.searchChromeSettings('')
+    const [history] = await Promise.all([
+      this.searchHistory('')
     ]);
 
-    return {
-      Actions: await this.getActions('', context),
-      Bookmarks: bookmarks.slice(0, 5),
-      Tabs: tabs,
-      History: history.slice(0, 5), // Limit to 5 recent
-      'Chrome Settings': chromeSettings
-    };
+    // Check if quick-links section is enabled in storage
+    let quickLinksVisible = false;
+    try {
+      const data = await chrome.storage.local.get('homePageSections');
+      const sections = data?.homePageSections;
+      if (Array.isArray(sections)) {
+        const qlSection = sections.find(s => s.id === 'quick-links');
+        quickLinksVisible = qlSection ? qlSection.visible !== false : true;
+      } else {
+        quickLinksVisible = true; // default on
+      }
+    } catch {
+      quickLinksVisible = true;
+    }
+
+    if (quickLinksVisible) {
+      // Load quick link bookmarks from storage slots
+      const quickLinks = await this.getQuickLinks();
+      if (quickLinks.length > 0) {
+        return { 'Quick Links': quickLinks.slice(0, 5) };
+      }
+    }
+
+    // Fallback to recent history
+    return { History: history.slice(0, 5) };
+  }
+
+  /**
+   * Load bookmarks stored in quick link slots
+   */
+  async getQuickLinks() {
+    try {
+      const data = await chrome.storage.local.get('bookmarkWidgetSlots');
+      const slots = data?.bookmarkWidgetSlots;
+      if (!Array.isArray(slots)) return [];
+
+      const results = [];
+      for (const slot of slots) {
+        if (!slot?.url) continue;
+        if (!this.isSearchableUrl(slot.url)) continue;
+        results.push({
+          id: `quicklink-${slot.id || slot.url}`,
+          type: 'bookmark',
+          title: slot.title || slot.url,
+          url: slot.url,
+          icon: '🔖'
+        });
+      }
+      return results;
+    } catch {
+      return [];
+    }
   }
 
   /**
