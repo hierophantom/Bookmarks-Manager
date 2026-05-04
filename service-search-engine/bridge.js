@@ -168,39 +168,31 @@ async function openOrFocusMainPage(options = {}) {
 
 
 /**
- * Handle keyboard shortcut
+ * Handle keyboard shortcut — opens the native toolbar popup
  */
 async function handleToggleCommand() {
   console.log('[Bridge] Toggle command received');
 
+  // First check if the current tab is the main Journey new tab page
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  if (!tab) {
-    console.warn('[Bridge] No active tab');
-    return;
-  }
-
-  console.log('[Bridge] Active tab:', tab.id, tab.url);
-
-  try {
-    if (await toggleMainOverlayInTab(tab)) {
-      return;
+  if (tab) {
+    try {
+      if (await toggleMainOverlayInTab(tab)) {
+        return;
+      }
+    } catch (error) {
+      console.error('[Bridge] Toggle main overlay failed:', error);
     }
-  } catch (error) {
-    console.error('[Bridge] Toggle main overlay failed:', error);
-    return;
   }
 
-  if (tab.url.startsWith('chrome://')) {
-    console.log('[Bridge] Chrome page - skipping toggle');
-    return;
-  }
-
-  // Try to toggle overlay on HTML page via content script
+  // Open the native extension popup
   try {
-    await sendMessageToTab(tab.id, { type: 'TOGGLE_OVERLAY' });
-    console.log('[Bridge] Sent toggle message to content script');
+    await chrome.action.openPopup();
+    console.log('[Bridge] Opened extension popup');
   } catch (error) {
-    console.warn('[Bridge] Could not send toggle message to content script:', error);
+    // chrome.action.openPopup() requires user gesture in some Chrome versions;
+    // silently ignore — user can also click the toolbar icon directly.
+    console.warn('[Bridge] Could not open popup programmatically:', error.message);
   }
 }
 
@@ -217,11 +209,6 @@ function handleMessage(request, sender, sendResponse) {
 
     case 'EXECUTE_RESULT':
       handleExecuteResult(request, sender, sendResponse);
-      break;
-
-    case 'TOGGLE_OVERLAY_FROM_UI':
-      handleToggleCommand();
-      sendResponse({ success: true });
       break;
 
     case 'OPEN_MAIN_PAGE':

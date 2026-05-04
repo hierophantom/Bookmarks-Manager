@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Journey</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      html,
+      body {
+        width: 300px;
+        background: transparent;
+        font-family: 'Lato', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        overflow: hidden;
+      }
+
+      #bm-popup {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        padding: 16px;
+        padding-bottom: 56px;
+        background: rgba(255, 255, 255, 0.92);
+        border: 1px solid rgba(0, 0, 0, 0.4);
+        border-radius: 8px;
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        position: relative;
+        overflow: hidden;
+        min-height: 80px;
+      }
+
+      #bm-popup-input {
+        all: unset;
+        display: block;
+        width: 100%;
+        box-sizing: border-box;
+        height: 36px;
+        padding: 8px 12px;
+        background: rgba(46, 51, 185, 0.4);
+        border-radius: 4px;
+        font-size: 16px;
+        font-weight: 400;
+        color: rgba(255, 255, 255, 0.9);
+        line-height: 1;
+        flex-shrink: 0;
+      }
+
+      #bm-popup-input::placeholder {
+        color: rgba(255, 255, 255, 0.7);
+      }
+
+      .bm-popup-label {
+        display: block;
+        font-size: 12px;
+        font-weight: 300;
+        color: rgba(0, 0, 0, 0.6);
+        line-height: 1;
+        flex-shrink: 0;
+      }
+
+      #bm-popup-results {
+        display: flex;
+        flex-direction: column;
+        flex-shrink: 0;
+      }
+
+      .bm-popup-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px;
+        border-radius: 4px;
+        cursor: pointer;
+        min-height: 40px;
+        box-sizing: border-box;
+      }
+
+      .bm-popup-item:hover,
+      .bm-popup-item--selected {
+        background: rgba(46, 51, 185, 0.6);
+      }
+
+      .bm-popup-item:hover .bm-popup-item-title,
+      .bm-popup-item--selected .bm-popup-item-title {
+        color: rgba(255, 255, 255, 0.9);
+      }
+
+      .bm-popup-item-title {
+        font-size: 16px;
+        font-weight: 400;
+        color: rgba(0, 0, 0, 0.8);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        line-height: 1;
+        min-width: 0;
+      }
+
+      .bm-popup-favicon {
+        width: 24px;
+        height: 24px;
+        border-radius: 4px;
+        flex-shrink: 0;
+        object-fit: contain;
+      }
+
+      .bm-popup-favicon-placeholder {
+        display: inline-block;
+        width: 24px;
+        height: 24px;
+        border-radius: 4px;
+        flex-shrink: 0;
+        background: rgba(0, 0, 0, 0.1);
+      }
+
+      .bm-popup-no-results {
+        display: block;
+        text-align: center;
+        padding: 20px 0;
+        font-size: 14px;
+        color: rgba(0, 0, 0, 0.4);
+        width: 100%;
+      }
+
+      #bm-popup-footer {
+        all: unset;
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 11px 40px;
+        background: #e8e8e9;
+        border-top: 1px solid rgba(0, 0, 0, 0.15);
+        font-size: 16px;
+        font-weight: 400;
+        color: rgba(0, 0, 0, 0.8);
+        cursor: pointer;
+        white-space: nowrap;
+        box-sizing: border-box;
+      }
+
+      #bm-popup-footer:hover {
+        background: #dddde0;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="bm-popup">
+      <input
+        id="bm-popup-input"
+        type="text"
+        placeholder="Search bookmarks"
+        autocomplete="off"
+        spellcheck="false"
+      />
+      <p id="bm-popup-label" class="bm-popup-label" style="display: none;"></p>
+      <div id="bm-popup-results"></div>
+      <button id="bm-popup-footer">Go to Journey</button>
+    </div>
+    <script src="popup.js"></script>
+  </body>
+</html>
