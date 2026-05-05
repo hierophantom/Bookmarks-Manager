@@ -3049,9 +3049,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         openContextMenu(event, [
           {
             label: 'Open',
-            icon: 'arrow_outward',
+            icon: 'open_in_browser',
             onSelect: async () => {
-              await openBookmarkUrl(child.url);
+              if (!child.url) return;
+              try {
+                const currentTab = await chrome.tabs.getCurrent();
+                if (currentTab && currentTab.id) {
+                  await chrome.tabs.update(currentTab.id, { url: child.url });
+                  return;
+                }
+              } catch (_error) {
+                // fallback
+              }
+              window.location.assign(child.url);
             }
           },
           {
