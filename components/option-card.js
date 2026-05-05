@@ -10,6 +10,7 @@ function createOptionCard(options = {}) {
     label = '',
     description = '',
     meta = '',
+    counter = null,
     swatches = [],
     leading = null,
     trailing = null,
@@ -69,6 +70,13 @@ function createOptionCard(options = {}) {
     metaEl.className = 'option-card__meta';
     metaEl.textContent = meta;
     card.appendChild(metaEl);
+  }
+
+  if (counter !== null && counter !== undefined) {
+    const counterEl = document.createElement('span');
+    counterEl.className = 'option-card__counter';
+    counterEl.textContent = String(counter);
+    card.appendChild(counterEl);
   }
 
   const trailingEl = buildOptionCardTrailing(trailing);
@@ -167,12 +175,35 @@ function updateOptionCardDescription(card, description) {
   }
 }
 
+function updateOptionCardCounter(card, counter) {
+  let counterEl = card.querySelector('.option-card__counter');
+
+  if (counter === null || counter === undefined) {
+    if (counterEl) counterEl.remove();
+    return;
+  }
+
+  if (!counterEl) {
+    counterEl = document.createElement('span');
+    counterEl.className = 'option-card__counter';
+    const trailing = card.querySelector('.option-card__trailing');
+    if (trailing) {
+      card.insertBefore(counterEl, trailing);
+    } else {
+      card.appendChild(counterEl);
+    }
+  }
+
+  counterEl.textContent = String(counter);
+}
+
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
     createOptionCard,
     setOptionCardSelected,
     setOptionCardDisabled,
     updateOptionCardLabel,
-    updateOptionCardDescription
+    updateOptionCardDescription,
+    updateOptionCardCounter
   };
 }
