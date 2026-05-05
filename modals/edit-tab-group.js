@@ -1,7 +1,7 @@
 /**
  * EditTabGroupModal
  * Shelf-style dialog for renaming a tab group and changing its color.
- * Uses createModal + showModal — same pattern as openFolderForm / openBookmarkForm.
+ * Uses createDialogModal + showModal — same pattern as openFolderForm / openBookmarkForm.
  */
 const EditTabGroupModal = (() => {
   const TAB_GROUP_COLORS = [
@@ -26,7 +26,7 @@ const EditTabGroupModal = (() => {
    * @returns {Promise<void>} Resolves when modal closes.
    */
   function show(group, focusField = 'name') {
-    if (typeof createModal !== 'function' || typeof showModal !== 'function') {
+    if (typeof createDialogModal !== 'function' || typeof showModal !== 'function') {
       if (typeof Modal !== 'undefined' && typeof Modal.openError === 'function') {
         Modal.openError({
           title: 'Edit tab group unavailable',
@@ -54,8 +54,8 @@ const EditTabGroupModal = (() => {
       nameLabel.setAttribute('for', 'edit-tab-group-name-input');
       nameLabel.textContent = 'Group name';
 
-      const nameFieldControl = typeof createTextField === 'function'
-        ? createTextField({
+      const nameFieldControl = typeof createTextInput === 'function'
+        ? createTextInput({
           placeholder: 'Unnamed',
           value: group.title || '',
           contrast: 'low',
@@ -63,7 +63,7 @@ const EditTabGroupModal = (() => {
         })
         : document.createElement('div');
 
-      let nameInput = nameFieldControl.querySelector ? nameFieldControl.querySelector('.text-field__input') : null;
+      let nameInput = nameFieldControl.querySelector ? nameFieldControl.querySelector('.text-input__input') : null;
       if (!nameInput) {
         nameInput = document.createElement('input');
         nameInput.type = 'text';
@@ -89,8 +89,8 @@ const EditTabGroupModal = (() => {
 
       const initialColor = getColorByValue(selectedColorName);
 
-      const colorFieldControl = typeof createSelectionField === 'function'
-        ? createSelectionField({
+      const colorFieldControl = typeof createSelectionInput === 'function'
+        ? createSelectionInput({
           label: initialColor.label,
           contrast: 'low',
           state: 'selection'
@@ -100,8 +100,8 @@ const EditTabGroupModal = (() => {
       // Inject color swatch into the selection field label area
       function updateColorFieldControl() {
         const currentColor = getColorByValue(selectedColorName);
-        if (colorFieldControl.classList.contains('selection-field')) {
-          const labelEl = colorFieldControl.querySelector('.selection-field__label');
+        if (colorFieldControl.classList.contains('selection-input')) {
+          const labelEl = colorFieldControl.querySelector('.selection-input__label');
           if (labelEl) {
             labelEl.innerHTML = '';
             const swatch = document.createElement('span');
@@ -187,7 +187,7 @@ const EditTabGroupModal = (() => {
       content.appendChild(colorField);
 
       // ── Modal ─────────────────────────────────────────────────────────────────
-      modal = createModal({
+      modal = createDialogModal({
         type: 'form',
         title: 'Edit Tab Group',
         content,

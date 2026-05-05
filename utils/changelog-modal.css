@@ -4,7 +4,7 @@
   user-select: text;
 }
 
-.changelog-modal-shell .modal__title,
+.changelog-modal-shell .dialog-modal__title,
 .changelog-modal-shell .changelog-modal__version-title,
 .changelog-modal__summary,
 .changelog-modal__group-title,

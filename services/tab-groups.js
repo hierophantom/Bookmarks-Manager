@@ -262,7 +262,7 @@ const TabGroupsService = (()=>{
           const groupId = parseInt(btn.closest('.tab-group-item').dataset.groupId);
           const group = await chrome.tabGroups.get(groupId);
           
-          // Create edit modal
+          // Create edit dialog-modal
           const modal = document.createElement('div');
           modal.style.cssText = `
             position: fixed;

@@ -11,7 +11,8 @@ function createBulkActionsMenu(options = {}) {
     selectedCount = 0,
     actions = [],
     visible = true,
-    attachToBody = true
+    attachToBody = true,
+    onClose = null
   } = options;
 
   const element = document.createElement('div');
@@ -29,9 +30,38 @@ function createBulkActionsMenu(options = {}) {
   element.appendChild(counter);
   element.appendChild(actionsWrap);
 
+  const closeBtn = document.createElement('button');
+  closeBtn.type = 'button';
+  closeBtn.className = 'action-button';
+  closeBtn.setAttribute('aria-label', 'Dismiss');
+  const closeBtnIcon = document.createElement('span');
+  closeBtnIcon.className = 'action-button__icon';
+  const closeBtnSymbol = document.createElement('span');
+  closeBtnSymbol.className = 'material-symbols-outlined';
+  closeBtnSymbol.setAttribute('aria-hidden', 'true');
+  closeBtnSymbol.textContent = 'close';
+  closeBtnIcon.appendChild(closeBtnSymbol);
+  closeBtn.appendChild(closeBtnIcon);
+  closeBtn.addEventListener('click', () => {
+    if (typeof onClose === 'function') {
+      onClose();
+    } else {
+      hide();
+    }
+  });
+  element.appendChild(closeBtn);
+
   function setSelectedCount(count) {
     const safeCount = Number.isFinite(count) ? Math.max(0, Number(count)) : 0;
-    counter.textContent = `${safeCount} selected`;
+    counter.innerHTML = '';
+    const countEl = document.createElement('span');
+    countEl.className = 'bulk-actions-menu__counter-count';
+    countEl.textContent = safeCount;
+    const labelEl = document.createElement('span');
+    labelEl.className = 'bulk-actions-menu__counter-label';
+    labelEl.textContent = 'items selected';
+    counter.appendChild(countEl);
+    counter.appendChild(labelEl);
   }
 
   function createActionButton(action = {}) {

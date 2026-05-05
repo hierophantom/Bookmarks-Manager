@@ -1,0 +1,144 @@
+/**
+ * Selection Field Component
+ * 
+ * Design System Component - BMG-101
+ * 
+ * @example
+ * const field = createSelectionInput({
+ *   label: 'Label',
+ *   contrast: 'low',
+ *   state: 'idle'
+ * });
+ */
+
+/**
+ * Creates a selection field element
+ * @param {Object} options - Field configuration
+ * @param {string} [options.label='Label'] - Field label
+ * @param {string} [options.selectionText='X tags selected'] - Selection applied label
+ * @param {string} [options.state='idle'] - 'idle', 'hover', 'active', 'selection'
+ * @param {string} [options.contrast='low'] - 'low' or 'high'
+ * @param {HTMLElement} [options.menu] - Optional selection menu element
+ * @param {Function} [options.onToggle] - Toggle handler
+ * @param {Function} [options.onClear] - Clear selection handler
+ * @returns {HTMLDivElement} The selection field element
+ */
+function createSelectionInput(options = {}) {
+  const {
+    label = 'Label',
+    selectionText = 'X tags selected',
+    state = 'idle',
+    contrast = 'low',
+    menu = null,
+    onToggle = null,
+    onClear = null
+  } = options;
+
+  const field = document.createElement('div');
+  field.className = `selection-input selection-input--${contrast}`;
+
+  const labelEl = document.createElement('div');
+  labelEl.className = 'selection-input__label';
+  labelEl.textContent = state === 'selection' ? selectionText : label;
+
+  const iconEl = document.createElement('span');
+  iconEl.className = 'selection-input__icon';
+  iconEl.innerHTML = "<span class='material-symbols-outlined' aria-hidden='true'></span>";
+
+  let clearButton = null;
+  if (typeof onClear === 'function') {
+    clearButton = document.createElement('button');
+    clearButton.className = 'selection-input__clear';
+    clearButton.type = 'button';
+    clearButton.setAttribute('aria-label', 'Clear selection');
+    clearButton.innerHTML = "<span class='material-symbols-outlined' aria-hidden='true'>close</span>";
+    clearButton.addEventListener('click', (event) => {
+      event.stopPropagation();
+      onClear();
+    });
+  }
+
+  field.appendChild(labelEl);
+  if (clearButton) {
+    field.appendChild(clearButton);
+  }
+  field.appendChild(iconEl);
+
+  applySelectionFieldState(field, state);
+  updateSelectionFieldSelectionState(field, state === 'selection');
+
+  if (menu) {
+    const menuWrapper = document.createElement('div');
+    menuWrapper.className = 'selection-input__menu';
+    menuWrapper.appendChild(menu);
+    if (state !== 'active') {
+      menuWrapper.style.display = 'none';
+    }
+    field.appendChild(menuWrapper);
+  }
+
+  if (typeof onToggle === 'function') {
+    field.addEventListener('click', () => onToggle(field));
+  }
+
+  return field;
+}
+
+/**
+ * Applies selection field state classes
+ * @param {HTMLDivElement} field - Selection field element
+ * @param {string} state - 'idle', 'hover', 'active', 'selection'
+ */
+function applySelectionFieldState(field, state) {
+  field.classList.remove('selection-input--idle', 'selection-input--hover', 'selection-input--active', 'selection-input--selection');
+  field.classList.add(`selection-input--${state}`);
+  updateSelectionFieldChevron(field, state);
+}
+
+function updateSelectionFieldChevron(field, state) {
+  const iconEl = field.querySelector('.selection-input__icon .material-symbols-outlined');
+  if (!iconEl) return;
+  iconEl.textContent = state === 'active' ? 'keyboard_arrow_up' : 'keyboard_arrow_down';
+}
+
+/**
+ * Updates selection field selection state
+ * @param {HTMLDivElement} field - Selection field element
+ * @param {boolean} hasSelection - Whether selection exists
+ */
+function updateSelectionFieldSelectionState(field, hasSelection) {
+  field.classList.toggle('selection-input--has-selection', hasSelection);
+}
+
+/**
+ * Updates selection field label
+ * @param {HTMLDivElement} field - Selection field element
+ * @param {string} label - New label
+ */
+function updateSelectionFieldLabel(field, label) {
+  const labelEl = field.querySelector('.selection-input__label');
+  if (labelEl) {
+    labelEl.textContent = label;
+  }
+}
+
+/**
+ * Updates selection field contrast
+ * @param {HTMLDivElement} field - Selection field element
+ * @param {string} contrast - 'low' or 'high'
+ */
+function updateSelectionFieldContrast(field, contrast) {
+  field.classList.remove('selection-input--low', 'selection-input--high');
+  field.classList.add(`selection-input--${contrast}`);
+}
+
+// Export for module usage
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = {
+    createSelectionInput,
+    applySelectionFieldState,
+    updateSelectionFieldSelectionState,
+    updateSelectionFieldLabel,
+    updateSelectionFieldContrast
+  };
+}

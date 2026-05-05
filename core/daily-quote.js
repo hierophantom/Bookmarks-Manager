@@ -43,7 +43,7 @@ const DailyQuoteService = (() => {
       }
       throw new Error('Invalid API response format');
     } catch (error) {
-      console.error('Failed to fetch quote from API:', error);
+      console.error('Failed to fetch quote-card from API:', error);
       // Return random fallback quote
       const fallback = FALLBACK_QUOTES[Math.floor(Math.random() * FALLBACK_QUOTES.length)];
       return {

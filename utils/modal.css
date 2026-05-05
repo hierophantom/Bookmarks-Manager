@@ -12,8 +12,8 @@
   z-index: 99999;
 }
 
-/* Shared modal classes used by Modal utils */
-.modal-overlay {
+/* Shared dialog-modal classes used by Modal utils */
+.dialog-modal-overlay {
   position: fixed;
   inset: 0;
   z-index: 99999;
@@ -25,7 +25,7 @@
   padding: 16px;
 }
 
-.modal {
+.dialog-modal {
   display: flex;
   flex-direction: column;
   gap: var(--padding-and-gap-x-large, 16px);
@@ -52,20 +52,20 @@
   color: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
 }
 
-.modal--form {
+.dialog-modal--form {
   width: min(90vw, 640px);
   overflow: visible;
 }
 
-.modal--form.delete-folder-modal-shell,
-.modal--form.delete-folder-modal-shell .modal__content,
-.modal--form.delete-folder-modal-shell .modal__body,
-.modal--form.delete-folder-modal-shell .modal__fields,
-.modal--form.delete-folder-modal-shell .modal__field {
+.dialog-modal--form.delete-folder-modal-shell,
+.dialog-modal--form.delete-folder-modal-shell .dialog-modal__content,
+.dialog-modal--form.delete-folder-modal-shell .dialog-modal__body,
+.dialog-modal--form.delete-folder-modal-shell .dialog-modal__fields,
+.dialog-modal--form.delete-folder-modal-shell .dialog-modal__field {
   overflow: visible;
 }
 
-.modal__content {
+.dialog-modal__content {
   display: flex;
   flex-direction: column;
   gap: var(--padding-and-gap-large, 8px);
@@ -73,21 +73,21 @@
   overflow: visible;
 }
 
-.modal__fields {
+.dialog-modal__fields {
   display: flex;
   flex-direction: column;
   gap: 8px;
   overflow: visible;
 }
 
-.modal__field {
+.dialog-modal__field {
   display: flex;
   flex-direction: column;
   gap: 8px;
   overflow: visible;
 }
 
-.modal__title {
+.dialog-modal__title {
   margin: 0;
   font-family: var(--font-family-sans-serif, 'Lato', sans-serif);
   font-size: var(--size-x-large-2, 24px);
@@ -96,31 +96,31 @@
   line-height: 1.1;
 }
 
-.modal__actions {
+.dialog-modal__actions {
   display: flex;
   gap: var(--padding-and-gap-large, 8px);
   width: 100%;
 }
 
-/* Selection field width stretch inside modal */
-.modal__field .selection-field,
-.modal__selection-field,
-.modal__field .chips-field,
-.modal__chips-field {
+/* Selection field width stretch inside dialog-modal */
+.dialog-modal__field .selection-input,
+.dialog-modal__selection-input,
+.dialog-modal__field .chip-input,
+.dialog-modal__chip-input {
   width: 100%;
   box-sizing: border-box;
 }
 
-.modal__field .selection-menu,
-.modal__selection-field .selection-menu {
+.dialog-modal__field .selection-menu,
+.dialog-modal__selection-input .selection-menu {
   width: 100%;
   box-sizing: border-box;
 }
 
-.modal__field .selection-field__menu,
-.modal__selection-field .selection-field__menu,
-.modal__field .chips-field__menu,
-.modal__chips-field .chips-field__menu {
+.dialog-modal__field .selection-input__menu,
+.dialog-modal__selection-input .selection-input__menu,
+.dialog-modal__field .chip-input__menu,
+.dialog-modal__chip-input .chip-input__menu {
   left: -1px;
   right: -1px;
   width: auto;
@@ -236,14 +236,14 @@
   transition: transform 0.2s ease;
 }
 
-.bm-widget-item-btn .widget-small {
+.bm-widget-item-btn .widget-gallery-tile-small {
   border: 1px solid transparent;
   box-sizing: border-box;
   transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
 }
 
-.bm-widget-item-btn:hover .widget-small,
-.bm-widget-item-btn:focus-visible .widget-small {
+.bm-widget-item-btn:hover .widget-gallery-tile-small,
+.bm-widget-item-btn:focus-visible .widget-gallery-tile-small {
   background: var(--common-common-bright-10, rgba(255, 255, 255, 0.4));
 }
 
@@ -251,13 +251,13 @@
   outline: none;
 }
 
-.bm-widget-item-btn--selected .widget-small {
+.bm-widget-item-btn--selected .widget-gallery-tile-small {
   border-color: var(--primary-primary-25, #2e33b9);
   background: var(--primary-primary-10, rgba(46, 51, 185, 0.4));
 }
 
-.bm-widget-item-btn--selected:hover .widget-small,
-.bm-widget-item-btn--selected:focus-visible .widget-small {
+.bm-widget-item-btn--selected:hover .widget-gallery-tile-small,
+.bm-widget-item-btn--selected:focus-visible .widget-gallery-tile-small {
   background: var(--primary-primary-15, rgba(46, 51, 185, 0.6));
 }
 
@@ -351,16 +351,16 @@
   flex-shrink: 0;
 }
 
-.widget-shop-modal__search.text-field {
+.widget-shop-modal__search.text-input {
   background: var(--primary-primary-10, rgba(46, 51, 185, 0.4));
   border-color: transparent;
 }
 
-.widget-shop-modal__search .text-field__input {
+.widget-shop-modal__search .text-input__input {
   color: var(--common-common-bright-20, rgba(255, 255, 255, 0.8));
 }
 
-.widget-shop-modal__search .text-field__input::placeholder {
+.widget-shop-modal__search .text-input__input::placeholder {
   color: var(--common-common-bright-20, rgba(255, 255, 255, 0.8));
   opacity: 1;
 }
@@ -498,10 +498,10 @@
   width: 100%;
 }
 
-[role="dialog"] .modal__title,
-.modal .modal__title,
-.modal-content .modal__title {
-  /* Keep shared reset on modal title only so specialized modal h2/h3 styles can own their typography. */
+[role="dialog"] .dialog-modal__title,
+.dialog-modal .dialog-modal__title,
+.dialog-modal-content .dialog-modal__title {
+  /* Keep shared reset on dialog-modal title only so specialized dialog-modal h2/h3 styles can own their typography. */
   margin-bottom: 0 !important;
 }
 
@@ -599,7 +599,7 @@
   margin-top: 8px;
 }
 
-/* Folder form modal */
+/* Folder form dialog-modal */
 .folder-form-modal-overlay {
   z-index: 9999;
 }
@@ -631,15 +631,15 @@
   margin-bottom: 0;
 }
 
-.folder-form-modal__field .text-field,
-.folder-form-modal__field .selection-field,
+.folder-form-modal__field .text-input,
+.folder-form-modal__field .selection-input,
 .folder-form-modal__field .folder-form-modal__selection-fallback,
 .folder-form-modal__field .folder-form-modal__input {
   width: 100%;
   box-sizing: border-box;
 }
 
-.folder-form-modal__field .selection-field__clear {
+.folder-form-modal__field .selection-input__clear {
   width: 20px;
   height: 20px;
   padding: 0 !important;
@@ -649,8 +649,8 @@
   color: var(--common-common-bright-20, rgba(255, 255, 255, 0.8));
 }
 
-.folder-form-modal__field .selection-field__clear:hover,
-.folder-form-modal__field .selection-field__clear:focus-visible {
+.folder-form-modal__field .selection-input__clear:hover,
+.folder-form-modal__field .selection-input__clear:focus-visible {
   border-color: var(--common-common-bright-10, rgba(255, 255, 255, 0.4)) !important;
   background: var(--common-common-bright-10, rgba(255, 255, 255, 0.4)) !important;
   color: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
@@ -1236,7 +1236,7 @@
   }
 }
 
-/* Save tabs modal */
+/* Save tabs dialog-modal */
 .save-tabs-modal-overlay {
   z-index: 1000;
 }

@@ -25,9 +25,9 @@ const AboutModal = (() => {
 
   function show() {
     try {
-      if (typeof createModal === 'function' && typeof showModal === 'function') {
+      if (typeof createDialogModal === 'function' && typeof showModal === 'function') {
         return new Promise((resolve) => {
-          const modal = createModal({
+          const modal = createDialogModal({
             type: 'dialog',
             title: 'About Journey',
             content: createContent(),
@@ -70,7 +70,7 @@ const AboutModal = (() => {
       console.error('Modal object not available');
       return null;
     } catch (error) {
-      console.error('Error opening about modal:', error);
+      console.error('Error opening about dialog-modal:', error);
       return null;
     }
   }

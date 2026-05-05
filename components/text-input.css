@@ -1,0 +1,113 @@
+/**
+ * Text Field Component
+ * 
+ * Design System Component - BMG-100
+ * Based on Figma: node-id=93-12485
+ * 
+ * Text input field with low/high contrast variants
+ * States: Idle, Hover, Active
+ */
+
+/* Base text field styles */
+.text-input {
+  /* Layout */
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  
+  /* Sizing */
+  height: 36px;
+  min-height: 36px;
+  padding: 8px 12px;
+  box-sizing: border-box;
+  
+  /* Appearance */
+  background: var(--text-field-bg, var(--common-common-bright-05, rgba(255, 255, 255, 0.1)));
+  border: 1px solid transparent;
+  border-radius: var(--corner-radius-small, 4px);
+  
+  /* Typography */
+  font-family: var(--font-family-sans-serif, 'Lato', sans-serif);
+  font-size: var(--size-large, 16px);
+  font-weight: var(--weight-regular, 400);
+  line-height: 1;
+  
+  /* Behavior */
+  transition: all 0.2s ease;
+}
+
+/* Input */
+.text-input__input {
+  flex: 1;
+  width: 100%;
+  min-width: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0;
+  margin: 0;
+  outline: none;
+  color: var(--text-field-text, var(--common-common-bright-25, rgba(255, 255, 255, 0.9)));
+  font: inherit;
+}
+
+.text-input__input::placeholder {
+  color: var(--text-field-placeholder, var(--common-common-bright-15, rgba(255, 255, 255, 0.6)));
+}
+
+/* Low contrast variant */
+.text-input--low {
+  --text-field-bg: var(--primary-primary-10, rgba(46, 51, 185, 0.4));
+  --text-field-border: transparent;
+  --text-field-text: var(--common-common-bright-20, rgba(255, 255, 255, 0.8));
+  --text-field-placeholder: var(--common-common-bright-20, rgba(255, 255, 255, 0.8));
+  --text-field-bg-hover: var(--primary-primary-15, rgba(46, 51, 185, 0.6));
+  --text-field-border-hover: transparent;
+  --text-field-bg-active: var(--primary-primary-15, rgba(46, 51, 185, 0.6));
+  --text-field-border-active: var(--primary-primary-25, #2e33b9);
+  --text-field-text-active: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
+}
+
+/* High contrast variant */
+.text-input--high {
+  --text-field-bg: var(--primary-primary-10, rgba(46, 51, 185, 0.8));
+  --text-field-border: transparent;
+  --text-field-text: var(--common-common-dark-20, rgba(0, 0, 0, 0.8));
+  --text-field-placeholder: var(--common-common-dark-20, rgba(0, 0, 0, 0.8));
+  --text-field-bg-hover: var(--primary-primary-15, rgba(46, 51, 185, 0.6));
+  --text-field-border-hover: transparent;
+  --text-field-bg-active: var(--primary-primary-15, rgba(46, 51, 185, 0.6));
+  --text-field-border-active: var(--primary-primary-10, rgba(46, 51, 185, 0.2));
+  --text-field-text-active: var(--common-common-dark-25, rgba(0, 0, 0, 0.9));
+}
+
+/* States */
+
+.text-input:hover {
+  background: var(--text-field-bg-hover, var(--common-common-bright-10, rgba(255, 255, 255, 0.2)));
+  border-color: var(--text-field-border-hover, var(--common-common-bright-10, rgba(255, 255, 255, 0.2)));
+}
+
+.text-input:focus-within {
+  background: var(--text-field-bg-active, var(--common-common-bright-10, rgba(255, 255, 255, 0.2)));
+  border-color: var(--text-field-border-active, var(--primary-primary-25, #2e33b9));
+}
+
+.text-input:focus-within .text-input__input {
+  color: var(--text-field-text-active, var(--common-common-bright-25, rgba(255, 255, 255, 0.9)));
+}
+
+/* Disabled */
+.text-input--disabled,
+.text-input--disabled .text-input__input {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.text-input--disabled {
+  background: var(--text-field-bg, var(--common-common-bright-05, rgba(255, 255, 255, 0.1)));
+  border-color: var(--text-field-border, transparent);
+}

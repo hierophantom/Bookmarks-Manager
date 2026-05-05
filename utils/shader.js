@@ -1,12 +1,12 @@
 /**
  * Background Shader Utility
- * Applies a dimmer/lighter overlay on top of background images
+ * Applies a brightness-slider/lighter overlay on top of background images
  * Range: -70 (full dim with black) to +70 (full lighten with white)
  */
 
 const ShaderService = (() => {
   /**
-   * Apply shader overlay based on dimmer value
+   * Apply shader overlay based on brightness-slider value
    * @param {number} dimmerValue - Value from -70 to 70
    */
   function applyShader(dimmerValue = 0) {

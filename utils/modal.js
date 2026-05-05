@@ -1,6 +1,6 @@
 const Modal = (() => {
   /**
-   * BookmarkForm Modal with Shelf chips-field integration
+   * BookmarkForm Modal with Shelf chip-input integration
    * @param {Object} defaults - Default values { id, title, url, tags, folderId }
    * @param {Object} options - Options { showFolderSelector: boolean, showTabsSuggestions: boolean }
    */
@@ -34,7 +34,7 @@ const Modal = (() => {
       fields.push({
         id: 'bm_tags',
         label: 'Tags',
-        type: 'chips-field',
+        type: 'chip-input',
         value: tagArr,
         placeholder: 'Add tags...',
         options: allTags,
@@ -76,11 +76,11 @@ const Modal = (() => {
       });
     }
 
-    if (typeof createModal !== 'function' || typeof showModal !== 'function') {
-      console.error('[Modal] openBookmarkForm - design-system modal component not available');
+    if (typeof createDialogModal !== 'function' || typeof showModal !== 'function') {
+      console.error('[Modal] openBookmarkForm - design-system dialog-modal component not available');
       await openError({
         title: 'Modal unavailable',
-        message: 'Bookmark modal component is unavailable. Please reload and try again.'
+        message: 'Bookmark dialog-modal component is unavailable. Please reload and try again.'
       });
       return null;
     }
@@ -96,7 +96,7 @@ const Modal = (() => {
 
       let cleanupTabsSuggestions = null;
 
-      const modal = createModal({
+      const modal = createDialogModal({
         type: 'form',
         title: defaults.id ? 'Edit bookmark' : 'Add bookmark',
         fields,
@@ -179,19 +179,19 @@ const Modal = (() => {
 
   // Show an inline error message inside an already-open modal
   function showModalInlineError(modalOverlay, fieldInput, message) {
-    const modalEl = modalOverlay.querySelector('.modal');
+    const modalEl = modalOverlay.querySelector('.dialog-modal');
     if (!modalEl) return;
 
     // Remove any previous error
     clearModalInlineError(modalOverlay);
 
     const banner = document.createElement('div');
-    banner.className = 'modal__inline-error';
+    banner.className = 'dialog-modal__inline-error';
     banner.setAttribute('role', 'alert');
     banner.textContent = message;
 
     // Insert before the actions bar so it sits at the bottom of the form
-    const actions = modalEl.querySelector('.modal__actions');
+    const actions = modalEl.querySelector('.dialog-modal__actions');
     if (actions) {
       modalEl.insertBefore(banner, actions);
     } else {
@@ -200,13 +200,13 @@ const Modal = (() => {
 
     // Highlight the offending field
     if (fieldInput) {
-      fieldInput.closest('.modal__text-field')?.classList.add('modal__text-field--error');
-      fieldInput.classList.add('modal__text-field-input--error');
+      fieldInput.closest('.dialog-modal__text-input')?.classList.add('dialog-modal__text-input--error');
+      fieldInput.classList.add('dialog-modal__text-input-input--error');
       fieldInput.focus();
       // Clear highlight as soon as the user edits the field
       const clearOnInput = () => {
-        fieldInput.closest('.modal__text-field')?.classList.remove('modal__text-field--error');
-        fieldInput.classList.remove('modal__text-field-input--error');
+        fieldInput.closest('.dialog-modal__text-input')?.classList.remove('dialog-modal__text-input--error');
+        fieldInput.classList.remove('dialog-modal__text-input-input--error');
         clearModalInlineError(modalOverlay);
         fieldInput.removeEventListener('input', clearOnInput);
       };
@@ -215,12 +215,12 @@ const Modal = (() => {
   }
 
   function clearModalInlineError(modalOverlay) {
-    const existing = modalOverlay.querySelector('.modal__inline-error');
+    const existing = modalOverlay.querySelector('.dialog-modal__inline-error');
     if (existing) existing.remove();
-    const highlightedFields = modalOverlay.querySelectorAll('.modal__text-field--error');
-    highlightedFields.forEach((el) => el.classList.remove('modal__text-field--error'));
-    const highlighted = modalOverlay.querySelectorAll('.modal__text-field-input--error');
-    highlighted.forEach((el) => el.classList.remove('modal__text-field-input--error'));
+    const highlightedFields = modalOverlay.querySelectorAll('.dialog-modal__text-input--error');
+    highlightedFields.forEach((el) => el.classList.remove('dialog-modal__text-input--error'));
+    const highlighted = modalOverlay.querySelectorAll('.dialog-modal__text-input-input--error');
+    highlighted.forEach((el) => el.classList.remove('dialog-modal__text-input-input--error'));
   }
 
   // Setup URL suggestions dropdown using open tabs and browsing history
@@ -266,7 +266,7 @@ const Modal = (() => {
     `;
 
     // Find the URL field wrapper
-    const urlField = urlInput.closest('.bm-field, .modal__field');
+    const urlField = urlInput.closest('.bm-field, .dialog-modal__field');
     if (!urlField) {
       urlInput.removeEventListener('input', markUrlEdited);
       titleInput.removeEventListener('input', markTitleEdited);
@@ -501,11 +501,11 @@ const Modal = (() => {
    * FolderForm Modal with emoji and color customization
    */
   async function openFolderForm(defaults = {}) {
-    if (typeof createModal !== 'function' || typeof showModal !== 'function') {
-      console.error('[Modal] openFolderForm - design-system modal component not available');
+    if (typeof createDialogModal !== 'function' || typeof showModal !== 'function') {
+      console.error('[Modal] openFolderForm - design-system dialog-modal component not available');
       await openError({
         title: 'Modal unavailable',
-        message: 'Folder modal component is unavailable. Please reload and try again.'
+        message: 'Folder dialog-modal component is unavailable. Please reload and try again.'
       });
       return null;
     }
@@ -543,8 +543,8 @@ const Modal = (() => {
       requiredMark.textContent = ' *';
       titleLabel.appendChild(requiredMark);
 
-      const titleFieldControl = typeof createTextField === 'function'
-        ? createTextField({
+      const titleFieldControl = typeof createTextInput === 'function'
+        ? createTextInput({
           placeholder: 'Enter folder name',
           value: defaults.title || '',
           contrast: 'low',
@@ -552,7 +552,7 @@ const Modal = (() => {
         })
         : document.createElement('div');
 
-      let titleInput = titleFieldControl.querySelector ? titleFieldControl.querySelector('.text-field__input') : null;
+      let titleInput = titleFieldControl.querySelector ? titleFieldControl.querySelector('.text-input__input') : null;
       if (!titleInput) {
         titleInput = document.createElement('input');
         titleInput.type = 'text';
@@ -577,8 +577,8 @@ const Modal = (() => {
       emojiLabel.textContent = 'Folder icon (optional)';
       emojiField.appendChild(emojiLabel);
 
-      const emojiFieldControl = typeof createSelectionField === 'function'
-        ? createSelectionField({
+      const emojiFieldControl = typeof createSelectionInput === 'function'
+        ? createSelectionInput({
           label: selectedEmoji ? `Emoji: ${selectedEmoji}` : 'Select emoji',
           contrast: 'low',
           state: selectedEmoji ? 'selection' : 'idle',
@@ -589,7 +589,7 @@ const Modal = (() => {
         })
         : document.createElement('button');
 
-      if (!emojiFieldControl.classList.contains('selection-field')) {
+      if (!emojiFieldControl.classList.contains('selection-input')) {
         emojiFieldControl.className = 'folder-form-modal__selection-fallback';
         emojiFieldControl.textContent = selectedEmoji ? `Emoji: ${selectedEmoji}` : 'Select emoji';
       }
@@ -607,15 +607,15 @@ const Modal = (() => {
 
       colorField.appendChild(colorLabel);
 
-      const colorFieldControl = typeof createSelectionField === 'function'
-        ? createSelectionField({
+      const colorFieldControl = typeof createSelectionInput === 'function'
+        ? createSelectionInput({
           label: selectedColor ? `Color: ${selectedColor}` : 'Color: None',
           contrast: 'low',
           state: selectedColor ? 'selection' : 'idle'
         })
         : document.createElement('button');
 
-      if (!colorFieldControl.classList.contains('selection-field')) {
+      if (!colorFieldControl.classList.contains('selection-input')) {
         colorFieldControl.className = 'folder-form-modal__selection-fallback';
         colorFieldControl.textContent = selectedColor ? `Color: ${selectedColor}` : 'Color: None';
       }
@@ -633,7 +633,7 @@ const Modal = (() => {
 
       function updateEmojiFieldControl() {
         const nextLabel = selectedEmoji ? `Emoji: ${selectedEmoji}` : 'Select emoji';
-        if (typeof updateSelectionFieldLabel === 'function' && emojiFieldControl.classList.contains('selection-field')) {
+        if (typeof updateSelectionFieldLabel === 'function' && emojiFieldControl.classList.contains('selection-input')) {
           updateSelectionFieldLabel(emojiFieldControl, nextLabel);
         } else {
           emojiFieldControl.textContent = nextLabel;
@@ -644,16 +644,16 @@ const Modal = (() => {
         const selectedOption = colorOptions.find((color) => color.value === selectedColor) || null;
         const nextLabel = selectedOption ? `Color: ${selectedOption.name}` : 'Color: None';
 
-        if (typeof applySelectionFieldState === 'function' && colorFieldControl.classList.contains('selection-field')) {
+        if (typeof applySelectionFieldState === 'function' && colorFieldControl.classList.contains('selection-input')) {
           applySelectionFieldState(colorFieldControl, selectedOption ? 'selection' : 'idle');
         }
 
-        if (typeof updateSelectionFieldSelectionState === 'function' && colorFieldControl.classList.contains('selection-field')) {
+        if (typeof updateSelectionFieldSelectionState === 'function' && colorFieldControl.classList.contains('selection-input')) {
           updateSelectionFieldSelectionState(colorFieldControl, Boolean(selectedOption));
         }
 
-        if (colorFieldControl.classList.contains('selection-field')) {
-          const labelEl = colorFieldControl.querySelector('.selection-field__label');
+        if (colorFieldControl.classList.contains('selection-input')) {
+          const labelEl = colorFieldControl.querySelector('.selection-input__label');
           if (labelEl) {
             labelEl.textContent = '';
 
@@ -760,7 +760,7 @@ const Modal = (() => {
       // Focus title input
       setTimeout(() => titleInput.focus(), 50);
 
-      modal = createModal({
+      modal = createDialogModal({
         type: 'form',
         title: modalTitle,
         content,
@@ -802,7 +802,7 @@ const Modal = (() => {
    */
   function openTabsPicker(tabs = []) {
     return new Promise((resolve) => {
-      if (typeof createModal === 'function' && typeof showModal === 'function') {
+      if (typeof createDialogModal === 'function' && typeof showModal === 'function') {
         const listWrap = document.createElement('div');
         listWrap.className = 'save-tabs-modal__content';
 
@@ -849,7 +849,7 @@ const Modal = (() => {
         listWrap.appendChild(list);
 
         let selectedTabs = [];
-        const modal = createModal({
+        const modal = createDialogModal({
           type: 'form',
           title: 'Add Tabs to Folder',
           content: listWrap,
@@ -868,7 +868,7 @@ const Modal = (() => {
           }
         });
 
-        modal.querySelector('.modal')?.classList.add('save-tabs-modal');
+        modal.querySelector('.dialog-modal')?.classList.add('save-tabs-modal');
 
         showModal(modal);
 
@@ -1004,7 +1004,7 @@ const Modal = (() => {
       };
 
       const overlay = document.createElement('div');
-      overlay.className = 'modal-overlay modal-overlay--entering widget-shop-shell-overlay';
+      overlay.className = 'dialog-modal-overlay dialog-modal-overlay--entering widget-shop-shell-overlay';
       overlay.setAttribute('role', 'dialog');
       overlay.setAttribute('aria-modal', 'true');
       overlay.setAttribute('aria-labelledby', 'widget-shop-title');
@@ -1058,7 +1058,7 @@ const Modal = (() => {
       const titleWrap = document.createElement('div');
       titleWrap.className = 'theme-settings-modal__title-wrap widget-shop-modal__title-wrap';
 
-      const searchField = createTextField({
+      const searchField = createTextInput({
         placeholder: 'Search this category',
         value: '',
         contrast: 'high',
@@ -1070,7 +1070,7 @@ const Modal = (() => {
       });
       searchField.classList.add('widget-shop-modal__search');
 
-      const searchInput = searchField.querySelector('.text-field__input');
+      const searchInput = searchField.querySelector('.text-input__input');
 
       const cardsWrap = document.createElement('div');
   cardsWrap.className = 'theme-settings-modal__panel-body widget-shop-modal__panel-body widget-shop-modal__cards';
@@ -1089,7 +1089,7 @@ const Modal = (() => {
         if (closed) return;
         closed = true;
         document.removeEventListener('keydown', handleKeyDown);
-        overlay.classList.add('modal-overlay--exiting');
+        overlay.classList.add('dialog-modal-overlay--exiting');
         shell.classList.add('theme-settings-shell--exiting');
 
         window.setTimeout(() => {
@@ -1202,7 +1202,7 @@ const Modal = (() => {
 
   function openWidgetSettings(widgetRecord) {
     return new Promise(async (resolve) => {
-      if (typeof createModal !== 'function' || typeof showModal !== 'function') {
+      if (typeof createDialogModal !== 'function' || typeof showModal !== 'function') {
         resolve(null);
         return;
       }
@@ -1239,7 +1239,7 @@ const Modal = (() => {
         const stack = document.createElement('div');
         stack.className = 'widget-settings-modal__stack';
 
-        const noteField = createTextField({
+        const noteField = createTextInput({
           value: state.note || '',
           placeholder: 'Capture your next step',
           contrast: 'low',
@@ -1249,7 +1249,7 @@ const Modal = (() => {
           }
         });
         noteField.classList.add('widget-settings-modal__field');
-        const noteInput = noteField.querySelector('.text-field__input');
+        const noteInput = noteField.querySelector('.text-input__input');
 
         stack.appendChild(createSettingSection({
           title: 'Note',
@@ -1264,7 +1264,7 @@ const Modal = (() => {
         let submitResult = null;
         let modal = null;
 
-        modal = createModal({
+        modal = createDialogModal({
           type: 'form',
           title: `${definition.name} settings`,
           subtitle: 'This note is saved per widget instance.',
@@ -1289,7 +1289,7 @@ const Modal = (() => {
           }
         });
 
-        modal.querySelector('.modal')?.classList.add('widget-settings-modal');
+        modal.querySelector('.dialog-modal')?.classList.add('widget-settings-modal');
         showModal(modal);
         window.setTimeout(() => {
           if (noteInput) {
@@ -1336,7 +1336,7 @@ const Modal = (() => {
         ]
       }));
 
-      const timezoneField = createTextField({
+      const timezoneField = createTextInput({
         value: state.timezone === 'local' ? '' : state.timezone,
         placeholder: 'local or Europe/London',
         contrast: 'low',
@@ -1346,9 +1346,9 @@ const Modal = (() => {
         }
       });
       timezoneField.classList.add('widget-settings-modal__field');
-      const timezoneInput = timezoneField.querySelector('.text-field__input');
+      const timezoneInput = timezoneField.querySelector('.text-input__input');
 
-      const labelField = createTextField({
+      const labelField = createTextInput({
         value: state.label,
         placeholder: 'Optional label',
         contrast: 'low',
@@ -1358,7 +1358,7 @@ const Modal = (() => {
         }
       });
       labelField.classList.add('widget-settings-modal__field');
-      const labelInput = labelField.querySelector('.text-field__input');
+      const labelInput = labelField.querySelector('.text-input__input');
 
       stack.appendChild(createSettingSection({
         title: 'Location',
@@ -1380,7 +1380,7 @@ const Modal = (() => {
       let submitResult = null;
       let modal = null;
 
-      modal = createModal({
+      modal = createDialogModal({
         type: 'form',
         title: `${definition.name} settings`,
         subtitle: 'These settings are saved per widget instance.',
@@ -1416,7 +1416,7 @@ const Modal = (() => {
         }
       });
 
-      modal.querySelector('.modal')?.classList.add('widget-settings-modal');
+      modal.querySelector('.dialog-modal')?.classList.add('widget-settings-modal');
       showModal(modal);
       window.setTimeout(() => {
         if (timezoneInput) {
@@ -1476,7 +1476,7 @@ const Modal = (() => {
   }
 
   /**
-   * Simple confirmation modal
+   * Simple confirmation dialog-modal
    */
   function openConfirmation(options = {}) {
     const { 
@@ -1495,14 +1495,14 @@ const Modal = (() => {
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#39;');
 
-    if (typeof createModal === 'function' && typeof showModal === 'function') {
+    if (typeof createDialogModal === 'function' && typeof showModal === 'function') {
       return new Promise((resolve) => {
         const messageEl = document.createElement('p');
-        messageEl.className = 'modal__subtitle';
+        messageEl.className = 'dialog-modal__subtitle';
         messageEl.style.whiteSpace = 'normal';
         messageEl.textContent = message;
 
-        const modal = createModal({
+        const modal = createDialogModal({
           type: 'dialog',
           title,
           content: messageEl,
@@ -1529,7 +1529,7 @@ const Modal = (() => {
   }
 
   /**
-   * Error modal - shows critical errors that need acknowledgment
+   * Error dialog-modal - shows critical errors that need acknowledgment
    */
   function openError(options = {}) {
     const { 
@@ -1607,7 +1607,7 @@ const Modal = (() => {
   }
 
   /**
-   * Prompt modal - collect a single text value
+   * Prompt dialog-modal - collect a single text value
    */
   async function openPrompt(options = {}) {
     const {
@@ -1653,7 +1653,7 @@ const Modal = (() => {
       const data = await modal.show();
       if (!data) return null;
 
-      const value = (data.modal_prompt_value || '').trim();
+      const value = (data.dialog-modal_prompt_value || '').trim();
       if (typeof validator === 'function') {
         const validationResult = validator(value);
         if (validationResult !== true) {

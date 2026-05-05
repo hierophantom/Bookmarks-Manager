@@ -255,8 +255,8 @@ const WidgetRegistryService = (() => {
 
       const update = () => {
         const preview = getPreview(record, new Date());
-        const labelEl = element.querySelector('.widget-small__label');
-        const subtextEl = element.querySelector('.widget-small__subtext');
+        const labelEl = element.querySelector('.widget-gallery-tile-small__label');
+        const subtextEl = element.querySelector('.widget-gallery-tile-small__subtext');
 
         if (labelEl) {
           labelEl.textContent = preview.label;
@@ -342,8 +342,8 @@ const WidgetRegistryService = (() => {
         }
 
         let cancelled = false;
-        const labelEl = element.querySelector('.widget-small__label');
-        const subtextEl = element.querySelector('.widget-small__subtext');
+        const labelEl = element.querySelector('.widget-gallery-tile-small__label');
+        const subtextEl = element.querySelector('.widget-gallery-tile-small__subtext');
 
         getBookmarkCount()
           .then((count) => {
@@ -432,8 +432,8 @@ const WidgetRegistryService = (() => {
 
         const update = () => {
           const preview = this.getPreview(null, new Date());
-          const labelEl = element.querySelector('.widget-small__label');
-          const subtextEl = element.querySelector('.widget-small__subtext');
+          const labelEl = element.querySelector('.widget-gallery-tile-small__label');
+          const subtextEl = element.querySelector('.widget-gallery-tile-small__subtext');
           if (labelEl) {
             labelEl.textContent = preview.label;
           }

@@ -1,0 +1,153 @@
+/**
+ * Cube Action Button Component
+ * 
+ * Design System Component - BMG-97
+ * Based on Figma: node-id=93-11989
+ * 
+ * Smaller icon-only button (20x20px) with two color schemes
+ * States: Idle, Hover
+ * Color Schemes: Default, Destructive
+ */
+
+/* Base cube action button styles */
+.icon-button {
+  /* Layout */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  
+  /* Sizing */
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+  min-height: 24px;
+  max-width: 24px;
+  max-height: 24px;
+  padding: 0;
+  
+  /* Appearance */
+  background: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
+  border: none;
+  border-radius: var(--corner-radius-pill, 999px);
+  
+  /* Behavior */
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.2s ease;
+}
+
+/* Icon */
+.icon-button__icon {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+  transition: opacity 0.2s ease;
+  display: block;
+}
+
+.icon-button__icon .material-symbols-outlined {
+  font-size: 12px;
+  width: 12px;
+  height: 12px;
+  display: block;
+  line-height: 1;
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+}
+
+.icon-button__icon img.app-local-icon {
+  width: 12px;
+  height: 12px;
+  display: block;
+  object-fit: contain;
+}
+
+.icon-button__icon .app-local-icon {
+  width: 12px;
+  height: 12px;
+  display: block;
+}
+
+/* Color Schemes */
+
+/* Default scheme */
+.icon-button--default {
+  background: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
+  color: var(--common-common-dark-25, rgba(0, 0, 0, 0.9));
+}
+
+.icon-button--default .icon-button__icon {
+  fill: currentColor;
+  color: var(--common-common-dark-25, rgba(0, 0, 0, 0.9));
+}
+
+.icon-button--default:hover {
+  background: var(--common-common-bright-20, rgba(255, 255, 255, 0.8));
+}
+
+.icon-button--default:hover .icon-button__icon {
+  color: var(--common-common-dark-25, rgba(0, 0, 0, 0.9));
+}
+
+/* Destructive scheme */
+.icon-button--destructive {
+  background: var(--destructive-destructive-25, #de3033);
+  color: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
+}
+
+.icon-button--destructive .icon-button__icon {
+  fill: currentColor;
+  color: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
+}
+
+.icon-button--destructive:hover {
+  background: var(--destructive-destructive-20, rgba(222, 48, 51, 0.8));
+}
+
+.icon-button--destructive:hover .icon-button__icon {
+  color: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
+}
+
+/* States */
+
+/* Active (pressed) */
+.icon-button:active {
+  transform: scale(0.95);
+}
+
+/* Disabled */
+.icon-button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.icon-button:disabled:hover {
+  background: currentColor;
+  transform: none;
+}
+
+.icon-button:disabled .icon-button__icon {
+  opacity: 0.3;
+}
+
+.icon-button--default:disabled:hover {
+  background: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
+}
+
+.icon-button--destructive:disabled:hover {
+  background: var(--role-destructive-25, #de3033);
+}
+
+/* Focus (keyboard navigation) */
+.icon-button:focus {
+  outline: none;
+}
+
+.icon-button:focus-visible {
+  outline: 2px solid var(--primary-primary-25, #2e33b9);
+  outline-offset: 2px;
+}
+
+/* Special styling for when inside a tooltip container */
+.icon-button-with-tooltip {
+  position: relative;
+}

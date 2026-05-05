@@ -6,7 +6,7 @@
 
 .selection-item {
   width: 100%;
-  min-height: 24px;
+  min-height: 30px;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -21,9 +21,14 @@
 }
 
 .selection-item:hover,
-.selection-item:focus-visible,
+.selection-item:focus-visible {
+  background: var(--selection-item-hover-bg, var(--common-common-dark-15, rgba(0, 0, 0, 0.4)));
+  color: var(--selection-item-hover-text, var(--common-common-bright-25, rgba(255, 255, 255, 0.9)));
+  outline: none;
+}
+
 .selection-item:active {
-  background: var(--selection-item-hover-bg, var(--common-common-bright-05, rgba(255, 255, 255, 0.1)));
+  background: var(--selection-item-active-bg, var(--common-common-dark-05, rgba(0, 0, 0, 0.1)));
   color: var(--selection-item-hover-text, var(--common-common-bright-25, rgba(255, 255, 255, 0.9)));
   outline: none;
 }

@@ -398,7 +398,7 @@ async function loadRightPanelData(panel) {
             if (typeof Modal !== 'undefined' && typeof Modal.openError === 'function') {
               await Modal.openError({
                 title: 'Modal Unavailable',
-                message: 'Save tabs modal is not available right now.'
+                message: 'Save tabs dialog-modal is not available right now.'
               });
             }
             return;
@@ -408,7 +408,7 @@ async function loadRightPanelData(panel) {
             await saveTabsModalApi.show(windowTabs);
             await loadRightPanelData(panel);
           } catch (error) {
-            console.error('Failed to open save session modal from active panel', error);
+            console.error('Failed to open save session dialog-modal from active panel', error);
           }
         },
         onExportSession: async (windowTabs) => {
@@ -460,8 +460,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // Initialize left panel (Folder Tree View)
     const leftPanelContainer = document.getElementById('bmg-left-panel');
-    if (leftPanelContainer && typeof createFolderTreeViewPanel !== 'undefined') {
-      const leftPanel = createFolderTreeViewPanel({
+    if (leftPanelContainer && typeof createFolderTreePanel !== 'undefined') {
+      const leftPanel = createFolderTreePanel({
         title: 'Folders',
         position: 'left',
         docked: false,
@@ -656,8 +656,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Initialize right panel (Active Sessions)
     const rightPanelContainer = document.getElementById('bmg-right-panel');
-    if (rightPanelContainer && typeof createActiveSessionsPanel !== 'undefined') {
-      const rightPanel = createActiveSessionsPanel({
+    if (rightPanelContainer && typeof createActiveSessionPanel !== 'undefined') {
+      const rightPanel = createActiveSessionPanel({
         title: 'Active Tabs',
         position: 'right',
         docked: false,

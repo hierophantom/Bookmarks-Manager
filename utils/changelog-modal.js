@@ -4,7 +4,7 @@ const ChangelogModal = (() => {
 
   async function show() {
     const overlay = createOverlay();
-    const modal = createModalShell();
+    const modal = createDialogModalShell();
     const content = createLoadingState();
     const footer = createFooter(overlay);
 
@@ -48,13 +48,13 @@ const ChangelogModal = (() => {
     } catch (error) {
       const errorState = createStatusState('Could not load changelog.');
       content.replaceWith(errorState);
-      console.error('Failed to open changelog modal:', error);
+      console.error('Failed to open changelog dialog-modal:', error);
     }
 
     function close() {
       document.removeEventListener('keydown', handleKeydown);
-      overlay.classList.add('modal-overlay--exiting');
-      modal.classList.add('modal--exiting');
+      overlay.classList.add('dialog-modal-overlay--exiting');
+      modal.classList.add('dialog-modal--exiting');
       setTimeout(() => {
         overlay.remove();
       }, 200);
@@ -85,22 +85,22 @@ const ChangelogModal = (() => {
 
   function createOverlay() {
     const overlay = document.createElement('div');
-    overlay.className = 'modal-overlay modal-overlay--entering';
+    overlay.className = 'dialog-modal-overlay dialog-modal-overlay--entering';
     overlay.setAttribute('role', 'dialog');
     overlay.setAttribute('aria-modal', 'true');
     overlay.setAttribute('aria-labelledby', 'changelog-modal-title');
     return overlay;
   }
 
-  function createModalShell() {
+  function createDialogModalShell() {
     const modal = document.createElement('div');
-    modal.className = 'modal modal--form changelog-modal-shell modal--entering';
+    modal.className = 'dialog-modal dialog-modal--form changelog-modal-shell dialog-modal--entering';
 
     const titleWrap = document.createElement('div');
     titleWrap.className = 'changelog-modal__heading';
 
     const title = document.createElement('h2');
-    title.className = 'modal__title';
+    title.className = 'dialog-modal__title';
     title.id = 'changelog-modal-title';
     title.textContent = 'Changelog';
 
@@ -223,14 +223,14 @@ const ChangelogModal = (() => {
       ? createCommonButton({ label: 'Close', contrast: 'low' })
       : document.createElement('button');
     if (!closeButton.className) closeButton.textContent = 'Close';
-    closeButton.classList.add('modal__action-btn', 'changelog-modal__action-btn');
+    closeButton.classList.add('dialog-modal__action-btn', 'changelog-modal__action-btn');
     closeButton.dataset.action = 'close';
 
     const shareButton = typeof createPrimaryButton === 'function'
       ? createPrimaryButton({ label: 'Share with a friend', contrast: 'high' })
       : document.createElement('button');
     if (!shareButton.className) shareButton.textContent = 'Share with a friend';
-    shareButton.classList.add('modal__action-btn', 'changelog-modal__action-btn');
+    shareButton.classList.add('dialog-modal__action-btn', 'changelog-modal__action-btn');
     shareButton.dataset.action = 'share';
 
     footer.appendChild(closeButton);

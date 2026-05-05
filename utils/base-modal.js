@@ -125,7 +125,7 @@ class BaseModal {
       : 'bm-btn-submit flex-1 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 font-medium transition-colors';
 
     const cancelButtonHtml = this.cancelText === null ? '' : `
-        <button id="bm-modal-cancel" type="button" aria-label="Cancel and close modal" class="bm-btn-cancel flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 font-medium transition-colors">
+        <button id="bm-modal-cancel" type="button" aria-label="Cancel and close dialog-modal" class="bm-btn-cancel flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 font-medium transition-colors">
           ${this.escapeHtml(this.cancelText)}
         </button>
       `;
@@ -319,12 +319,12 @@ class BaseModal {
       return;
     }
 
-    console.log('[BaseModal] handleSubmit - resolving promise before closing modal');
+    console.log('[BaseModal] handleSubmit - resolving promise before closing dialog-modal');
     if (this.resolver) {
       this.resolver(data);
     }
     
-    console.log('[BaseModal] handleSubmit - closing modal');
+    console.log('[BaseModal] handleSubmit - closing dialog-modal');
     this.close();
     
     if (this.onSubmit) {

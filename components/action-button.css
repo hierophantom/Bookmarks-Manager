@@ -27,7 +27,7 @@
   padding: 0;
   
   /* Appearance */
-  background: var(--common-common-bright-05, rgba(255, 255, 255, 0.1));
+  background: transparent;
   border: none;
   border-radius: var(--corner-radius-small, 4px);
   
@@ -75,28 +75,18 @@
 
 /* Idle (base) */
 .action-button {
-  background: var(--common-common-bright-05, rgba(255, 255, 255, 0.1));
+  background: transparent;
 }
 
 /* Hover */
 .action-button:hover {
-  background: linear-gradient(
-    90deg,
-    rgba(255, 255, 255, 0.05) 0%,
-    rgba(255, 255, 255, 0.05) 100%
-  ),
-  var(--common-common-bright-05, rgba(255, 255, 255, 0.1));
+  background: var(--primary-primary-25, #2e33b9);
 }
 
 /* Active (pressed) */
 .action-button:active {
-  background: linear-gradient(
-    90deg,
-    rgba(0, 0, 0, 0.1) 0%,
-    rgba(0, 0, 0, 0.1) 100%
-  ),
-  var(--common-common-bright-05, rgba(255, 255, 255, 0.1));
-  transform: scale(0.98);
+  background-color: var(--primary-primary-25, #2e33b9);
+  background-image: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4));
 }
 
 /* Disabled */
@@ -106,8 +96,7 @@
 }
 
 .action-button:disabled:hover {
-  background: var(--common-common-bright-05, rgba(255, 255, 255, 0.1));
-  transform: none;
+  background: transparent;
 }
 
 /* Focus (keyboard navigation) */

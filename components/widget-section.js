@@ -1,0 +1,81 @@
+/**
+ * Cube Section Component
+ *
+ * Design System Component - BMG-109
+ * States: Idle, Hover
+ */
+
+/**
+ * Creates a cube section element
+ * @param {Object} options - Section configuration
+ * @param {Array<HTMLElement>} [options.items=[]] - Widget items to render
+ * @param {string} [options.state='idle'] - 'idle' or 'hover'
+ * @param {string} [options.wrap='none'] - 'none' or 'vertical'
+ * @param {HTMLElement|null} [options.action=null] - Action element for hover state
+ * @returns {HTMLDivElement} The cube section element
+ */
+function createWidgetSection(options = {}) {
+  const {
+    items = [],
+    state = 'idle',
+    wrap = 'none',
+    action = null
+  } = options;
+
+  const section = document.createElement('div');
+  section.className = 'widget-section';
+
+  applyCubeSectionState(section, state);
+
+  const itemsEl = document.createElement('div');
+  itemsEl.className = 'widget-section__items';
+
+  if (wrap === 'vertical') {
+    itemsEl.classList.add('widget-section__items--wrap-vertical');
+  }
+
+  items.forEach((item) => {
+    if (item instanceof HTMLElement) {
+      itemsEl.appendChild(item);
+    }
+  });
+
+  section.appendChild(itemsEl);
+
+  if (action instanceof HTMLElement) {
+    const actionsEl = document.createElement('div');
+    actionsEl.className = 'widget-section__actions';
+    actionsEl.appendChild(action);
+    section.appendChild(actionsEl);
+  }
+
+  // Add hover interaction
+  section.addEventListener('mouseenter', () => {
+    applyCubeSectionState(section, 'hover');
+  });
+  
+  section.addEventListener('mouseleave', () => {
+    applyCubeSectionState(section, 'idle');
+  });
+
+  return section;
+}
+
+/**
+ * Applies cube section state
+ * @param {HTMLDivElement} section - Section element
+ * @param {string} state - 'idle' or 'hover'
+ */
+function applyCubeSectionState(section, state) {
+  if (!section || !section.classList) return;
+  section.classList.remove('widget-section--idle', 'widget-section--hover');
+  section.classList.add(`widget-section--${state}`);
+}
+
+// Export for module usage
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = {
+    createWidgetSection,
+    applyCubeSectionState
+  };
+}

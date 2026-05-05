@@ -1,0 +1,75 @@
+/**
+ * Cube Section Component
+ *
+ * Design System Component - BMG-109
+ * Based on Figma: node-id=99-8521
+ *
+ * States: Idle, Hover
+ * Supports wrapping widgets vertically
+ */
+
+.widget-section {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  border-radius: var(--corner-radius-medium, 8px);
+  backdrop-filter: blur(7px);
+  min-height: 112px;
+  width: 712px;
+  max-width: 712px;
+  user-select: none;
+  transition: background 0.2s ease;
+}
+
+.widget-section--idle {
+  background: transparent;
+}
+
+.widget-section--hover {
+  background: var(--common-common-dark-10, rgba(0, 0, 0, 0.2));
+}
+
+.widget-section__items {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.widget-section--even-slots .widget-section__items {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  align-items: flex-start;
+  justify-items: center;
+  column-gap: 0;
+  row-gap: 20px;
+}
+
+.widget-section__items--wrap-vertical {
+  flex-direction: column;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  max-height: var(--cube-section-wrap-height, 240px);
+}
+
+.widget-section__actions {
+  position: absolute;
+  top: -8px;
+  right: -4px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+
+.widget-section--hover .widget-section__actions {
+  opacity: 1;
+  pointer-events: auto;
+}
+  justify-content: flex-end;
+}

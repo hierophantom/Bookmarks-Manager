@@ -1,0 +1,147 @@
+/**
+ * Widget Small Component
+ *
+ * Design System Component - BMG-108
+ * Based on Figma: node-id=99-8369
+ *
+ * Types: Widget, Empty slot
+ * States: Idle, Hover, Dragged active
+ */
+
+.widget-gallery-tile-small {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 110px;
+  height: 110px;
+  min-width: 110px;
+  min-height: 110px;
+  padding: 4px 8px;
+  border-radius: var(--corner-radius-medium, 8px);
+  border: 1px solid transparent;
+  background: var(--common-common-bright-05, rgba(255, 255, 255, 0.1));
+  backdrop-filter: blur(7px);
+  color: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
+  font-family: var(--font-family-sans-serif, 'Lato', sans-serif);
+  user-select: none;
+  transition: all 0.2s ease;
+}
+
+.widget-gallery-tile-small--widget.widget-gallery-tile-small--hover,
+.widget-gallery-tile-small--widget:hover {
+  background: var(--common-common-bright-10, rgba(255, 255, 255, 0.4));
+}
+
+.widget-gallery-tile-small--empty {
+  background: var(--common-common-dark-05, rgba(0, 0, 0, 0.1));
+  border: 1px dashed var(--common-common-bright-10, rgba(255, 255, 255, 0.4));
+}
+
+.widget-gallery-tile-small--dragged {
+  background: var(--primary-primary-05, rgba(46, 51, 185, 0.2));
+  border: 1px dashed var(--primary-primary-20, rgba(46, 51, 185, 0.8));
+}
+
+.widget-gallery-tile-small__content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+}
+
+.widget-gallery-tile-small__icon {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: currentColor;
+}
+
+.widget-gallery-tile-small__icon .material-symbols-outlined {
+  font-size: 30px;
+  width: 30px;
+  height: 30px;
+  display: block;
+  line-height: 1;
+}
+
+.widget-gallery-tile-small__favicon {
+  width: 30px;
+  height: 30px;
+  object-fit: cover;
+  border-radius: 6px;
+}
+
+.widget-gallery-tile-small__icon--text {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.widget-gallery-tile-small__text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1;
+  width: 100%;
+  overflow: hidden;
+  height: 28px;
+  justify-content: center;
+}
+
+.widget-gallery-tile-small__label {
+  font-size: var(--size-large, 16px);
+  font-weight: var(--weight-regular, 400);
+  color: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
+  text-align: center;
+  width: 100%;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.widget-gallery-tile-small__subtext {
+  font-size: var(--size-medium, 12px);
+  font-weight: var(--weight-light, 300);
+  color: var(--common-common-bright-15, rgba(255, 255, 255, 0.6));
+  text-align: center;
+  width: 100%;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  height: 12px;
+}
+
+.widget-gallery-tile-small--widget.widget-gallery-tile-small--hover .widget-gallery-tile-small__subtext,
+.widget-gallery-tile-small--widget:hover .widget-gallery-tile-small__subtext {
+  opacity: 1;
+}
+
+.widget-gallery-tile-small__actions {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+
+.widget-gallery-tile-small--widget.widget-gallery-tile-small--hover .widget-gallery-tile-small__actions,
+.widget-gallery-tile-small--widget:hover .widget-gallery-tile-small__actions {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.widget-gallery-tile-small--empty .widget-gallery-tile-small__actions {
+  display: none;
+}

@@ -137,7 +137,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
       if (quoteContainer) quoteContainer.style.display = 'flex';
     } catch (error) {
-      console.error('Failed to load quote:', error);
+      console.error('Failed to load quote-card:', error);
       if (quoteContainer) quoteContainer.style.display = 'none';
     }
   }
@@ -227,7 +227,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   function createFaviconIcon(url) {
     return FaviconService.createFaviconElement(url, {
       size: 24,
-      className: 'bookmark-favicon bookmarks-gallery-view__favicon',
+      className: 'bookmark-favicon bookmark-gallery-tile-small__favicon',
       alt: ''
     });
   }
@@ -470,7 +470,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function openMenu() {
       // Close any other open selection field menus
-      document.querySelectorAll('.selection-field--active').forEach(otherField => {
+      document.querySelectorAll('.selection-input--active').forEach(otherField => {
         if (otherField !== field) {
           // Trigger click on other field to close it
           const clickEvent = new MouseEvent('click', {
@@ -492,7 +492,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
       const menu = buildMenu();
       menuWrapper = document.createElement('div');
-      menuWrapper.className = 'selection-field__menu';
+      menuWrapper.className = 'selection-input__menu';
       menuWrapper.appendChild(menu);
       field.appendChild(menuWrapper);
       applySelectionFieldState(field, 'active');
@@ -516,7 +516,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   async function initBookmarksActions() {
     if (!bookmarksActionsLeft || !bookmarksActionsRight || !bookmarksActionsSettings) return;
 
-    const searchComp = createSearchComp({
+    const searchComp = createSearchField({
       placeholder: 'Search bookmarks...',
       contrast: 'low',
       shortcutKeys: ['⌘', 'F'],
@@ -525,7 +525,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     });
     searchComp.style.width = '200px';
-    textSearchInput = searchComp.querySelector('.search-comp__input');
+    textSearchInput = searchComp.querySelector('.search-field__input');
     if (textSearchInput) {
       textSearchInput.addEventListener('keydown', async (event) => {
         if (event.key !== 'ArrowDown') return;
@@ -537,7 +537,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     bookmarksActionsLeft.appendChild(searchComp);
 
-    const tagField = createSelectionField({
+    const tagField = createSelectionInput({
       label: 'Filter by tag',
       contrast: 'low',
       state: 'idle',
@@ -602,7 +602,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       applySelectionFieldState(sortField, hasSelection ? 'selection' : 'idle');
     }
 
-    const sortField = createSelectionField({
+    const sortField = createSelectionInput({
       label: 'Sort by: Default',
       contrast: 'low',
       state: 'idle',
@@ -615,7 +615,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
     updateSortFieldLabel();
 
-    const viewField = createSelectionField({
+    const viewField = createSelectionInput({
       label: 'View as: Gallery',
       contrast: 'low',
       state: 'idle'
@@ -806,7 +806,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         menu.setAttribute('data-menu-type', 'view-settings');
 
         // Close any open selection fields
-        document.querySelectorAll('.selection-field--active').forEach(field => {
+        document.querySelectorAll('.selection-input--active').forEach(field => {
           const clickEvent = new MouseEvent('click', {
             bubbles: true,
             cancelable: true
@@ -1152,7 +1152,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   function createThisSessionTabTile(tab) {
-    const closeAction = createCubeActionButton({
+    const closeAction = createIconButton({
       icon: 'close',
       label: 'Close tab',
       tooltip: 'Close tab',
@@ -1164,7 +1164,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     });
 
-    const saveAction = createCubeActionButton({
+    const saveAction = createIconButton({
       icon: 'bookmark_add',
       label: 'Save tab',
       tooltip: 'Save as bookmark',
@@ -1179,12 +1179,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     const icon = tab.favIconUrl
       ? FaviconService.createFaviconElement(tab.url, {
         size: 24,
-        className: 'bookmark-favicon bookmarks-gallery-view__favicon',
+        className: 'bookmark-favicon bookmark-gallery-tile-small__favicon',
         alt: ''
       })
       : createMaterialIcon('tab');
 
-    const tile = createBookmarksGalleryView({
+    const tile = createBookmarkGalleryTileSmall({
       type: 'bookmark',
       state: 'idle',
       label: tab.title || tab.url || 'Untitled tab',
@@ -1312,7 +1312,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     tabGroups.forEach((group) => {
       const label = group.title || 'Unnamed';
 
-      const card = createOptionCard({
+      const card = createSelectCard({
         label,
         counter: group.tabCount,
         swatches: [group.color],
@@ -1486,7 +1486,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         ? `Current window (${groupFiltered.length} tabs)`
         : `Window ${thisSessionWindowCounter - 1} (${groupFiltered.length} tabs)`;
 
-      const closeDuplicatesAction = createCubeActionButtonWithLabel({
+      const closeDuplicatesAction = createLabeledIconButton({
         icon: 'difference',
         label: 'Close duplicates',
         onClick: async (event) => {
@@ -1496,7 +1496,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
       });
 
-      const closeStaleAction = createCubeActionButtonWithLabel({
+      const closeStaleAction = createLabeledIconButton({
         icon: 'history',
         label: 'Close stale tabs',
         onClick: async (event) => {
@@ -1568,7 +1568,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (thisSessionActionsInitialized) return;
     if (!thisSessionActionsLeft || !thisSessionActionsSettings || !thisSessionActionsRight) return;
 
-    const searchComp = createSearchComp({
+    const searchComp = createSearchField({
       placeholder: 'Search tabs...',
       contrast: 'low',
       onInput: () => {
@@ -1577,7 +1577,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     });
     searchComp.style.width = '220px';
-    thisSessionSearchInput = searchComp.querySelector('.search-comp__input');
+    thisSessionSearchInput = searchComp.querySelector('.search-field__input');
     thisSessionActionsLeft.appendChild(searchComp);
 
     try {
@@ -1586,7 +1586,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       thisSessionSort = 'browser-order';
     }
 
-    thisSessionSortField = createSelectionField({
+    thisSessionSortField = createSelectionInput({
       label: 'Sort tabs: Tabs order',
       contrast: 'low',
       state: 'idle',
@@ -1625,7 +1625,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     thisSessionActionsSettings.appendChild(thisSessionSortField);
 
-    thisSessionTabGroupFilterField = createSelectionField({
+    thisSessionTabGroupFilterField = createSelectionInput({
       label: 'Filter by tab group',
       contrast: 'low',
       state: 'idle',
@@ -1937,7 +1937,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         thisSessionSearchInput.focus();
         thisSessionSearchInput.select();
       } else {
-        const searchInput = document.querySelector('.search-comp__input');
+        const searchInput = document.querySelector('.search-field__input');
         if (searchInput) {
           searchInput.focus();
           searchInput.select();
@@ -1952,7 +1952,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const activeEl = document.activeElement;
     const activeTile = activeEl && typeof activeEl.closest === 'function'
-      ? activeEl.closest('.bookmarks-gallery-view')
+      ? activeEl.closest('.bookmark-gallery-tile-small')
       : null;
 
     if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && isBookmarksPageActive()) {
@@ -2094,7 +2094,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           continue;
         }
 
-        if (candidate.classList.contains('bookmarks-gallery-view')) {
+        if (candidate.classList.contains('bookmark-gallery-tile-small')) {
           scrollAnchor = {
             kind: 'tile',
             id: candidate.dataset.id,
@@ -2407,7 +2407,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       for (const folder of folderResults) {
         if (thisRender !== renderVersion) return;
         const folderPath = getFolderPath(folder.id);
-        const folderTreeAction = createCubeActionButton({
+        const folderTreeAction = createIconButton({
           icon: 'folder_open',
           label: 'Show in folder tree',
           tooltip: folderPath ? `Show in folder tree: ${folderPath}` : 'Show in folder tree',
@@ -2441,7 +2441,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           : '';
         const locationPath = getFolderPath(child.id);
         const bookmarkTags = getTagsForId(child.id);
-        const tagAction = bookmarkTags.length > 0 ? createCubeActionButton({
+        const tagAction = bookmarkTags.length > 0 ? createIconButton({
           icon: 'label',
           label: 'Tags',
           onClick: (event) => {
@@ -2454,7 +2454,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           tagAction.setAttribute('title', bookmarkTags.join(', '));
         }
 
-        const folderAction = child.parentId ? createCubeActionButton({
+        const folderAction = child.parentId ? createIconButton({
           icon: 'folder_open',
           label: 'Show in folder tree',
           tooltip: locationPath ? `Show in folder tree: ${locationPath}` : 'Show in folder tree',
@@ -2465,7 +2465,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
           }
         }) : null;
-        const editAction = createCubeActionButton({
+        const editAction = createIconButton({
           icon: 'edit',
           label: 'Edit',
           tooltip: 'Edit',
@@ -2474,7 +2474,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             BookmarksService.editBookmarkPrompt(child.id).then(() => render(true));
           }
         });
-        const deleteAction = createCubeActionButton({
+        const deleteAction = createIconButton({
           icon: 'delete',
           label: 'Remove',
           tooltip: 'Remove',
@@ -2501,7 +2501,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           try { return new URL(child.url).hostname.replace(/^www\./, ''); } catch (e) { return 'Website'; }
         })();
 
-        const tile = createBookmarksGalleryView({
+        const tile = createBookmarkGalleryTileSmall({
           type: 'bookmark',
           state: 'idle',
           label: child.title || child.url,
@@ -2740,7 +2740,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const defaultAction = 'delete';
       const deleteFolderSummary = buildDeleteFolderSummary(counts);
 
-      if (typeof createModal === 'function' && typeof showModal === 'function') {
+      if (typeof createDialogModal === 'function' && typeof showModal === 'function') {
         return new Promise((resolve) => {
           const content = document.createElement('div');
           content.className = 'delete-folder-modal';
@@ -2801,7 +2801,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
 
             if (!modal) return;
-            const destinationField = modal.querySelector('[data-modal-select="move_destination"]')?.closest('.modal__field');
+            const destinationField = modal.querySelector('[data-modal-select="move_destination"]')?.closest('.dialog-modal__field');
             if (destinationField) {
               destinationField.style.display = hiddenActionInput.value === 'move' ? '' : 'none';
             }
@@ -2810,7 +2810,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           content.querySelector('#delete-action-delete').addEventListener('change', updateChoiceState);
           content.querySelector('#delete-action-move').addEventListener('change', updateChoiceState);
 
-          modal = createModal({
+          modal = createDialogModal({
             type: 'form',
             title: 'Delete folder',
             content,
@@ -2852,7 +2852,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
           });
 
-          modal.querySelector('.modal')?.classList.add('delete-folder-modal-shell');
+          modal.querySelector('.dialog-modal')?.classList.add('delete-folder-modal-shell');
 
           showModal(modal);
           setTimeout(updateChoiceState, 0);
@@ -2952,7 +2952,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function createBookmarkTile(child) {
       perf.tilesRendered += 1;
-      const editAction = createCubeActionButton({
+      const editAction = createIconButton({
         icon: 'edit',
         label: 'Edit',
         tooltip: 'Edit',
@@ -2961,7 +2961,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           BookmarksService.editBookmarkPrompt(child.id).then(() => render(true));
         }
       });
-      const deleteAction = createCubeActionButton({
+      const deleteAction = createIconButton({
         icon: 'delete',
         label: 'Remove',
         tooltip: 'Remove',
@@ -2983,7 +2983,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
 
       const bookmarkTags = getTagsForId(child.id);
-      const tagAction = bookmarkTags.length > 0 ? createCubeActionButton({
+      const tagAction = bookmarkTags.length > 0 ? createIconButton({
         icon: 'label',
         label: 'Tags',
         onClick: (event) => {
@@ -3001,7 +3001,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         try { return new URL(child.url).hostname.replace(/^www\./, ''); } catch (e) { return 'Website'; }
       })();
 
-      const tile = createBookmarksGalleryView({
+      const tile = createBookmarkGalleryTileSmall({
         type: 'bookmark',
         state: 'idle',
         label: child.title || child.url,
@@ -3011,15 +3011,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         showIdleActions: true
       });
 
-      const actionsContainer = tile.querySelector('.bookmarks-gallery-view__actions');
+      const actionsContainer = tile.querySelector('.bookmark-gallery-tile-small__actions');
       if (!actionsContainer) {
         // Create actions container if it doesn't exist (when no idle actions)
         const newContainer = document.createElement('div');
-        newContainer.className = 'bookmarks-gallery-view__actions';
+        newContainer.className = 'bookmark-gallery-tile-small__actions';
         tile.appendChild(newContainer);
       }
 
-      const container = tile.querySelector('.bookmarks-gallery-view__actions');
+      const container = tile.querySelector('.bookmark-gallery-tile-small__actions');
       if (container) {
         tile.addEventListener('mouseenter', () => {
           if (editAction && !container.contains(editAction)) {
@@ -3117,7 +3117,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         showSearchIdleActions = false
       } = options;
       perf.tilesRendered += 1;
-      const editAction = createCubeActionButton({
+      const editAction = createIconButton({
         icon: 'edit',
         label: 'Rename',
         tooltip: 'Rename',
@@ -3126,7 +3126,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           BookmarkModals.editFolder(child.id).then(() => render(true));
         }
       });
-      const deleteAction = createCubeActionButton({
+      const deleteAction = createIconButton({
         icon: 'delete',
         label: 'Remove',
         tooltip: 'Remove',
@@ -3141,7 +3141,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       const childCount = (child.children && child.children.length) || 0;
       const customization = getFolderCustomization(child.id);
-      const tile = createBookmarksGalleryView({
+      const tile = createBookmarkGalleryTileSmall({
         type: 'folder',
         state: 'idle',
         label: child.title || 'Folder',
@@ -3157,7 +3157,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       applyFolderCustomizationStyles(tile, customization);
 
-      const actionsContainer = tile.querySelector('.bookmarks-gallery-view__actions');
+      const actionsContainer = tile.querySelector('.bookmark-gallery-tile-small__actions');
       if (actionsContainer && Array.isArray(searchIdleActions) && searchIdleActions.length > 0) {
         tile.addEventListener('mouseenter', () => {
           if (editAction && !actionsContainer.contains(editAction)) {
@@ -3267,7 +3267,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       // Hide (root folders + top-level Other/Mobile sections)
       if (canHideFolderSection) {
-        const hideBtn = createCubeActionButton({
+        const hideBtn = createIconButton({
           icon: 'visibility_off',
           label: 'Hide',
           onClick: async (event) => {
@@ -3284,7 +3284,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       // Edit for any non-system folder section (including nested folders)
       if (canEditFolderSection) {
-        const editBtn = createCubeActionButton({
+        const editBtn = createIconButton({
           icon: 'edit',
           label: 'Edit',
           onClick: async (event) => {
@@ -3298,7 +3298,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
 
       // Add folder
-      const addFolderBtn = createCubeActionButton({
+      const addFolderBtn = createIconButton({
         icon: 'folder',
         label: 'Insert',
         onClick: async (event) => {
@@ -3322,7 +3322,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       tooltipData.push('Add subfolder');
 
       // Import (Move to folder)
-      const importBtn = createCubeActionButton({
+      const importBtn = createIconButton({
         icon: 'south_west',
         label: 'Import',
         onClick: async (event) => {
@@ -3337,7 +3337,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       tooltipData.push('Import active tabs');
 
       // Open all
-      const openAllBtn = createCubeActionButton({
+      const openAllBtn = createIconButton({
         icon: 'arrow_outward',
         label: 'Open',
         onClick: async (event) => {
@@ -3377,7 +3377,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       tooltipData.push('Open all bookmarks');
 
       // Add bookmark
-      const addBookmarkBtn = createCubeActionButtonWithLabel({
+      const addBookmarkBtn = createLabeledIconButton({
         icon: 'add',
         label: 'Add bookmark',
         colorScheme: 'primary',
@@ -3407,7 +3407,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       // Delete for user folders, but never for top-level system sections
       if (canDeleteFolderSection) {
-        const deleteBtn = createCubeActionButton({
+        const deleteBtn = createIconButton({
           icon: 'delete',
           label: 'Remove',
           colorScheme: 'destructive',
@@ -3545,7 +3545,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!content.getAttribute('data-folder-nav')) {
           content.addEventListener('click', (event) => {
             if (event.target.closest('button')) return;
-            const tile = event.target.closest('.bookmarks-gallery-view--folder');
+            const tile = event.target.closest('.bookmark-gallery-tile-small--folder');
             if (!tile || !content.contains(tile)) return;
             const targetId = tile.dataset.id;
             if (!targetId) return;
@@ -3694,7 +3694,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   function clearInsideTarget() {
     if (dragState.insideTargetEl) {
-      dragState.insideTargetEl.classList.remove('bookmarks-gallery-view--drop-inside');
+      dragState.insideTargetEl.classList.remove('bookmark-gallery-tile-small--drop-inside');
       dragState.insideTargetEl = null;
     }
   }
@@ -3710,7 +3710,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (intent.mode === 'inside' && intent.targetEl) {
       hideDragCaret();
-      intent.targetEl.classList.add('bookmarks-gallery-view--drop-inside');
+      intent.targetEl.classList.add('bookmark-gallery-tile-small--drop-inside');
       dragState.insideTargetEl = intent.targetEl;
       return;
     }
@@ -3718,7 +3718,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const caret = ensureDragCaret();
     if (intent.mode === 'append' && intent.containerEl) {
       const contentRect = intent.containerEl.getBoundingClientRect();
-      const tiles = intent.containerEl.querySelectorAll('.bookmarks-gallery-view');
+      const tiles = intent.containerEl.querySelectorAll('.bookmark-gallery-tile-small');
       const lastTile = tiles.length ? tiles[tiles.length - 1] : null;
       const top = lastTile ? lastTile.getBoundingClientRect().top + 6 : contentRect.top + 6;
       const left = lastTile ? lastTile.getBoundingClientRect().right - 2 : contentRect.left + 8;
@@ -3747,7 +3747,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     hideDragCaret();
     clearInsideTarget();
     if (dragState.srcEl) {
-      dragState.srcEl.classList.remove('bookmarks-gallery-view--drag-source');
+      dragState.srcEl.classList.remove('bookmark-gallery-tile-small--drag-source');
     }
     if (dragState.ghostEl && dragState.ghostEl.parentNode) {
       dragState.ghostEl.parentNode.removeChild(dragState.ghostEl);
@@ -3761,14 +3761,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   function createDragGhost(sourceEl) {
     const ghost = sourceEl.cloneNode(true);
-    ghost.classList.add('bookmarks-gallery-view--drag-ghost');
-    ghost.classList.remove('bookmarks-gallery-view--drag-source', 'bookmarks-gallery-view--drop-inside');
+    ghost.classList.add('bookmark-gallery-tile-small--drag-ghost');
+    ghost.classList.remove('bookmark-gallery-tile-small--drag-source', 'bookmark-gallery-tile-small--drop-inside');
     document.body.appendChild(ghost);
     return ghost;
   }
 
   function getTileDropMode(tile, event) {
-    const tileType = tile.classList.contains('bookmarks-gallery-view--folder') ? 'folder' : 'bookmark';
+    const tileType = tile.classList.contains('bookmark-gallery-tile-small--folder') ? 'folder' : 'bookmark';
     const rect = tile.getBoundingClientRect();
     const x = event.clientX - rect.left;
     const beforeZone = rect.width * 0.33;
@@ -3919,7 +3919,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (!el.dataset.id) return;
       dragState.srcId = el.dataset.id;
       dragState.srcEl = el;
-      el.classList.add('bookmarks-gallery-view--drag-source');
+      el.classList.add('bookmark-gallery-tile-small--drag-source');
 
       e.dataTransfer.setData('text/bookmark-id', el.dataset.id);
       e.dataTransfer.effectAllowed = 'move';
@@ -3980,7 +3980,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (!dragState.srcId) return;
       e.preventDefault();
 
-      const tile = e.target.closest('.bookmarks-gallery-view');
+      const tile = e.target.closest('.bookmark-gallery-tile-small');
       if (tile && container.contains(tile)) {
         return;
       }
@@ -4121,7 +4121,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       while (probeIndex >= 0 && probeIndex < visibleSections.length) {
         const probeSection = visibleSections[probeIndex];
-        const visibleItems = Array.from(probeSection.querySelectorAll('.bookmarks-gallery-view'))
+        const visibleItems = Array.from(probeSection.querySelectorAll('.bookmark-gallery-tile-small'))
           .filter((item) => item && item.offsetParent !== null);
         if (visibleItems.length > 0) {
           return direction === 'previous'
@@ -4137,7 +4137,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // For each folder section content, set up arrow key navigation
     document.querySelectorAll('.folder-section__content').forEach(contentContainer => {
       if (!contentContainer.getAttribute('data-kbd-nav-initialized')) {
-        const navApi = KeyboardNavigation.setupListNavigation(contentContainer, '.bookmarks-gallery-view', {
+        const navApi = KeyboardNavigation.setupListNavigation(contentContainer, '.bookmark-gallery-tile-small', {
           focusClass: 'bm-focused',
           resolveAdjacentItem: ({ direction }) => resolveAdjacentSectionItem(contentContainer, direction),
           onItemFocus: (item) => {
@@ -4157,7 +4157,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   async function activateBookmarkTile(tile) {
     if (!tile) return false;
 
-    if (tile.classList.contains('bookmarks-gallery-view--folder')) {
+    if (tile.classList.contains('bookmark-gallery-tile-small--folder')) {
       const folderId = tile.dataset.id;
       if (!folderId) return false;
 
@@ -4188,7 +4188,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     for (const section of sections) {
       if (!section || section.offsetParent === null) continue;
 
-      const visibleItems = Array.from(section.querySelectorAll('.bookmarks-gallery-view'))
+      const visibleItems = Array.from(section.querySelectorAll('.bookmark-gallery-tile-small'))
         .filter((item) => item && item.offsetParent !== null);
 
       const firstResult = pickLast
@@ -4331,7 +4331,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   async function showUpdatePromptModal() {
-    if (typeof createModal !== 'function' || typeof showModal !== 'function') {
+    if (typeof createDialogModal !== 'function' || typeof showModal !== 'function') {
       return;
     }
 
@@ -4360,7 +4360,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       content.appendChild(highlightsList);
     }
 
-    const modal = createModal({
+    const modal = createDialogModal({
       type: 'form',
       title: `Update available: ${titleVersion}`,
       content,
@@ -4628,7 +4628,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     await WidgetsService.render('widgets-container');
   }); }
 
-  // Listen for save session modal request from content overlay
+  // Listen for save session dialog-modal request from content overlay
   chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.type === 'OPEN_SAVE_SESSION_MODAL' && request.tabs) {
       console.log('[Main] Opening save session modal with', request.tabs.length, 'tabs');

@@ -311,7 +311,7 @@ const JourneyPage = (() => {
 
   function renderTimeframes() {
     refs.timeframes.innerHTML = '';
-    refs.timeframes.appendChild(createSegmentedControl({
+    refs.timeframes.appendChild(createSegmentedControlsss({
       title: 'Time frame:',
       showTitle: true,
       contrast: 'low',
@@ -420,7 +420,7 @@ const JourneyPage = (() => {
 
   function renderOriginSearch() {
     refs.originSearch.innerHTML = '';
-    const textField = createTextField({
+    const textField = createTextInput({
       placeholder: 'Search journeys',
       value: state.originQuery,
       contrast: 'low',
@@ -448,7 +448,7 @@ const JourneyPage = (() => {
       return;
     }
 
-    refs.originList.appendChild(createJourneyOriginItem({
+    refs.originList.appendChild(createJourneyOriginCard({
       title: 'Show all journeys',
       details: [formatBranchCopy(sessions.reduce((sum, session) => sum + session.branchCount, 0))],
       active: state.selectedOriginId === 'all',
@@ -467,7 +467,7 @@ const JourneyPage = (() => {
     }));
 
     sessions.forEach((session) => {
-      refs.originList.appendChild(createJourneyOriginItem({
+      refs.originList.appendChild(createJourneyOriginCard({
         title: session.title,
         details: [
           `Time spent: ${formatDuration(session.durationMs)}`,
@@ -1215,7 +1215,7 @@ const JourneyPage = (() => {
       onSelectAll: () => onChange(menuOptions.slice())
     });
 
-    const field = createSelectionField({
+    const field = createSelectionInput({
       label,
       selectionText: formatFilterSelectionCopy(selectedValues.length),
       state: state.openFilterMenu === menuKey ? 'active' : selectedValues.length ? 'selection' : 'idle',
@@ -1229,7 +1229,7 @@ const JourneyPage = (() => {
     });
     field.classList.add('journey-page__filter-control');
 
-    const menuWrapper = field.querySelector('.selection-field__menu');
+    const menuWrapper = field.querySelector('.selection-input__menu');
     if (menuWrapper) {
       menuWrapper.addEventListener('click', (event) => {
         event.stopPropagation();

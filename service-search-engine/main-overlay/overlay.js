@@ -255,7 +255,7 @@ class MainOverlay {
         console.error('SaveTabsModal not available');
         await Modal.openError({
           title: 'Modal Unavailable',
-          message: 'Save modal not available.'
+          message: 'Save dialog-modal not available.'
         });
         return;
       }
@@ -484,7 +484,7 @@ class MainOverlay {
       let success = false;
 
       if (item.id === 'save-session') {
-        // Close overlay first to avoid visual collision, then open modal
+        // Close overlay first to avoid visual collision, then open dialog-modal
         this.close();
         await this.handleSaveSession();
         success = true;

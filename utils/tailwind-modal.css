@@ -1,6 +1,6 @@
 /**
  * Tailwind CSS - Minimal utility-first CSS framework for modals
- * Includes only necessary utilities for modal components
+ * Includes only necessary utilities for dialog-modal components
  */
 
 /* Reset & Base */
@@ -116,7 +116,7 @@
   transition-duration: 150ms;
 }
 
-/* Custom modal styles */
+/* Custom dialog-modal styles */
 .bm-modal-card {
   animation: slideUp 0.2s ease-out;
 }

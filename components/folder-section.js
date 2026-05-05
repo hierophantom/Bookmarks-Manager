@@ -158,42 +158,42 @@ function applyFolderSectionSeparators(breadcrumbsEl) {
 }
 
 function getDefaultFolderSectionActions() {
-  if (typeof createCubeActionButton !== 'function' || typeof createCubeActionButtonWithLabel !== 'function') {
+  if (typeof createIconButton !== 'function' || typeof createLabeledIconButton !== 'function') {
     return [];
   }
 
   return [
-    createCubeActionButton({
+    createIconButton({
       icon: 'visibility_off',
       label: 'Hide',
       tooltip: 'Hide'
     }),
-    createCubeActionButton({
+    createIconButton({
       icon: 'edit',
       label: 'Edit',
       tooltip: 'Edit'
     }),
-    createCubeActionButton({
+    createIconButton({
       icon: 'folder',
       label: 'Move to folder',
       tooltip: 'Move to folder'
     }),
-    createCubeActionButton({
+    createIconButton({
       icon: 'arrow_insert',
       label: 'Insert',
       tooltip: 'Insert'
     }),
-    createCubeActionButton({
+    createIconButton({
       icon: 'arrow_outward',
       label: 'Open',
       tooltip: 'Open'
     }),
-    createCubeActionButtonWithLabel({
+    createLabeledIconButton({
       icon: 'add',
       label: 'Add bookmark',
       colorScheme: 'primary'
     }),
-    createCubeActionButton({
+    createIconButton({
       icon: 'delete',
       label: 'Remove',
       tooltip: 'Remove',

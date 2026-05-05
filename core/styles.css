@@ -576,7 +576,7 @@ img.app-local-icon.material-symbols-outlined {
   transform: translateY(-1px);
 }
 
-.quote {
+.quote-card {
   padding: 24px;
   text-align: center;
   margin: 12px auto 24px;
@@ -587,7 +587,7 @@ img.app-local-icon.material-symbols-outlined {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
 }
 
-.quote__text {
+.quote-card__text {
   font-size: var(--body--reg);
   font-style: italic;
   color: var(--theme-text);
@@ -595,7 +595,7 @@ img.app-local-icon.material-symbols-outlined {
   margin-bottom: 12px;
 }
 
-.quote__author {
+.quote-card__author {
   font-size: var(--label);
   color: var(--theme-secondary);
   font-weight: 600;
@@ -604,7 +604,7 @@ img.app-local-icon.material-symbols-outlined {
   display: inline-block;
 }
 
-.quote__author:hover {
+.quote-card__author:hover {
   text-decoration: underline;
 }
 
@@ -784,7 +784,7 @@ img.app-local-icon.material-symbols-outlined {
 }
 
 /* Compact pills: don't stretch to fill row */
-.this-session-tab-groups__cards .option-card {
+.this-session-tab-groups__cards .select-card {
   width: auto;
   flex-shrink: 0;
 }
@@ -879,14 +879,14 @@ img.app-local-icon.material-symbols-outlined {
   outline-offset: 6px;
 }
 
-.bookmarks-gallery-view__favicon {
+.bookmark-gallery-tile-small__favicon {
   width: 30px;
   height: 30px;
   border-radius: 4px;
   object-fit: contain;
 }
 
-.bookmarks-gallery-view.bm-focused {
+.bookmark-gallery-tile-small.bm-focused {
   outline: 2px solid var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
   outline-offset: 4px;
 }
@@ -1118,25 +1118,25 @@ img.app-local-icon.material-symbols-outlined {
 
 /* ===== MODALS & DIALOGS ===== */
 [role="dialog"],
-.modal,
-.modal-content,
+.dialog-modal,
+.dialog-modal-content,
 .settings-modal {
   background: var(--theme-background);
   border-color: var(--theme-border);
   color: var(--theme-text);
 }
 
-[role="dialog"] .modal__title,
-.modal .modal__title,
-.modal-content .modal__title {
-  /* Scope shared heading styles to modal title API to avoid overriding custom modal content headings. */
+[role="dialog"] .dialog-modal__title,
+.dialog-modal .dialog-modal__title,
+.dialog-modal-content .dialog-modal__title {
+  /* Scope shared heading styles to dialog-modal title API to avoid overriding custom dialog-modal content headings. */
   color: var(--theme-primary);
   margin-bottom: 16px;
 }
 
-[role="dialog"] button:not(.chips-field__action):not(.chip__dismiss):not(.selection-menu__clear):not(.selection-menu__select-all-button):not(.tab):not(.action-button):not(.button-common):not(.button-primary):not(.option-card):not(.selection-field),
-.modal button:not(.chips-field__action):not(.chip__dismiss):not(.selection-menu__clear):not(.selection-menu__select-all-button):not(.tab):not(.action-button):not(.button-common):not(.button-primary):not(.option-card):not(.selection-field),
-.modal-content button:not(.chips-field__action):not(.chip__dismiss):not(.selection-menu__clear):not(.selection-menu__select-all-button):not(.tab):not(.action-button):not(.button-common):not(.button-primary):not(.option-card):not(.selection-field) {
+[role="dialog"] button:not(.chip-input__action):not(.chip__dismiss):not(.selection-menu__clear):not(.selection-menu__select-all-button):not(.tab):not(.action-button):not(.button-common):not(.button-primary):not(.select-card):not(.selection-input),
+.dialog-modal button:not(.chip-input__action):not(.chip__dismiss):not(.selection-menu__clear):not(.selection-menu__select-all-button):not(.tab):not(.action-button):not(.button-common):not(.button-primary):not(.select-card):not(.selection-input),
+.dialog-modal-content button:not(.chip-input__action):not(.chip__dismiss):not(.selection-menu__clear):not(.selection-menu__select-all-button):not(.tab):not(.action-button):not(.button-common):not(.button-primary):not(.select-card):not(.selection-input) {
   border-radius: 4px;
   cursor: pointer;
   padding: 8px 16px;
@@ -1144,32 +1144,32 @@ img.app-local-icon.material-symbols-outlined {
   font-weight: 500;
 }
 
-[role="dialog"] button:not(:disabled):not(.chips-field__action):not(.chip__dismiss):not(.selection-menu__clear):not(.selection-menu__select-all-button):not(.tab):not(.action-button):not(.button-common):not(.button-primary):not(.option-card):not(.selection-field),
-.modal button:not(:disabled):not(.chips-field__action):not(.chip__dismiss):not(.selection-menu__clear):not(.selection-menu__select-all-button):not(.tab):not(.action-button):not(.button-common):not(.button-primary):not(.option-card):not(.selection-field),
-.modal-content button:not(:disabled):not(.chips-field__action):not(.chip__dismiss):not(.selection-menu__clear):not(.selection-menu__select-all-button):not(.tab):not(.action-button):not(.button-common):not(.button-primary):not(.option-card):not(.selection-field) {
+[role="dialog"] button:not(:disabled):not(.chip-input__action):not(.chip__dismiss):not(.selection-menu__clear):not(.selection-menu__select-all-button):not(.tab):not(.action-button):not(.button-common):not(.button-primary):not(.select-card):not(.selection-input),
+.dialog-modal button:not(:disabled):not(.chip-input__action):not(.chip__dismiss):not(.selection-menu__clear):not(.selection-menu__select-all-button):not(.tab):not(.action-button):not(.button-common):not(.button-primary):not(.select-card):not(.selection-input),
+.dialog-modal-content button:not(:disabled):not(.chip-input__action):not(.chip__dismiss):not(.selection-menu__clear):not(.selection-menu__select-all-button):not(.tab):not(.action-button):not(.button-common):not(.button-primary):not(.select-card):not(.selection-input) {
   border: none;
   background: transparent;
   color: var(--theme-primary);
 }
 
-[role="dialog"] button:not(:disabled):not(.chips-field__action):not(.chip__dismiss):not(.selection-menu__clear):not(.selection-menu__select-all-button):not(.tab):not(.action-button):not(.button-common):not(.button-primary):not(.option-card):not(.selection-field):hover,
-.modal button:not(:disabled):not(.chips-field__action):not(.chip__dismiss):not(.selection-menu__clear):not(.selection-menu__select-all-button):not(.tab):not(.action-button):not(.button-common):not(.button-primary):not(.option-card):not(.selection-field):hover,
-.modal-content button:not(:disabled):not(.chips-field__action):not(.chip__dismiss):not(.selection-menu__clear):not(.selection-menu__select-all-button):not(.tab):not(.action-button):not(.button-common):not(.button-primary):not(.option-card):not(.selection-field):hover {
+[role="dialog"] button:not(:disabled):not(.chip-input__action):not(.chip__dismiss):not(.selection-menu__clear):not(.selection-menu__select-all-button):not(.tab):not(.action-button):not(.button-common):not(.button-primary):not(.select-card):not(.selection-input):hover,
+.dialog-modal button:not(:disabled):not(.chip-input__action):not(.chip__dismiss):not(.selection-menu__clear):not(.selection-menu__select-all-button):not(.tab):not(.action-button):not(.button-common):not(.button-primary):not(.select-card):not(.selection-input):hover,
+.dialog-modal-content button:not(:disabled):not(.chip-input__action):not(.chip__dismiss):not(.selection-menu__clear):not(.selection-menu__select-all-button):not(.tab):not(.action-button):not(.button-common):not(.button-primary):not(.select-card):not(.selection-input):hover {
   background: var(--common-common-dark-25, rgba(0, 0, 0, 0.8));
   border-color: transparent;
 }
 
-[role="dialog"] button:not(:disabled):not(.chips-field__action):not(.chip__dismiss):not(.selection-menu__clear):not(.selection-menu__select-all-button):not(.tab):not(.action-button):not(.button-common):not(.button-primary):not(.option-card):not(.selection-field),
-.modal button:not(:disabled):not(.chips-field__action):not(.chip__dismiss):not(.selection-menu__clear):not(.selection-menu__select-all-button):not(.tab):not(.action-button):not(.button-common):not(.button-primary):not(.option-card):not(.selection-field),
-.modal-content button:not(:disabled):not(.chips-field__action):not(.chip__dismiss):not(.selection-menu__clear):not(.selection-menu__select-all-button):not(.tab):not(.action-button):not(.button-common):not(.button-primary):not(.option-card):not(.selection-field) {
+[role="dialog"] button:not(:disabled):not(.chip-input__action):not(.chip__dismiss):not(.selection-menu__clear):not(.selection-menu__select-all-button):not(.tab):not(.action-button):not(.button-common):not(.button-primary):not(.select-card):not(.selection-input),
+.dialog-modal button:not(:disabled):not(.chip-input__action):not(.chip__dismiss):not(.selection-menu__clear):not(.selection-menu__select-all-button):not(.tab):not(.action-button):not(.button-common):not(.button-primary):not(.select-card):not(.selection-input),
+.dialog-modal-content button:not(:disabled):not(.chip-input__action):not(.chip__dismiss):not(.selection-menu__clear):not(.selection-menu__select-all-button):not(.tab):not(.action-button):not(.button-common):not(.button-primary):not(.select-card):not(.selection-input) {
   border: none;
   background: transparent;
 }
 
 
 [role="dialog"] button.primary,
-.modal button.primary,
-.modal-content button.primary,
+.dialog-modal button.primary,
+.dialog-modal-content button.primary,
 #save-settings-btn,
 #save-btn,
 .save-button {
@@ -1179,8 +1179,8 @@ img.app-local-icon.material-symbols-outlined {
 }
 
 [role="dialog"] button.primary:hover,
-.modal button.primary:hover,
-.modal-content button.primary:hover,
+.dialog-modal button.primary:hover,
+.dialog-modal-content button.primary:hover,
 #save-settings-btn:hover,
 #save-btn:hover,
 .save-button:hover {
@@ -1215,15 +1215,15 @@ img.app-local-icon.material-symbols-outlined {
   margin: 0;
 }
 
-[role="dialog"] input:not(.text-field__input):not(.search-comp__input):not(.chips-field__input),
+[role="dialog"] input:not(.text-input__input):not(.search-field__input):not(.chip-input__input),
 [role="dialog"] textarea,
 [role="dialog"] select,
-.modal input:not(.text-field__input):not(.search-comp__input):not(.chips-field__input),
-.modal textarea,
-.modal select,
-.modal-content input:not(.text-field__input):not(.search-comp__input):not(.chips-field__input),
-.modal-content textarea,
-.modal-content select {
+.dialog-modal input:not(.text-input__input):not(.search-field__input):not(.chip-input__input),
+.dialog-modal textarea,
+.dialog-modal select,
+.dialog-modal-content input:not(.text-input__input):not(.search-field__input):not(.chip-input__input),
+.dialog-modal-content textarea,
+.dialog-modal-content select {
   border: 1px solid var(--theme-border);
   border-radius: 4px;
   padding: 8px;
@@ -1232,15 +1232,15 @@ img.app-local-icon.material-symbols-outlined {
   background: white;
 }
 
-[role="dialog"] input:not(.text-field__input):not(.search-comp__input):not(.chips-field__input):focus,
+[role="dialog"] input:not(.text-input__input):not(.search-field__input):not(.chip-input__input):focus,
 [role="dialog"] textarea:focus,
 [role="dialog"] select:focus,
-.modal input:not(.text-field__input):not(.search-comp__input):not(.chips-field__input):focus,
-.modal textarea:focus,
-.modal select:focus,
-.modal-content input:not(.text-field__input):not(.search-comp__input):not(.chips-field__input):focus,
-.modal-content textarea:focus,
-.modal-content select:focus {
+.dialog-modal input:not(.text-input__input):not(.search-field__input):not(.chip-input__input):focus,
+.dialog-modal textarea:focus,
+.dialog-modal select:focus,
+.dialog-modal-content input:not(.text-input__input):not(.search-field__input):not(.chip-input__input):focus,
+.dialog-modal-content textarea:focus,
+.dialog-modal-content select:focus {
   outline: none;
   border-color: var(--theme-primary);
   box-shadow: 0 0 0 3px var(--theme-input-shadow);
@@ -1290,7 +1290,7 @@ img.app-local-icon.material-symbols-outlined {
   gap: 16px;
 }
 
-#widgets-container .cube-section {
+#widgets-container .widget-section {
   width: 712px;
   margin: 0 auto;
 }
@@ -1518,25 +1518,25 @@ img.app-local-icon.material-symbols-outlined {
 
 /* Modal and Dialog Styling */
 [role="dialog"],
-.modal,
-.modal-content,
+.dialog-modal,
+.dialog-modal-content,
 .settings-modal {
   background: var(--theme-background);
   border-color: var(--theme-border);
   color: var(--theme-text);
 }
 
-[role="dialog"] .modal__title,
-.modal .modal__title,
-.modal-content .modal__title {
-  /* Scope shared heading styles to modal title API to avoid overriding custom modal content headings. */
+[role="dialog"] .dialog-modal__title,
+.dialog-modal .dialog-modal__title,
+.dialog-modal-content .dialog-modal__title {
+  /* Scope shared heading styles to dialog-modal title API to avoid overriding custom dialog-modal content headings. */
   color: var(--theme-primary);
   margin-bottom: 16px;
 }
 
-[role="dialog"] button:not(.chips-field__action):not(.chip__dismiss):not(.selection-menu__clear):not(.selection-menu__select-all-button):not(.tab):not(.action-button):not(.button-common):not(.button-primary):not(.option-card):not(.selection-field):not(.segmented-control__item),
-.modal button:not(.chips-field__action):not(.chip__dismiss):not(.selection-menu__clear):not(.selection-menu__select-all-button):not(.tab):not(.action-button):not(.button-common):not(.button-primary):not(.option-card):not(.selection-field):not(.segmented-control__item),
-.modal-content button:not(.chips-field__action):not(.chip__dismiss):not(.selection-menu__clear):not(.selection-menu__select-all-button):not(.tab):not(.action-button):not(.button-common):not(.button-primary):not(.option-card):not(.selection-field):not(.segmented-control__item) {
+[role="dialog"] button:not(.chip-input__action):not(.chip__dismiss):not(.selection-menu__clear):not(.selection-menu__select-all-button):not(.tab):not(.action-button):not(.button-common):not(.button-primary):not(.select-card):not(.selection-input):not(.segmented-controls__item),
+.dialog-modal button:not(.chip-input__action):not(.chip__dismiss):not(.selection-menu__clear):not(.selection-menu__select-all-button):not(.tab):not(.action-button):not(.button-common):not(.button-primary):not(.select-card):not(.selection-input):not(.segmented-controls__item),
+.dialog-modal-content button:not(.chip-input__action):not(.chip__dismiss):not(.selection-menu__clear):not(.selection-menu__select-all-button):not(.tab):not(.action-button):not(.button-common):not(.button-primary):not(.select-card):not(.selection-input):not(.segmented-controls__item) {
   border-radius: 4px;
   cursor: pointer;
   padding: 8px 16px;
@@ -1544,25 +1544,25 @@ img.app-local-icon.material-symbols-outlined {
   font-weight: 500;
 }
 
-[role="dialog"] button:not(:disabled):not(.chips-field__action):not(.chip__dismiss):not(.selection-menu__clear):not(.selection-menu__select-all-button):not(.tab):not(.action-button):not(.button-common):not(.button-primary):not(.option-card):not(.selection-field):not(.segmented-control__item),
-.modal button:not(:disabled):not(.chips-field__action):not(.chip__dismiss):not(.selection-menu__clear):not(.selection-menu__select-all-button):not(.tab):not(.action-button):not(.button-common):not(.button-primary):not(.option-card):not(.selection-field):not(.segmented-control__item),
-.modal-content button:not(:disabled):not(.chips-field__action):not(.chip__dismiss):not(.selection-menu__clear):not(.selection-menu__select-all-button):not(.tab):not(.action-button):not(.button-common):not(.button-primary):not(.option-card):not(.selection-field):not(.segmented-control__item) {
+[role="dialog"] button:not(:disabled):not(.chip-input__action):not(.chip__dismiss):not(.selection-menu__clear):not(.selection-menu__select-all-button):not(.tab):not(.action-button):not(.button-common):not(.button-primary):not(.select-card):not(.selection-input):not(.segmented-controls__item),
+.dialog-modal button:not(:disabled):not(.chip-input__action):not(.chip__dismiss):not(.selection-menu__clear):not(.selection-menu__select-all-button):not(.tab):not(.action-button):not(.button-common):not(.button-primary):not(.select-card):not(.selection-input):not(.segmented-controls__item),
+.dialog-modal-content button:not(:disabled):not(.chip-input__action):not(.chip__dismiss):not(.selection-menu__clear):not(.selection-menu__select-all-button):not(.tab):not(.action-button):not(.button-common):not(.button-primary):not(.select-card):not(.selection-input):not(.segmented-controls__item) {
   border: none;
   background: transparent;
   color: var(--theme-primary);
 }
 
-[role="dialog"] button:not(:disabled):not(.chips-field__action):not(.chip__dismiss):not(.selection-menu__clear):not(.selection-menu__select-all-button):not(.tab):not(.action-button):not(.button-common):not(.button-primary):not(.option-card):not(.selection-field):not(.segmented-control__item):hover,
-.modal button:not(:disabled):not(.chips-field__action):not(.chip__dismiss):not(.selection-menu__clear):not(.selection-menu__select-all-button):not(.tab):not(.action-button):not(.button-common):not(.button-primary):not(.option-card):not(.selection-field):not(.segmented-control__item):hover,
-.modal-content button:not(:disabled):not(.chips-field__action):not(.chip__dismiss):not(.selection-menu__clear):not(.selection-menu__select-all-button):not(.tab):not(.action-button):not(.button-common):not(.button-primary):not(.option-card):not(.selection-field):not(.segmented-control__item):hover {
+[role="dialog"] button:not(:disabled):not(.chip-input__action):not(.chip__dismiss):not(.selection-menu__clear):not(.selection-menu__select-all-button):not(.tab):not(.action-button):not(.button-common):not(.button-primary):not(.select-card):not(.selection-input):not(.segmented-controls__item):hover,
+.dialog-modal button:not(:disabled):not(.chip-input__action):not(.chip__dismiss):not(.selection-menu__clear):not(.selection-menu__select-all-button):not(.tab):not(.action-button):not(.button-common):not(.button-primary):not(.select-card):not(.selection-input):not(.segmented-controls__item):hover,
+.dialog-modal-content button:not(:disabled):not(.chip-input__action):not(.chip__dismiss):not(.selection-menu__clear):not(.selection-menu__select-all-button):not(.tab):not(.action-button):not(.button-common):not(.button-primary):not(.select-card):not(.selection-input):not(.segmented-controls__item):hover {
   background: var(--common-common-dark-25, rgba(0, 0, 0, 0.8));
   border-color: transparent;
 }
 
 
 [role="dialog"] button.primary,
-.modal button.primary,
-.modal-content button.primary,
+.dialog-modal button.primary,
+.dialog-modal-content button.primary,
 #save-settings-btn,
 #save-btn,
 .save-button {
@@ -1572,23 +1572,23 @@ img.app-local-icon.material-symbols-outlined {
 }
 
 [role="dialog"] button.primary:hover,
-.modal button.primary:hover,
-.modal-content button.primary:hover,
+.dialog-modal button.primary:hover,
+.dialog-modal-content button.primary:hover,
 #save-settings-btn:hover,
 #save-btn:hover,
 .save-button:hover {
   background: var(--theme-secondary);
 }
 
-[role="dialog"] input:not(.text-field__input):not(.search-comp__input):not(.chips-field__input),
+[role="dialog"] input:not(.text-input__input):not(.search-field__input):not(.chip-input__input),
 [role="dialog"] textarea,
 [role="dialog"] select,
-.modal input:not(.text-field__input):not(.search-comp__input):not(.chips-field__input),
-.modal textarea,
-.modal select,
-.modal-content input:not(.text-field__input):not(.search-comp__input):not(.chips-field__input),
-.modal-content textarea,
-.modal-content select {
+.dialog-modal input:not(.text-input__input):not(.search-field__input):not(.chip-input__input),
+.dialog-modal textarea,
+.dialog-modal select,
+.dialog-modal-content input:not(.text-input__input):not(.search-field__input):not(.chip-input__input),
+.dialog-modal-content textarea,
+.dialog-modal-content select {
   border: 1px solid var(--theme-border);
   border-radius: 4px;
   padding: 8px;
@@ -1597,15 +1597,15 @@ img.app-local-icon.material-symbols-outlined {
   background: white;
 }
 
-[role="dialog"] input:not(.text-field__input):not(.search-comp__input):not(.chips-field__input):focus,
+[role="dialog"] input:not(.text-input__input):not(.search-field__input):not(.chip-input__input):focus,
 [role="dialog"] textarea:focus,
 [role="dialog"] select:focus,
-.modal input:not(.text-field__input):not(.search-comp__input):not(.chips-field__input):focus,
-.modal textarea:focus,
-.modal select:focus,
-.modal-content input:not(.text-field__input):not(.search-comp__input):not(.chips-field__input):focus,
-.modal-content textarea:focus,
-.modal-content select:focus {
+.dialog-modal input:not(.text-input__input):not(.search-field__input):not(.chip-input__input):focus,
+.dialog-modal textarea:focus,
+.dialog-modal select:focus,
+.dialog-modal-content input:not(.text-input__input):not(.search-field__input):not(.chip-input__input):focus,
+.dialog-modal-content textarea:focus,
+.dialog-modal-content select:focus {
   outline: none;
   border-color: var(--theme-primary);
   box-shadow: 0 0 0 3px rgba(0,102,255,0.1);

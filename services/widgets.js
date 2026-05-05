@@ -3,7 +3,8 @@ const WidgetsService = (()=>{
   const DEFAULT_SLOTS = 8;
   const BOOKMARK_WIDGETS_KEY = 'bookmarkWidgetSlots';
   const BOOKMARK_ROW_SIZE = 5;
-  const SEARCH_WIDGET_ID = 'search-bar-widget';
+  const SEARCH_WIDGET_ID = 'widget-search-bar';
+  const LEGACY_SEARCH_WIDGET_IDS = new Set(['search-bar-widget']);
   const SEARCH_WIDGET_SEEDED_KEY = 'searchBarWidgetSeeded';
   const SEARCH_PROVIDER_KEY = 'searchEngine';
   const SEARCH_CUSTOM_TEMPLATE_KEY = 'customSearchProviderTemplate';
@@ -120,7 +121,14 @@ const WidgetsService = (()=>{
 
   async function ensureSearchWidgetSeeded() {
     const slots = await SlotSystem.ensureSlots(STORAGE_KEY, DEFAULT_SLOTS);
-    if (slots.some(isSearchWidgetRecord)) {
+    const normalizedSlots = slots.map(normalizeSearchWidgetRecord);
+    const slotsChanged = JSON.stringify(normalizedSlots) !== JSON.stringify(slots);
+
+    if (slotsChanged) {
+      await SlotSystem.save(STORAGE_KEY, normalizedSlots);
+    }
+
+    if (normalizedSlots.some(isSearchWidgetRecord)) {
       if (await Storage.get(SEARCH_WIDGET_SEEDED_KEY) !== true) {
         await Storage.set({ [SEARCH_WIDGET_SEEDED_KEY]: true });
       }
@@ -130,7 +138,7 @@ const WidgetsService = (()=>{
     const seeded = await Storage.get(SEARCH_WIDGET_SEEDED_KEY);
     if (seeded) return;
 
-    const emptyIndex = slots.findIndex((slot) => !slot);
+    const emptyIndex = normalizedSlots.findIndex((slot) => !slot);
     if (emptyIndex === -1) {
       await Storage.set({ [SEARCH_WIDGET_SEEDED_KEY]: true });
       return;
@@ -196,7 +204,7 @@ const WidgetsService = (()=>{
 
     const bookmarkItems = slots.map((item, idx) => {
       if (!item) {
-        const emptyWidget = createWidgetSmall({
+        const emptyWidget = createWidgetGalleryTileSmall({
           type: 'empty',
           state: 'idle'
         });
@@ -210,14 +218,14 @@ const WidgetsService = (()=>{
 
         emptyWidget.addEventListener('dragover', (e) => {
           e.preventDefault();
-          emptyWidget.classList.add('widget-small--dragged');
+          emptyWidget.classList.add('widget-gallery-tile-small--dragged');
         });
         emptyWidget.addEventListener('dragleave', () => {
-          emptyWidget.classList.remove('widget-small--dragged');
+          emptyWidget.classList.remove('widget-gallery-tile-small--dragged');
         });
         emptyWidget.addEventListener('drop', async (e) => {
           e.preventDefault();
-          emptyWidget.classList.remove('widget-small--dragged');
+          emptyWidget.classList.remove('widget-gallery-tile-small--dragged');
           const srcIndex = parseInt(e.dataTransfer.getData('text/bookmark-widget-index'), 10);
           if (isNaN(srcIndex)) return;
           await swapBookmarkSlots(srcIndex, idx);
@@ -227,7 +235,7 @@ const WidgetsService = (()=>{
         return emptyWidget;
       }
 
-      const editBtn = createCubeActionButton({
+      const editBtn = createIconButton({
         icon: 'edit',
         label: 'Edit bookmark',
         tooltip: 'Edit bookmark',
@@ -244,7 +252,7 @@ const WidgetsService = (()=>{
         }
       });
 
-      const removeBtn = createCubeActionButton({
+      const removeBtn = createIconButton({
         icon: 'close',
         label: 'Remove bookmark',
         tooltip: 'Remove bookmark',
@@ -266,12 +274,12 @@ const WidgetsService = (()=>{
       const faviconIcon = (typeof FaviconService !== 'undefined' && item.url)
         ? FaviconService.createFaviconElement(item.url, {
           size: 24,
-          className: 'widget-small__favicon',
+          className: 'widget-gallery-tile-small__favicon',
           alt: item.title || 'Bookmark favicon'
         })
         : 'book';
 
-      const widget = createWidgetSmall({
+      const widget = createWidgetGalleryTileSmall({
         type: 'widget',
         state: 'idle',
         label: item.title || 'Bookmark',
@@ -300,18 +308,18 @@ const WidgetsService = (()=>{
           await render(containerId);
       });
       widget.addEventListener('mouseenter', () => {
-        widget.classList.remove('widget-small--idle');
-        widget.classList.add('widget-small--hover');
+        widget.classList.remove('widget-gallery-tile-small--idle');
+        widget.classList.add('widget-gallery-tile-small--hover');
       });
       widget.addEventListener('mouseleave', () => {
-        widget.classList.remove('widget-small--hover');
-        widget.classList.add('widget-small--idle');
+        widget.classList.remove('widget-gallery-tile-small--hover');
+        widget.classList.add('widget-gallery-tile-small--idle');
       });
 
       return widget;
     });
 
-    const addBookmarkAction = createCubeActionButtonWithLabel({
+    const addBookmarkAction = createLabeledIconButton({
       icon: 'add',
       label: 'Add bookmark',
       colorScheme: 'primary',
@@ -323,15 +331,15 @@ const WidgetsService = (()=>{
       }
     });
 
-    const bookmarkSection = createCubeSection({
+    const bookmarkSection = createWidgetSection({
       items: bookmarkItems,
       state: 'idle',
       wrap: 'none',
       action: addBookmarkAction
     });
-    bookmarkSection.classList.add('cube-section--even-slots');
+    bookmarkSection.classList.add('widget-section--even-slots');
 
-    container.appendChild(createWidgetSection('Quick links', bookmarkSection));
+    container.appendChild(createWidgetSectionWrapper('Quick links', bookmarkSection));
   }
 
   async function renderStandardWidgets(container, containerId, sectionState = null) {
@@ -348,7 +356,7 @@ const WidgetsService = (()=>{
     const widgetItems = slotEntries.map(({ item, slotIndex }) => {
       if (!item) {
         // Empty slot
-        const emptyWidget = createWidgetSmall({
+        const emptyWidget = createWidgetGalleryTileSmall({
           type: 'empty',
           state: 'idle'
         });
@@ -371,14 +379,14 @@ const WidgetsService = (()=>{
         // Drag and drop handlers
         emptyWidget.addEventListener('dragover', (e) => {
           e.preventDefault();
-          emptyWidget.classList.add('widget-small--dragged');
+          emptyWidget.classList.add('widget-gallery-tile-small--dragged');
         });
         emptyWidget.addEventListener('dragleave', () => {
-          emptyWidget.classList.remove('widget-small--dragged');
+          emptyWidget.classList.remove('widget-gallery-tile-small--dragged');
         });
         emptyWidget.addEventListener('drop', async (e) => {
           e.preventDefault();
-          emptyWidget.classList.remove('widget-small--dragged');
+          emptyWidget.classList.remove('widget-gallery-tile-small--dragged');
           const srcIndex = parseInt(e.dataTransfer.getData('text/widget-index'), 10);
           if (isNaN(srcIndex)) return;
           await swapSlots(srcIndex, slotIndex);
@@ -396,7 +404,7 @@ const WidgetsService = (()=>{
         
         // Create action buttons for hover state
         const editBtn = canEditWidget
-          ? createCubeActionButton({
+          ? createIconButton({
             icon: 'edit',
             label: 'Edit',
             tooltip: 'Edit widget',
@@ -416,7 +424,7 @@ const WidgetsService = (()=>{
           })
           : null;
         
-        const removeBtn = createCubeActionButton({
+        const removeBtn = createIconButton({
           icon: 'close',
           label: 'Remove',
           tooltip: 'Remove widget',
@@ -435,7 +443,7 @@ const WidgetsService = (()=>{
           }
         });
         
-        const widget = createWidgetSmall({
+        const widget = createWidgetGalleryTileSmall({
           type: 'widget',
           state: 'idle',
           label: preview.label,
@@ -466,12 +474,12 @@ const WidgetsService = (()=>{
         
         // Show actions on hover
         widget.addEventListener('mouseenter', () => {
-          widget.classList.remove('widget-small--idle');
-          widget.classList.add('widget-small--hover');
+          widget.classList.remove('widget-gallery-tile-small--idle');
+          widget.classList.add('widget-gallery-tile-small--hover');
         });
         widget.addEventListener('mouseleave', () => {
-          widget.classList.remove('widget-small--hover');
-          widget.classList.add('widget-small--idle');
+          widget.classList.remove('widget-gallery-tile-small--hover');
+          widget.classList.add('widget-gallery-tile-small--idle');
         });
         
         return widget;
@@ -479,7 +487,7 @@ const WidgetsService = (()=>{
     });
     
     // Create add widget action button
-    const addWidgetAction = createCubeActionButtonWithLabel({
+    const addWidgetAction = createLabeledIconButton({
       icon: 'add',
       label: 'Add widget',
       colorScheme: 'primary',
@@ -501,18 +509,18 @@ const WidgetsService = (()=>{
     });
     
     // Create cube section
-    const cubeSection = createCubeSection({
+    const cubeSection = createWidgetSection({
       items: widgetItems,
       state: 'idle',
       wrap: 'none',
       action: addWidgetAction
     });
-    cubeSection.classList.add('cube-section--even-slots');
+    cubeSection.classList.add('widget-section--even-slots');
 
-    container.appendChild(createWidgetSection('Widgets', cubeSection));
+    container.appendChild(createWidgetSectionWrapper('Widgets', cubeSection));
   }
 
-  function createWidgetSection(title, sectionElement) {
+  function createWidgetSectionWrapper(title, sectionElement) {
     const wrapper = document.createElement('div');
     wrapper.className = 'widget-stack-section';
 
@@ -549,8 +557,34 @@ const WidgetsService = (()=>{
     };
   }
 
+  function normalizeSearchWidgetRecord(item) {
+    if (!item || typeof item !== 'object') {
+      return item;
+    }
+
+    if (item.id === SEARCH_WIDGET_ID) {
+      return item;
+    }
+
+    if (!LEGACY_SEARCH_WIDGET_IDS.has(item.id)) {
+      return item;
+    }
+
+    return {
+      ...item,
+      id: SEARCH_WIDGET_ID,
+      title: item.title || 'Search',
+      subtitle: item.subtitle || 'Web + bookmarks',
+      icon: item.icon || 'search'
+    };
+  }
+
   function isSearchWidgetRecord(item) {
-    return Boolean(item && item.id === SEARCH_WIDGET_ID);
+    return Boolean(
+      item
+      && typeof item.id === 'string'
+      && (item.id === SEARCH_WIDGET_ID || LEGACY_SEARCH_WIDGET_IDS.has(item.id))
+    );
   }
 
   async function setStandardWidgetSlot(index, item) {
@@ -586,8 +620,16 @@ const WidgetsService = (()=>{
     let changed = false;
 
     const normalizedSlots = slots.map((item) => {
-      if (!item || isSearchWidgetRecord(item)) {
+      if (!item) {
         return item;
+      }
+
+      if (isSearchWidgetRecord(item)) {
+        const normalizedSearchWidget = normalizeSearchWidgetRecord(item);
+        if (JSON.stringify(normalizedSearchWidget) !== JSON.stringify(item)) {
+          changed = true;
+        }
+        return normalizedSearchWidget;
       }
 
       const normalizedItem = normalizeStandardWidgetRecord(item);
@@ -642,7 +684,7 @@ const WidgetsService = (()=>{
 
   async function createHomepageSearchWidget(containerId) {
     const provider = await getSearchProvider();
-    const widget = createSearchBarWidget({
+    const widget = createWidgetSearchBar({
       provider: { visual: createSearchProviderVisual(provider) },
       ariaLabel: 'Search bookmarks, tabs, history, and the web',
       onInput: (event, value) => {
@@ -652,14 +694,14 @@ const WidgetsService = (()=>{
         event.preventDefault();
         setSearchBarWidgetResults(widgetEl, []);
         applySearchBarWidgetState(widgetEl, 'unfocused-idle');
-        const input = widgetEl.querySelector('.search-bar-widget__input');
+        const input = widgetEl.querySelector('.widget-search-bar__input');
         if (input) {
           input.blur();
         }
       }
     });
 
-    const input = widget.querySelector('.search-bar-widget__input');
+    const input = widget.querySelector('.widget-search-bar__input');
     let debounceTimer = null;
     let closeMenuTimer = null;
     let requestId = 0;
@@ -667,7 +709,7 @@ const WidgetsService = (()=>{
     let selectedResultIndex = -1;
 
     const collectResultButtons = () => {
-      resultButtons = Array.from(widget.querySelectorAll('.search-result-item, .search-bar-widget__fallback-result'));
+      resultButtons = Array.from(widget.querySelectorAll('.widget-search-bar-item, .widget-search-bar__fallback-result'));
       resultButtons.forEach((button, index) => {
         button.dataset.searchWidgetIndex = String(index);
         button.tabIndex = -1;
@@ -680,7 +722,7 @@ const WidgetsService = (()=>{
       resultButtons.forEach((button, index) => {
         const isSelected = index === selectedResultIndex;
         button.setAttribute('aria-selected', isSelected ? 'true' : 'false');
-        if (typeof applySearchResultItemState === 'function' && button.classList.contains('search-result-item')) {
+        if (typeof applySearchResultItemState === 'function' && button.classList.contains('widget-search-bar-item')) {
           applySearchResultItemState(button, isSelected ? 'focused' : 'idle');
         }
       });
@@ -811,7 +853,7 @@ const WidgetsService = (()=>{
 
     widget.addEventListener('mousedown', clearCloseTimer);
     widget.addEventListener('mousemove', (event) => {
-      const button = event.target.closest('.search-result-item, .search-bar-widget__fallback-result');
+      const button = event.target.closest('.widget-search-bar-item, .widget-search-bar__fallback-result');
       if (!button || !widget.contains(button)) return;
       const index = Number(button.dataset.searchWidgetIndex);
       if (!Number.isNaN(index) && index !== selectedResultIndex) {
@@ -825,7 +867,7 @@ const WidgetsService = (()=>{
 
   function createSearchProviderBadge(label) {
     const badge = document.createElement('span');
-    badge.className = 'search-bar-widget__provider-badge';
+    badge.className = 'widget-search-bar__provider-badge';
     badge.textContent = label;
     return badge;
   }
@@ -838,7 +880,7 @@ const WidgetsService = (()=>{
     }
 
     const image = document.createElement('img');
-    image.className = 'search-bar-widget__provider-image';
+    image.className = 'widget-search-bar__provider-image';
     image.alt = `${provider.name} logo`;
 
     let sourceIndex = 0;
@@ -858,7 +900,7 @@ const WidgetsService = (()=>{
   function createSearchProviderFallbackVisual(provider) {
     if (provider && provider.materialIcon) {
       const icon = document.createElement('span');
-      icon.className = 'search-bar-widget__provider-visual material-symbols-outlined';
+      icon.className = 'widget-search-bar__provider-visual material-symbols-outlined';
       icon.setAttribute('aria-hidden', 'true');
       icon.textContent = provider.materialIcon;
       return icon;
@@ -1000,7 +1042,7 @@ const WidgetsService = (()=>{
     if (item.type === 'bookmark' && item.url && typeof FaviconService !== 'undefined') {
       return FaviconService.createFaviconElement(item.url, {
         size: 24,
-        className: 'search-result-item__image',
+        className: 'widget-search-bar-item__image',
         alt: ''
       });
     }
@@ -1092,7 +1134,7 @@ const WidgetsService = (()=>{
       if (typeof SaveTabsModal === 'undefined') {
         await Modal.openError({
           title: 'Modal unavailable',
-          message: 'Save journey modal is unavailable.'
+          message: 'Save journey dialog-modal is unavailable.'
         });
         return;
       }

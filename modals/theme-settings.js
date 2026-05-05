@@ -10,13 +10,13 @@ const ThemeSettingsModal = (() => {
     const requiredApis = [
       'createActionButton',
       'createTab',
-      'createOptionCard',
+      'createSelectCard',
       'createChoiceGroup',
-      'createTextField',
-      'createSelectionField',
+      'createTextInput',
+      'createSelectionInput',
       'createSelectionMenu',
       'createSettingSection',
-      'createDimmer'
+      'createBrightnessSlider'
     ];
 
     const missingApis = requiredApis.filter((name) => typeof window[name] !== 'function');
@@ -97,7 +97,7 @@ const ThemeSettingsModal = (() => {
     content.innerHTML = '';
 
     const closeButton = createActionButton({
-      icon: createModalIcon('close'),
+      icon: createDialogModalIcon('close'),
       label: 'Close preferences',
       onClick: closePreferences
     });
@@ -281,7 +281,7 @@ const ThemeSettingsModal = (() => {
 
     pane.appendChild(createSettingSection({
       title: 'Daily inspiration',
-      description: 'Display a new inspirational quote each day on the home screen.',
+      description: 'Display a new inspirational quote-card each day on the home screen.',
       divided: false,
       content: createChoiceGroup({
         type: 'radio',
@@ -321,7 +321,7 @@ const ThemeSettingsModal = (() => {
     }));
 
     if (state.searchEngine === 'custom') {
-      const templateField = createTextField({
+      const templateField = createTextInput({
         value: state.customSearchProviderTemplate,
         placeholder: 'https://example.com/search?q={query}',
         contrast: 'high',
@@ -336,7 +336,7 @@ const ThemeSettingsModal = (() => {
         }
       });
       templateField.classList.add('theme-settings-modal__search-template-field');
-      const templateInput = templateField.querySelector('.text-field__input');
+      const templateInput = templateField.querySelector('.text-input__input');
       if (templateInput) {
         templateInput.addEventListener('blur', async () => {
           await persistSearchEnginePreferences(state);
@@ -377,8 +377,8 @@ const ThemeSettingsModal = (() => {
           ? state.homePageSections[definition.id].visible !== false
           : definition.defaultVisible !== false;
 
-        const leading = createModalIcon(definition.icon);
-        const card = createOptionCard({
+        const leading = createDialogModalIcon(definition.icon);
+        const card = createSelectCard({
           label: definition.label,
           description: visible ? 'Visible on the home page' : 'Hidden from the home page',
           leading,
@@ -415,7 +415,7 @@ const ThemeSettingsModal = (() => {
       leading.className = 'theme-settings-modal__theme-dot';
       leading.style.background = theme.primary;
 
-      const card = createOptionCard({
+      const card = createSelectCard({
         label: theme.name,
         leading,
         selected: state.selectedTheme === themeId,
@@ -423,7 +423,7 @@ const ThemeSettingsModal = (() => {
         onClick: async () => {
           state.selectedTheme = themeId;
           await ThemesService.setTheme(themeId);
-          grid.querySelectorAll('.option-card').forEach((item) => {
+          grid.querySelectorAll('.select-card').forEach((item) => {
             setOptionCardSelected(item, item.dataset.optionCardValue === themeId);
           });
         }
@@ -646,7 +646,7 @@ const ThemeSettingsModal = (() => {
   function buildFrequencyField(state, rerender) {
     const currentOption = state.frequencyOptions.find((option) => option.value === state.selectedFrequency) || state.frequencyOptions[0];
     const hasSelection = Boolean(currentOption && currentOption.value !== 'never');
-    const field = createSelectionField({
+    const field = createSelectionInput({
       label: currentOption ? currentOption.label : 'Never',
       selectionText: currentOption ? currentOption.label : 'Never',
       contrast: 'high',
@@ -698,7 +698,7 @@ const ThemeSettingsModal = (() => {
       });
 
       menuWrapper = document.createElement('div');
-      menuWrapper.className = 'selection-field__menu';
+      menuWrapper.className = 'selection-input__menu';
       menuWrapper.appendChild(menu);
       field.appendChild(menuWrapper);
       applySelectionFieldState(field, 'active');
@@ -732,7 +732,7 @@ const ThemeSettingsModal = (() => {
       title: 'Dimmer',
       description: 'Dim or lighten your background for better readability.',
       divided: false,
-      content: createDimmer({
+      content: createBrightnessSlider({
         value: state.selectedDimmer,
         showValue: true,
         onInput: (value) => {
@@ -928,7 +928,7 @@ const ThemeSettingsModal = (() => {
     state.cleanupFns = [];
   }
 
-  function createModalIcon(name) {
+  function createDialogModalIcon(name) {
     const icon = document.createElement('span');
     icon.className = 'material-symbols-outlined';
     icon.setAttribute('aria-hidden', 'true');
@@ -945,7 +945,7 @@ const ThemeSettingsModal = (() => {
     } = options;
 
     const overlay = document.createElement('div');
-    overlay.className = 'modal-overlay modal-overlay--entering theme-settings-shell-overlay';
+    overlay.className = 'dialog-modal-overlay dialog-modal-overlay--entering theme-settings-shell-overlay';
     overlay.setAttribute('role', 'dialog');
     overlay.setAttribute('aria-modal', 'true');
     overlay.setAttribute('aria-labelledby', 'theme-settings-title');
@@ -965,7 +965,7 @@ const ThemeSettingsModal = (() => {
       if (closed) return;
       closed = true;
 
-      overlay.classList.add('modal-overlay--exiting');
+      overlay.classList.add('dialog-modal-overlay--exiting');
       shell.classList.add('theme-settings-shell--exiting');
       document.removeEventListener('keydown', handleKeyDown);
 
@@ -1037,7 +1037,7 @@ const ThemeSettingsModal = (() => {
           quoteAuthor.href = `https://en.wikipedia.org/wiki/${encodeURIComponent(authorName.replace(/ /g, '_'))}`;
         }
       } catch (error) {
-        console.warn('Failed to refresh daily quote visibility', error);
+        console.warn('Failed to refresh daily quote-card visibility', error);
       }
     }
   }

@@ -10,31 +10,31 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;500;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..24,300..700,0..1,-50..200">
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="components.css">
-  <link rel="stylesheet" href="../components/widget-small.css">
-  <link rel="stylesheet" href="../components/cube-section.css">
-  <link rel="stylesheet" href="../components/bookmarks-gallery-view.css">
+  <link rel="stylesheet" href="../components/widget-gallery-tile-small.css">
+  <link rel="stylesheet" href="../components/widget-section.css">
+  <link rel="stylesheet" href="../components/bookmark-gallery-tile-small.css">
   <link rel="stylesheet" href="../components/folder-section.css">
-  <link rel="stylesheet" href="../components/cube-action-button.css">
-  <link rel="stylesheet" href="../components/cube-action-button-with-label.css">
+  <link rel="stylesheet" href="../components/icon-button.css">
+  <link rel="stylesheet" href="../components/labeled-icon-button.css">
   <link rel="stylesheet" href="../components/action-button.css">
   <link rel="stylesheet" href="../components/tooltip.css">
-  <link rel="stylesheet" href="../components/search-comp.css">
-  <link rel="stylesheet" href="../components/search-result-item.css">
-  <link rel="stylesheet" href="../components/search-bar-widget.css">
-  <link rel="stylesheet" href="../components/text-field.css">
-  <link rel="stylesheet" href="../components/selection-field.css">
+  <link rel="stylesheet" href="../components/search-field.css">
+  <link rel="stylesheet" href="../components/widget-search-bar-item.css">
+  <link rel="stylesheet" href="../components/widget-search-bar.css">
+  <link rel="stylesheet" href="../components/text-input.css">
+  <link rel="stylesheet" href="../components/selection-input.css">
   <link rel="stylesheet" href="../components/selection-item.css">
   <link rel="stylesheet" href="../components/selection-menu.css">
   <link rel="stylesheet" href="../components/bulk-actions-menu.css">
   <link rel="stylesheet" href="../components/choice-group.css">
-  <link rel="stylesheet" href="../components/dimmer.css">
+  <link rel="stylesheet" href="../components/brightness-slider.css">
   <link rel="stylesheet" href="../components/setting-section.css">
-  <link rel="stylesheet" href="../components/chips-field.css">
+  <link rel="stylesheet" href="../components/chip-input.css">
   <link rel="stylesheet" href="../components/button-common.css">
-  <link rel="stylesheet" href="../components/segmented-control.css">
-  <link rel="stylesheet" href="../components/journey-origin-item.css">
+  <link rel="stylesheet" href="../components/segmented-controls.css">
+  <link rel="stylesheet" href="../components/journey-origin-card.css">
   <link rel="stylesheet" href="../components/journey-node-card.css">
-  <link rel="stylesheet" href="../components/option-card.css">
+  <link rel="stylesheet" href="../components/select-card.css">
   <link rel="stylesheet" href="../components/button-primary.css">
   <link rel="stylesheet" href="../components/chip.css">
   <link rel="stylesheet" href="../components/snackbar.css">
@@ -46,11 +46,11 @@
   <link rel="stylesheet" href="../utils/changelog-modal.css">
   <link rel="stylesheet" href="../utils/modal.css">
   <link rel="stylesheet" href="../utils/unsplash-attribution-modal.css">
-  <link rel="stylesheet" href="../components/modal.css">
+  <link rel="stylesheet" href="../components/dialog-modal.css">
   <!-- New side panel components -->
   <link rel="stylesheet" href="../components/side-panel.css">
-  <link rel="stylesheet" href="../components/folder-tree-view.css">
-  <link rel="stylesheet" href="../components/active-sessions-panel.css">
+  <link rel="stylesheet" href="../components/folder-tree-panel.css">
+  <link rel="stylesheet" href="../components/active-session-panel.css">
   <link rel="stylesheet" href="../components/folder-tree-item.css">
   <link rel="stylesheet" href="journey.css">
   <!-- Load main overlay for this chrome-extension:// page -->
@@ -244,26 +244,26 @@
   <script src="../utils/storage.js"></script>
   <script src="../utils/keyboard-navigation.js"></script>
   <script src="../utils/emoji-picker.js"></script>
-  <script src="../components/text-field.js"></script>
+  <script src="../components/text-input.js"></script>
   <script src="../components/tag.js"></script>
   <script src="../components/choice-group.js"></script>
-  <script src="../components/dimmer.js"></script>
+  <script src="../components/brightness-slider.js"></script>
   <script src="../components/selection-item.js"></script>
   <script src="../components/selection-menu.js"></script>
   <script src="../components/bulk-actions-menu.js"></script>
-  <script src="../components/selection-field.js"></script>
+  <script src="../components/selection-input.js"></script>
   <script src="../components/setting-section.js"></script>
-  <script src="../components/chips-field.js"></script>
+  <script src="../components/chip-input.js"></script>
   <script src="../components/button-common.js"></script>
-  <script src="../components/segmented-control.js"></script>
-  <script src="../components/journey-origin-item.js"></script>
+  <script src="../components/segmented-controls.js"></script>
+  <script src="../components/journey-origin-card.js"></script>
   <script src="../components/journey-node-card.js"></script>
-  <script src="../components/option-card.js"></script>
+  <script src="../components/select-card.js"></script>
   <script src="../components/button-primary.js"></script>
   <script src="../components/chip.js"></script>
   <script src="../components/snackbar.js"></script>
   <script src="../components/tab.js"></script>
-  <script src="../components/modal.js"></script>
+  <script src="../components/dialog-modal.js"></script>
   <script src="../utils/modal.js"></script>
   <script src="../utils/undo.js"></script>
   <script src="../utils/undo-persist.js"></script>
@@ -271,8 +271,8 @@
   <script src="../utils/slots.js"></script>
   <!-- Load new panel components FIRST -->
   <script src="../components/side-panel.js"></script>
-  <script src="../components/folder-tree-view.js"></script>
-  <script src="../components/active-sessions-panel.js"></script>
+  <script src="../components/folder-tree-panel.js"></script>
+  <script src="../components/active-session-panel.js"></script>
   <script src="../components/folder-tree-item.js"></script>
   <!-- Panel initialization -->
   <script src="panel-init.js"></script>
@@ -292,17 +292,17 @@
   <script src="../utils/right-panel-ui.js"></script>
   <script src="../services/bookmark-modals.js"></script>
   <script src="../components/tooltip.js"></script>
-  <script src="../components/widget-small.js"></script>
-  <script src="../components/cube-section.js"></script>
-  <script src="../components/bookmarks-gallery-view.js"></script>
+  <script src="../components/widget-gallery-tile-small.js"></script>
+  <script src="../components/widget-section.js"></script>
+  <script src="../components/bookmark-gallery-tile-small.js"></script>
   <script src="../components/folder-section.js"></script>
   <script src="../components/breadcrumbs.js"></script>
-  <script src="../components/cube-action-button.js"></script>
-  <script src="../components/cube-action-button-with-label.js"></script>
+  <script src="../components/icon-button.js"></script>
+  <script src="../components/labeled-icon-button.js"></script>
   <script src="../components/action-button.js"></script>
-  <script src="../components/search-comp.js"></script>
-  <script src="../components/search-result-item.js"></script>
-  <script src="../components/search-bar-widget.js"></script>
+  <script src="../components/search-field.js"></script>
+  <script src="../components/widget-search-bar-item.js"></script>
+  <script src="../components/widget-search-bar.js"></script>
   <script src="../services/widgets.js"></script>
   <script src="../modals/theme-settings.js"></script>
   <script src="../modals/edit-tab-group.js"></script>

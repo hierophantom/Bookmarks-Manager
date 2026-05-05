@@ -53,8 +53,8 @@ const SaveTabsModal = (() => {
         const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
         const defaultFolderName = `Session - ${dateStr} ${timeStr}`;
 
-        if (typeof createModal !== 'function' || typeof showModal !== 'function') {
-          throw new Error('Design-system modal component is not available');
+        if (typeof createDialogModal !== 'function' || typeof showModal !== 'function') {
+          throw new Error('Design-system dialog-modal component is not available');
         }
 
         // Content
@@ -185,7 +185,7 @@ const SaveTabsModal = (() => {
 
         let submitResult = null;
 
-        const modal = createModal({
+        const modal = createDialogModal({
           type: 'form',
           title: 'Save journey',
           content,
@@ -240,7 +240,7 @@ const SaveTabsModal = (() => {
           }
         });
 
-        modal.querySelector('.modal')?.classList.add('save-tabs-modal');
+        modal.querySelector('.dialog-modal')?.classList.add('save-tabs-modal');
 
         showModal(modal);
       } catch (error) {

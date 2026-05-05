@@ -8,7 +8,7 @@ const UnsplashAttributionModal = (() => {
   let attributionTooltip = null;
 
   /**
-   * Show attribution modal for current Unsplash image
+   * Show attribution dialog-modal for current Unsplash image
    */
   async function show() {
     try {
@@ -21,7 +21,7 @@ const UnsplashAttributionModal = (() => {
 
       const photographerUrl = settings.photographerUrl || settings.unsplashUrl || '#';
 
-      if (typeof createModal === 'function' && typeof showModal === 'function') {
+      if (typeof createDialogModal === 'function' && typeof showModal === 'function') {
         return new Promise((resolve) => {
           const content = document.createElement('div');
           content.className = 'unsplash-attribution-modal';
@@ -56,7 +56,7 @@ const UnsplashAttributionModal = (() => {
           content.appendChild(photographerLink);
           content.appendChild(courtesyCopy);
 
-          const modal = createModal({
+          const modal = createDialogModal({
             type: 'dialog',
             title: 'Background Photo Attribution',
             content,

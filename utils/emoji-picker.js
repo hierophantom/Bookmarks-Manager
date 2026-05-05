@@ -88,8 +88,8 @@ const EmojiPicker = (() => {
         renderGrid();
       };
 
-      if (typeof createSearchComp === 'function') {
-        const searchComp = createSearchComp({
+      if (typeof createSearchField === 'function') {
+        const searchComp = createSearchField({
           placeholder: 'Search all emojis',
           value: '',
           contrast: 'low',
@@ -98,7 +98,7 @@ const EmojiPicker = (() => {
             handleSearchValue(value);
           }
         });
-        searchComp.classList.add('emoji-picker__search-comp');
+        searchComp.classList.add('emoji-picker__search-field');
         content.appendChild(searchComp);
       } else {
         const searchInput = document.createElement('input');
@@ -129,8 +129,8 @@ const EmojiPicker = (() => {
       tabsShelf.className = 'emoji-picker__tabs-shelf';
       let segmentedSurface = null;
 
-      if (typeof createSegmentedControl === 'function') {
-        const segmented = createSegmentedControl({
+      if (typeof createSegmentedControlsss === 'function') {
+        const segmented = createSegmentedControlsss({
           items: categories.map((category) => ({
             label: CATEGORY_EMOJI[category] || '•',
             value: category,
@@ -149,7 +149,7 @@ const EmojiPicker = (() => {
         segmented.style.width = '100%';
         segmented.style.display = 'block';
 
-        segmentedSurface = segmented.querySelector('.segmented-control__surface');
+        segmentedSurface = segmented.querySelector('.segmented-controls__surface');
         if (segmentedSurface) {
           segmentedSurface.classList.add('emoji-picker__tabs-surface');
         }
@@ -231,7 +231,7 @@ const EmojiPicker = (() => {
           btn.addEventListener('click', () => {
             submitResult = emoji;
             submitIntent = 'select';
-            const confirmBtn = modalInstance?.querySelector('.modal__action-btn--primary');
+            const confirmBtn = modalInstance?.querySelector('.dialog-modal__action-btn--primary');
             if (confirmBtn) {
               confirmBtn.click();
             }
@@ -282,10 +282,10 @@ const EmojiPicker = (() => {
 
       function applySegmentedOverrides() {
         if (!segmentedSurface) return;
-        segmentedSurface.querySelectorAll('.segmented-control__item').forEach((item) => {
+        segmentedSurface.querySelectorAll('.segmented-controls__item').forEach((item) => {
           item.style.flex = '1 1 0';
           item.style.minWidth = '0';
-          const labelEl = item.querySelector('.segmented-control__item-label');
+          const labelEl = item.querySelector('.segmented-controls__item-label');
           if (labelEl) {
             labelEl.style.fontSize = '24px';
             labelEl.style.lineHeight = '1';
@@ -297,7 +297,7 @@ const EmojiPicker = (() => {
       let submitIntent = 'select';
       let modalInstance = null;
 
-      modalInstance = createModal({
+      modalInstance = createDialogModal({
         type: 'form',
         title: 'Select Emoji',
         content,
@@ -341,9 +341,9 @@ const EmojiPicker = (() => {
         }
       });
 
-      const modalShell = modalInstance.querySelector('.modal');
+      const modalShell = modalInstance.querySelector('.dialog-modal');
       if (modalShell) {
-        modalShell.classList.add('modal--emoji-picker', 'modal--scroll-body');
+        modalShell.classList.add('dialog-modal--emoji-picker', 'dialog-modal--scroll-body');
       }
 
       showModal(modalInstance);
