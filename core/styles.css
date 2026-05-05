@@ -761,6 +761,36 @@ img.app-local-icon.material-symbols-outlined {
   line-height: 1;
 }
 
+/* ── Tab Groups Section ──────────────────────────────────────────────────── */
+.this-session-tab-groups {
+  width: 100%;
+  max-width: 1180px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-sizing: border-box;
+}
+
+.this-session-tab-groups__title {
+  font-size: var(--size-large, 16px);
+  font-weight: var(--weight-bold, 700);
+  color: var(--common-common-bright-25, rgba(255, 255, 255, 0.9));
+}
+
+.this-session-tab-groups__cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+/* Compact pills: don't stretch to fill row */
+.this-session-tab-groups__cards .option-card {
+  width: auto;
+  flex-shrink: 0;
+}
+
+/* ── Edit Tab Group Modal ────────────────────────────────────────────────── */
+
 .bookmarks-drag-scroll-zone {
   position: fixed;
   left: 0;
@@ -817,6 +847,7 @@ img.app-local-icon.material-symbols-outlined {
 .bookmarks-actions__settings {
   display: flex;
   align-items: center;
+  gap: 16px;
 }
 
 .bookmarks-actions__spacer {

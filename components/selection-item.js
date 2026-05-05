@@ -30,6 +30,7 @@ function createSelectionItem(options = {}) {
     inputType = 'text',
     label = '',
     description = '',
+    counter = null,
     icon = null,
     selected = false,
     checked = false,
@@ -108,6 +109,13 @@ function createSelectionItem(options = {}) {
     }
 
     item.appendChild(textWrap);
+
+    if (counter !== null && counter !== undefined) {
+      const counterEl = document.createElement('span');
+      counterEl.className = 'selection-item__counter';
+      counterEl.textContent = String(counter);
+      item.appendChild(counterEl);
+    }
   }
 
   if (typeof onClick === 'function') {

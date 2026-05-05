@@ -184,6 +184,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   const thisSessionCollapsedWindowIds = new Set();
   const thisSessionVisitedTabIds = new Set();
   const THIS_SESSION_SORT_STORAGE_KEY = 'thisSessionSortChoice';
+  let thisSessionTabGroupFilter = new Set();
+  let thisSessionTabGroupFilterField = null;
+  let thisSessionTabGroups = [];
 
   function createMaterialIcon(name) {
     const icon = document.createElement('span');
@@ -1047,24 +1050,43 @@ document.addEventListener('DOMContentLoaded', async () => {
     }).filter((win) => win.tabs.length > 0);
 
     const groupColorById = {};
+    const groupInfoById = {};
     await Promise.all(Array.from(groupIds).map(async (groupId) => {
       try {
         const group = await chrome.tabGroups.get(groupId);
-        groupColorById[groupId] = mapTabGroupColor(group && group.color);
+        groupInfoById[groupId] = {
+          color: mapTabGroupColor(group && group.color),
+          colorName: (group && group.color) || 'blue',
+          title: (group && group.title) || ''
+        };
       } catch (error) {
-        groupColorById[groupId] = mapTabGroupColor('blue');
+        groupInfoById[groupId] = { color: mapTabGroupColor('blue'), colorName: 'blue', title: '' };
       }
     }));
 
+    // Build per-group tab counts from mapped windows
+    const tabCountByGroupId = {};
     mappedWindows.forEach((win) => {
       win.tabs.forEach((tab) => {
         if (tab.active) {
           thisSessionVisitedTabIds.add(tab.id);
         }
-        if (tab.groupId >= 0 && groupColorById[tab.groupId]) {
-          tab.groupColor = groupColorById[tab.groupId];
+        if (tab.groupId >= 0 && groupInfoById[tab.groupId]) {
+          tab.groupColor = groupInfoById[tab.groupId].color;
+          tabCountByGroupId[tab.groupId] = (tabCountByGroupId[tab.groupId] || 0) + 1;
         }
       });
+    });
+
+    const tabGroups = Array.from(groupIds).map((groupId) => {
+      const info = groupInfoById[groupId] || { color: mapTabGroupColor('blue'), colorName: 'blue', title: '' };
+      return {
+        id: groupId,
+        title: info.title,
+        color: info.color,
+        colorName: info.colorName,
+        tabCount: tabCountByGroupId[groupId] || 0
+      };
     });
 
     const focusedWindow = mappedWindows.find((win) => win.id === currentWindowId)
@@ -1074,7 +1096,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     return {
       currentWindowId: focusedWindow ? focusedWindow.id : null,
-      windows: mappedWindows
+      windows: mappedWindows,
+      tabGroups
     };
   }
 
@@ -1253,8 +1276,143 @@ document.addEventListener('DOMContentLoaded', async () => {
     })));
   }
 
-  function updateThisSessionSortFieldLabel() {
-    if (!thisSessionSortField) return;
+  function updateTabGroupFilterField() {
+    if (!thisSessionTabGroupFilterField) return;
+    const count = thisSessionTabGroupFilter.size;
+    const label = count > 0 ? `Tab group: ${count} selected` : 'Filter by tab group';
+    updateSelectionFieldLabel(thisSessionTabGroupFilterField, label);
+    updateSelectionFieldSelectionState(thisSessionTabGroupFilterField, count > 0);
+    applySelectionFieldState(thisSessionTabGroupFilterField, count > 0 ? 'selection' : 'idle');
+  }
+
+  function toggleTabGroupFilter(groupId) {
+    if (thisSessionTabGroupFilter.has(groupId)) {
+      thisSessionTabGroupFilter.delete(groupId);
+    } else {
+      thisSessionTabGroupFilter.add(groupId);
+    }
+    updateTabGroupFilterField();
+    renderThisSessionPage(true);
+  }
+
+  function renderTabGroupsSection(tabGroups) {
+    if (!tabGroups || tabGroups.length === 0) return null;
+
+    const section = document.createElement('div');
+    section.className = 'this-session-tab-groups';
+
+    const title = document.createElement('p');
+    title.className = 'this-session-tab-groups__title';
+    title.textContent = 'Active Tab Groups';
+    section.appendChild(title);
+
+    const cards = document.createElement('div');
+    cards.className = 'this-session-tab-groups__cards';
+
+    tabGroups.forEach((group) => {
+      const label = group.title || 'Unnamed';
+
+      const card = createOptionCard({
+        label,
+        counter: group.tabCount,
+        swatches: [group.color],
+        selected: thisSessionTabGroupFilter.has(group.id),
+        contrast: 'high',
+        onClick: () => toggleTabGroupFilter(group.id)
+      });
+
+      card.dataset.tabGroupId = String(group.id);
+
+      card.addEventListener('contextmenu', (event) => {
+        openContextMenu(event, [
+          {
+            label: 'Change Name',
+            icon: 'edit',
+            onSelect: async () => {
+              if (typeof EditTabGroupModal !== 'undefined') {
+                await EditTabGroupModal.show({ id: group.id, title: group.title, colorName: group.colorName }, 'name');
+                await renderThisSessionPage(true);
+              }
+            }
+          },
+          {
+            label: 'Change Color',
+            icon: 'palette',
+            onSelect: async () => {
+              if (typeof EditTabGroupModal !== 'undefined') {
+                await EditTabGroupModal.show({ id: group.id, title: group.title, colorName: group.colorName }, 'color');
+                await renderThisSessionPage(true);
+              }
+            }
+          },
+          { type: 'divider' },
+          {
+            label: 'Ungroup Tabs',
+            icon: 'tab_unselected',
+            onSelect: async () => {
+              const tabs = await chrome.tabs.query({ groupId: group.id });
+              const tabIds = tabs.map((t) => t.id);
+              const windowId = tabs.length > 0 ? tabs[0].windowId : null;
+              await chrome.tabs.ungroup(tabIds);
+              thisSessionTabGroupFilter.delete(group.id);
+              UndoService.show(`Ungrouped "${group.title || 'Unnamed'}"`, async () => {
+                try {
+                  const newGroupId = await chrome.tabs.group({ tabIds, createProperties: windowId ? { windowId } : undefined });
+                  await chrome.tabGroups.update(newGroupId, { title: group.title, color: group.colorName });
+                } catch (e) { /* skip */ }
+                await renderThisSessionPage(true);
+              });
+              await renderThisSessionPage(true);
+            }
+          },
+          {
+            label: 'Delete Group',
+            icon: 'delete',
+            destructive: true,
+            onSelect: async () => {
+              const groupName = group.title || 'Unnamed';
+              const confirmed = await Modal.openConfirmation({
+                title: 'Delete tab group?',
+                message: `"${groupName}" and all its tabs will be permanently closed.`,
+                confirmText: 'Delete',
+                cancelText: 'Cancel',
+                destructive: true
+              });
+              if (!confirmed) return;
+              const tabs = await chrome.tabs.query({ groupId: group.id });
+              const tabData = tabs.map((t) => ({ url: t.url, title: t.title, index: t.index, windowId: t.windowId }));
+              await chrome.tabs.remove(tabs.map((t) => t.id));
+              thisSessionTabGroupFilter.delete(group.id);
+              UndoService.show(`Deleted group "${groupName}"`, async () => {
+                const createdTabIds = [];
+                for (const t of tabData) {
+                  try {
+                    const created = await chrome.tabs.create({ url: t.url, windowId: t.windowId, active: false });
+                    createdTabIds.push(created.id);
+                  } catch (e) { /* skip */ }
+                }
+                if (createdTabIds.length > 0) {
+                  try {
+                    const newGroupId = await chrome.tabs.group({ tabIds: createdTabIds });
+                    await chrome.tabGroups.update(newGroupId, { title: group.title, color: group.colorName });
+                  } catch (e) { /* skip */ }
+                }
+                await renderThisSessionPage(true);
+              });
+              await renderThisSessionPage(true);
+            }
+          }
+        ]);
+      });
+
+      cards.appendChild(card);
+    });
+
+    section.appendChild(cards);
+    return section;
+  }
+
+  function updateThisSessionSortFieldLabel() {    if (!thisSessionSortField) return;
     const labelByValue = {
       'browser-order': 'Tabs order',
       az: 'A-Z',
@@ -1279,8 +1437,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     thisSessionLastSnapshot = snapshot;
     thisSessionCurrentWindowId = snapshot.currentWindowId;
+    thisSessionTabGroups = snapshot.tabGroups || [];
     thisSessionRoot.innerHTML = '';
     thisSessionWindowCounter = 0;
+
+    // Render tab groups section at the top
+    const tabGroupsSection = renderTabGroupsSection(thisSessionTabGroups);
+    if (tabGroupsSection) {
+      thisSessionRoot.appendChild(tabGroupsSection);
+    }
 
     const query = String(thisSessionSearchQuery || '').trim().toLowerCase();
 
@@ -1304,7 +1469,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         })
         : tabs;
 
-      if (!filteredTabs.length && query) {
+      const groupFiltered = thisSessionTabGroupFilter.size > 0
+        ? filteredTabs.filter((tab) => thisSessionTabGroupFilter.has(tab.groupId))
+        : filteredTabs;
+
+      if (!groupFiltered.length && (query || thisSessionTabGroupFilter.size > 0)) {
         return;
       }
 
@@ -1314,8 +1483,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       thisSessionWindowCounter += 1;
       const title = isCurrentWindow
-        ? `Current window (${filteredTabs.length} tabs)`
-        : `Window ${thisSessionWindowCounter - 1} (${filteredTabs.length} tabs)`;
+        ? `Current window (${groupFiltered.length} tabs)`
+        : `Window ${thisSessionWindowCounter - 1} (${groupFiltered.length} tabs)`;
 
       const closeDuplicatesAction = createCubeActionButtonWithLabel({
         icon: 'difference',
@@ -1340,7 +1509,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const section = createFolderSection({
         state: 'idle',
         breadcrumbItems: [{ label: title, type: 'current' }],
-        items: filteredTabs.map((tab) => createThisSessionTabTile(tab)),
+        items: groupFiltered.map((tab) => createThisSessionTabTile(tab)),
         actions: [closeDuplicatesAction, closeStaleAction],
         collapsed: !isCurrentWindow && thisSessionCollapsedWindowIds.has(windowData.id),
         onToggleCollapse: (isCollapsed) => {
@@ -1402,7 +1571,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     const searchComp = createSearchComp({
       placeholder: 'Search tabs...',
       contrast: 'low',
-      shortcutKeys: ['T'],
       onInput: () => {
         thisSessionSearchQuery = thisSessionSearchInput ? thisSessionSearchInput.value : '';
         renderThisSessionPage(true);
@@ -1457,6 +1625,63 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     thisSessionActionsSettings.appendChild(thisSessionSortField);
 
+    thisSessionTabGroupFilterField = createSelectionField({
+      label: 'Filter by tab group',
+      contrast: 'low',
+      state: 'idle',
+      onClear: async () => {
+        thisSessionTabGroupFilter.clear();
+        updateTabGroupFilterField();
+        await renderThisSessionPage(true);
+      }
+    });
+
+    setupSelectionFieldMenu(thisSessionTabGroupFilterField, () => {
+      const groups = thisSessionTabGroups;
+      if (!groups || groups.length === 0) {
+        return createSelectionMenu({
+          type: 'simple',
+          contrast: 'low',
+          title: 'Tab Groups',
+          items: ['No tab groups open']
+        });
+      }
+
+      return createSelectionMenu({
+        type: 'simple',
+        contrast: 'low',
+        title: 'Filter by Tab Group',
+        items: groups.map((g) => g.title ? `${g.title} (${g.tabCount})` : `Unnamed (${g.tabCount})`),
+        onClear: async () => {
+          thisSessionTabGroupFilter.clear();
+          updateTabGroupFilterField();
+          await renderThisSessionPage(true);
+        },
+        onSelectAll: async () => {
+          thisSessionTabGroupFilter = new Set(groups.map((g) => g.id));
+          updateTabGroupFilterField();
+          await renderThisSessionPage(true);
+        },
+        selectedIndices: groups.reduce((acc, g, i) => {
+          if (thisSessionTabGroupFilter.has(g.id)) acc.push(i);
+          return acc;
+        }, []),
+        onSelect: async (index) => {
+          const group = groups[index];
+          if (!group) return;
+          if (thisSessionTabGroupFilter.has(group.id)) {
+            thisSessionTabGroupFilter.delete(group.id);
+          } else {
+            thisSessionTabGroupFilter.add(group.id);
+          }
+          updateTabGroupFilterField();
+          await renderThisSessionPage(true);
+        }
+      });
+    });
+
+    thisSessionActionsSettings.appendChild(thisSessionTabGroupFilterField);
+
     const openJourneyButton = createCommonButton({
       label: 'Open Session Journey',
       icon: createMaterialIcon('conversion_path'),
@@ -1501,6 +1726,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     if (chrome?.windows?.onFocusChanged) {
       chrome.windows.onFocusChanged.addListener(queueThisSessionRender);
+    }
+    if (chrome?.tabGroups?.onUpdated) {
+      chrome.tabGroups.onUpdated.addListener(queueThisSessionRender);
+    }
+    if (chrome?.tabGroups?.onRemoved) {
+      chrome.tabGroups.onRemoved.addListener((group) => {
+        if (group && group.id) {
+          thisSessionTabGroupFilter.delete(group.id);
+        }
+        queueThisSessionRender();
+      });
     }
   }
 
@@ -1696,10 +1932,16 @@ document.addEventListener('DOMContentLoaded', async () => {
       && (e.key === 'f' || e.key === 'F');
     if (isFindShortcut) {
       e.preventDefault();
-      const searchInput = document.querySelector('.search-comp__input');
-      if (searchInput) {
-        searchInput.focus();
-        searchInput.select();
+      // On This Session page, focus the tab search input
+      if (activePageIndex === 1 && thisSessionSearchInput) {
+        thisSessionSearchInput.focus();
+        thisSessionSearchInput.select();
+      } else {
+        const searchInput = document.querySelector('.search-comp__input');
+        if (searchInput) {
+          searchInput.focus();
+          searchInput.select();
+        }
       }
       return;
     }
@@ -2207,9 +2449,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             BookmarkModals.tags(child.id).then(() => render(true));
           }
         }) : null;
+
         if (tagAction && bookmarkTags.length > 0) {
           tagAction.setAttribute('title', bookmarkTags.join(', '));
         }
+
         const folderAction = child.parentId ? createCubeActionButton({
           icon: 'folder_open',
           label: 'Show in folder tree',
