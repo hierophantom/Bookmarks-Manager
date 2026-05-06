@@ -750,11 +750,43 @@ document.addEventListener('DOMContentLoaded', async () => {
     const tagsToAdd = selectedTags.filter((tag) => !baselineSharedSet.has(tag.toLowerCase()));
     const tagsToRemove = baselineSharedTags.filter((tag) => !selectedSet.has(tag.toLowerCase()));
 
+    const allTags = await TagsService.getAll();
+
+    if (!selectedTags.length) {
+      const hasAnyExistingTags = summary.bookmarkIds.some((bookmarkId) => {
+        const existing = allTags[bookmarkId];
+        return Array.isArray(existing) && existing.length > 0;
+      });
+
+      if (!hasAnyExistingTags) {
+        return;
+      }
+
+      const confirmed = await Modal.openConfirmation({
+        title: 'Remove all tags?',
+        message: `Remove all tags from ${summary.bookmarkIds.length} selected ${summary.bookmarkIds.length === 1 ? 'bookmark' : 'bookmarks'}?`,
+        confirmText: 'Remove all',
+        destructive: true
+      });
+
+      if (!confirmed) {
+        return;
+      }
+
+      summary.bookmarkIds.forEach((bookmarkId) => {
+        allTags[bookmarkId] = [];
+      });
+
+      await TagsService.setAll(allTags);
+      clearBulkSelection();
+      await render(true);
+      return;
+    }
+
     if (!tagsToAdd.length && !tagsToRemove.length) {
       return;
     }
 
-    const allTags = await TagsService.getAll();
     const tagsToRemoveSet = new Set(tagsToRemove.map((tag) => tag.toLowerCase()));
 
     summary.bookmarkIds.forEach((bookmarkId) => {
@@ -3149,6 +3181,68 @@ document.addEventListener('DOMContentLoaded', async () => {
         tile.draggable = true;
         tile.addEventListener('click', (event) => {
           openBookmarkUrl(child.url, event);
+        });
+        tile.addEventListener('contextmenu', (event) => {
+          openContextMenu(event, [
+            {
+              label: 'Open',
+              icon: 'open_in_browser',
+              onSelect: async () => {
+                if (!child.url) return;
+                try {
+                  const currentTab = await chrome.tabs.getCurrent();
+                  if (currentTab && currentTab.id) {
+                    await chrome.tabs.update(currentTab.id, { url: child.url });
+                    return;
+                  }
+                } catch (_error) {
+                  // fallback
+                }
+                window.location.assign(child.url);
+              }
+            },
+            {
+              label: 'Open in new tab',
+              icon: 'open_in_new',
+              onSelect: async () => {
+                if (!child.url) return;
+                await chrome.tabs.create({ url: child.url });
+              }
+            },
+            {
+              label: 'Copy URL',
+              icon: 'content_copy',
+              onSelect: async () => {
+                if (!child.url) return;
+                await copyTextToClipboard(child.url);
+              }
+            },
+            { type: 'divider' },
+            {
+              label: 'Edit',
+              icon: 'edit',
+              onSelect: async () => {
+                await BookmarksService.editBookmarkPrompt(child.id);
+                await render(true);
+              }
+            },
+            {
+              label: 'Delete',
+              icon: 'delete',
+              destructive: true,
+              onSelect: async () => {
+                const confirmed = await Modal.openConfirmation({
+                  title: 'Delete bookmark',
+                  message: 'Are you sure you want to delete this bookmark?',
+                  confirmText: 'Delete',
+                  destructive: true
+                });
+                if (!confirmed) return;
+                await BookmarksService.deleteWithUndo(child.id);
+                await render(true);
+              }
+            }
+          ]);
         });
         addDragHandlers(tile);
         items.push(tile);
