@@ -391,11 +391,13 @@ function createDialogModalActionButton(btn = {}, index = 0) {
   const type = btn.type || inferredType;
   const label = btn.label || getModalActionLabel(requestedRole || (type === 'primary' ? 'submit' : 'cancel'), type);
   const disabled = Boolean(btn.disabled);
+  const shortcutKeys = parseDialogShortcutKeys(btn.shortcut);
 
   if ((type === 'primary' || type === 'destructive') && typeof createPrimaryButton === 'function') {
     const button = createPrimaryButton({
       label,
       contrast: 'high',
+      shortcutKeys,
       disabled
     });
     button.classList.add(
@@ -409,6 +411,7 @@ function createDialogModalActionButton(btn = {}, index = 0) {
     const button = createCommonButton({
       label,
       contrast: 'low',
+      shortcutKeys,
       disabled
     });
     button.classList.add('dialog-modal__action-btn', 'dialog-modal__action-btn--common');
@@ -426,6 +429,15 @@ function createDialogModalActionButton(btn = {}, index = 0) {
   fallback.appendChild(labelEl);
 
   return fallback;
+}
+
+function parseDialogShortcutKeys(shortcut) {
+  if (!shortcut) return null;
+  const value = String(shortcut).trim();
+  if (!value) return null;
+  if (value === 'ESC') return ['Esc'];
+  if (value === '↵') return ['Enter'];
+  return [value];
 }
 
 function getModalActionLabel(role, type) {

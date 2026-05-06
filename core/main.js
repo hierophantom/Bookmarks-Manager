@@ -164,8 +164,16 @@ document.addEventListener('DOMContentLoaded', async () => {
   let currentSort = 'none';
   let availableTags = [];
   let currentFolderFilter = null; // Track which folder is being viewed
+  let latestBookmarksTreeRoot = null;
+  let latestBookmarkNodeIndex = new Map();
+  let bulkSelectionIds = new Set();
+  let bulkSelectionScopeKey = '';
+  let bulkActionsMenu = null;
+  let bulkActionInFlight = false;
   const BOOKMARKS_SORT_STORAGE_KEY = 'bookmarksSortChoice';
   const COLLAPSED_FOLDERS_KEY = 'collapsedFolderSections';
+  const BULK_OPEN_CONFIRM_THRESHOLD = 20;
+  const BULK_SELECTABLE_SELECTOR = '.bookmark-gallery-tile-small[data-id][data-bulk-type]';
   let collapsedFolders = new Set();
   const BOOKMARK_LINK_TRIGGER_STORAGE_KEY = 'bookmarkLinkTriggerMode';
   let bookmarkLinkTriggerMode = 'new-tab';
@@ -301,6 +309,596 @@ document.addEventListener('DOMContentLoaded', async () => {
     textarea.select();
     document.execCommand('copy');
     document.body.removeChild(textarea);
+  }
+
+  function isEditableTarget(target) {
+    const tag = target && target.tagName;
+    return tag === 'INPUT' || tag === 'TEXTAREA' || Boolean(target && target.isContentEditable);
+  }
+
+  function getBulkSelectionScopeKey() {
+    const query = (textSearchInput && typeof textSearchInput.value === 'string')
+      ? textSearchInput.value.trim().toLowerCase()
+      : '';
+    const tags = Array.isArray(currentFilterTags)
+      ? [...currentFilterTags].sort().join(',')
+      : '';
+    const folder = currentFolderFilter || 'all';
+    return `${folder}|${query}|${tags}`;
+  }
+
+  function getBulkSelectionSummary() {
+    const selectedIds = Array.from(bulkSelectionIds);
+    const summary = {
+      total: selectedIds.length,
+      bookmarkIds: [],
+      folderIds: []
+    };
+
+    selectedIds.forEach((id) => {
+      const node = latestBookmarkNodeIndex.get(id);
+      if (!node) return;
+      if (node.url) {
+        summary.bookmarkIds.push(id);
+      } else {
+        summary.folderIds.push(id);
+      }
+    });
+
+    summary.total = summary.bookmarkIds.length + summary.folderIds.length;
+    return summary;
+  }
+
+  function clearBulkSelection() {
+    if (bulkSelectionIds.size === 0) return;
+    bulkSelectionIds.clear();
+    updateBulkSelectionUI();
+  }
+
+  function collectVisibleBulkTiles() {
+    if (!isBookmarksPageActive()) return [];
+    return Array.from(document.querySelectorAll(BULK_SELECTABLE_SELECTOR))
+      .filter((tile) => tile && tile.offsetParent !== null);
+  }
+
+  async function materializeAllBulkSelectableTiles() {
+    const sections = Array.from(document.querySelectorAll('.folder-section'));
+    for (const section of sections) {
+      const renderItems = section && section._renderFolderItems;
+      if (typeof renderItems === 'function') {
+        await renderItems();
+      }
+    }
+  }
+
+  function toggleBulkSelectionForId(id) {
+    if (!id) return;
+    if (bulkSelectionIds.has(id)) {
+      bulkSelectionIds.delete(id);
+    } else {
+      bulkSelectionIds.add(id);
+    }
+    updateBulkSelectionUI();
+  }
+
+  async function selectAllVisibleTiles() {
+    await materializeAllBulkSelectableTiles();
+    const inScopeTiles = collectVisibleBulkTiles();
+    if (!inScopeTiles.length) return;
+    inScopeTiles.forEach((tile) => {
+      const id = tile.dataset.id;
+      if (id) bulkSelectionIds.add(id);
+    });
+    updateBulkSelectionUI();
+  }
+
+  function decorateTileWithBulkControl(tile, type, id) {
+    if (!tile || !id) return;
+    tile.dataset.bulkType = type;
+
+    const existingToggle = tile.querySelector('.bookmark-bulk-toggle');
+    if (existingToggle) {
+      existingToggle.remove();
+    }
+
+    const toggle = document.createElement('button');
+    toggle.type = 'button';
+    toggle.className = 'bookmark-bulk-toggle';
+    toggle.setAttribute('aria-label', `Select ${type}`);
+
+    const control = document.createElement('span');
+    control.className = 'selection-item__control selection-item__control--multi';
+    control.setAttribute('aria-hidden', 'true');
+    toggle.appendChild(control);
+
+    toggle.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      toggleBulkSelectionForId(id);
+    });
+
+    tile.appendChild(toggle);
+  }
+
+  function buildBulkMoveDestinationOptions() {
+    const options = [];
+
+    function visit(node, depth = 0) {
+      if (!node || node.url) return;
+      if (node.id !== '0') {
+        options.push({
+          value: node.id,
+          label: `${'  '.repeat(depth)}${node.title || '(Untitled)'}`
+        });
+      }
+      const children = Array.isArray(node.children) ? node.children : [];
+      children.forEach((child) => visit(child, depth + 1));
+    }
+
+    const rootNode = latestBookmarksTreeRoot;
+    const rootChildren = rootNode && Array.isArray(rootNode.children) ? rootNode.children : [];
+    rootChildren.forEach((child) => visit(child, 0));
+    return options;
+  }
+
+  async function promptBulkMoveDestination() {
+    const options = buildBulkMoveDestinationOptions();
+    if (!options.length) {
+      await Modal.openError({
+        title: 'No destination folders',
+        message: 'Create a folder first, then try moving the selected bookmarks again.'
+      });
+      return null;
+    }
+
+    if (typeof createDialogModal === 'function' && typeof showModal === 'function') {
+      return new Promise((resolve) => {
+        let selectedFolderId = options[0].value;
+        const modal = createDialogModal({
+          type: 'form',
+          title: 'Move bookmarks',
+          subtitle: 'Choose a destination folder for the selected bookmarks.',
+          fields: [
+            {
+              id: 'bulk_move_destination',
+              label: 'Destination folder',
+              type: 'select',
+              value: selectedFolderId,
+              required: true,
+              options
+            }
+          ],
+          buttons: [
+            { label: 'Cancel', type: 'common', role: 'cancel', shortcut: 'ESC' },
+            { label: 'Move', type: 'primary', role: 'confirm', shortcut: '↵' }
+          ],
+          onSubmit: () => {
+            const destinationInput = document.getElementById('bulk_move_destination');
+            selectedFolderId = destinationInput && destinationInput.value ? destinationInput.value : '';
+            if (!selectedFolderId) {
+              Modal.openError({
+                title: 'Destination required',
+                message: 'Select a destination folder to continue.'
+              });
+              return false;
+            }
+            return true;
+          },
+          onClose: (confirmed) => {
+            resolve(confirmed ? selectedFolderId : null);
+          }
+        });
+
+        showModal(modal);
+      });
+    }
+
+    const picker = new BaseModal({
+      title: 'Move bookmarks',
+      fields: [
+        {
+          id: 'bulk_move_destination',
+          label: 'Destination folder',
+          type: 'select',
+          value: options[0].value,
+          required: true,
+          options
+        }
+      ],
+      confirmText: 'Move',
+      cancelText: 'Cancel'
+    });
+
+    const data = await picker.show();
+    if (!data) return null;
+    return data.dialog-modal_bulk_move_destination || null;
+  }
+
+  async function runBulkDelete(summary) {
+    if (!summary.total) return;
+    const messageParts = [];
+    if (summary.bookmarkIds.length) {
+      const count = summary.bookmarkIds.length;
+      messageParts.push(`${count} ${count === 1 ? 'bookmark' : 'bookmarks'}`);
+    }
+    if (summary.folderIds.length) {
+      const count = summary.folderIds.length;
+      messageParts.push(`${count} ${count === 1 ? 'folder' : 'folders'} (including all nested items)`);
+    }
+
+    const confirmed = await Modal.openConfirmation({
+      title: 'Delete selected items',
+      message: `Delete ${messageParts.join(' and ')}?`,
+      confirmText: 'Delete',
+      destructive: true
+    });
+    if (!confirmed) return;
+
+    for (const bookmarkId of summary.bookmarkIds) {
+      await BookmarksService.removeBookmark(bookmarkId);
+    }
+
+    for (const folderId of summary.folderIds) {
+      await BookmarksService.removeFolder(folderId);
+    }
+
+    clearBulkSelection();
+    await render(true);
+  }
+
+  async function runBulkMove(summary) {
+    if (!summary.bookmarkIds.length) return;
+    const destinationFolderId = await promptBulkMoveDestination();
+    if (!destinationFolderId) return;
+
+    for (const bookmarkId of summary.bookmarkIds) {
+      await chrome.bookmarks.move(bookmarkId, { parentId: destinationFolderId });
+    }
+
+    clearBulkSelection();
+    await render(true);
+  }
+
+  async function promptBulkTags(summary) {
+    const allAvailableTags = await TagsService.getAllTags().catch(() => []);
+    const allTagsMap = await TagsService.getAll();
+    const selectedBookmarkCount = summary.bookmarkIds.length;
+
+    const sharedTags = (() => {
+      const tagSets = summary.bookmarkIds.map((bookmarkId) => {
+        const tags = allTagsMap[bookmarkId];
+        return new Set(Array.isArray(tags) ? tags : []);
+      });
+
+      if (!tagSets.length) return [];
+      const [firstSet, ...rest] = tagSets;
+      return Array.from(firstSet).filter((tag) => rest.every((set) => set.has(tag)));
+    })();
+
+    if (typeof createDialogModal === 'function' && typeof showModal === 'function') {
+      return new Promise((resolve) => {
+        let submitResult = null;
+        let selectedTagsState = Array.from(sharedTags);
+        let syncingSelectedValues = false;
+
+        const normalizeUniqueTags = (tags) => {
+          const normalized = [];
+          const seen = new Set();
+
+          (Array.isArray(tags) ? tags : []).forEach((tag) => {
+            const value = typeof tag === 'string' ? tag.trim() : '';
+            if (!value) return;
+            const key = value.toLowerCase();
+            if (seen.has(key)) return;
+            seen.add(key);
+            normalized.push(value);
+          });
+
+          return normalized;
+        };
+
+        const content = document.createElement('div');
+        content.className = 'bulk-tags-modal';
+
+        const fields = document.createElement('div');
+        fields.className = 'bulk-tags-modal__fields';
+
+        const sharedWrap = document.createElement('div');
+        sharedWrap.className = 'bulk-tags-modal__shared';
+
+        const sharedTitle = document.createElement('p');
+        sharedTitle.className = 'bulk-tags-modal__shared-title';
+        sharedTitle.textContent = 'Common tags';
+        sharedWrap.appendChild(sharedTitle);
+
+        const sharedTagsWrap = document.createElement('div');
+        sharedTagsWrap.className = 'bulk-tags-modal__shared-tags';
+        sharedWrap.appendChild(sharedTagsWrap);
+
+        const renderSharedTags = () => {
+          sharedTagsWrap.innerHTML = '';
+
+          if (!selectedTagsState.length) {
+            const emptyText = document.createElement('p');
+            emptyText.className = 'bulk-tags-modal__shared-empty';
+            emptyText.textContent = 'No common tags selected';
+            sharedTagsWrap.appendChild(emptyText);
+            return;
+          }
+
+          selectedTagsState.forEach((tagText) => {
+            if (typeof createChip === 'function') {
+              const chip = createChip({
+                text: tagText,
+                contrast: 'low',
+                dismissible: true,
+                onRemove: () => {
+                  selectedTagsState = selectedTagsState.filter((tag) => tag.toLowerCase() !== tagText.toLowerCase());
+                  if (typeof addTagsField.setSelectedValues === 'function') {
+                    syncingSelectedValues = true;
+                    addTagsField.setSelectedValues(selectedTagsState);
+                    syncingSelectedValues = false;
+                  }
+                  renderSharedTags();
+                }
+              });
+              sharedTagsWrap.appendChild(chip);
+              return;
+            }
+
+            const fallback = document.createElement('span');
+            fallback.className = 'bulk-tags-modal__shared-tag-fallback';
+            fallback.textContent = tagText;
+            sharedTagsWrap.appendChild(fallback);
+          });
+        };
+
+        const addTagsField = createChipInput({
+          label: 'Add tags',
+          contrast: 'low',
+          selectedValues: sharedTags,
+          availableItems: allAvailableTags,
+          menuTitle: 'Found tags',
+          inputPlaceholder: 'Add tags',
+          allowCustom: true,
+          onChange: (values) => {
+            if (syncingSelectedValues) return;
+            selectedTagsState = normalizeUniqueTags(values);
+            renderSharedTags();
+          }
+        });
+        addTagsField.classList.add('bulk-tags-modal__chip-input');
+        fields.appendChild(addTagsField);
+        fields.appendChild(sharedWrap);
+
+        renderSharedTags();
+
+        content.appendChild(fields);
+
+        const modal = createDialogModal({
+          type: 'form',
+          title: 'Edit tags',
+          subtitle: `Edit tags for ${selectedBookmarkCount} selected ${selectedBookmarkCount === 1 ? 'bookmark' : 'bookmarks'}`,
+          content,
+          buttons: [
+            { label: 'Cancel', type: 'common', role: 'cancel', shortcut: 'ESC' },
+            { label: 'Save', type: 'primary', role: 'confirm', shortcut: '↵' }
+          ],
+          onSubmit: () => {
+            const selectedValues = normalizeUniqueTags(selectedTagsState);
+            submitResult = {
+              selectedTags: selectedValues,
+              baselineSharedTags: sharedTags
+            };
+            return true;
+          },
+          onClose: (confirmed) => {
+            resolve(confirmed ? submitResult : null);
+          }
+        });
+
+        showModal(modal);
+      });
+    }
+
+    const value = await Modal.openPrompt({
+      title: 'Edit tags',
+      label: 'Tags',
+      message: 'Enter one or more tags separated by commas.',
+      placeholder: 'work, reading-list',
+      defaultValue: '',
+      confirmText: 'Save'
+    });
+
+    if (!value) return null;
+    return {
+      selectedTags: value
+        .split(',')
+        .map((tag) => tag.trim())
+        .filter((tag) => tag.length > 0),
+      baselineSharedTags: []
+    };
+  }
+
+  async function runBulkAddTag(summary) {
+    if (!summary.bookmarkIds.length) return;
+    const tagEditResult = await promptBulkTags(summary);
+    if (!tagEditResult) return;
+
+    const normalizeUniqueTags = (tags) => {
+      const normalized = [];
+      const seen = new Set();
+
+      (Array.isArray(tags) ? tags : []).forEach((tag) => {
+        const value = typeof tag === 'string' ? tag.trim() : '';
+        if (!value) return;
+        const key = value.toLowerCase();
+        if (seen.has(key)) return;
+        seen.add(key);
+        normalized.push(value);
+      });
+
+      return normalized;
+    };
+
+    const selectedTags = normalizeUniqueTags(tagEditResult.selectedTags);
+    const baselineSharedTags = normalizeUniqueTags(tagEditResult.baselineSharedTags);
+
+    const baselineSharedSet = new Set(baselineSharedTags.map((tag) => tag.toLowerCase()));
+    const selectedSet = new Set(selectedTags.map((tag) => tag.toLowerCase()));
+
+    const tagsToAdd = selectedTags.filter((tag) => !baselineSharedSet.has(tag.toLowerCase()));
+    const tagsToRemove = baselineSharedTags.filter((tag) => !selectedSet.has(tag.toLowerCase()));
+
+    if (!tagsToAdd.length && !tagsToRemove.length) {
+      return;
+    }
+
+    const allTags = await TagsService.getAll();
+    const tagsToRemoveSet = new Set(tagsToRemove.map((tag) => tag.toLowerCase()));
+
+    summary.bookmarkIds.forEach((bookmarkId) => {
+      const current = normalizeUniqueTags(allTags[bookmarkId]);
+      const next = current.filter((tag) => !tagsToRemoveSet.has(tag.toLowerCase()));
+
+      tagsToAdd.forEach((tag) => {
+        const exists = next.some((currentTag) => currentTag.toLowerCase() === tag.toLowerCase());
+        if (!exists) {
+          next.push(tag);
+        }
+      });
+
+      allTags[bookmarkId] = next;
+    });
+    await TagsService.setAll(allTags);
+
+    clearBulkSelection();
+    await render(true);
+  }
+
+  async function runBulkCopyUrls(summary) {
+    const urls = summary.bookmarkIds
+      .map((id) => latestBookmarkNodeIndex.get(id))
+      .filter((node) => node && node.url)
+      .map((node) => node.url);
+
+    if (!urls.length) {
+      await Modal.openError({
+        title: 'No URLs to copy',
+        message: 'Only bookmarks can be copied.'
+      });
+      return;
+    }
+
+    await copyTextToClipboard(urls.join('\n'));
+  }
+
+  async function runBulkOpenInNewTabs(summary) {
+    const urls = summary.bookmarkIds
+      .map((id) => latestBookmarkNodeIndex.get(id))
+      .filter((node) => node && node.url)
+      .map((node) => node.url);
+
+    if (!urls.length) return;
+
+    if (urls.length > BULK_OPEN_CONFIRM_THRESHOLD) {
+      const confirmed = await Modal.openConfirmation({
+        title: 'Open selected bookmarks?',
+        message: `Open ${urls.length} bookmarks in new tabs?`,
+        confirmText: 'Open'
+      });
+      if (!confirmed) return;
+    }
+
+    urls.forEach((url) => {
+      chrome.tabs.create({ url, active: false });
+    });
+  }
+
+  function getBulkActions(summary) {
+    if (!summary.total) return [];
+    const hasBookmarks = summary.bookmarkIds.length > 0;
+    const hasFolders = summary.folderIds.length > 0;
+    const isMixed = hasBookmarks && hasFolders;
+
+    const wrapAction = (runner) => async () => {
+      if (bulkActionInFlight) return;
+      bulkActionInFlight = true;
+      try {
+        await runner(summary);
+      } finally {
+        bulkActionInFlight = false;
+      }
+    };
+
+    if (isMixed) {
+      return [
+        { label: 'Delete selected', icon: 'delete', variant: 'destructive', onClick: wrapAction(runBulkDelete) }
+      ];
+    }
+
+    if (hasFolders && !hasBookmarks) {
+      return [
+        { label: 'Delete selected', icon: 'delete', variant: 'destructive', onClick: wrapAction(runBulkDelete) }
+      ];
+    }
+
+    return [
+      { label: 'Move', icon: 'drive_file_move', variant: 'common', onClick: wrapAction(runBulkMove) },
+      { label: 'Manage tag', icon: 'label', variant: 'common', onClick: wrapAction(runBulkAddTag) },
+      { label: 'Copy URL', icon: 'content_copy', variant: 'common', onClick: wrapAction(runBulkCopyUrls) },
+      { label: 'Open selected', icon: 'open_in_new', variant: 'common', onClick: wrapAction(runBulkOpenInNewTabs) },
+      { label: 'Delete selected', icon: 'delete', variant: 'destructive', onClick: wrapAction(runBulkDelete) }
+    ];
+  }
+
+  function updateBulkSelectionUI() {
+    const validSelection = new Set();
+    bulkSelectionIds.forEach((id) => {
+      if (latestBookmarkNodeIndex.has(id)) {
+        validSelection.add(id);
+      }
+    });
+    bulkSelectionIds = validSelection;
+
+    const selectedCount = bulkSelectionIds.size;
+
+    document.querySelectorAll(BULK_SELECTABLE_SELECTOR).forEach((tile) => {
+      const id = tile.dataset.id;
+      const isSelected = Boolean(id && bulkSelectionIds.has(id));
+      tile.classList.toggle('bookmark-gallery-tile-small--bulk-selected', isSelected);
+      const control = tile.querySelector('.bookmark-bulk-toggle .selection-item__control--multi');
+      if (control) {
+        control.classList.toggle('selection-item__control--selected', isSelected);
+      }
+      const toggle = tile.querySelector('.bookmark-bulk-toggle');
+      if (toggle) {
+        toggle.setAttribute('aria-pressed', isSelected ? 'true' : 'false');
+      }
+    });
+
+    const shouldShow = isBookmarksPageActive() && selectedCount > 0;
+    if (!bulkActionsMenu && typeof createBulkActionsMenu === 'function') {
+      bulkActionsMenu = createBulkActionsMenu({
+        selectedCount,
+        actions: [],
+        visible: false,
+        onClose: () => {
+          clearBulkSelection();
+        }
+      });
+    }
+
+    if (!bulkActionsMenu) return;
+
+    bulkActionsMenu.setSelectedCount(selectedCount);
+    bulkActionsMenu.setActions(getBulkActions(getBulkSelectionSummary()));
+
+    if (shouldShow) {
+      bulkActionsMenu.show();
+    } else {
+      bulkActionsMenu.hide();
+    }
   }
 
   function countBookmarksInNode(node) {
@@ -521,6 +1119,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       contrast: 'low',
       shortcutKeys: ['⌘', 'F'],
       onInput: () => {
+        clearBulkSelection();
         render(true);
       }
     });
@@ -544,6 +1143,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       onClear: () => {
         currentFilterTags = [];
         updateTagFieldLabel();
+        clearBulkSelection();
         render(true);
       }
     });
@@ -610,6 +1210,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         currentSort = 'none';
         await persistSortChoice(currentSort);
         updateSortFieldLabel();
+        clearBulkSelection();
         render(true);
       }
     });
@@ -660,16 +1261,19 @@ document.addEventListener('DOMContentLoaded', async () => {
             currentFilterTags = [...currentFilterTags, tag];
           }
           updateTagFieldLabel();
+          clearBulkSelection();
           render(true);
         },
         onClear: () => {
           currentFilterTags = [];
           updateTagFieldLabel();
+          clearBulkSelection();
           render(true);
         },
         onSelectAll: () => {
           currentFilterTags = [...availableTags];
           updateTagFieldLabel();
+          clearBulkSelection();
           render(true);
         }
       });
@@ -688,6 +1292,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           currentSort = normalizeSortChoice(selection ? selection.value : 'none');
           await persistSortChoice(currentSort);
           updateSortFieldLabel();
+          clearBulkSelection();
           render(true);
         }
       });
@@ -1848,6 +2453,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (persist) {
       await Storage.set({ activePageIndex: normalized });
     }
+    updateBulkSelectionUI();
   }
 
   // Init page from storage
@@ -1946,9 +2552,26 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
+    const isDismissBulkSelectionShortcut = e.key === 'Escape' && isBookmarksPageActive() && bulkSelectionIds.size > 0;
+    const hasOpenDialog = Boolean(document.querySelector('.dialog-modal-overlay'));
+    if (isDismissBulkSelectionShortcut && !hasOpenDialog) {
+      e.preventDefault();
+      clearBulkSelection();
+      return;
+    }
+
     const target = e.target;
-    const tag = target && target.tagName;
-    if (tag === 'INPUT' || tag === 'TEXTAREA' || (target && target.isContentEditable)) return;
+    const isSelectAllShortcut = (e.metaKey || e.ctrlKey) && !e.shiftKey && !e.altKey
+      && (e.key === 'a' || e.key === 'A');
+    if (isSelectAllShortcut && isBookmarksPageActive() && !isEditableTarget(target)) {
+      e.preventDefault();
+      selectAllVisibleTiles().catch((error) => {
+        console.error('Failed to select all items in current scope', error);
+      });
+      return;
+    }
+
+    if (isEditableTarget(target)) return;
 
     const activeEl = document.activeElement;
     const activeTile = activeEl && typeof activeEl.closest === 'function'
@@ -2160,6 +2783,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       requestAnimationFrame(apply);
     }
     const renderedFolderIds = new Set();
+    const nextBulkSelectionScope = getBulkSelectionScopeKey();
+    if (nextBulkSelectionScope !== bulkSelectionScopeKey) {
+      bulkSelectionScopeKey = nextBulkSelectionScope;
+      bulkSelectionIds.clear();
+    }
 
     if (root && root._lazyObserver) {
       root._lazyObserver.disconnect();
@@ -2290,6 +2918,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (n.children && n.children.length) buildMap(n.children);
       }
     })(tree && tree[0] ? tree[0] : null);
+    latestBookmarksTreeRoot = tree && tree[0] ? tree[0] : null;
+    latestBookmarkNodeIndex = idToNode;
 
     function getFolderPath(id) {
       const parts = [];
@@ -2515,6 +3145,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         tile.dataset.id = child.id;
         tile.dataset.url = child.url || '';
+        decorateTileWithBulkControl(tile, 'bookmark', child.id);
         tile.draggable = true;
         tile.addEventListener('click', (event) => {
           openBookmarkUrl(child.url, event);
@@ -2552,6 +3183,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
       }
       restoreScrollPosition();
+      updateBulkSelectionUI();
       return;
     }
 
@@ -2582,6 +3214,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           });
         }
         restoreScrollPosition();
+        updateBulkSelectionUI();
         return;
       }
     }
@@ -3041,6 +3674,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       tile.dataset.id = child.id;
       tile.dataset.url = child.url || '';
+      decorateTileWithBulkControl(tile, 'bookmark', child.id);
       tile.draggable = true;
       tile.addEventListener('click', (event) => {
         openBookmarkUrl(child.url, event);
@@ -3179,6 +3813,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
 
       tile.dataset.id = child.id;
+      decorateTileWithBulkControl(tile, 'folder', child.id);
       tile.draggable = true;
       tile.addEventListener('contextmenu', (event) => {
         const nestedBookmarkCount = countBookmarksInNode(child);
@@ -3593,6 +4228,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     restoreScrollPosition();
+    updateBulkSelectionUI();
   }
 
   const dragState = {
@@ -4604,12 +5240,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Filter main view to show only a specific folder
   window.showBookmarksInFolder = async function(folderId) {
+    clearBulkSelection();
     currentFolderFilter = folderId;
     await render(false);
   };
 
   // Clear folder filter and show normal view
   window.clearFolderFilter = async function() {
+    clearBulkSelection();
     currentFolderFilter = null;
     await render(false);
   };

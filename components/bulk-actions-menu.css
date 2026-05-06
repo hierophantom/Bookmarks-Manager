@@ -55,8 +55,35 @@
   height: 36px;
 }
 
+.bulk-actions-menu__action--destructive {
+  border-color: var(--role-destructive-20, rgba(222, 48, 51, 0.8));
+  color: var(--role-common-bright-25, rgba(255, 255, 255, 0.95));
+  background: var(--role-destructive-15, rgba(222, 48, 51, 0.6));
+}
+
+.bulk-actions-menu__action--destructive:hover {
+  border-color: var(--role-destructive-25, #de3033);
+  color: var(--role-common-bright-25, rgba(255, 255, 255, 0.95));
+  background: var(--role-destructive-20, rgba(222, 48, 51, 0.8));
+}
+
+.button-common.bulk-actions-menu__action--destructive {
+  background: var(--role-destructive-15, rgba(222, 48, 51, 0.6)) !important;
+  border-color: var(--role-destructive-20, rgba(222, 48, 51, 0.8)) !important;
+  color: var(--role-common-bright-25, rgba(255, 255, 255, 0.95)) !important;
+}
+
+.button-common.bulk-actions-menu__action--destructive:hover {
+  background: var(--role-destructive-20, rgba(222, 48, 51, 0.8)) !important;
+  border-color: var(--role-destructive-25, #de3033) !important;
+  color: var(--role-common-bright-25, rgba(255, 255, 255, 0.95)) !important;
+}
+
 .bulk-actions-menu__fallback-button {
   height: 32px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   border-radius: 8px;
   border: 1px solid var(--common-common-bright-05, rgba(255, 255, 255, 0.1));
   background: var(--common-common-bright-05, rgba(255, 255, 255, 0.08));
@@ -68,6 +95,26 @@
   cursor: pointer;
 }
 
+.bulk-actions-menu__fallback-icon,
+.bulk-actions-menu__fallback-icon .material-symbols-outlined {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.bulk-actions-menu__fallback-label {
+  line-height: 1;
+}
+
 .bulk-actions-menu__fallback-button:hover {
   background: var(--common-common-bright-10, rgba(255, 255, 255, 0.14));
+}
+
+.bulk-actions-menu__fallback-button--destructive {
+  border-color: var(--role-destructive-20, rgba(222, 48, 51, 0.8));
+  color: var(--role-common-bright-25, rgba(255, 255, 255, 0.95));
+  background: var(--role-destructive-15, rgba(222, 48, 51, 0.6));
+}
+
+.bulk-actions-menu__fallback-button--destructive:hover {
+  background: var(--role-destructive-20, rgba(222, 48, 51, 0.8));
 }

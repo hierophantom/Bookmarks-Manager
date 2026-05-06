@@ -1653,7 +1653,7 @@ const Modal = (() => {
       const data = await modal.show();
       if (!data) return null;
 
-      const value = (data.dialog-modal_prompt_value || '').trim();
+      const value = (data['dialog-modal_modal_prompt_value'] || '').trim();
       if (typeof validator === 'function') {
         const validationResult = validator(value);
         if (validationResult !== true) {

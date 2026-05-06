@@ -93,11 +93,26 @@ function createBulkActionsMenu(options = {}) {
           if (typeof onClick === 'function') onClick(action);
         }
       });
+      if (variant === 'destructive') {
+        button.classList.add('bulk-actions-menu__action--destructive');
+      }
     } else {
       button = document.createElement('button');
       button.type = 'button';
       button.className = 'bulk-actions-menu__fallback-button';
-      button.textContent = label;
+      if (variant === 'destructive') button.classList.add('bulk-actions-menu__fallback-button--destructive');
+
+      if (resolvedIcon) {
+        const iconWrap = document.createElement('span');
+        iconWrap.className = 'bulk-actions-menu__fallback-icon';
+        iconWrap.appendChild(resolvedIcon);
+        button.appendChild(iconWrap);
+      }
+
+      const labelWrap = document.createElement('span');
+      labelWrap.className = 'bulk-actions-menu__fallback-label';
+      labelWrap.textContent = label;
+      button.appendChild(labelWrap);
       button.addEventListener('click', () => {
         if (typeof onClick === 'function') onClick(action);
       });
