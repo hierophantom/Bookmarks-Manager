@@ -564,21 +564,29 @@ document.addEventListener('DOMContentLoaded', async () => {
     const allTagsMap = await TagsService.getAll();
     const selectedBookmarkCount = summary.bookmarkIds.length;
 
-    const sharedTags = (() => {
-      const tagSets = summary.bookmarkIds.map((bookmarkId) => {
-        const tags = allTagsMap[bookmarkId];
-        return new Set(Array.isArray(tags) ? tags : []);
+    const appliedTags = (() => {
+      const seen = new Set();
+      const values = [];
+
+      summary.bookmarkIds.forEach((bookmarkId) => {
+        const tags = Array.isArray(allTagsMap[bookmarkId]) ? allTagsMap[bookmarkId] : [];
+        tags.forEach((tag) => {
+          const normalized = typeof tag === 'string' ? tag.trim() : '';
+          if (!normalized) return;
+          const key = normalized.toLowerCase();
+          if (seen.has(key)) return;
+          seen.add(key);
+          values.push(normalized);
+        });
       });
 
-      if (!tagSets.length) return [];
-      const [firstSet, ...rest] = tagSets;
-      return Array.from(firstSet).filter((tag) => rest.every((set) => set.has(tag)));
+      return values;
     })();
 
     if (typeof createDialogModal === 'function' && typeof showModal === 'function') {
       return new Promise((resolve) => {
         let submitResult = null;
-        let selectedTagsState = Array.from(sharedTags);
+        let selectedTagsState = Array.from(appliedTags);
         let syncingSelectedValues = false;
 
         const normalizeUniqueTags = (tags) => {
@@ -608,7 +616,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const sharedTitle = document.createElement('p');
         sharedTitle.className = 'bulk-tags-modal__shared-title';
-        sharedTitle.textContent = 'Common tags';
+        sharedTitle.textContent = 'Applied tags';
         sharedWrap.appendChild(sharedTitle);
 
         const sharedTagsWrap = document.createElement('div');
@@ -621,7 +629,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           if (!selectedTagsState.length) {
             const emptyText = document.createElement('p');
             emptyText.className = 'bulk-tags-modal__shared-empty';
-            emptyText.textContent = 'No common tags selected';
+            emptyText.textContent = 'No applied tags selected';
             sharedTagsWrap.appendChild(emptyText);
             return;
           }
@@ -656,7 +664,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const addTagsField = createChipInput({
           label: 'Add tags',
           contrast: 'low',
-          selectedValues: sharedTags,
+          selectedValues: appliedTags,
           availableItems: allAvailableTags,
           menuTitle: 'Found tags',
           inputPlaceholder: 'Add tags',
@@ -688,7 +696,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const selectedValues = normalizeUniqueTags(selectedTagsState);
             submitResult = {
               selectedTags: selectedValues,
-              baselineSharedTags: sharedTags
+              baselineAppliedTags: appliedTags
             };
             return true;
           },
@@ -716,7 +724,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         .split(',')
         .map((tag) => tag.trim())
         .filter((tag) => tag.length > 0),
-      baselineSharedTags: []
+      baselineAppliedTags: []
     };
   }
 
@@ -742,13 +750,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     const selectedTags = normalizeUniqueTags(tagEditResult.selectedTags);
-    const baselineSharedTags = normalizeUniqueTags(tagEditResult.baselineSharedTags);
+    const baselineAppliedTags = normalizeUniqueTags(tagEditResult.baselineAppliedTags);
 
-    const baselineSharedSet = new Set(baselineSharedTags.map((tag) => tag.toLowerCase()));
+    const baselineAppliedSet = new Set(baselineAppliedTags.map((tag) => tag.toLowerCase()));
     const selectedSet = new Set(selectedTags.map((tag) => tag.toLowerCase()));
 
-    const tagsToAdd = selectedTags.filter((tag) => !baselineSharedSet.has(tag.toLowerCase()));
-    const tagsToRemove = baselineSharedTags.filter((tag) => !selectedSet.has(tag.toLowerCase()));
+    const tagsToAdd = selectedTags.filter((tag) => !baselineAppliedSet.has(tag.toLowerCase()));
+    const tagsToRemove = baselineAppliedTags.filter((tag) => !selectedSet.has(tag.toLowerCase()));
 
     const allTags = await TagsService.getAll();
 
