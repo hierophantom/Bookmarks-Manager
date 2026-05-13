@@ -290,6 +290,21 @@ Key additions:
 - `content_scripts`: Overlay injection
 - `background.service_worker`: Background logic
 
+### Security Guardrail: `web_accessible_resources`
+
+Current stance:
+- `web_accessible_resources` is intentionally not declared in `manifest.json`.
+- This keeps extension assets non-addressable from arbitrary web pages by default.
+
+Rationale:
+- Avoids expanding external page visibility into packaged extension resources.
+- Reduces extension fingerprinting and probing surface.
+
+Change policy:
+- Any future addition of `web_accessible_resources` requires explicit security review before merge.
+- New entries must be minimal and justified by a concrete feature need.
+- If added, restrict `matches` as narrowly as possible and document the reason in this architecture file.
+
 ---
 
 ## Edge Cases & UX Considerations
