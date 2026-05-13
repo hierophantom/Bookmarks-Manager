@@ -1,4 +1,48 @@
 const TabGroupsService = (()=>{
+  const TAB_GROUP_COLOR_MAP = {
+    grey: '#999999',
+    blue: '#1f5cf0',
+    red: '#d32f2f',
+    yellow: '#f57f17',
+    green: '#388e3c',
+    pink: '#c2185b',
+    purple: '#7b1fa2',
+    cyan: '#00838f'
+  };
+
+  function getSafeGroupColorToken(colorToken) {
+    return Object.prototype.hasOwnProperty.call(TAB_GROUP_COLOR_MAP, colorToken) ? colorToken : 'grey';
+  }
+
+  function getGroupColorHex(colorToken) {
+    return TAB_GROUP_COLOR_MAP[getSafeGroupColorToken(colorToken)];
+  }
+
+  function withAlpha(hexColor, alpha = 0.08) {
+    const match = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hexColor);
+    if (!match) return 'rgba(153, 153, 153, 0.08)';
+
+    const r = parseInt(match[1], 16);
+    const g = parseInt(match[2], 16);
+    const b = parseInt(match[3], 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  }
+
+  function applyGroupColors(container) {
+    container.querySelectorAll('.tab-group-item').forEach((groupEl) => {
+      const token = getSafeGroupColorToken(groupEl.dataset.groupColor || 'grey');
+      const color = getGroupColorHex(token);
+
+      groupEl.style.borderLeftColor = color;
+      groupEl.style.backgroundColor = withAlpha(color, 0.08);
+
+      const titleEl = groupEl.querySelector('.tab-group-title');
+      if (titleEl) titleEl.style.color = color;
+
+      const metaEl = groupEl.querySelector('.tab-group-meta');
+      if (metaEl) metaEl.style.color = color;
+    });
+  }
   
   // Check if tabGroups API is available
   const hasTabGroupsAPI = typeof chrome !== 'undefined' && chrome.tabGroups && typeof chrome.tabGroups.query === 'function';
@@ -112,33 +156,23 @@ const TabGroupsService = (()=>{
       for (const group of groups) {
         const tabs = await getGroupTabs(group.id);
         const bgColor = group.color || 'grey';
-        const colorMap = {
-          'grey': '#999',
-          'blue': '#1f5cf0',
-          'red': '#d32f2f',
-          'yellow': '#f57f17',
-          'green': '#388e3c',
-          'pink': '#c2185b',
-          'purple': '#7b1fa2',
-          'cyan': '#00838f'
-        };
-        
-        const color = colorMap[bgColor] || '#999';
+        const safeColorToken = getSafeGroupColorToken(bgColor);
         const title = group.title || `Untitled Group (${tabs.length} tabs)`;
         
         html += `
           <div class="tab-group-item" style="
-            border-left: 4px solid ${color};
-            background: ${color}08;
+            border-left: 4px solid #999;
+            background: rgba(153, 153, 153, 0.08);
             padding: 10px;
             border-radius: 4px;
             margin-bottom: 12px;
           " 
-          data-group-id="${group.id}">
+          data-group-id="${group.id}"
+          data-group-color="${safeColorToken}">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
               <div style="flex:1;">
-                <strong style="color:${color}">${escapeHtml(title)}</strong>
-                <div style="font-size:80%;color:${color};margin-top:2px;">${escapeHtml(bgColor)} • ${tabs.length} tab${tabs.length !== 1 ? 's' : ''}</div>
+                <strong class="tab-group-title" style="color:#999">${escapeHtml(title)}</strong>
+                <div class="tab-group-meta" style="font-size:80%;color:#999;margin-top:2px;">${escapeHtml(safeColorToken)} • ${tabs.length} tab${tabs.length !== 1 ? 's' : ''}</div>
               </div>
               <div style="display:flex;gap:4px;">
                 <button class="edit-group-btn" style="padding:4px 8px;font-size:90%;cursor:pointer;background:#fff;border:1px solid #ddd;border-radius:3px;">✎ Edit</button>
@@ -183,6 +217,7 @@ const TabGroupsService = (()=>{
       
       html += '</div>';
       container.innerHTML = html;
+      applyGroupColors(container);
       
       // Attach event listeners
       container.querySelectorAll('.tab-item').forEach(el => {
@@ -278,18 +313,7 @@ const TabGroupsService = (()=>{
           `;
           
           const colors = ['grey', 'blue', 'red', 'yellow', 'green', 'pink', 'purple', 'cyan'];
-          const colorMap = {
-            grey: '#999999',
-            blue: '#2196F3',
-            red: '#F44336',
-            yellow: '#FFC107',
-            green: '#4CAF50',
-            pink: '#E91E63',
-            purple: '#9C27B0',
-            cyan: '#00BCD4'
-          };
-          
-          const currentColor = group.color || 'grey';
+          const currentColor = getSafeGroupColorToken(group.color || 'grey');
           
           let colorHtml = colors.map(c => `
             <div style="
@@ -302,7 +326,7 @@ const TabGroupsService = (()=>{
               <div style="
                 width: 40px;
                 height: 40px;
-                background: ${colorMap[c]};
+                background: ${getGroupColorHex(c)};
                 border: ${c === currentColor ? '3px solid #000' : '2px solid #ddd'};
                 border-radius: 4px;
                 transition: all 0.2s;
