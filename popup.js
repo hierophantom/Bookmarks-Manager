@@ -113,22 +113,50 @@
     const visible = allItems.slice(0, 5);
     flatItems = visible;
 
-    el.results.innerHTML = visible.map((item, i) => {
-      const faviconHtml = item.url
-        ? getFaviconHtml(item.url)
-        : `<span class="bm-popup-favicon-placeholder"></span>`;
-      const title = escapeHtml(item.title || item.url || 'Untitled');
-      return `
-        <div class="bm-popup-item${i === 0 ? ' bm-popup-item--selected' : ''}" data-idx="${i}">
-          ${faviconHtml}
-          <span class="bm-popup-item-title">${title}</span>
-        </div>
-      `;
-    }).join('');
+    el.results.innerHTML = '';
+    visible.forEach((item, i) => {
+      const row = document.createElement('div');
+      row.className = `bm-popup-item${i === 0 ? ' bm-popup-item--selected' : ''}`;
+      row.dataset.idx = String(i);
 
-    if (typeof FaviconService !== 'undefined' && typeof FaviconService.attachErrorHandlers === 'function') {
-      FaviconService.attachErrorHandlers(el.results);
-    }
+      if (item.url && typeof FaviconService !== 'undefined' && typeof FaviconService.createFaviconElement === 'function') {
+        row.appendChild(FaviconService.createFaviconElement(item.url, {
+          size: 24,
+          className: 'bm-popup-favicon',
+          alt: ''
+        }));
+      } else if (item.url) {
+        const fallbackImg = document.createElement('img');
+        fallbackImg.className = 'bm-popup-favicon';
+        fallbackImg.width = 24;
+        fallbackImg.height = 24;
+        fallbackImg.loading = 'lazy';
+        fallbackImg.alt = '';
+
+        try {
+          fallbackImg.src = `${new URL(item.url).origin}/favicon.ico`;
+        } catch {
+          const placeholder = document.createElement('span');
+          placeholder.className = 'bm-popup-favicon-placeholder';
+          row.appendChild(placeholder);
+        }
+
+        if (fallbackImg.src) {
+          row.appendChild(fallbackImg);
+        }
+      } else {
+        const placeholder = document.createElement('span');
+        placeholder.className = 'bm-popup-favicon-placeholder';
+        row.appendChild(placeholder);
+      }
+
+      const title = document.createElement('span');
+      title.className = 'bm-popup-item-title';
+      title.textContent = item.title || item.url || 'Untitled';
+      row.appendChild(title);
+
+      el.results.appendChild(row);
+    });
 
     if (visible.length > 0) selectedIndex = 0;
   }
@@ -165,31 +193,6 @@
   }
 
   // ── Helpers ─────────────────────────────────────────────────────────────────
-
-  function getFaviconHtml(url) {
-    if (!url) return '<span class="bm-popup-favicon-placeholder"></span>';
-    if (typeof FaviconService !== 'undefined' && typeof FaviconService.getFaviconHtml === 'function') {
-      return FaviconService.getFaviconHtml(url, {
-        size: 24,
-        className: 'bm-popup-favicon',
-        alt: ''
-      });
-    }
-
-    try {
-      const directFaviconUrl = `${new URL(url).origin}/favicon.ico`;
-      return `<img class="bm-popup-favicon" src="${directFaviconUrl}" width="24" height="24" alt="" loading="lazy" />`;
-    } catch {
-      return '<span class="bm-popup-favicon-placeholder"></span>';
-    }
-  }
-
-  function escapeHtml(text) {
-    if (!text) return '';
-    return text
-      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;').replace(/'/g, '&#039;');
-  }
 
   // ── Start ───────────────────────────────────────────────────────────────────
   init();

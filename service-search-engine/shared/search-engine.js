@@ -125,6 +125,11 @@ export class SearchEngine {
       if (bookmarks.length > 0) results.Bookmarks = bookmarks;
     }
 
+    const chromeSettings = await this.searchChromeSettings(normalizedQuery);
+    if (chromeSettings.length > 0) {
+      results['Chrome Settings'] = chromeSettings.slice(0, 5);
+    }
+
     // Always include relevant actions
     results.Actions = await this.getActions(query, context);
 
@@ -136,8 +141,9 @@ export class SearchEngine {
    * For content overlay: returns 'Quick Links' if the section is visible, else 'History'
    */
   async getDefaultResults(context) {
-    const [history] = await Promise.all([
-      this.searchHistory('')
+    const [history, chromeSettings] = await Promise.all([
+      this.searchHistory(''),
+      this.searchChromeSettings('')
     ]);
 
     // Check if quick-links section is enabled in storage
@@ -159,12 +165,20 @@ export class SearchEngine {
       // Load quick link bookmarks from storage slots
       const quickLinks = await this.getQuickLinks();
       if (quickLinks.length > 0) {
-        return { 'Quick Links': quickLinks.slice(0, 5) };
+        const results = { 'Quick Links': quickLinks.slice(0, 5) };
+        if (chromeSettings.length > 0) {
+          results['Chrome Settings'] = chromeSettings.slice(0, 4);
+        }
+        return results;
       }
     }
 
     // Fallback to recent history
-    return { History: history.slice(0, 5) };
+    const fallbackResults = { History: history.slice(0, 5) };
+    if (chromeSettings.length > 0) {
+      fallbackResults['Chrome Settings'] = chromeSettings.slice(0, 4);
+    }
+    return fallbackResults;
   }
 
   /**

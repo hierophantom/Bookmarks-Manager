@@ -2392,6 +2392,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   let activePageIndex = 0;
   let lastPageIndex = 0;
 
+  // Render state must be initialized before setActivePage can call render() during startup.
+  let renderVersion = 0;
+  let renderCallCount = 0;
+
   function isBookmarksPageActive() {
     return activePageIndex === 2;
   }
@@ -2726,12 +2730,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   // Tag filtering state handled by selection field menu
-
-  // Render version to avoid stale async writes
-  let renderVersion = 0;
-
-  // Perf instrumentation (opt-in via window.__bmgPerf)
-  let renderCallCount = 0;
 
   // Text search is handled by search component listeners
 
