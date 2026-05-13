@@ -5,6 +5,19 @@
 import SearchEngine from './shared/search-engine.js';
 
 const engine = new SearchEngine();
+const DEBUG = false;
+
+function debugLog(...args) {
+  if (DEBUG) {
+    console.log(...args);
+  }
+}
+
+function debugWarn(...args) {
+  if (DEBUG) {
+    console.warn(...args);
+  }
+}
 
 function getMainPageUrl() {
   return chrome.runtime.getURL('core/main.html');
@@ -84,7 +97,7 @@ async function toggleMainOverlayInTab(tab) {
       throw error;
     }
 
-    console.log('[Bridge] Main page not ready yet, waiting for load before toggling overlay');
+    debugLog('[Bridge] Main page not ready yet, waiting for load before toggling overlay');
     await waitForMainPageLoad(tab.id);
     await sendMessageToTab(tab.id, { type: 'TOGGLE_MAIN_OVERLAY' });
     return true;
@@ -95,7 +108,7 @@ async function toggleMainOverlayInTab(tab) {
  * Initialize service worker
  */
 function init() {
-  console.log('[Bridge] Service worker initialized');
+  debugLog('[Bridge] Service worker initialized');
 
   if (chrome.runtime && chrome.runtime.onUpdateAvailable) {
     chrome.runtime.onUpdateAvailable.addListener(async (details) => {
@@ -104,7 +117,7 @@ function init() {
       try {
         await chrome.storage.local.set({ pendingUpdateVersion: nextVersion });
       } catch (error) {
-        console.warn('[Bridge] Failed to persist pending update version', error);
+        debugWarn('[Bridge] Failed to persist pending update version', error);
       }
     });
   }
@@ -157,7 +170,7 @@ async function openOrFocusMainPage(options = {}) {
         return await chrome.tabs.update(preferCurrentTabId, { url: mainUrl, active: true });
       }
     } catch (error) {
-      console.warn('[Bridge] Preferred tab lookup failed:', error);
+      debugWarn('[Bridge] Preferred tab lookup failed:', error);
     }
   }
 
@@ -189,7 +202,7 @@ async function openOrFocusMainPage(options = {}) {
  * Handle keyboard shortcut — opens the native toolbar popup
  */
 async function handleToggleCommand() {
-  console.log('[Bridge] Toggle command received');
+  debugLog('[Bridge] Toggle command received');
 
   // First check if the current tab is the main Journey new tab page
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -206,11 +219,11 @@ async function handleToggleCommand() {
   // Open the native extension popup
   try {
     await chrome.action.openPopup();
-    console.log('[Bridge] Opened extension popup');
+    debugLog('[Bridge] Opened extension popup');
   } catch (error) {
     // chrome.action.openPopup() requires user gesture in some Chrome versions;
     // silently ignore — user can also click the toolbar icon directly.
-    console.warn('[Bridge] Could not open popup programmatically:', error.message);
+    debugWarn('[Bridge] Could not open popup programmatically:', error.message);
   }
 }
 
@@ -218,7 +231,7 @@ async function handleToggleCommand() {
  * Handle runtime messages
  */
 function handleMessage(request, sender, sendResponse) {
-  console.log('[Bridge] Message:', request.type, 'from:', sender.url);
+  debugLog('[Bridge] Message received:', request.type);
 
   switch (request.type) {
     case 'SEARCH':
@@ -235,7 +248,7 @@ function handleMessage(request, sender, sendResponse) {
       break;
 
     default:
-      console.warn('[Bridge] Unknown message type:', request.type);
+      debugWarn('[Bridge] Unknown message type:', request.type);
       sendResponse({ error: 'Unknown message type' });
   }
 }
@@ -245,7 +258,7 @@ function handleMessage(request, sender, sendResponse) {
  */
 async function handleSearch(request, sender, sendResponse) {
   try {
-    console.log('[Bridge] Search:', request.query, 'from tab:', sender.tab?.id);
+    debugLog('[Bridge] Search request received');
 
     // Enrich tab data from sender if needed
     let currentTab = sender.tab;
@@ -254,7 +267,7 @@ async function handleSearch(request, sender, sendResponse) {
         const tab = await chrome.tabs.get(sender.tab.id);
         currentTab = tab;
       } catch (error) {
-        console.warn('[Bridge] Could not fetch full tab data:', error);
+        debugWarn('[Bridge] Could not fetch full tab data:', error);
       }
     }
 
@@ -264,7 +277,7 @@ async function handleSearch(request, sender, sendResponse) {
       isExtensionPage: false
     });
 
-    console.log('[Bridge] Results keys:', Object.keys(results));
+    debugLog('[Bridge] Search completed with result categories:', Object.keys(results));
 
     sendResponse({
       success: true,
@@ -285,7 +298,7 @@ async function handleSearch(request, sender, sendResponse) {
  */
 async function handleExecuteResult(request, sender, sendResponse) {
   try {
-    console.log('[Bridge] Execute:', request.resultType, request.resultId, 'from tab:', sender.tab?.id);
+    debugLog('[Bridge] Execute request received:', request.resultType);
 
     const metadata = {
       ...request.metadata,
@@ -308,7 +321,7 @@ async function handleExecuteResult(request, sender, sendResponse) {
       await chrome.tabs.create({ url: metadata.url });
       success = true;
     } else {
-      console.warn('[Bridge] Unknown result type or missing data:', request);
+      debugWarn('[Bridge] Unknown result type or missing data');
     }
 
     sendResponse({ success });
@@ -324,4 +337,4 @@ async function handleExecuteResult(request, sender, sendResponse) {
 // Initialize on load
 init();
 
-console.log('[Bridge] Service worker ready');
+debugLog('[Bridge] Service worker ready');
