@@ -15,10 +15,14 @@
 const FaviconService = (() => {
   // Cache for favicon URLs to avoid repeated computation
   const cache = new Map();
+  const failedCandidateUrls = new Set();
 
   const KNOWN_FAVICON_OVERRIDES = {
     'docs.google.com': 'https://ssl.gstatic.com/docs/documents/images/kix-favicon7.ico'
   };
+  const KNOWN_GOOGLE_LOOKUP_UNRELIABLE_HOSTS = new Set([
+    'web.whatsapp.com'
+  ]);
   
   /**
    * Extract domain from URL for fallback generation
@@ -65,6 +69,12 @@ const FaviconService = (() => {
   function isGoogleHost(hostname) {
     const normalizedHost = (hostname || '').replace(/^www\./, '').toLowerCase();
     return normalizedHost === 'google.com' || normalizedHost.endsWith('.google.com');
+  }
+
+  function shouldUseGoogleLookup(hostname) {
+    const normalizedHost = (hostname || '').replace(/^www\./, '').toLowerCase();
+    if (!normalizedHost) return false;
+    return !KNOWN_GOOGLE_LOOKUP_UNRELIABLE_HOSTS.has(normalizedHost);
   }
 
   function isHttpUrl(url) {
@@ -229,6 +239,10 @@ const FaviconService = (() => {
 
   function getOrderedGoogleLookupUrls(url, size = 16) {
     const hostname = extractHostname(url);
+    if (!shouldUseGoogleLookup(hostname)) {
+      return [];
+    }
+
     const byDomainUrl = getGoogleFaviconUrl(url, size);
     const byDomain = getGoogleDomainFaviconUrl(url, size);
 
@@ -268,11 +282,11 @@ const FaviconService = (() => {
 
     return [
       getKnownDomainFaviconUrl(url),
-      ...getOrderedGoogleLookupUrls(url, size),
-      getChromeFaviconUrl(url, size),
+      getDirectFaviconUrl(url),
       getDuckDuckGoFaviconUrl(url),
-      getDirectFaviconUrl(url)
-    ].filter(Boolean);
+      ...getOrderedGoogleLookupUrls(url, size),
+      getChromeFaviconUrl(url, size)
+    ].filter(Boolean).filter((candidate) => !failedCandidateUrls.has(candidate));
   }
 
   /**
@@ -335,36 +349,10 @@ const FaviconService = (() => {
       return cache.get(cacheKey);
     }
 
-    const knownDomainFavicon = getKnownDomainFaviconUrl(url);
-    if (knownDomainFavicon) {
-      cache.set(cacheKey, knownDomainFavicon);
-      return knownDomainFavicon;
-    }
-
-    const orderedGoogleLookups = getOrderedGoogleLookupUrls(url, size);
-    for (const googleUrl of orderedGoogleLookups) {
-      if (googleUrl) {
-        cache.set(cacheKey, googleUrl);
-        return googleUrl;
-      }
-    }
-
-    const duckDuckGoFavicon = getDuckDuckGoFaviconUrl(url);
-    if (duckDuckGoFavicon) {
-      cache.set(cacheKey, duckDuckGoFavicon);
-      return duckDuckGoFavicon;
-    }
-
-    const directFavicon = getDirectFaviconUrl(url);
-    if (directFavicon) {
-      cache.set(cacheKey, directFavicon);
-      return directFavicon;
-    }
-
-    const chromeFavicon = getChromeFaviconUrl(url, size);
-    if (chromeFavicon) {
-      cache.set(cacheKey, chromeFavicon);
-      return chromeFavicon;
+    const candidates = getFaviconCandidates(url, size);
+    if (candidates.length > 0) {
+      cache.set(cacheKey, candidates[0]);
+      return candidates[0];
     }
     
     // Fallback to generated icon
@@ -430,6 +418,10 @@ const FaviconService = (() => {
     img.onerror = () => {
       const currentIndex = Number(img.dataset.faviconCandidateIndex || '0');
       const nextIndex = currentIndex + 1;
+      const failedCandidate = candidates[currentIndex];
+      if (failedCandidate) {
+        failedCandidateUrls.add(failedCandidate);
+      }
 
       if (nextIndex < candidates.length) {
         img.dataset.faviconCandidateIndex = String(nextIndex);
@@ -468,6 +460,7 @@ const FaviconService = (() => {
    */
   function clearCache() {
     cache.clear();
+    failedCandidateUrls.clear();
   }
 
   /**

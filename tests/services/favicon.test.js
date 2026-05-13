@@ -60,18 +60,19 @@ describe('FaviconService', () => {
       const candidates = FaviconService.getFaviconCandidates(url);
 
       expect(candidates.length).toBeGreaterThan(1);
-      expect(candidates[0]).toContain('google.com/s2/favicons?domain_url=');
-      expect(candidates[0]).toContain(encodeURIComponent(url));
-      expect(candidates[1]).toContain('google.com/s2/favicons?domain=');
-      expect(candidates[2]).toContain('chrome://favicon2');
+      expect(candidates[0]).toContain('https://keep.google.com/favicon.ico');
+      expect(candidates[1]).toContain('icons.duckduckgo.com/ip3/keep.google.com.ico');
+      expect(candidates[2]).toContain('google.com/s2/favicons?domain_url=');
+      expect(candidates[2]).toContain(encodeURIComponent(url));
     });
 
-    it('should prioritize domain-level lookup first for non-google hosts', () => {
+    it('should prioritize direct host lookup first for non-google hosts', () => {
       const url = 'https://yts.do/';
       const candidates = FaviconService.getFaviconCandidates(url);
 
-      expect(candidates[0]).toContain('google.com/s2/favicons?domain=');
-      expect(candidates[1]).toContain('google.com/s2/favicons?domain_url=');
+      expect(candidates[0]).toContain('https://yts.do/favicon.ico');
+      expect(candidates[1]).toContain('icons.duckduckgo.com/ip3/yts.do.ico');
+      expect(candidates[2]).toContain('google.com/s2/favicons?domain=');
       expect(candidates.some(candidate => candidate.includes('icons.duckduckgo.com/ip3/yts.do.ico'))).toBe(true);
     });
 
@@ -86,9 +87,9 @@ describe('FaviconService', () => {
       const url = 'https://www.google.com/search?q=The+1975&sourceid=chrome&ie=UTF-8#ebo=0';
       const candidates = FaviconService.getFaviconCandidates(url);
 
-      expect(candidates[0]).toContain('google.com/s2/favicons?domain_url=');
-      expect(candidates[0]).toContain(encodeURIComponent('https://www.google.com/search'));
-      expect(candidates[0]).not.toContain(encodeURIComponent('q=The+1975'));
+      expect(candidates[2]).toContain('google.com/s2/favicons?domain_url=');
+      expect(candidates[2]).toContain(encodeURIComponent('https://www.google.com/search'));
+      expect(candidates[2]).not.toContain(encodeURIComponent('q=The+1975'));
     });
 
     it('should return empty candidates for non-http URL', () => {
@@ -157,15 +158,14 @@ describe('FaviconService', () => {
       const url = 'https://keep.google.com/u/0/';
       const img = FaviconService.createFaviconElement(url);
 
-      expect(img.src).toContain('google.com/s2/favicons?domain_url=');
-      expect(img.src).toContain(encodeURIComponent(url));
+      expect(img.src).toContain('https://keep.google.com/favicon.ico');
     });
 
-    it('should start with domain-level source for non-google hosts', () => {
+    it('should start with direct host source for non-google hosts', () => {
       const url = 'https://yts.do/';
       const img = FaviconService.createFaviconElement(url);
 
-      expect(img.src).toContain('google.com/s2/favicons?domain=');
+      expect(img.src).toContain('https://yts.do/favicon.ico');
       expect(img.src).toContain('yts.do');
     });
 
@@ -178,11 +178,12 @@ describe('FaviconService', () => {
 
     it('should use normalized lookup URL for google search favicon source', () => {
       const url = 'https://www.google.com/search?q=The+1975&hl=en#ebo=0';
-      const img = FaviconService.createFaviconElement(url);
+      const candidates = FaviconService.getFaviconCandidates(url);
+      const googleDomainUrlCandidate = candidates.find((candidate) => candidate.includes('google.com/s2/favicons?domain_url='));
 
-      expect(img.src).toContain('google.com/s2/favicons?domain_url=');
-      expect(img.src).toContain(encodeURIComponent('https://www.google.com/search'));
-      expect(img.src).not.toContain(encodeURIComponent('q=The+1975'));
+      expect(googleDomainUrlCandidate).toBeDefined();
+      expect(googleDomainUrlCandidate).toContain(encodeURIComponent('https://www.google.com/search'));
+      expect(googleDomainUrlCandidate).not.toContain(encodeURIComponent('q=The+1975'));
     });
   });
 
@@ -199,11 +200,12 @@ describe('FaviconService', () => {
       expect(html).toContain('height="16"');
     });
 
-    it('should include error handler in HTML', () => {
+    it('should avoid inline error handlers in HTML', () => {
       const url = 'https://www.example.org';
       const html = FaviconService.getFaviconHtml(url);
       
-      expect(html).toContain('onerror=');
+      expect(html).not.toContain('onerror=');
+      expect(html).toContain('data-fallback-url=');
     });
 
     it('should accept custom options', () => {

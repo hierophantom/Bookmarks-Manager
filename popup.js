@@ -114,9 +114,8 @@
     flatItems = visible;
 
     el.results.innerHTML = visible.map((item, i) => {
-      const faviconUrl = item.url ? getFaviconUrl(item.url) : '';
-      const faviconHtml = faviconUrl
-        ? `<img class="bm-popup-favicon" src="${faviconUrl}" width="24" height="24" alt="" onerror="this.style.display='none';" />`
+      const faviconHtml = item.url
+        ? getFaviconHtml(item.url)
         : `<span class="bm-popup-favicon-placeholder"></span>`;
       const title = escapeHtml(item.title || item.url || 'Untitled');
       return `
@@ -126,6 +125,10 @@
         </div>
       `;
     }).join('');
+
+    if (typeof FaviconService !== 'undefined' && typeof FaviconService.attachErrorHandlers === 'function') {
+      FaviconService.attachErrorHandlers(el.results);
+    }
 
     if (visible.length > 0) selectedIndex = 0;
   }
@@ -163,12 +166,21 @@
 
   // ── Helpers ─────────────────────────────────────────────────────────────────
 
-  function getFaviconUrl(url) {
+  function getFaviconHtml(url) {
+    if (!url) return '<span class="bm-popup-favicon-placeholder"></span>';
+    if (typeof FaviconService !== 'undefined' && typeof FaviconService.getFaviconHtml === 'function') {
+      return FaviconService.getFaviconHtml(url, {
+        size: 24,
+        className: 'bm-popup-favicon',
+        alt: ''
+      });
+    }
+
     try {
-      const domain = new URL(url).hostname;
-      return `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=24`;
+      const directFaviconUrl = `${new URL(url).origin}/favicon.ico`;
+      return `<img class="bm-popup-favicon" src="${directFaviconUrl}" width="24" height="24" alt="" loading="lazy" />`;
     } catch {
-      return '';
+      return '<span class="bm-popup-favicon-placeholder"></span>';
     }
   }
 
