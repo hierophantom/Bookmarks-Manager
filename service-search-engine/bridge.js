@@ -23,6 +23,14 @@ function sendMessageToTab(tabId, message) {
   });
 }
 
+function isTrustedRuntimeSender(sender) {
+  return Boolean(sender && sender.id === chrome.runtime.id);
+}
+
+function isValidRuntimeRequest(request) {
+  return Boolean(request && typeof request === 'object' && typeof request.type === 'string');
+}
+
 function waitForMainPageLoad(tabId) {
   const mainUrl = getMainPageUrl();
 
@@ -122,6 +130,16 @@ function init() {
 
   // Listen for messages
   chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    if (!isTrustedRuntimeSender(sender)) {
+      sendResponse({ success: false, error: 'Untrusted sender' });
+      return;
+    }
+
+    if (!isValidRuntimeRequest(request)) {
+      sendResponse({ success: false, error: 'Invalid message payload' });
+      return;
+    }
+
     handleMessage(request, sender, sendResponse);
     return true; // Keep channel open for async
   });
