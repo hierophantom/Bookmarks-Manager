@@ -140,6 +140,12 @@ const RightPanelUI = (() => {
 
       // Open the save tabs modal with this window's tabs
       if (typeof SaveTabsModal !== 'undefined') {
+        if (typeof AnalyticsService !== 'undefined') {
+          AnalyticsService.capture('session_save_started', {
+            source: 'right_panel',
+            tab_count: targetWindow.tabs.length
+          });
+        }
         await SaveTabsModal.show(targetWindow.tabs);
         await renderTabs(); // Refresh after save
       } else {

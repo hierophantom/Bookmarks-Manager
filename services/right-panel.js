@@ -76,13 +76,17 @@ const RightPanelService = (() => {
    */
   async function getTabsByWindow() {
     const windows = await chrome.windows.getAll({ populate: true });
-    const currentUrl = chrome.runtime.getURL('core/main.html');
     
     const windowsWithTabs = [];
     
     windows.forEach((window, index) => {
-      const tabs = window.tabs
-        .filter(tab => tab.url && !tab.url.includes(currentUrl)) // Exclude bookmark manager tab
+      const tabs = (typeof SessionTabService !== 'undefined' && typeof SessionTabService.filterJourneySurfaceTabs === 'function'
+        ? SessionTabService.filterJourneySurfaceTabs(window.tabs)
+        : window.tabs.filter((tab) => {
+          const effectiveUrl = tab?.url || tab?.pendingUrl || '';
+          const journeyPageUrl = chrome?.runtime?.getURL ? chrome.runtime.getURL('core/main.html') : '';
+          return Boolean(effectiveUrl) && !(journeyPageUrl && effectiveUrl.includes(journeyPageUrl)) && !effectiveUrl.startsWith('chrome://newtab/');
+        }))
         .map(tab => ({
           id: tab.id,
           title: tab.title || tab.url,

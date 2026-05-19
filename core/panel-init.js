@@ -342,12 +342,16 @@ async function loadRightPanelData(panel) {
       });
     });
 
-    const currentUrl = chrome.runtime.getURL('core/main.html');
-
     const windowsWithTabs = windows
       .map((windowInfo) => {
         const tabs = Array.isArray(windowInfo.tabs)
-          ? windowInfo.tabs.filter((tab) => tab && tab.url && !tab.url.includes(currentUrl))
+          ? (typeof SessionTabService !== 'undefined' && typeof SessionTabService.filterJourneySurfaceTabs === 'function'
+            ? SessionTabService.filterJourneySurfaceTabs(windowInfo.tabs)
+            : windowInfo.tabs.filter((tab) => {
+              const effectiveUrl = tab?.url || tab?.pendingUrl || '';
+              const journeyPageUrl = chrome?.runtime?.getURL ? chrome.runtime.getURL('core/main.html') : '';
+              return Boolean(effectiveUrl) && !(journeyPageUrl && effectiveUrl.includes(journeyPageUrl)) && !effectiveUrl.startsWith('chrome://newtab/');
+            }))
           : [];
 
         return {

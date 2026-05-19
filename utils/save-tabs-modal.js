@@ -7,8 +7,16 @@ const SaveTabsModal = (() => {
   async function show(tabs) {
     return new Promise(async (resolve, reject) => {
       try {
+        const visibleTabs = typeof SessionTabService !== 'undefined' && typeof SessionTabService.filterJourneySurfaceTabs === 'function'
+          ? SessionTabService.filterJourneySurfaceTabs(tabs)
+          : (Array.isArray(tabs) ? tabs.filter((tab) => {
+            const effectiveUrl = tab?.url || tab?.pendingUrl || '';
+            const journeyPageUrl = chrome?.runtime?.getURL ? chrome.runtime.getURL('core/main.html') : '';
+            return Boolean(effectiveUrl) && !(journeyPageUrl && effectiveUrl.includes(journeyPageUrl)) && !effectiveUrl.startsWith('chrome://newtab/');
+          }) : []);
+
         // Build tab list for selection
-        const tabCheckboxes = tabs.map((tab, index) => {
+        const tabCheckboxes = visibleTabs.map((tab, index) => {
           return {
             label: tab.title || tab.url,
             value: tab.id,
@@ -214,7 +222,7 @@ const SaveTabsModal = (() => {
               destinationFolderId = newFolder.id;
             }
 
-            const selectedTabs = tabs.filter(tab => selectedTabIds.includes(tab.id));
+            const selectedTabs = visibleTabs.filter(tab => selectedTabIds.includes(tab.id));
             for (const tab of selectedTabs) {
               await chrome.bookmarks.create({
                 parentId: destinationFolderId,

@@ -142,6 +142,14 @@ const Modal = (() => {
             folderId: folderInput ? folderInput.value : null
           };
 
+          if (typeof AnalyticsService !== 'undefined') {
+            AnalyticsService.capture('bookmark_form_submitted', {
+              mode: defaults.id ? 'edit' : 'create',
+              has_tags: tags.length > 0,
+              has_folder: Boolean(folderInput && folderInput.value)
+            });
+          }
+
           return true;
         },
         onClose: (confirmed) => {
@@ -784,6 +792,14 @@ const Modal = (() => {
             color: selectedColor
           } : null
           };
+
+          if (typeof AnalyticsService !== 'undefined') {
+            AnalyticsService.capture('folder_form_submitted', {
+              mode: defaults.folderId ? 'edit' : 'create',
+              has_emoji: Boolean(selectedEmoji),
+              has_color: Boolean(selectedColor)
+            });
+          }
 
           return true;
         },

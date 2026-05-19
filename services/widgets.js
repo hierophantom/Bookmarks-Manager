@@ -1139,6 +1139,13 @@ const WidgetsService = (()=>{
         return;
       }
 
+      if (typeof AnalyticsService !== 'undefined') {
+        AnalyticsService.capture('session_save_started', {
+          source: 'search_widget',
+          tab_count: tabs.length
+        });
+      }
+
       await SaveTabsModal.show(tabs);
     } catch (error) {
       console.error('Search widget save session failed:', error);

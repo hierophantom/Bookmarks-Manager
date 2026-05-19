@@ -10,6 +10,7 @@
     "128": "assets/icons/icon-128.png"
   },
   "permissions": ["bookmarks", "tabs", "tabGroups", "storage", "history", "topSites"],
+  "host_permissions": ["https://eu.i.posthog.com/*"],
   "background": {
     "service_worker": "service-search-engine/bridge.js",
     "type": "module"

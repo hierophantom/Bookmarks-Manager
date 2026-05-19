@@ -28,7 +28,7 @@ const ThemeSettingsModal = (() => {
       return null;
     }
 
-    const [themes, currentThemeId, bgSettings, newTabEnabled, quoteEnabled, topbarBackdropEnabled, searchEngine, customSearchProviderTemplate, bookmarkLinkTriggerMode] = await Promise.all([
+    const [themes, currentThemeId, bgSettings, newTabEnabled, quoteEnabled, topbarBackdropEnabled, searchEngine, customSearchProviderTemplate, bookmarkLinkTriggerMode, analyticsEnabled] = await Promise.all([
       Promise.resolve(ThemesService.getThemes()),
       ThemesService.getCurrentThemeId(),
       BackgroundsService.getBackgroundSettings(),
@@ -37,7 +37,8 @@ const ThemeSettingsModal = (() => {
       Storage.get('topbarBackdropEnabled'),
       Storage.get('searchEngine'),
       Storage.get('customSearchProviderTemplate'),
-      Storage.get(BOOKMARK_LINK_TRIGGER_STORAGE_KEY)
+      Storage.get(BOOKMARK_LINK_TRIGGER_STORAGE_KEY),
+      Storage.get('usageAnalyticsEnabled')
     ]);
 
     const frequencyOptions = Object.entries(BackgroundsService.FREQUENCIES).map(([value, config]) => ({
@@ -65,6 +66,7 @@ const ThemeSettingsModal = (() => {
       searchEngine: normalizeSearchProviderId(searchEngine),
       customSearchProviderTemplate: typeof customSearchProviderTemplate === 'string' ? customSearchProviderTemplate : '',
       bookmarkLinkTriggerMode: normalizeBookmarkLinkTriggerMode(bookmarkLinkTriggerMode),
+      analyticsEnabled: analyticsEnabled !== false,
       searchEngineStatus: '',
       searchEngineStatusTone: 'muted',
       backgroundSettings: bgSettings,
@@ -134,6 +136,11 @@ const ThemeSettingsModal = (() => {
         key: 'general',
         label: 'General behaviour',
         subtitle: 'Control how the app acts'
+      },
+      {
+        key: 'privacy',
+        label: 'Privacy',
+        subtitle: 'Control analytics and policy'
       }
     ];
 
@@ -146,24 +153,18 @@ const ThemeSettingsModal = (() => {
         onClick: () => {
           if (state.activePane === config.key) return;
           state.activePane = config.key;
+          if (typeof AnalyticsService !== 'undefined') {
+            AnalyticsService.capture('settings_section_viewed', {
+              section: config.key
+            });
+          }
           rerender();
         }
       });
       tabs.appendChild(tab);
     });
 
-    const footer = document.createElement('div');
-    footer.className = 'theme-settings-modal__sidebar-footer';
-
-    const privacyLink = document.createElement('a');
-    privacyLink.className = 'theme-settings-modal__privacy-link';
-    privacyLink.textContent = 'Privacy Policy';
-    privacyLink.href = chrome.runtime.getURL('core/privacy-policy.html');
-    privacyLink.target = '_blank';
-    privacyLink.rel = 'noopener noreferrer';
-
-    sidebarContent.append(tabs, footer);
-    footer.appendChild(privacyLink);
+    sidebarContent.append(tabs);
     sidebar.appendChild(sidebarContent);
     return sidebar;
   }
@@ -181,13 +182,20 @@ const ThemeSettingsModal = (() => {
     const title = document.createElement('h2');
     title.className = 'theme-settings-modal__title';
     title.id = 'theme-settings-title';
-    title.textContent = state.activePane === 'look-feel' ? 'Look & feel' : 'General behaviour';
+    const paneTitle = state.activePane === 'look-feel'
+      ? 'Look & feel'
+      : state.activePane === 'general'
+        ? 'General behaviour'
+        : 'Privacy';
+    title.textContent = paneTitle;
 
     const subtitle = document.createElement('p');
     subtitle.className = 'theme-settings-modal__subtitle';
     subtitle.textContent = state.activePane === 'look-feel'
       ? 'Control how the app looks'
-      : 'Control how the app acts';
+      : state.activePane === 'general'
+        ? 'Control how the app acts'
+        : 'Control analytics and policy';
 
     titleWrap.append(title, subtitle);
 
@@ -199,7 +207,9 @@ const ThemeSettingsModal = (() => {
     body.appendChild(
       state.activePane === 'look-feel'
         ? buildLookAndFeelPane(state, rerender)
-        : buildGeneralBehaviourPane(state, rerender)
+        : state.activePane === 'general'
+          ? buildGeneralBehaviourPane(state, rerender)
+          : buildPrivacyPane(state, rerender)
     );
     panel.appendChild(body);
 
@@ -294,6 +304,57 @@ const ThemeSettingsModal = (() => {
           await applyDailyQuoteVisibility(state.dailyQuoteShow);
         }
       })
+    }));
+
+    return pane;
+  }
+
+  function buildPrivacyPane(state, _rerender) {
+    const pane = document.createElement('div');
+    pane.className = 'theme-settings-modal__pane';
+
+    pane.appendChild(createSettingSection({
+      title: 'Usage analytics',
+      description: 'Anonymous product analytics sent to PostHog Cloud (EU). Bookmark titles, URLs, search text, folder names, and tab contents are never sent.',
+      className: 'theme-settings-modal__privacy-section',
+      content: createChoiceGroup({
+        type: 'radio',
+        items: [
+          { label: 'Enabled', value: 'enabled', checked: state.analyticsEnabled },
+          { label: 'Disabled', value: 'disabled', checked: !state.analyticsEnabled }
+        ],
+        onChange: async ({ changedValue }) => {
+          state.analyticsEnabled = changedValue === 'enabled';
+          await Storage.set({ usageAnalyticsEnabled: state.analyticsEnabled });
+          if (typeof AnalyticsService !== 'undefined' && typeof AnalyticsService.setEnabled === 'function') {
+            await AnalyticsService.setEnabled(state.analyticsEnabled);
+          }
+        }
+      })
+    }));
+
+    const noteWrap = document.createElement('div');
+    noteWrap.className = 'theme-settings-modal__privacy-note';
+
+    const noteCopy = document.createElement('p');
+    noteCopy.className = 'theme-settings-modal__privacy-copy';
+    noteCopy.textContent = 'Read the privacy policy for full data handling details and how to turn analytics off at any time.';
+
+    const privacyLink = document.createElement('a');
+    privacyLink.className = 'theme-settings-modal__privacy-link';
+    privacyLink.textContent = 'Open privacy policy';
+    privacyLink.href = chrome.runtime.getURL('core/privacy-policy.html');
+    privacyLink.target = '_blank';
+    privacyLink.rel = 'noopener noreferrer';
+
+    noteWrap.append(noteCopy, privacyLink);
+
+    pane.appendChild(createSettingSection({
+      title: 'Privacy policy',
+      description: 'How Journey handles extension data and analytics.',
+      className: 'theme-settings-modal__privacy-section',
+      divided: false,
+      content: noteWrap
     }));
 
     return pane;

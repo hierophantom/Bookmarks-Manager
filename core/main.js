@@ -52,6 +52,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
+  if (typeof AnalyticsService !== 'undefined' && typeof AnalyticsService.init === 'function') {
+    try {
+      await AnalyticsService.init();
+    } catch (error) {
+      console.warn('Analytics initialization failed', error);
+    }
+  }
+
   // Check new tab override setting
   const newTabEnabled = await Storage.get('newTabOverrideEnabled');
   
@@ -1488,6 +1496,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         const data = await Modal.openFolderForm({ title: '' });
         if (!data) return;
         const newFolder = await BookmarksService.createFolder('1', data.title);
+        if (typeof AnalyticsService !== 'undefined') {
+          AnalyticsService.capture('folder_created', {
+            source: 'toolbar',
+            has_emoji: Boolean(data.customization && data.customization.emoji),
+            has_color: Boolean(data.customization && data.customization.color)
+          });
+        }
         if (data.customization && typeof FolderCustomizationService !== 'undefined') {
           await FolderCustomizationService.set(newFolder.id, data.customization);
         }
@@ -1629,6 +1644,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
+  function filterSessionTabs(tabs) {
+    if (typeof SessionTabService !== 'undefined' && typeof SessionTabService.filterJourneySurfaceTabs === 'function') {
+      return SessionTabService.filterJourneySurfaceTabs(tabs);
+    }
+
+    const journeyPageUrl = chrome?.runtime?.getURL ? chrome.runtime.getURL('core/main.html') : '';
+    return (Array.isArray(tabs) ? tabs : []).filter((tab) => {
+      const effectiveUrl = tab?.url || tab?.pendingUrl || '';
+      if (!effectiveUrl) return false;
+      if (effectiveUrl.startsWith('chrome://newtab/')) return false;
+      return !(journeyPageUrl && effectiveUrl.includes(journeyPageUrl));
+    });
+  }
+
   function compareTabsBySort(a, b) {
     if (thisSessionSort === 'az') {
       return getTabTitle(a).localeCompare(getTabTitle(b));
@@ -1659,15 +1688,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     }
 
-    const extensionUrl = chrome.runtime.getURL('core/main.html');
     const groupIds = new Set();
 
     const mappedWindows = windows.map((win) => {
-      const tabs = (win.tabs || [])
-        .filter((tab) => {
-          const effectiveUrl = tab.url || tab.pendingUrl || '';
-          return !effectiveUrl.includes(extensionUrl);
-        })
+      const tabs = filterSessionTabs(win.tabs || [])
         .map((tab) => {
           const effectiveUrl = tab.url || tab.pendingUrl || '';
           if (typeof tab.groupId === 'number' && tab.groupId >= 0) {
@@ -1692,7 +1716,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         incognito: Boolean(win.incognito),
         tabs
       };
-    }).filter((win) => win.tabs.length > 0);
+    });
 
     const groupColorById = {};
     const groupInfoById = {};
@@ -1914,6 +1938,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
+    if (typeof AnalyticsService !== 'undefined') {
+      AnalyticsService.capture('session_save_started', {
+        source: 'this_session',
+        tab_count: tabs.length
+      });
+    }
+
     await SaveTabsModal.show(tabs.map((tab) => ({
       id: tab.id,
       title: tab.title,
@@ -2122,6 +2153,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
       }
 
+      const isEmptyWindowSection = groupFiltered.length === 0;
+
+      if (isEmptyWindowSection && !isCurrentWindow) {
+        return;
+      }
+
       if (!isCurrentWindow && !thisSessionCollapsedWindowIds.has(windowData.id)) {
         thisSessionCollapsedWindowIds.add(windowData.id);
       }
@@ -2151,11 +2188,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
       });
 
+      const emptyState = isEmptyWindowSection
+        ? (() => {
+          const emptyStateEl = document.createElement('div');
+          emptyStateEl.className = 'folder-section__empty-state this-session-section__empty-state';
+          emptyStateEl.textContent = 'No active tabs';
+          return emptyStateEl;
+        })()
+        : null;
+
       const section = createFolderSection({
         state: 'idle',
         breadcrumbItems: [{ label: title, type: 'current' }],
-        items: groupFiltered.map((tab) => createThisSessionTabTile(tab)),
-        actions: [closeDuplicatesAction, closeStaleAction],
+        items: isEmptyWindowSection ? [emptyState] : groupFiltered.map((tab) => createThisSessionTabTile(tab)),
+        actions: isEmptyWindowSection ? [] : [closeDuplicatesAction, closeStaleAction],
         collapsed: !isCurrentWindow && thisSessionCollapsedWindowIds.has(windowData.id),
         onToggleCollapse: (isCollapsed) => {
           if (isCurrentWindow) return;
@@ -2488,6 +2534,15 @@ document.addEventListener('DOMContentLoaded', async () => {
       } catch (e) {
         console.warn('This Session page render failed', e);
       }
+    }
+    if (typeof AnalyticsService !== 'undefined' && typeof AnalyticsService.trackPageView === 'function') {
+      const pageNameByIndex = {
+        0: 'Home',
+        1: 'This Session',
+        2: 'Bookmarks',
+        3: 'Journey'
+      };
+      AnalyticsService.trackPageView(pageNameByIndex[activePageIndex] || `Page ${activePageIndex}`);
     }
     if (pageContainer && direction) {
       pageContainer.classList.remove('slide-left', 'slide-right');
@@ -4045,6 +4100,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (chrome.runtime.lastError) rej(chrome.runtime.lastError); else res(node);
               });
             });
+            if (typeof AnalyticsService !== 'undefined') {
+              AnalyticsService.capture('folder_created', {
+                source: 'folder_section',
+                has_emoji: Boolean(data.customization && data.customization.emoji),
+                has_color: Boolean(data.customization && data.customization.color)
+              });
+            }
             UndoService.show('Folder created', async () => {
               await BookmarksService.removeFolder(newSubfolder.id);
               await render(true);
@@ -4128,6 +4190,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
             if (data.tags && data.tags.length && newNode) {
               await TagsService.setTags(newNode.id, data.tags);
+            }
+            if (typeof AnalyticsService !== 'undefined') {
+              AnalyticsService.capture('bookmark_created', {
+                source: 'folder_section',
+                has_tags: Boolean(data.tags && data.tags.length)
+              });
             }
             UndoService.show('Bookmark added', async () => {
               await BookmarksService.removeBookmark(newNode.id);
